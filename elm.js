@@ -5674,7 +5674,7 @@ var $author$project$Main$rootFret = function (model) {
 		case 'MajorPent':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 		default:
-			return A2($elm$core$Basics$modBy, 12, model.root - 4);
+			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 	}
 };
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
@@ -5738,36 +5738,22 @@ var $elm$core$List$filterMap = F2(
 			_List_Nil,
 			xs);
 	});
-var $author$project$Main$isPentatonic = function (st) {
-	switch (st.$) {
-		case 'MinorPent':
-			return true;
-		case 'MajorPent':
-			return true;
-		default:
-			return false;
-	}
-};
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
 var $author$project$Main$drawBoxRegions = function (model) {
-	if ($author$project$Main$isPentatonic(model.scale)) {
-		var octaves = _List_fromArray(
-			[-1, 0, 1]);
-		return A2(
-			$elm$core$List$concatMap,
-			function (b) {
-				return A2(
-					$elm$core$List$filterMap,
-					A2($author$project$Main$drawOneBox, model, b),
-					octaves);
-			},
-			_List_fromArray(
-				[1, 2, 3, 4, 5]));
-	} else {
-		return _List_Nil;
-	}
+	var octaves = _List_fromArray(
+		[-1, 0, 1]);
+	return A2(
+		$elm$core$List$concatMap,
+		function (b) {
+			return A2(
+				$elm$core$List$filterMap,
+				A2($author$project$Main$drawOneBox, model, b),
+				octaves);
+		},
+		_List_fromArray(
+			[1, 2, 3, 4, 5]));
 };
 var $author$project$Main$fretLineX = function (f) {
 	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
@@ -6153,6 +6139,78 @@ var $author$project$Main$boxOf = F2(
 		}
 		return $elm$core$Maybe$Nothing;
 	});
+var $author$project$Main$ionianBoxOf = F2(
+	function (s, fRel) {
+		var _v0 = A2($author$project$Main$boxOf, s, fRel);
+		if (_v0.$ === 'Just') {
+			var b = _v0.a;
+			return $elm$core$Maybe$Just(b);
+		} else {
+			var _v1 = _Utils_Tuple2(s, fRel);
+			_v1$12:
+			while (true) {
+				switch (_v1.a) {
+					case 1:
+						switch (_v1.b) {
+							case 2:
+								return $elm$core$Maybe$Just(1);
+							case 8:
+								return $elm$core$Maybe$Just(4);
+							default:
+								break _v1$12;
+						}
+					case 2:
+						switch (_v1.b) {
+							case 1:
+								return $elm$core$Maybe$Just(1);
+							case 7:
+								return $elm$core$Maybe$Just(3);
+							default:
+								break _v1$12;
+						}
+					case 3:
+						switch (_v1.b) {
+							case 5:
+								return $elm$core$Maybe$Just(3);
+							case 11:
+								return $elm$core$Maybe$Just(5);
+							default:
+								break _v1$12;
+						}
+					case 4:
+						switch (_v1.b) {
+							case 4:
+								return $elm$core$Maybe$Just(2);
+							case 10:
+								return $elm$core$Maybe$Just(5);
+							default:
+								break _v1$12;
+						}
+					case 5:
+						switch (_v1.b) {
+							case 3:
+								return $elm$core$Maybe$Just(2);
+							case 9:
+								return $elm$core$Maybe$Just(4);
+							default:
+								break _v1$12;
+						}
+					case 6:
+						switch (_v1.b) {
+							case 2:
+								return $elm$core$Maybe$Just(1);
+							case 8:
+								return $elm$core$Maybe$Just(4);
+							default:
+								break _v1$12;
+						}
+					default:
+						break _v1$12;
+				}
+			}
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Main$scaleIntervals = function (st) {
 	switch (st.$) {
 		case 'MinorPent':
@@ -6183,16 +6241,23 @@ var $author$project$Main$isInScale = F2(
 	});
 var $author$project$Main$positionBox = F3(
 	function (model, s, f) {
-		return A2(
+		if (A2(
 			$author$project$Main$isInScale,
 			model,
-			A2($author$project$Main$noteAt, s, f)) ? ($author$project$Main$isPentatonic(model.scale) ? A2(
-			$author$project$Main$boxOf,
-			s,
-			A2(
+			A2($author$project$Main$noteAt, s, f))) {
+			var fRel = A2(
 				$elm$core$Basics$modBy,
 				12,
-				f - $author$project$Main$rootFret(model))) : $elm$core$Maybe$Just(0)) : $elm$core$Maybe$Nothing;
+				f - $author$project$Main$rootFret(model));
+			var _v0 = model.scale;
+			if (_v0.$ === 'Ionian') {
+				return A2($author$project$Main$ionianBoxOf, s, fRel);
+			} else {
+				return A2($author$project$Main$boxOf, s, fRel);
+			}
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
 	});
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
 var $author$project$Main$drawNoteAt = F3(
@@ -6504,21 +6569,7 @@ var $author$project$Main$legendText = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
-var $author$project$Main$viewLegend = function (model) {
-	var boxItems = $author$project$Main$isPentatonic(model.scale) ? A2(
-		$elm$core$List$cons,
-		$author$project$Main$legendText('Boxes:'),
-		A2(
-			$elm$core$List$map,
-			$author$project$Main$legendSwatch,
-			_List_fromArray(
-				[
-					_Utils_Tuple2(1, '1'),
-					_Utils_Tuple2(2, '2'),
-					_Utils_Tuple2(3, '3'),
-					_Utils_Tuple2(4, '4'),
-					_Utils_Tuple2(5, '5')
-				]))) : _List_Nil;
+var $author$project$Main$viewLegend = function (_v0) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -6531,16 +6582,29 @@ var $author$project$Main$viewLegend = function (model) {
 				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
 				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 			]),
-		_Utils_ap(
-			boxItems,
-			_List_fromArray(
-				[
-					$author$project$Main$legendText('Tones:'),
-					A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
-					A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
-					A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
-					A2($author$project$Main$legendMarker, 'circle-plain', 'other')
-				])));
+		A2(
+			$elm$core$List$cons,
+			$author$project$Main$legendText('Boxes:'),
+			_Utils_ap(
+				A2(
+					$elm$core$List$map,
+					$author$project$Main$legendSwatch,
+					_List_fromArray(
+						[
+							_Utils_Tuple2(1, '1'),
+							_Utils_Tuple2(2, '2'),
+							_Utils_Tuple2(3, '3'),
+							_Utils_Tuple2(4, '4'),
+							_Utils_Tuple2(5, '5')
+						])),
+				_List_fromArray(
+					[
+						$author$project$Main$legendText('Tones:'),
+						A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+						A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
+						A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
+						A2($author$project$Main$legendMarker, 'circle-plain', 'other')
+					]))));
 };
 var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = $author$project$Main$noteName(model.root) + (' ' + function () {

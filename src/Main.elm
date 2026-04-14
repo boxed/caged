@@ -24,12 +24,6 @@ type ScaleType
     | Ionian
 
 
-isPentatonic : ScaleType -> Bool
-isPentatonic st =
-    case st of
-        MinorPent -> True
-        MajorPent -> True
-        Ionian -> False
 
 
 type Msg
@@ -135,7 +129,7 @@ rootFret model =
             modBy 12 (model.root - 7)
 
         Ionian ->
-            modBy 12 (model.root - 4)
+            modBy 12 (model.root - 7)
 
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
@@ -181,14 +175,42 @@ boxOf s fRel =
 positionBox : Model -> Int -> Int -> Maybe Int
 positionBox model s f =
     if isInScale model (noteAt s f) then
-        if isPentatonic model.scale then
-            boxOf s (modBy 12 (f - rootFret model))
-
-        else
-            Just 0
+        let
+            fRel =
+                modBy 12 (f - rootFret model)
+        in
+        case model.scale of
+            Ionian -> ionianBoxOf s fRel
+            _ -> boxOf s fRel
 
     else
         Nothing
+
+
+{-| Box mapping for Ionian: pentatonic notes reuse `boxOf`, the two extra
+scale tones per string are placed in whichever pentatonic box their fret
+range already contains. Derived with F_root shifted to match MajorPent. -}
+ionianBoxOf : Int -> Int -> Maybe Int
+ionianBoxOf s fRel =
+    case boxOf s fRel of
+        Just b ->
+            Just b
+
+        Nothing ->
+            case ( s, fRel ) of
+                ( 1, 2 ) -> Just 1
+                ( 1, 8 ) -> Just 4
+                ( 2, 1 ) -> Just 1
+                ( 2, 7 ) -> Just 3
+                ( 3, 5 ) -> Just 3
+                ( 3, 11 ) -> Just 5
+                ( 4, 4 ) -> Just 2
+                ( 4, 10 ) -> Just 5
+                ( 5, 3 ) -> Just 2
+                ( 5, 9 ) -> Just 4
+                ( 6, 2 ) -> Just 1
+                ( 6, 8 ) -> Just 4
+                _ -> Nothing
 
 
 type NoteRole
@@ -500,17 +522,13 @@ viewFretboard model =
 
 drawBoxRegions : Model -> List (Svg.Svg Msg)
 drawBoxRegions model =
-    if isPentatonic model.scale then
-        let
-            octaves =
-                [ -1, 0, 1 ]
-        in
-        List.concatMap
-            (\b -> List.filterMap (drawOneBox model b) octaves)
-            [ 1, 2, 3, 4, 5 ]
-
-    else
-        []
+    let
+        octaves =
+            [ -1, 0, 1 ]
+    in
+    List.concatMap
+        (\b -> List.filterMap (drawOneBox model b) octaves)
+        [ 1, 2, 3, 4, 5 ]
 
 
 drawOneBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -903,16 +921,7 @@ drawInlayDots =
 
 
 viewLegend : Model -> Html Msg
-viewLegend model =
-    let
-        boxItems =
-            if isPentatonic model.scale then
-                legendText "Boxes:"
-                    :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
-
-            else
-                []
-    in
+viewLegend _ =
     div
         [ style "margin-top" "16px"
         , style "font-size" "13px"
@@ -922,7 +931,8 @@ viewLegend model =
         , style "flex-wrap" "wrap"
         , style "align-items" "center"
         ]
-        (boxItems
+        (legendText "Boxes:"
+            :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
             ++ [ legendText "Tones:"
                , legendMarker "square-dark" "Root"
                , legendMarker "circle-dashed" "3rd"
