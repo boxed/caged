@@ -5849,8 +5849,8 @@ var $author$project$Main$drawFretMarkers = function () {
 			function (f) {
 				return _List_fromArray(
 					[
-						A2(dot, f, (-$author$project$Main$stringSpacing) * 1.2),
-						A2(dot, f, $author$project$Main$stringSpacing * 1.2)
+						A2(dot, f, -$author$project$Main$stringSpacing),
+						A2(dot, f, $author$project$Main$stringSpacing)
 					]);
 			},
 			doubles));

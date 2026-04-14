@@ -666,7 +666,7 @@ drawFretMarkers =
                 []
     in
     List.map (\f -> dot f 0) singles
-        ++ List.concatMap (\f -> [ dot f (-stringSpacing * 1.2), dot f (stringSpacing * 1.2) ]) doubles
+        ++ List.concatMap (\f -> [ dot f -stringSpacing, dot f stringSpacing ]) doubles
 
 
 
