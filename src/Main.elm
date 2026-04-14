@@ -19,8 +19,17 @@ type alias Model =
 
 
 type ScaleType
-    = Major
-    | Minor
+    = MinorPent
+    | MajorPent
+    | Ionian
+
+
+isPentatonic : ScaleType -> Bool
+isPentatonic st =
+    case st of
+        MinorPent -> True
+        MajorPent -> True
+        Ionian -> False
 
 
 type Msg
@@ -30,7 +39,7 @@ type Msg
 
 init : Model
 init =
-    { root = 9, scale = Minor }
+    { root = 9, scale = MinorPent }
 
 
 
@@ -92,11 +101,14 @@ noteAt s f =
 scaleIntervals : ScaleType -> List Int
 scaleIntervals st =
     case st of
-        Minor ->
+        MinorPent ->
             [ 0, 3, 5, 7, 10 ]
 
-        Major ->
+        MajorPent ->
             [ 0, 2, 4, 7, 9 ]
+
+        Ionian ->
+            [ 0, 2, 4, 5, 7, 9, 11 ]
 
 
 scaleNotes : Model -> List Int
@@ -116,11 +128,14 @@ Major pent of R → relative minor (R - 3)'s fret on low E.
 rootFret : Model -> Int
 rootFret model =
     case model.scale of
-        Minor ->
+        MinorPent ->
             modBy 12 (model.root - 4)
 
-        Major ->
+        MajorPent ->
             modBy 12 (model.root - 7)
+
+        Ionian ->
+            modBy 12 (model.root - 4)
 
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
@@ -166,7 +181,11 @@ boxOf s fRel =
 positionBox : Model -> Int -> Int -> Maybe Int
 positionBox model s f =
     if isInScale model (noteAt s f) then
-        boxOf s (modBy 12 (f - rootFret model))
+        if isPentatonic model.scale then
+            boxOf s (modBy 12 (f - rootFret model))
+
+        else
+            Just 0
 
     else
         Nothing
@@ -187,8 +206,9 @@ noteRole model n =
 
         thirdInterval =
             case model.scale of
-                Minor -> 3
-                Major -> 4
+                MinorPent -> 3
+                MajorPent -> 4
+                Ionian -> 4
     in
     if interval == 0 then
         Root
@@ -318,7 +338,7 @@ view model =
         , viewScaleTitle model
         , viewControls model
         , viewFretboard model
-        , viewLegend
+        , viewLegend model
         ]
 
 
@@ -329,15 +349,16 @@ viewScaleTitle model =
             noteName model.root
                 ++ " "
                 ++ (case model.scale of
-                        Minor -> "Minor"
-                        Major -> "Major"
+                        MinorPent -> "Minor Pentatonic"
+                        MajorPent -> "Major Pentatonic"
+                        Ionian -> "Ionian (Major)"
                    )
-                ++ " Pentatonic"
 
         intervalLabels =
             case model.scale of
-                Minor -> [ "R", "♭3", "4", "5", "♭7" ]
-                Major -> [ "R", "2", "3", "5", "6" ]
+                MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
+                MajorPent -> [ "R", "2", "3", "5", "6" ]
+                Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
 
         notePairs =
             List.map2
@@ -369,8 +390,9 @@ viewControls model =
             [ label "Root" , noteButtonRow model ]
         , div []
             [ label "Scale"
-            , scaleButton model Minor "Minor"
-            , scaleButton model Major "Major"
+            , scaleButton model MinorPent "Minor Pent"
+            , scaleButton model MajorPent "Major Pent"
+            , scaleButton model Ionian "Ionian"
             ]
         ]
 
@@ -478,13 +500,17 @@ viewFretboard model =
 
 drawBoxRegions : Model -> List (Svg.Svg Msg)
 drawBoxRegions model =
-    let
-        octaves =
-            [ -1, 0, 1 ]
-    in
-    List.concatMap
-        (\b -> List.filterMap (drawOneBox model b) octaves)
-        [ 1, 2, 3, 4, 5 ]
+    if isPentatonic model.scale then
+        let
+            octaves =
+                [ -1, 0, 1 ]
+        in
+        List.concatMap
+            (\b -> List.filterMap (drawOneBox model b) octaves)
+            [ 1, 2, 3, 4, 5 ]
+
+    else
+        []
 
 
 drawOneBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -876,8 +902,17 @@ drawInlayDots =
 -- LEGEND
 
 
-viewLegend : Html Msg
-viewLegend =
+viewLegend : Model -> Html Msg
+viewLegend model =
+    let
+        boxItems =
+            if isPentatonic model.scale then
+                legendText "Boxes:"
+                    :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
+
+            else
+                []
+    in
     div
         [ style "margin-top" "16px"
         , style "font-size" "13px"
@@ -887,8 +922,7 @@ viewLegend =
         , style "flex-wrap" "wrap"
         , style "align-items" "center"
         ]
-        ([ legendText "Boxes:" ]
-            ++ List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
+        (boxItems
             ++ [ legendText "Tones:"
                , legendMarker "square-dark" "Root"
                , legendMarker "circle-dashed" "3rd"

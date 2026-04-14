@@ -4370,8 +4370,8 @@ function _Browser_load(url)
 		}
 	}));
 }
-var $author$project$Main$Minor = {$: 'Minor'};
-var $author$project$Main$init = {root: 9, scale: $author$project$Main$Minor};
+var $author$project$Main$MinorPent = {$: 'MinorPent'};
+var $author$project$Main$init = {root: 9, scale: $author$project$Main$MinorPent};
 var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
@@ -5205,7 +5205,8 @@ var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$Major = {$: 'Major'};
+var $author$project$Main$Ionian = {$: 'Ionian'};
+var $author$project$Main$MajorPent = {$: 'MajorPent'};
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$label = function (s) {
 	return A2(
@@ -5378,8 +5379,9 @@ var $author$project$Main$viewControls = function (model) {
 				_List_fromArray(
 					[
 						$author$project$Main$label('Scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Minor, 'Minor'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Major, 'Major')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor Pent'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major Pent'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian')
 					]))
 			]));
 };
@@ -5666,10 +5668,13 @@ var $author$project$Main$polygonPoints = function (positions) {
 };
 var $author$project$Main$rootFret = function (model) {
 	var _v0 = model.scale;
-	if (_v0.$ === 'Minor') {
-		return A2($elm$core$Basics$modBy, 12, model.root - 4);
-	} else {
-		return A2($elm$core$Basics$modBy, 12, model.root - 7);
+	switch (_v0.$) {
+		case 'MinorPent':
+			return A2($elm$core$Basics$modBy, 12, model.root - 4);
+		case 'MajorPent':
+			return A2($elm$core$Basics$modBy, 12, model.root - 7);
+		default:
+			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 	}
 };
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
@@ -5733,22 +5738,36 @@ var $elm$core$List$filterMap = F2(
 			_List_Nil,
 			xs);
 	});
+var $author$project$Main$isPentatonic = function (st) {
+	switch (st.$) {
+		case 'MinorPent':
+			return true;
+		case 'MajorPent':
+			return true;
+		default:
+			return false;
+	}
+};
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
 var $author$project$Main$drawBoxRegions = function (model) {
-	var octaves = _List_fromArray(
-		[-1, 0, 1]);
-	return A2(
-		$elm$core$List$concatMap,
-		function (b) {
-			return A2(
-				$elm$core$List$filterMap,
-				A2($author$project$Main$drawOneBox, model, b),
-				octaves);
-		},
-		_List_fromArray(
-			[1, 2, 3, 4, 5]));
+	if ($author$project$Main$isPentatonic(model.scale)) {
+		var octaves = _List_fromArray(
+			[-1, 0, 1]);
+		return A2(
+			$elm$core$List$concatMap,
+			function (b) {
+				return A2(
+					$elm$core$List$filterMap,
+					A2($author$project$Main$drawOneBox, model, b),
+					octaves);
+			},
+			_List_fromArray(
+				[1, 2, 3, 4, 5]));
+	} else {
+		return _List_Nil;
+	}
 };
 var $author$project$Main$fretLineX = function (f) {
 	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
@@ -6020,10 +6039,13 @@ var $author$project$Main$noteRole = F2(
 	function (model, n) {
 		var thirdInterval = function () {
 			var _v0 = model.scale;
-			if (_v0.$ === 'Minor') {
-				return 3;
-			} else {
-				return 4;
+			switch (_v0.$) {
+				case 'MinorPent':
+					return 3;
+				case 'MajorPent':
+					return 4;
+				default:
+					return 4;
 			}
 		}();
 		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
@@ -6132,12 +6154,16 @@ var $author$project$Main$boxOf = F2(
 		return $elm$core$Maybe$Nothing;
 	});
 var $author$project$Main$scaleIntervals = function (st) {
-	if (st.$ === 'Minor') {
-		return _List_fromArray(
-			[0, 3, 5, 7, 10]);
-	} else {
-		return _List_fromArray(
-			[0, 2, 4, 7, 9]);
+	switch (st.$) {
+		case 'MinorPent':
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
+		case 'MajorPent':
+			return _List_fromArray(
+				[0, 2, 4, 7, 9]);
+		default:
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 11]);
 	}
 };
 var $author$project$Main$scaleNotes = function (model) {
@@ -6160,13 +6186,13 @@ var $author$project$Main$positionBox = F3(
 		return A2(
 			$author$project$Main$isInScale,
 			model,
-			A2($author$project$Main$noteAt, s, f)) ? A2(
+			A2($author$project$Main$noteAt, s, f)) ? ($author$project$Main$isPentatonic(model.scale) ? A2(
 			$author$project$Main$boxOf,
 			s,
 			A2(
 				$elm$core$Basics$modBy,
 				12,
-				f - $author$project$Main$rootFret(model))) : $elm$core$Maybe$Nothing;
+				f - $author$project$Main$rootFret(model))) : $elm$core$Maybe$Just(0)) : $elm$core$Maybe$Nothing;
 	});
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
 var $author$project$Main$drawNoteAt = F3(
@@ -6478,35 +6504,35 @@ var $author$project$Main$legendText = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
-var $author$project$Main$viewLegend = A2(
-	$elm$html$Html$div,
-	_List_fromArray(
-		[
-			A2($elm$html$Html$Attributes$style, 'margin-top', '16px'),
-			A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-			A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
-			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-			A2($elm$html$Html$Attributes$style, 'gap', '18px'),
-			A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-			A2($elm$html$Html$Attributes$style, 'align-items', 'center')
-		]),
-	_Utils_ap(
+var $author$project$Main$viewLegend = function (model) {
+	var boxItems = $author$project$Main$isPentatonic(model.scale) ? A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Boxes:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendSwatch,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(1, '1'),
+					_Utils_Tuple2(2, '2'),
+					_Utils_Tuple2(3, '3'),
+					_Utils_Tuple2(4, '4'),
+					_Utils_Tuple2(5, '5')
+				]))) : _List_Nil;
+	return A2(
+		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$author$project$Main$legendText('Boxes:')
+				A2($elm$html$Html$Attributes$style, 'margin-top', '16px'),
+				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'gap', '18px'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 			]),
 		_Utils_ap(
-			A2(
-				$elm$core$List$map,
-				$author$project$Main$legendSwatch,
-				_List_fromArray(
-					[
-						_Utils_Tuple2(1, '1'),
-						_Utils_Tuple2(2, '2'),
-						_Utils_Tuple2(3, '3'),
-						_Utils_Tuple2(4, '4'),
-						_Utils_Tuple2(5, '5')
-					])),
+			boxItems,
 			_List_fromArray(
 				[
 					$author$project$Main$legendText('Tones:'),
@@ -6514,24 +6540,32 @@ var $author$project$Main$viewLegend = A2(
 					A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
 					A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
 					A2($author$project$Main$legendMarker, 'circle-plain', 'other')
-				]))));
+				])));
+};
 var $author$project$Main$viewScaleTitle = function (model) {
-	var scaleName = $author$project$Main$noteName(model.root) + (' ' + (function () {
+	var scaleName = $author$project$Main$noteName(model.root) + (' ' + function () {
 		var _v1 = model.scale;
-		if (_v1.$ === 'Minor') {
-			return 'Minor';
-		} else {
-			return 'Major';
+		switch (_v1.$) {
+			case 'MinorPent':
+				return 'Minor Pentatonic';
+			case 'MajorPent':
+				return 'Major Pentatonic';
+			default:
+				return 'Ionian (Major)';
 		}
-	}() + ' Pentatonic'));
+	}());
 	var intervalLabels = function () {
 		var _v0 = model.scale;
-		if (_v0.$ === 'Minor') {
-			return _List_fromArray(
-				['R', '♭3', '4', '5', '♭7']);
-		} else {
-			return _List_fromArray(
-				['R', '2', '3', '5', '6']);
+		switch (_v0.$) {
+			case 'MinorPent':
+				return _List_fromArray(
+					['R', '♭3', '4', '5', '♭7']);
+			case 'MajorPent':
+				return _List_fromArray(
+					['R', '2', '3', '5', '6']);
+			default:
+				return _List_fromArray(
+					['R', '2', '3', '4', '5', '6', '7']);
 		}
 	}();
 	var notePairs = A3(
@@ -6599,7 +6633,7 @@ var $author$project$Main$view = function (model) {
 				$author$project$Main$viewScaleTitle(model),
 				$author$project$Main$viewControls(model),
 				$author$project$Main$viewFretboard(model),
-				$author$project$Main$viewLegend
+				$author$project$Main$viewLegend(model)
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$sandbox(
