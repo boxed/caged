@@ -6582,8 +6582,7 @@ var $author$project$Main$view = function (model) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				A2($elm$html$Html$Attributes$style, 'margin', '2rem 1rem'),
-				A2($elm$html$Html$Attributes$style, 'padding', '24px')
+				A2($elm$html$Html$Attributes$style, 'margin', '1rem 0.5rem')
 			]),
 		_List_fromArray(
 			[
