@@ -5205,6 +5205,7 @@ var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$Dorian = {$: 'Dorian'};
 var $author$project$Main$Ionian = {$: 'Ionian'};
 var $author$project$Main$MajorPent = {$: 'MajorPent'};
 var $elm$html$Html$span = _VirtualDom_node('span');
@@ -5381,7 +5382,8 @@ var $author$project$Main$viewControls = function (model) {
 						$author$project$Main$label('Scale'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor Pent'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major Pent'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian')
 					]))
 			]));
 };
@@ -5673,8 +5675,10 @@ var $author$project$Main$rootFret = function (model) {
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 		case 'MajorPent':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
-		default:
+		case 'Ionian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
+		default:
+			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 	}
 };
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
@@ -6030,8 +6034,10 @@ var $author$project$Main$noteRole = F2(
 					return 3;
 				case 'MajorPent':
 					return 4;
-				default:
+				case 'Ionian':
 					return 4;
+				default:
+					return 3;
 			}
 		}();
 		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
@@ -6139,6 +6145,78 @@ var $author$project$Main$boxOf = F2(
 		}
 		return $elm$core$Maybe$Nothing;
 	});
+var $author$project$Main$dorianBoxOf = F2(
+	function (s, fRel) {
+		var _v0 = A2($author$project$Main$boxOf, s, fRel);
+		if (_v0.$ === 'Just') {
+			var b = _v0.a;
+			return $elm$core$Maybe$Just(b);
+		} else {
+			var _v1 = _Utils_Tuple2(s, fRel);
+			_v1$12:
+			while (true) {
+				switch (_v1.a) {
+					case 1:
+						switch (_v1.b) {
+							case 2:
+								return $elm$core$Maybe$Just(1);
+							case 9:
+								return $elm$core$Maybe$Just(4);
+							default:
+								break _v1$12;
+						}
+					case 2:
+						switch (_v1.b) {
+							case 2:
+								return $elm$core$Maybe$Just(1);
+							case 7:
+								return $elm$core$Maybe$Just(3);
+							default:
+								break _v1$12;
+						}
+					case 3:
+						switch (_v1.b) {
+							case 6:
+								return $elm$core$Maybe$Just(3);
+							case 11:
+								return $elm$core$Maybe$Just(5);
+							default:
+								break _v1$12;
+						}
+					case 4:
+						switch (_v1.b) {
+							case 4:
+								return $elm$core$Maybe$Just(2);
+							case 11:
+								return $elm$core$Maybe$Just(5);
+							default:
+								break _v1$12;
+						}
+					case 5:
+						switch (_v1.b) {
+							case 4:
+								return $elm$core$Maybe$Just(2);
+							case 9:
+								return $elm$core$Maybe$Just(4);
+							default:
+								break _v1$12;
+						}
+					case 6:
+						switch (_v1.b) {
+							case 2:
+								return $elm$core$Maybe$Just(1);
+							case 9:
+								return $elm$core$Maybe$Just(4);
+							default:
+								break _v1$12;
+						}
+					default:
+						break _v1$12;
+				}
+			}
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Main$ionianBoxOf = F2(
 	function (s, fRel) {
 		var _v0 = A2($author$project$Main$boxOf, s, fRel);
@@ -6219,9 +6297,12 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'MajorPent':
 			return _List_fromArray(
 				[0, 2, 4, 7, 9]);
-		default:
+		case 'Ionian':
 			return _List_fromArray(
 				[0, 2, 4, 5, 7, 9, 11]);
+		default:
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 9, 10]);
 	}
 };
 var $author$project$Main$scaleNotes = function (model) {
@@ -6250,10 +6331,13 @@ var $author$project$Main$positionBox = F3(
 				12,
 				f - $author$project$Main$rootFret(model));
 			var _v0 = model.scale;
-			if (_v0.$ === 'Ionian') {
-				return A2($author$project$Main$ionianBoxOf, s, fRel);
-			} else {
-				return A2($author$project$Main$boxOf, s, fRel);
+			switch (_v0.$) {
+				case 'Ionian':
+					return A2($author$project$Main$ionianBoxOf, s, fRel);
+				case 'Dorian':
+					return A2($author$project$Main$dorianBoxOf, s, fRel);
+				default:
+					return A2($author$project$Main$boxOf, s, fRel);
 			}
 		} else {
 			return $elm$core$Maybe$Nothing;
@@ -6614,8 +6698,10 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Minor Pentatonic';
 			case 'MajorPent':
 				return 'Major Pentatonic';
-			default:
+			case 'Ionian':
 				return 'Ionian (Major)';
+			default:
+				return 'Dorian';
 		}
 	}());
 	var intervalLabels = function () {
@@ -6627,9 +6713,12 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'MajorPent':
 				return _List_fromArray(
 					['R', '2', '3', '5', '6']);
-			default:
+			case 'Ionian':
 				return _List_fromArray(
 					['R', '2', '3', '4', '5', '6', '7']);
+			default:
+				return _List_fromArray(
+					['R', '2', '♭3', '4', '5', '6', '♭7']);
 		}
 	}();
 	var notePairs = A3(

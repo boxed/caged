@@ -22,6 +22,7 @@ type ScaleType
     = MinorPent
     | MajorPent
     | Ionian
+    | Dorian
 
 
 
@@ -104,6 +105,9 @@ scaleIntervals st =
         Ionian ->
             [ 0, 2, 4, 5, 7, 9, 11 ]
 
+        Dorian ->
+            [ 0, 2, 3, 5, 7, 9, 10 ]
+
 
 scaleNotes : Model -> List Int
 scaleNotes model =
@@ -130,6 +134,9 @@ rootFret model =
 
         Ionian ->
             modBy 12 (model.root - 7)
+
+        Dorian ->
+            modBy 12 (model.root - 4)
 
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
@@ -181,6 +188,7 @@ positionBox model s f =
         in
         case model.scale of
             Ionian -> ionianBoxOf s fRel
+            Dorian -> dorianBoxOf s fRel
             _ -> boxOf s fRel
 
     else
@@ -213,6 +221,32 @@ ionianBoxOf s fRel =
                 _ -> Nothing
 
 
+{-| Box mapping for Dorian: minor-pent anchor (F_root = R-4). Dorian adds a
+major 2nd and major 6th on top of the minor pentatonic; each extra falls in
+the pentatonic box whose fret range already contains it. -}
+dorianBoxOf : Int -> Int -> Maybe Int
+dorianBoxOf s fRel =
+    case boxOf s fRel of
+        Just b ->
+            Just b
+
+        Nothing ->
+            case ( s, fRel ) of
+                ( 1, 2 ) -> Just 1
+                ( 1, 9 ) -> Just 4
+                ( 2, 2 ) -> Just 1
+                ( 2, 7 ) -> Just 3
+                ( 3, 6 ) -> Just 3
+                ( 3, 11 ) -> Just 5
+                ( 4, 4 ) -> Just 2
+                ( 4, 11 ) -> Just 5
+                ( 5, 4 ) -> Just 2
+                ( 5, 9 ) -> Just 4
+                ( 6, 2 ) -> Just 1
+                ( 6, 9 ) -> Just 4
+                _ -> Nothing
+
+
 type NoteRole
     = Root
     | Third
@@ -231,6 +265,7 @@ noteRole model n =
                 MinorPent -> 3
                 MajorPent -> 4
                 Ionian -> 4
+                Dorian -> 3
     in
     if interval == 0 then
         Root
@@ -374,6 +409,7 @@ viewScaleTitle model =
                         MinorPent -> "Minor Pentatonic"
                         MajorPent -> "Major Pentatonic"
                         Ionian -> "Ionian (Major)"
+                        Dorian -> "Dorian"
                    )
 
         intervalLabels =
@@ -381,6 +417,7 @@ viewScaleTitle model =
                 MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 MajorPent -> [ "R", "2", "3", "5", "6" ]
                 Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
+                Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
 
         notePairs =
             List.map2
@@ -415,6 +452,7 @@ viewControls model =
             , scaleButton model MinorPent "Minor Pent"
             , scaleButton model MajorPent "Major Pent"
             , scaleButton model Ionian "Ionian"
+            , scaleButton model Dorian "Dorian"
             ]
         ]
 
