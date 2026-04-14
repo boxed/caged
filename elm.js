@@ -6580,7 +6580,11 @@ var $author$project$Main$viewScaleTitle = function (model) {
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'margin', '2rem 1rem'),
+				A2($elm$html$Html$Attributes$style, 'padding', '24px')
+			]),
 		_List_fromArray(
 			[
 				A2(

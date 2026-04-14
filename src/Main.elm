@@ -313,7 +313,7 @@ stringY s =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [ style "margin" "2rem 1rem", style "padding" "24px" ]
         [ h1 [ style "margin" "0 0 6px" ] [ text "Guitar Fretboard Visualizer" ]
         , viewScaleTitle model
         , viewControls model
