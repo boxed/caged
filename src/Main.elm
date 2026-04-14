@@ -334,9 +334,18 @@ viewScaleTitle model =
                    )
                 ++ " Pentatonic"
 
-        notes =
-            List.map (\i -> noteName (modBy 12 (model.root + i)))
+        intervalLabels =
+            case model.scale of
+                Minor -> [ "R", "♭3", "4", "5", "♭7" ]
+                Major -> [ "R", "2", "3", "5", "6" ]
+
+        notePairs =
+            List.map2
+                (\i lbl ->
+                    noteName (modBy 12 (model.root + i)) ++ " (" ++ lbl ++ ")"
+                )
                 (scaleIntervals model.scale)
+                intervalLabels
     in
     div [ style "margin-bottom" "14px" ]
         [ div
@@ -349,7 +358,7 @@ viewScaleTitle model =
             , style "font-size" "14px"
             , style "margin-top" "2px"
             ]
-            [ text ("Notes: " ++ String.join "  ·  " notes) ]
+            [ text ("Notes: " ++ String.join "  ·  " notePairs) ]
         ]
 
 

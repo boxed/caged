@@ -6431,20 +6431,32 @@ var $author$project$Main$viewLegend = A2(
 				]))));
 var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = $author$project$Main$noteName(model.root) + (' ' + (function () {
-		var _v0 = model.scale;
-		if (_v0.$ === 'Minor') {
+		var _v1 = model.scale;
+		if (_v1.$ === 'Minor') {
 			return 'Minor';
 		} else {
 			return 'Major';
 		}
 	}() + ' Pentatonic'));
-	var notes = A2(
-		$elm$core$List$map,
-		function (i) {
-			return $author$project$Main$noteName(
-				A2($elm$core$Basics$modBy, 12, model.root + i));
-		},
-		$author$project$Main$scaleIntervals(model.scale));
+	var intervalLabels = function () {
+		var _v0 = model.scale;
+		if (_v0.$ === 'Minor') {
+			return _List_fromArray(
+				['R', '♭3', '4', '5', '♭7']);
+		} else {
+			return _List_fromArray(
+				['R', '2', '3', '5', '6']);
+		}
+	}();
+	var notePairs = A3(
+		$elm$core$List$map2,
+		F2(
+			function (i, lbl) {
+				return $author$project$Main$noteName(
+					A2($elm$core$Basics$modBy, 12, model.root + i)) + (' (' + (lbl + ')'));
+			}),
+		$author$project$Main$scaleIntervals(model.scale),
+		intervalLabels);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -6475,7 +6487,7 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$text(
-						'Notes: ' + A2($elm$core$String$join, '  ·  ', notes))
+						'Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs))
 					]))
 			]));
 };
