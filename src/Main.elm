@@ -232,12 +232,12 @@ boxShape b =
 boxColor : Int -> String
 boxColor b =
     case b of
-        1 -> "#c7a8d4"
-        2 -> "#f4b683"
-        3 -> "#98cfe3"
-        4 -> "#f5adbb"
-        5 -> "#aed9a2"
-        _ -> "#dddddd"
+        1 -> "var(--box-1)"
+        2 -> "var(--box-2)"
+        3 -> "var(--box-3)"
+        4 -> "var(--box-4)"
+        5 -> "var(--box-5)"
+        _ -> "var(--surface-bd)"
 
 
 
@@ -354,7 +354,7 @@ viewScaleTitle model =
             ]
             [ text scaleName ]
         , div
-            [ style "color" "#555"
+            [ style "color" "var(--text-2)"
             , style "font-size" "14px"
             , style "margin-top" "2px"
             ]
@@ -381,7 +381,7 @@ label s =
         [ style "display" "inline-block"
         , style "width" "60px"
         , style "font-size" "13px"
-        , style "color" "#666"
+        , style "color" "var(--text-2)"
         , style "font-weight" "600"
         , style "text-transform" "uppercase"
         , style "letter-spacing" "0.05em"
@@ -424,24 +424,24 @@ buttonBaseStyle : Bool -> List (Html.Attribute Msg)
 buttonBaseStyle active =
     [ style "padding" "6px 12px"
     , style "margin" "0 4px 0 0"
-    , style "border" "1px solid #bbb"
+    , style "border" "1px solid var(--btn-bd)"
     , style "border-radius" "6px"
     , style "cursor" "pointer"
     , style "font-size" "14px"
     , style "font-family" "inherit"
     , style "background"
         (if active then
-            "#2a2a2a"
+            "var(--btn-on-bg)"
 
          else
-            "#ffffff"
+            "var(--btn-bg)"
         )
     , style "color"
         (if active then
-            "#ffffff"
+            "var(--btn-on-text)"
 
          else
-            "#333"
+            "var(--btn-text)"
         )
     , style "font-weight"
         (if active then
@@ -458,7 +458,7 @@ viewFretboard model =
     Svg.svg
         [ SA.viewBox ("0 0 " ++ String.fromFloat totalWidth ++ " " ++ String.fromFloat totalHeight)
         , SA.width (String.fromFloat totalWidth)
-        , SA.style "max-width: 100%; height: auto; background: white; border: 1px solid #e0e0e0; border-radius: 6px;"
+        , SA.style "max-width: 100%; height: auto; background: var(--surface); border: 1px solid var(--surface-bd); border-radius: 6px;"
         ]
         (List.concat
             [ drawFretMarkers
@@ -606,7 +606,7 @@ drawFretLines =
                 , SA.x2 (String.fromFloat (leftMargin + nutWidth))
                 , SA.y1 (String.fromFloat top)
                 , SA.y2 (String.fromFloat bot)
-                , SA.stroke "#2a2a2a"
+                , SA.stroke "var(--nut)"
                 , SA.strokeWidth "5"
                 , SA.strokeLinecap "round"
                 ]
@@ -618,7 +618,7 @@ drawFretLines =
                 , SA.x2 (String.fromFloat (fretLineX f))
                 , SA.y1 (String.fromFloat top)
                 , SA.y2 (String.fromFloat bot)
-                , SA.stroke "#b8b8b8"
+                , SA.stroke "var(--fret-line)"
                 , SA.strokeWidth "1.3"
                 ]
                 []
@@ -641,7 +641,7 @@ drawStrings =
                 , SA.x2 (String.fromFloat rightX)
                 , SA.y1 (String.fromFloat (stringY s))
                 , SA.y2 (String.fromFloat (stringY s))
-                , SA.stroke "#a0a0a0"
+                , SA.stroke "var(--string)"
                 , SA.strokeWidth "1"
                 ]
                 []
@@ -661,7 +661,7 @@ drawFretMarkers =
                 [ SA.cx (String.fromFloat (noteX f))
                 , SA.cy (String.fromFloat (midY + dy))
                 , SA.r "5"
-                , SA.fill "#e4e4e4"
+                , SA.fill "var(--inlay-board)"
                 ]
                 []
     in
@@ -701,8 +701,8 @@ drawNoteAt model s f =
                                 , SA.width "28"
                                 , SA.height "28"
                                 , SA.rx "3"
-                                , SA.fill "#2a2a2a"
-                                , SA.stroke "#2a2a2a"
+                                , SA.fill "var(--root-bg)"
+                                , SA.stroke "var(--root-bg)"
                                 , SA.strokeWidth "1"
                                 ]
                                 []
@@ -712,8 +712,8 @@ drawNoteAt model s f =
                                 [ SA.cx (String.fromFloat cx)
                                 , SA.cy (String.fromFloat cy)
                                 , SA.r "14"
-                                , SA.fill "#ffffff"
-                                , SA.stroke "#2a2a2a"
+                                , SA.fill "var(--note-bg)"
+                                , SA.stroke "var(--chord-bd)"
                                 , SA.strokeWidth "1.8"
                                 , SA.strokeDasharray "4 3"
                                 ]
@@ -724,8 +724,8 @@ drawNoteAt model s f =
                                 [ SA.cx (String.fromFloat cx)
                                 , SA.cy (String.fromFloat cy)
                                 , SA.r "14"
-                                , SA.fill "#ffffff"
-                                , SA.stroke "#2a2a2a"
+                                , SA.fill "var(--note-bg)"
+                                , SA.stroke "var(--chord-bd)"
                                 , SA.strokeWidth "1.8"
                                 , SA.strokeLinecap "round"
                                 , SA.strokeDasharray "0.1 4"
@@ -737,18 +737,18 @@ drawNoteAt model s f =
                                 [ SA.cx (String.fromFloat cx)
                                 , SA.cy (String.fromFloat cy)
                                 , SA.r "14"
-                                , SA.fill "#ffffff"
-                                , SA.stroke "#3a3a3a"
+                                , SA.fill "var(--note-bg)"
+                                , SA.stroke "var(--note-bd)"
                                 , SA.strokeWidth "1.3"
                                 ]
                                 []
 
                 textColor =
                     case role of
-                        Root -> "#ffffff"
-                        Third -> "#202020"
-                        Fifth -> "#202020"
-                        Other -> "#202020"
+                        Root -> "var(--root-text)"
+                        Third -> "var(--note-text)"
+                        Fifth -> "var(--note-text)"
+                        Other -> "var(--note-text)"
 
                 labelNode =
                     Svg.text_
@@ -800,7 +800,7 @@ drawFretNumbers =
                             , SA.width "26"
                             , SA.height "19"
                             , SA.rx "3"
-                            , SA.fill "#ededed"
+                            , SA.fill "var(--fret-num-bg)"
                             ]
                             []
                         ]
@@ -824,7 +824,7 @@ drawFretNumbers =
                                     ++ ","
                                     ++ String.fromFloat (y - 24)
                                 )
-                            , SA.fill "#888"
+                            , SA.fill "var(--triangle)"
                             ]
                             []
                         ]
@@ -839,7 +839,7 @@ drawFretNumbers =
                         , SA.textAnchor "middle"
                         , SA.fontSize "13"
                         , SA.fontFamily "-apple-system, Helvetica, Arial, sans-serif"
-                        , SA.fill "#444"
+                        , SA.fill "var(--fret-num)"
                         ]
                         [ Svg.text txt ]
             in
@@ -864,7 +864,7 @@ drawInlayDots =
                 [ SA.cx (String.fromFloat (noteX f + dx))
                 , SA.cy (String.fromFloat y)
                 , SA.r "5"
-                , SA.fill "#7a7a7a"
+                , SA.fill "var(--inlay-below)"
                 ]
                 []
     in
@@ -881,7 +881,7 @@ viewLegend =
     div
         [ style "margin-top" "16px"
         , style "font-size" "13px"
-        , style "color" "#555"
+        , style "color" "var(--text-2)"
         , style "display" "flex"
         , style "gap" "18px"
         , style "flex-wrap" "wrap"
@@ -900,7 +900,7 @@ viewLegend =
 
 legendText : String -> Html Msg
 legendText s =
-    span [ style "font-weight" "600", style "color" "#333" ] [ text s ]
+    span [ style "font-weight" "600", style "color" "var(--text-strong)" ] [ text s ]
 
 
 legendSwatch : ( Int, String ) -> Html Msg
@@ -939,7 +939,7 @@ legendMarker kind lbl =
                 "square-dark" ->
                     span
                         (common
-                            ++ [ style "background" "#2a2a2a"
+                            ++ [ style "background" "var(--root-bg)"
                                , style "border-radius" "2px"
                                ]
                         )
@@ -948,8 +948,8 @@ legendMarker kind lbl =
                 "circle-dashed" ->
                     span
                         (common
-                            ++ [ style "background" "#ffffff"
-                               , style "border" "1.8px dashed #2a2a2a"
+                            ++ [ style "background" "var(--note-bg)"
+                               , style "border" "1.8px dashed var(--chord-bd)"
                                , style "border-radius" "50%"
                                ]
                         )
@@ -958,8 +958,8 @@ legendMarker kind lbl =
                 "circle-dotted" ->
                     span
                         (common
-                            ++ [ style "background" "#ffffff"
-                               , style "border" "1.8px dotted #2a2a2a"
+                            ++ [ style "background" "var(--note-bg)"
+                               , style "border" "1.8px dotted var(--chord-bd)"
                                , style "border-radius" "50%"
                                ]
                         )
@@ -968,8 +968,8 @@ legendMarker kind lbl =
                 _ ->
                     span
                         (common
-                            ++ [ style "background" "#ffffff"
-                               , style "border" "1px solid #3a3a3a"
+                            ++ [ style "background" "var(--note-bg)"
+                               , style "border" "1px solid var(--note-bd)"
                                , style "border-radius" "50%"
                                ]
                         )

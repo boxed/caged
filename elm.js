@@ -5215,7 +5215,7 @@ var $author$project$Main$label = function (s) {
 				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
 				A2($elm$html$Html$Attributes$style, 'width', '60px'),
 				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-				A2($elm$html$Html$Attributes$style, 'color', '#666'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
 				A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
 				A2($elm$html$Html$Attributes$style, 'text-transform', 'uppercase'),
 				A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
@@ -5234,7 +5234,7 @@ var $author$project$Main$buttonBaseStyle = function (active) {
 		[
 			A2($elm$html$Html$Attributes$style, 'padding', '6px 12px'),
 			A2($elm$html$Html$Attributes$style, 'margin', '0 4px 0 0'),
-			A2($elm$html$Html$Attributes$style, 'border', '1px solid #bbb'),
+			A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
 			A2($elm$html$Html$Attributes$style, 'border-radius', '6px'),
 			A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
 			A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
@@ -5242,11 +5242,11 @@ var $author$project$Main$buttonBaseStyle = function (active) {
 			A2(
 			$elm$html$Html$Attributes$style,
 			'background',
-			active ? '#2a2a2a' : '#ffffff'),
+			active ? 'var(--btn-on-bg)' : 'var(--btn-bg)'),
 			A2(
 			$elm$html$Html$Attributes$style,
 			'color',
-			active ? '#ffffff' : '#333'),
+			active ? 'var(--btn-on-text)' : 'var(--btn-text)'),
 			A2(
 			$elm$html$Html$Attributes$style,
 			'font-weight',
@@ -5423,17 +5423,17 @@ var $elm$core$List$any = F2(
 var $author$project$Main$boxColor = function (b) {
 	switch (b) {
 		case 1:
-			return '#c7a8d4';
+			return 'var(--box-1)';
 		case 2:
-			return '#f4b683';
+			return 'var(--box-2)';
 		case 3:
-			return '#98cfe3';
+			return 'var(--box-3)';
 		case 4:
-			return '#f5adbb';
+			return 'var(--box-4)';
 		case 5:
-			return '#aed9a2';
+			return 'var(--box-5)';
 		default:
-			return '#dddddd';
+			return 'var(--surface-bd)';
 	}
 };
 var $author$project$Main$boxShape = function (b) {
@@ -5778,7 +5778,7 @@ var $author$project$Main$drawFretLines = function () {
 					$elm$core$String$fromFloat(top)),
 					$elm$svg$Svg$Attributes$y2(
 					$elm$core$String$fromFloat(bot)),
-					$elm$svg$Svg$Attributes$stroke('#b8b8b8'),
+					$elm$svg$Svg$Attributes$stroke('var(--fret-line)'),
 					$elm$svg$Svg$Attributes$strokeWidth('1.3')
 				]),
 			_List_Nil);
@@ -5795,7 +5795,7 @@ var $author$project$Main$drawFretLines = function () {
 				$elm$core$String$fromFloat(top)),
 				$elm$svg$Svg$Attributes$y2(
 				$elm$core$String$fromFloat(bot)),
-				$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
+				$elm$svg$Svg$Attributes$stroke('var(--nut)'),
 				$elm$svg$Svg$Attributes$strokeWidth('5'),
 				$elm$svg$Svg$Attributes$strokeLinecap('round')
 			]),
@@ -5833,7 +5833,7 @@ var $author$project$Main$drawFretMarkers = function () {
 						$elm$svg$Svg$Attributes$cy(
 						$elm$core$String$fromFloat(midY + dy)),
 						$elm$svg$Svg$Attributes$r('5'),
-						$elm$svg$Svg$Attributes$fill('#e4e4e4')
+						$elm$svg$Svg$Attributes$fill('var(--inlay-board)')
 					]),
 				_List_Nil);
 		});
@@ -5892,7 +5892,7 @@ var $author$project$Main$drawFretNumbers = function () {
 							$author$project$Main$noteX(f) - 5) + (',' + ($elm$core$String$fromFloat(y - 18) + (' ' + ($elm$core$String$fromFloat(
 							$author$project$Main$noteX(f) + 5) + (',' + ($elm$core$String$fromFloat(y - 18) + (' ' + ($elm$core$String$fromFloat(
 							$author$project$Main$noteX(f)) + (',' + $elm$core$String$fromFloat(y - 24))))))))))),
-						$elm$svg$Svg$Attributes$fill('#888')
+						$elm$svg$Svg$Attributes$fill('var(--triangle)')
 					]),
 				_List_Nil)
 			]) : _List_Nil;
@@ -5908,7 +5908,7 @@ var $author$project$Main$drawFretNumbers = function () {
 					$elm$svg$Svg$Attributes$textAnchor('middle'),
 					$elm$svg$Svg$Attributes$fontSize('13'),
 					$elm$svg$Svg$Attributes$fontFamily('-apple-system, Helvetica, Arial, sans-serif'),
-					$elm$svg$Svg$Attributes$fill('#444')
+					$elm$svg$Svg$Attributes$fill('var(--fret-num)')
 				]),
 			_List_fromArray(
 				[
@@ -5929,7 +5929,7 @@ var $author$project$Main$drawFretNumbers = function () {
 						$elm$svg$Svg$Attributes$width('26'),
 						$elm$svg$Svg$Attributes$height('19'),
 						$elm$svg$Svg$Attributes$rx('3'),
-						$elm$svg$Svg$Attributes$fill('#ededed')
+						$elm$svg$Svg$Attributes$fill('var(--fret-num-bg)')
 					]),
 				_List_Nil)
 			]) : _List_Nil;
@@ -5963,7 +5963,7 @@ var $author$project$Main$drawInlayDots = function () {
 						$elm$svg$Svg$Attributes$cy(
 						$elm$core$String$fromFloat(y)),
 						$elm$svg$Svg$Attributes$r('5'),
-						$elm$svg$Svg$Attributes$fill('#7a7a7a')
+						$elm$svg$Svg$Attributes$fill('var(--inlay-below)')
 					]),
 				_List_Nil);
 		});
@@ -6178,13 +6178,13 @@ var $author$project$Main$drawNoteAt = F3(
 			var textColor = function () {
 				switch (role.$) {
 					case 'Root':
-						return '#ffffff';
+						return 'var(--root-text)';
 					case 'Third':
-						return '#202020';
+						return 'var(--note-text)';
 					case 'Fifth':
-						return '#202020';
+						return 'var(--note-text)';
 					default:
-						return '#202020';
+						return 'var(--note-text)';
 				}
 			}();
 			var cy = $author$project$Main$stringY(s);
@@ -6222,8 +6222,8 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$width('28'),
 									$elm$svg$Svg$Attributes$height('28'),
 									$elm$svg$Svg$Attributes$rx('3'),
-									$elm$svg$Svg$Attributes$fill('#2a2a2a'),
-									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
+									$elm$svg$Svg$Attributes$fill('var(--root-bg)'),
+									$elm$svg$Svg$Attributes$stroke('var(--root-bg)'),
 									$elm$svg$Svg$Attributes$strokeWidth('1')
 								]),
 							_List_Nil);
@@ -6237,8 +6237,8 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$cy(
 									$elm$core$String$fromFloat(cy)),
 									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('#ffffff'),
-									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
+									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+									$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
 									$elm$svg$Svg$Attributes$strokeWidth('1.8'),
 									$elm$svg$Svg$Attributes$strokeDasharray('4 3')
 								]),
@@ -6253,8 +6253,8 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$cy(
 									$elm$core$String$fromFloat(cy)),
 									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('#ffffff'),
-									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
+									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+									$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
 									$elm$svg$Svg$Attributes$strokeWidth('1.8'),
 									$elm$svg$Svg$Attributes$strokeLinecap('round'),
 									$elm$svg$Svg$Attributes$strokeDasharray('0.1 4')
@@ -6270,8 +6270,8 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$cy(
 									$elm$core$String$fromFloat(cy)),
 									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('#ffffff'),
-									$elm$svg$Svg$Attributes$stroke('#3a3a3a'),
+									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+									$elm$svg$Svg$Attributes$stroke('var(--note-bd)'),
 									$elm$svg$Svg$Attributes$strokeWidth('1.3')
 								]),
 							_List_Nil);
@@ -6317,7 +6317,7 @@ var $author$project$Main$drawStrings = function () {
 					$elm$svg$Svg$Attributes$y2(
 					$elm$core$String$fromFloat(
 						$author$project$Main$stringY(s))),
-					$elm$svg$Svg$Attributes$stroke('#a0a0a0'),
+					$elm$svg$Svg$Attributes$stroke('var(--string)'),
 					$elm$svg$Svg$Attributes$strokeWidth('1')
 				]),
 			_List_Nil);
@@ -6342,7 +6342,7 @@ var $author$project$Main$viewFretboard = function (model) {
 				'0 0 ' + ($elm$core$String$fromFloat($author$project$Main$totalWidth) + (' ' + $elm$core$String$fromFloat($author$project$Main$totalHeight)))),
 				$elm$svg$Svg$Attributes$width(
 				$elm$core$String$fromFloat($author$project$Main$totalWidth)),
-				$elm$svg$Svg$Attributes$style('max-width: 100%; height: auto; background: white; border: 1px solid #e0e0e0; border-radius: 6px;')
+				$elm$svg$Svg$Attributes$style('max-width: 100%; height: auto; background: var(--surface); border: 1px solid var(--surface-bd); border-radius: 6px;')
 			]),
 		$elm$core$List$concat(
 			_List_fromArray(
@@ -6374,7 +6374,7 @@ var $author$project$Main$legendMarker = F2(
 							common,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'background', '#2a2a2a'),
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--root-bg)'),
 									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
 								])),
 						_List_Nil);
@@ -6385,8 +6385,8 @@ var $author$project$Main$legendMarker = F2(
 							common,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'background', '#ffffff'),
-									A2($elm$html$Html$Attributes$style, 'border', '1.8px dashed #2a2a2a'),
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.8px dashed var(--chord-bd)'),
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
 								])),
 						_List_Nil);
@@ -6397,8 +6397,8 @@ var $author$project$Main$legendMarker = F2(
 							common,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'background', '#ffffff'),
-									A2($elm$html$Html$Attributes$style, 'border', '1.8px dotted #2a2a2a'),
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.8px dotted var(--chord-bd)'),
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
 								])),
 						_List_Nil);
@@ -6409,8 +6409,8 @@ var $author$project$Main$legendMarker = F2(
 							common,
 							_List_fromArray(
 								[
-									A2($elm$html$Html$Attributes$style, 'background', '#ffffff'),
-									A2($elm$html$Html$Attributes$style, 'border', '1px solid #3a3a3a'),
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
 								])),
 						_List_Nil);
@@ -6471,7 +6471,7 @@ var $author$project$Main$legendText = function (s) {
 		_List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
-				A2($elm$html$Html$Attributes$style, 'color', '#333')
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-strong)')
 			]),
 		_List_fromArray(
 			[
@@ -6484,7 +6484,7 @@ var $author$project$Main$viewLegend = A2(
 		[
 			A2($elm$html$Html$Attributes$style, 'margin-top', '16px'),
 			A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-			A2($elm$html$Html$Attributes$style, 'color', '#555'),
+			A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
 			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
 			A2($elm$html$Html$Attributes$style, 'gap', '18px'),
 			A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
@@ -6566,7 +6566,7 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'color', '#555'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
 						A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
 						A2($elm$html$Html$Attributes$style, 'margin-top', '2px')
 					]),
