@@ -544,19 +544,34 @@ polygonPoints positions =
         ( _, lo5, hi5 ) = byString 5
         ( _, lo6, hi6 ) = byString 6
 
+        yMid sa sb =
+            (stringY sa + stringY sb) / 2
+
         verts =
             [ ( fretCenterX lo1, stringY 1 - pad )
             , ( fretCenterX hi1, stringY 1 - pad )
-            , ( fretCenterX hi2, stringY 2 )
-            , ( fretCenterX hi3, stringY 3 )
-            , ( fretCenterX hi4, stringY 4 )
-            , ( fretCenterX hi5, stringY 5 )
+            , ( fretCenterX hi1, yMid 1 2 )
+            , ( fretCenterX hi2, yMid 1 2 )
+            , ( fretCenterX hi2, yMid 2 3 )
+            , ( fretCenterX hi3, yMid 2 3 )
+            , ( fretCenterX hi3, yMid 3 4 )
+            , ( fretCenterX hi4, yMid 3 4 )
+            , ( fretCenterX hi4, yMid 4 5 )
+            , ( fretCenterX hi5, yMid 4 5 )
+            , ( fretCenterX hi5, yMid 5 6 )
+            , ( fretCenterX hi6, yMid 5 6 )
             , ( fretCenterX hi6, stringY 6 + pad )
             , ( fretCenterX lo6, stringY 6 + pad )
-            , ( fretCenterX lo5, stringY 5 )
-            , ( fretCenterX lo4, stringY 4 )
-            , ( fretCenterX lo3, stringY 3 )
-            , ( fretCenterX lo2, stringY 2 )
+            , ( fretCenterX lo6, yMid 5 6 )
+            , ( fretCenterX lo5, yMid 5 6 )
+            , ( fretCenterX lo5, yMid 4 5 )
+            , ( fretCenterX lo4, yMid 4 5 )
+            , ( fretCenterX lo4, yMid 3 4 )
+            , ( fretCenterX lo3, yMid 3 4 )
+            , ( fretCenterX lo3, yMid 2 3 )
+            , ( fretCenterX lo2, yMid 2 3 )
+            , ( fretCenterX lo2, yMid 1 2 )
+            , ( fretCenterX lo1, yMid 1 2 )
             ]
     in
     verts

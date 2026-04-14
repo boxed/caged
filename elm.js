@@ -5541,6 +5541,10 @@ var $elm$core$Maybe$withDefault = F2(
 		}
 	});
 var $author$project$Main$polygonPoints = function (positions) {
+	var yMid = F2(
+		function (sa, sb) {
+			return ($author$project$Main$stringY(sa) + $author$project$Main$stringY(sb)) / 2;
+		});
 	var pad = $author$project$Main$stringSpacing * 0.55;
 	var byString = function (s) {
 		return A2(
@@ -5582,17 +5586,35 @@ var $author$project$Main$polygonPoints = function (positions) {
 			$author$project$Main$fretCenterX(hi1),
 			$author$project$Main$stringY(1) - pad),
 			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(hi1),
+			A2(yMid, 1, 2)),
+			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(hi2),
-			$author$project$Main$stringY(2)),
+			A2(yMid, 1, 2)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(hi2),
+			A2(yMid, 2, 3)),
 			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(hi3),
-			$author$project$Main$stringY(3)),
+			A2(yMid, 2, 3)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(hi3),
+			A2(yMid, 3, 4)),
 			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(hi4),
-			$author$project$Main$stringY(4)),
+			A2(yMid, 3, 4)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(hi4),
+			A2(yMid, 4, 5)),
 			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(hi5),
-			$author$project$Main$stringY(5)),
+			A2(yMid, 4, 5)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(hi5),
+			A2(yMid, 5, 6)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(hi6),
+			A2(yMid, 5, 6)),
 			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(hi6),
 			$author$project$Main$stringY(6) + pad),
@@ -5600,17 +5622,35 @@ var $author$project$Main$polygonPoints = function (positions) {
 			$author$project$Main$fretCenterX(lo6),
 			$author$project$Main$stringY(6) + pad),
 			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(lo6),
+			A2(yMid, 5, 6)),
+			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(lo5),
-			$author$project$Main$stringY(5)),
+			A2(yMid, 5, 6)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(lo5),
+			A2(yMid, 4, 5)),
 			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(lo4),
-			$author$project$Main$stringY(4)),
+			A2(yMid, 4, 5)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(lo4),
+			A2(yMid, 3, 4)),
 			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(lo3),
-			$author$project$Main$stringY(3)),
+			A2(yMid, 3, 4)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(lo3),
+			A2(yMid, 2, 3)),
 			_Utils_Tuple2(
 			$author$project$Main$fretCenterX(lo2),
-			$author$project$Main$stringY(2))
+			A2(yMid, 2, 3)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(lo2),
+			A2(yMid, 1, 2)),
+			_Utils_Tuple2(
+			$author$project$Main$fretCenterX(lo1),
+			A2(yMid, 1, 2))
 		]);
 	return A2(
 		$elm$core$String$join,
