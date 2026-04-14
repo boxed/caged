@@ -458,7 +458,7 @@ viewFretboard model =
     Svg.svg
         [ SA.viewBox ("0 0 " ++ String.fromFloat totalWidth ++ " " ++ String.fromFloat totalHeight)
         , SA.width (String.fromFloat totalWidth)
-        , SA.style "max-width: 100%; height: auto; background: var(--surface); border: 1px solid var(--surface-bd); border-radius: 6px;"
+        , SA.style "max-width: 100%; height: auto;"
         ]
         (List.concat
             [ drawFretMarkers

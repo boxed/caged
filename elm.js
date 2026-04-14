@@ -6342,7 +6342,7 @@ var $author$project$Main$viewFretboard = function (model) {
 				'0 0 ' + ($elm$core$String$fromFloat($author$project$Main$totalWidth) + (' ' + $elm$core$String$fromFloat($author$project$Main$totalHeight)))),
 				$elm$svg$Svg$Attributes$width(
 				$elm$core$String$fromFloat($author$project$Main$totalWidth)),
-				$elm$svg$Svg$Attributes$style('max-width: 100%; height: auto; background: var(--surface); border: 1px solid var(--surface-bd); border-radius: 6px;')
+				$elm$svg$Svg$Attributes$style('max-width: 100%; height: auto;')
 			]),
 		$elm$core$List$concat(
 			_List_fromArray(
