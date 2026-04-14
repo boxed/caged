@@ -6347,10 +6347,10 @@ var $author$project$Main$viewFretboard = function (model) {
 		$elm$core$List$concat(
 			_List_fromArray(
 				[
+					$author$project$Main$drawFretMarkers,
 					$author$project$Main$drawBoxRegions(model),
 					$author$project$Main$drawFretLines,
 					$author$project$Main$drawStrings,
-					$author$project$Main$drawFretMarkers,
 					$author$project$Main$drawNotes(model),
 					$author$project$Main$drawFretNumbers,
 					$author$project$Main$drawInlayDots

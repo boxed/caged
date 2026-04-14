@@ -461,10 +461,10 @@ viewFretboard model =
         , SA.style "max-width: 100%; height: auto; background: white; border: 1px solid #e0e0e0; border-radius: 6px;"
         ]
         (List.concat
-            [ drawBoxRegions model
+            [ drawFretMarkers
+            , drawBoxRegions model
             , drawFretLines
             , drawStrings
-            , drawFretMarkers
             , drawNotes model
             , drawFretNumbers
             , drawInlayDots
