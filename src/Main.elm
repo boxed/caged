@@ -449,8 +449,8 @@ viewControls model =
             [ label "Root" , noteButtonRow model ]
         , div []
             [ label "Scale"
-            , scaleButton model MinorPent "Minor Pent"
-            , scaleButton model MajorPent "Major Pent"
+            , scaleButton model MinorPent "Minor pentatonic"
+            , scaleButton model MajorPent "Major pentatonic"
             , scaleButton model Ionian "Ionian"
             , scaleButton model Dorian "Dorian"
             ]

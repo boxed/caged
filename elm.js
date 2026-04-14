@@ -5380,8 +5380,8 @@ var $author$project$Main$viewControls = function (model) {
 				_List_fromArray(
 					[
 						$author$project$Main$label('Scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor Pent'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major Pent'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor pentatonic'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian')
 					]))
