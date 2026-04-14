@@ -513,9 +513,9 @@ drawOneBox model b octave =
             (Svg.polygon
                 [ SA.points (polygonPoints positions)
                 , SA.fill (boxColor b)
-                , SA.fillOpacity "var(--box-fill-opacity)"
+                , SA.fillOpacity "0.45"
                 , SA.stroke (boxColor b)
-                , SA.strokeOpacity "var(--box-stroke-opacity)"
+                , SA.strokeOpacity "0.85"
                 , SA.strokeWidth "1"
                 , SA.strokeLinejoin "round"
                 ]
@@ -917,7 +917,7 @@ legendSwatch ( b, lbl ) =
             , style "background" (boxColor b)
             , style "border" ("1px solid " ++ boxColor b)
             , style "border-radius" "3px"
-            , style "opacity" "var(--swatch-opacity)"
+            , style "opacity" "0.75"
             ]
             []
         , text lbl

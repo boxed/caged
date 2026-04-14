@@ -5706,10 +5706,10 @@ var $author$project$Main$drawOneBox = F3(
 						$author$project$Main$polygonPoints(positions)),
 						$elm$svg$Svg$Attributes$fill(
 						$author$project$Main$boxColor(b)),
-						$elm$svg$Svg$Attributes$fillOpacity('var(--box-fill-opacity)'),
+						$elm$svg$Svg$Attributes$fillOpacity('0.45'),
 						$elm$svg$Svg$Attributes$stroke(
 						$author$project$Main$boxColor(b)),
-						$elm$svg$Svg$Attributes$strokeOpacity('var(--box-stroke-opacity)'),
+						$elm$svg$Svg$Attributes$strokeOpacity('0.85'),
 						$elm$svg$Svg$Attributes$strokeWidth('1'),
 						$elm$svg$Svg$Attributes$strokeLinejoin('round')
 					]),
@@ -6459,7 +6459,7 @@ var $author$project$Main$legendSwatch = function (_v0) {
 						'border',
 						'1px solid ' + $author$project$Main$boxColor(b)),
 						A2($elm$html$Html$Attributes$style, 'border-radius', '3px'),
-						A2($elm$html$Html$Attributes$style, 'opacity', 'var(--swatch-opacity)')
+						A2($elm$html$Html$Attributes$style, 'opacity', '0.75')
 					]),
 				_List_Nil),
 				$elm$html$Html$text(lbl)
