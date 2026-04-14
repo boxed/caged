@@ -696,9 +696,10 @@ drawNoteAt model s f =
                                 [ SA.cx (String.fromFloat cx)
                                 , SA.cy (String.fromFloat cy)
                                 , SA.r "14"
-                                , SA.fill "#4a4a4a"
+                                , SA.fill "#ffffff"
                                 , SA.stroke "#2a2a2a"
-                                , SA.strokeWidth "1"
+                                , SA.strokeWidth "1.8"
+                                , SA.strokeDasharray "4 3"
                                 ]
                                 []
 
@@ -709,7 +710,9 @@ drawNoteAt model s f =
                                 , SA.r "14"
                                 , SA.fill "#ffffff"
                                 , SA.stroke "#2a2a2a"
-                                , SA.strokeWidth "3"
+                                , SA.strokeWidth "1.8"
+                                , SA.strokeLinecap "round"
+                                , SA.strokeDasharray "0.1 4"
                                 ]
                                 []
 
@@ -727,7 +730,7 @@ drawNoteAt model s f =
                 textColor =
                     case role of
                         Root -> "#ffffff"
-                        Third -> "#ffffff"
+                        Third -> "#202020"
                         Fifth -> "#202020"
                         Other -> "#202020"
 
@@ -848,8 +851,8 @@ viewLegend =
             ++ List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
             ++ [ legendText "Tones:"
                , legendMarker "square-dark" "Root"
-               , legendMarker "circle-dark" "3rd"
-               , legendMarker "circle-ring" "5th"
+               , legendMarker "circle-dashed" "3rd"
+               , legendMarker "circle-dotted" "5th"
                , legendMarker "circle-plain" "other"
                ]
         )
@@ -902,20 +905,21 @@ legendMarker kind lbl =
                         )
                         []
 
-                "circle-dark" ->
+                "circle-dashed" ->
                     span
                         (common
-                            ++ [ style "background" "#4a4a4a"
+                            ++ [ style "background" "#ffffff"
+                               , style "border" "1.8px dashed #2a2a2a"
                                , style "border-radius" "50%"
                                ]
                         )
                         []
 
-                "circle-ring" ->
+                "circle-dotted" ->
                     span
                         (common
                             ++ [ style "background" "#ffffff"
-                               , style "border" "3px solid #2a2a2a"
+                               , style "border" "1.8px dotted #2a2a2a"
                                , style "border-radius" "50%"
                                ]
                         )

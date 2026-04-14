@@ -6088,6 +6088,7 @@ var $author$project$Main$positionBox = F3(
 				12,
 				f - $author$project$Main$rootFret(model))) : $elm$core$Maybe$Nothing;
 	});
+var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
 var $author$project$Main$drawNoteAt = F3(
 	function (model, s, f) {
 		var _v0 = A3($author$project$Main$positionBox, model, s, f);
@@ -6099,7 +6100,7 @@ var $author$project$Main$drawNoteAt = F3(
 					case 'Root':
 						return '#ffffff';
 					case 'Third':
-						return '#ffffff';
+						return '#202020';
 					case 'Fifth':
 						return '#202020';
 					default:
@@ -6156,9 +6157,10 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$cy(
 									$elm$core$String$fromFloat(cy)),
 									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('#4a4a4a'),
+									$elm$svg$Svg$Attributes$fill('#ffffff'),
 									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
-									$elm$svg$Svg$Attributes$strokeWidth('1')
+									$elm$svg$Svg$Attributes$strokeWidth('1.8'),
+									$elm$svg$Svg$Attributes$strokeDasharray('4 3')
 								]),
 							_List_Nil);
 					case 'Fifth':
@@ -6173,7 +6175,9 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$r('14'),
 									$elm$svg$Svg$Attributes$fill('#ffffff'),
 									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
-									$elm$svg$Svg$Attributes$strokeWidth('3')
+									$elm$svg$Svg$Attributes$strokeWidth('1.8'),
+									$elm$svg$Svg$Attributes$strokeLinecap('round'),
+									$elm$svg$Svg$Attributes$strokeDasharray('0.1 4')
 								]),
 							_List_Nil);
 					default:
@@ -6293,18 +6297,7 @@ var $author$project$Main$legendMarker = F2(
 									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
 								])),
 						_List_Nil);
-				case 'circle-dark':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', '#4a4a4a'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
-								])),
-						_List_Nil);
-				case 'circle-ring':
+				case 'circle-dashed':
 					return A2(
 						$elm$html$Html$span,
 						_Utils_ap(
@@ -6312,7 +6305,19 @@ var $author$project$Main$legendMarker = F2(
 							_List_fromArray(
 								[
 									A2($elm$html$Html$Attributes$style, 'background', '#ffffff'),
-									A2($elm$html$Html$Attributes$style, 'border', '3px solid #2a2a2a'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.8px dashed #2a2a2a'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-dotted':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', '#ffffff'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.8px dotted #2a2a2a'),
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
 								])),
 						_List_Nil);
@@ -6425,8 +6430,8 @@ var $author$project$Main$viewLegend = A2(
 				[
 					$author$project$Main$legendText('Tones:'),
 					A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
-					A2($author$project$Main$legendMarker, 'circle-dark', '3rd'),
-					A2($author$project$Main$legendMarker, 'circle-ring', '5th'),
+					A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
+					A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
 					A2($author$project$Main$legendMarker, 'circle-plain', 'other')
 				]))));
 var $author$project$Main$viewScaleTitle = function (model) {
