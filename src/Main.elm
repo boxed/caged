@@ -285,7 +285,7 @@ totalWidth =
 
 totalHeight : Float
 totalHeight =
-    topMargin + fretboardHeight + 60
+    topMargin + fretboardHeight + 80
 
 
 noteX : Int -> Float
@@ -467,6 +467,7 @@ viewFretboard model =
             , drawFretMarkers
             , drawNotes model
             , drawFretNumbers
+            , drawInlayDots
             ]
         )
 
@@ -845,6 +846,30 @@ drawFretNumbers =
             bg ++ openTriangle ++ [ lbl ]
     in
     List.concatMap labelFor (List.range 0 numFrets)
+
+
+
+-- INLAY DOT ROW (below fret numbers)
+
+
+drawInlayDots : List (Svg.Svg Msg)
+drawInlayDots =
+    let
+        singles = [ 3, 5, 7, 9, 15, 17, 19, 21 ]
+        doubles = [ 12 ]
+        y = topMargin + fretboardHeight + 60
+
+        dot f dx =
+            Svg.circle
+                [ SA.cx (String.fromFloat (noteX f + dx))
+                , SA.cy (String.fromFloat y)
+                , SA.r "5"
+                , SA.fill "#7a7a7a"
+                ]
+                []
+    in
+    List.map (\f -> dot f 0) singles
+        ++ List.concatMap (\f -> [ dot f -7, dot f 7 ]) doubles
 
 
 

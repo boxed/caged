@@ -5945,6 +5945,46 @@ var $author$project$Main$drawFretNumbers = function () {
 		labelFor,
 		A2($elm$core$List$range, 0, $author$project$Main$numFrets));
 }();
+var $author$project$Main$drawInlayDots = function () {
+	var y = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 60;
+	var singles = _List_fromArray(
+		[3, 5, 7, 9, 15, 17, 19, 21]);
+	var doubles = _List_fromArray(
+		[12]);
+	var dot = F2(
+		function (f, dx) {
+			return A2(
+				$elm$svg$Svg$circle,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$cx(
+						$elm$core$String$fromFloat(
+							$author$project$Main$noteX(f) + dx)),
+						$elm$svg$Svg$Attributes$cy(
+						$elm$core$String$fromFloat(y)),
+						$elm$svg$Svg$Attributes$r('5'),
+						$elm$svg$Svg$Attributes$fill('#7a7a7a')
+					]),
+				_List_Nil);
+		});
+	return _Utils_ap(
+		A2(
+			$elm$core$List$map,
+			function (f) {
+				return A2(dot, f, 0);
+			},
+			singles),
+		A2(
+			$elm$core$List$concatMap,
+			function (f) {
+				return _List_fromArray(
+					[
+						A2(dot, f, -7),
+						A2(dot, f, 7)
+					]);
+			},
+			doubles));
+}();
 var $elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
 var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
 var $author$project$Main$openString = function (s) {
@@ -6289,7 +6329,7 @@ var $author$project$Main$drawStrings = function () {
 }();
 var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
-var $author$project$Main$totalHeight = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 60;
+var $author$project$Main$totalHeight = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 80;
 var $author$project$Main$rightMargin = 18;
 var $author$project$Main$totalWidth = (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets)) + $author$project$Main$rightMargin;
 var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
@@ -6312,7 +6352,8 @@ var $author$project$Main$viewFretboard = function (model) {
 					$author$project$Main$drawStrings,
 					$author$project$Main$drawFretMarkers,
 					$author$project$Main$drawNotes(model),
-					$author$project$Main$drawFretNumbers
+					$author$project$Main$drawFretNumbers,
+					$author$project$Main$drawInlayDots
 				])));
 };
 var $author$project$Main$legendMarker = F2(
