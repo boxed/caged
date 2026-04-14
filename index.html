@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Guitar Fretboard Visualizer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <style>
         html, body {
             margin: 0;
@@ -15,7 +15,10 @@
         #app {
             max-width: 1500px;
             margin: 0 auto;
-            padding: 24px;
+            padding-top: max(24px, env(safe-area-inset-top));
+            padding-right: max(24px, env(safe-area-inset-right));
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            padding-left: max(24px, env(safe-area-inset-left));
         }
     </style>
 </head>
