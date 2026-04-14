@@ -5932,6 +5932,23 @@ var $author$project$Main$noteAt = F2(
 			12,
 			$author$project$Main$openString(s) + f);
 	});
+var $author$project$Main$Fifth = {$: 'Fifth'};
+var $author$project$Main$Other = {$: 'Other'};
+var $author$project$Main$Root = {$: 'Root'};
+var $author$project$Main$Third = {$: 'Third'};
+var $author$project$Main$noteRole = F2(
+	function (model, n) {
+		var thirdInterval = function () {
+			var _v0 = model.scale;
+			if (_v0.$ === 'Minor') {
+				return 3;
+			} else {
+				return 4;
+			}
+		}();
+		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
+		return (!interval) ? $author$project$Main$Root : (_Utils_eq(interval, thirdInterval) ? $author$project$Main$Third : ((interval === 7) ? $author$project$Main$Fifth : $author$project$Main$Other));
+	});
 var $author$project$Main$boxOf = F2(
 	function (s, fRel) {
 		var _v0 = _Utils_Tuple2(s, fRel);
@@ -6076,9 +6093,19 @@ var $author$project$Main$drawNoteAt = F3(
 		var _v0 = A3($author$project$Main$positionBox, model, s, f);
 		if (_v0.$ === 'Just') {
 			var n = A2($author$project$Main$noteAt, s, f);
-			var isRoot = _Utils_eq(
-				A2($elm$core$Basics$modBy, 12, n),
-				A2($elm$core$Basics$modBy, 12, model.root));
+			var role = A2($author$project$Main$noteRole, model, n);
+			var textColor = function () {
+				switch (role.$) {
+					case 'Root':
+						return '#ffffff';
+					case 'Third':
+						return '#ffffff';
+					case 'Fifth':
+						return '#202020';
+					default:
+						return '#202020';
+				}
+			}();
 			var cy = $author$project$Main$stringY(s);
 			var cx = $author$project$Main$noteX(f);
 			var labelNode = A2(
@@ -6093,43 +6120,79 @@ var $author$project$Main$drawNoteAt = F3(
 						$elm$svg$Svg$Attributes$fontSize('13'),
 						$elm$svg$Svg$Attributes$fontWeight('700'),
 						$elm$svg$Svg$Attributes$fontFamily('-apple-system, Helvetica, Arial, sans-serif'),
-						$elm$svg$Svg$Attributes$fill(
-						isRoot ? '#ffffff' : '#202020')
+						$elm$svg$Svg$Attributes$fill(textColor)
 					]),
 				_List_fromArray(
 					[
 						$elm$svg$Svg$text(
 						$author$project$Main$noteName(n))
 					]));
-			var background = isRoot ? A2(
-				$elm$svg$Svg$rect,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$x(
-						$elm$core$String$fromFloat(cx - 14)),
-						$elm$svg$Svg$Attributes$y(
-						$elm$core$String$fromFloat(cy - 14)),
-						$elm$svg$Svg$Attributes$width('28'),
-						$elm$svg$Svg$Attributes$height('28'),
-						$elm$svg$Svg$Attributes$rx('3'),
-						$elm$svg$Svg$Attributes$fill('#2a2a2a'),
-						$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
-						$elm$svg$Svg$Attributes$strokeWidth('1')
-					]),
-				_List_Nil) : A2(
-				$elm$svg$Svg$circle,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$cx(
-						$elm$core$String$fromFloat(cx)),
-						$elm$svg$Svg$Attributes$cy(
-						$elm$core$String$fromFloat(cy)),
-						$elm$svg$Svg$Attributes$r('14'),
-						$elm$svg$Svg$Attributes$fill('#ffffff'),
-						$elm$svg$Svg$Attributes$stroke('#3a3a3a'),
-						$elm$svg$Svg$Attributes$strokeWidth('1.3')
-					]),
-				_List_Nil);
+			var background = function () {
+				switch (role.$) {
+					case 'Root':
+						return A2(
+							$elm$svg$Svg$rect,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x(
+									$elm$core$String$fromFloat(cx - 14)),
+									$elm$svg$Svg$Attributes$y(
+									$elm$core$String$fromFloat(cy - 14)),
+									$elm$svg$Svg$Attributes$width('28'),
+									$elm$svg$Svg$Attributes$height('28'),
+									$elm$svg$Svg$Attributes$rx('3'),
+									$elm$svg$Svg$Attributes$fill('#2a2a2a'),
+									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
+									$elm$svg$Svg$Attributes$strokeWidth('1')
+								]),
+							_List_Nil);
+					case 'Third':
+						return A2(
+							$elm$svg$Svg$circle,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$cx(
+									$elm$core$String$fromFloat(cx)),
+									$elm$svg$Svg$Attributes$cy(
+									$elm$core$String$fromFloat(cy)),
+									$elm$svg$Svg$Attributes$r('14'),
+									$elm$svg$Svg$Attributes$fill('#4a4a4a'),
+									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
+									$elm$svg$Svg$Attributes$strokeWidth('1')
+								]),
+							_List_Nil);
+					case 'Fifth':
+						return A2(
+							$elm$svg$Svg$circle,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$cx(
+									$elm$core$String$fromFloat(cx)),
+									$elm$svg$Svg$Attributes$cy(
+									$elm$core$String$fromFloat(cy)),
+									$elm$svg$Svg$Attributes$r('14'),
+									$elm$svg$Svg$Attributes$fill('#ffffff'),
+									$elm$svg$Svg$Attributes$stroke('#2a2a2a'),
+									$elm$svg$Svg$Attributes$strokeWidth('3')
+								]),
+							_List_Nil);
+					default:
+						return A2(
+							$elm$svg$Svg$circle,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$cx(
+									$elm$core$String$fromFloat(cx)),
+									$elm$svg$Svg$Attributes$cy(
+									$elm$core$String$fromFloat(cy)),
+									$elm$svg$Svg$Attributes$r('14'),
+									$elm$svg$Svg$Attributes$fill('#ffffff'),
+									$elm$svg$Svg$Attributes$stroke('#3a3a3a'),
+									$elm$svg$Svg$Attributes$strokeWidth('1.3')
+								]),
+							_List_Nil);
+				}
+			}();
 			return $elm$core$Maybe$Just(
 				A2(
 					$elm$svg$Svg$g,
@@ -6208,6 +6271,79 @@ var $author$project$Main$viewFretboard = function (model) {
 					$author$project$Main$drawFretNumbers
 				])));
 };
+var $author$project$Main$legendMarker = F2(
+	function (kind, lbl) {
+		var common = _List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+				A2($elm$html$Html$Attributes$style, 'width', '16px'),
+				A2($elm$html$Html$Attributes$style, 'height', '16px'),
+				A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
+			]);
+		var marker = function () {
+			switch (kind) {
+				case 'square-dark':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', '#2a2a2a'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
+								])),
+						_List_Nil);
+				case 'circle-dark':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', '#4a4a4a'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-ring':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', '#ffffff'),
+									A2($elm$html$Html$Attributes$style, 'border', '3px solid #2a2a2a'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				default:
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', '#ffffff'),
+									A2($elm$html$Html$Attributes$style, 'border', '1px solid #3a3a3a'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+			}
+		}();
+		return A2(
+			$elm$html$Html$span,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'gap', '6px')
+				]),
+			_List_fromArray(
+				[
+					marker,
+					$elm$html$Html$text(lbl)
+				]));
+	});
 var $author$project$Main$legendSwatch = function (_v0) {
 	var b = _v0.a;
 	var lbl = _v0.b;
@@ -6264,7 +6400,7 @@ var $author$project$Main$viewLegend = A2(
 			A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
 			A2($elm$html$Html$Attributes$style, 'color', '#555'),
 			A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-			A2($elm$html$Html$Attributes$style, 'gap', '16px'),
+			A2($elm$html$Html$Attributes$style, 'gap', '18px'),
 			A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
 			A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 		]),
@@ -6287,16 +6423,11 @@ var $author$project$Main$viewLegend = A2(
 					])),
 			_List_fromArray(
 				[
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'margin-left', '12px')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Dark square = root note')
-						]))
+					$author$project$Main$legendText('Tones:'),
+					A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+					A2($author$project$Main$legendMarker, 'circle-dark', '3rd'),
+					A2($author$project$Main$legendMarker, 'circle-ring', '5th'),
+					A2($author$project$Main$legendMarker, 'circle-plain', 'other')
 				]))));
 var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = $author$project$Main$noteName(model.root) + (' ' + (function () {

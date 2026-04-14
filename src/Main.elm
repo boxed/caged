@@ -172,6 +172,37 @@ positionBox model s f =
         Nothing
 
 
+type NoteRole
+    = Root
+    | Third
+    | Fifth
+    | Other
+
+
+noteRole : Model -> Int -> NoteRole
+noteRole model n =
+    let
+        interval =
+            modBy 12 (n - model.root)
+
+        thirdInterval =
+            case model.scale of
+                Minor -> 3
+                Major -> 4
+    in
+    if interval == 0 then
+        Root
+
+    else if interval == thirdInterval then
+        Third
+
+    else if interval == 7 then
+        Fifth
+
+    else
+        Other
+
+
 {-| Relative-fret pattern of each box per string: (lower, upper).
 These are the two scale notes of that box on that string,
 where "upper" of box N equals "lower" of box N+1.
@@ -632,34 +663,64 @@ drawNoteAt model s f =
         Just _ ->
             let
                 n = noteAt s f
-                isRoot = modBy 12 n == modBy 12 model.root
+                role = noteRole model n
                 cx = noteX f
                 cy = stringY s
 
                 background =
-                    if isRoot then
-                        Svg.rect
-                            [ SA.x (String.fromFloat (cx - 14))
-                            , SA.y (String.fromFloat (cy - 14))
-                            , SA.width "28"
-                            , SA.height "28"
-                            , SA.rx "3"
-                            , SA.fill "#2a2a2a"
-                            , SA.stroke "#2a2a2a"
-                            , SA.strokeWidth "1"
-                            ]
-                            []
+                    case role of
+                        Root ->
+                            Svg.rect
+                                [ SA.x (String.fromFloat (cx - 14))
+                                , SA.y (String.fromFloat (cy - 14))
+                                , SA.width "28"
+                                , SA.height "28"
+                                , SA.rx "3"
+                                , SA.fill "#2a2a2a"
+                                , SA.stroke "#2a2a2a"
+                                , SA.strokeWidth "1"
+                                ]
+                                []
 
-                    else
-                        Svg.circle
-                            [ SA.cx (String.fromFloat cx)
-                            , SA.cy (String.fromFloat cy)
-                            , SA.r "14"
-                            , SA.fill "#ffffff"
-                            , SA.stroke "#3a3a3a"
-                            , SA.strokeWidth "1.3"
-                            ]
-                            []
+                        Third ->
+                            Svg.circle
+                                [ SA.cx (String.fromFloat cx)
+                                , SA.cy (String.fromFloat cy)
+                                , SA.r "14"
+                                , SA.fill "#4a4a4a"
+                                , SA.stroke "#2a2a2a"
+                                , SA.strokeWidth "1"
+                                ]
+                                []
+
+                        Fifth ->
+                            Svg.circle
+                                [ SA.cx (String.fromFloat cx)
+                                , SA.cy (String.fromFloat cy)
+                                , SA.r "14"
+                                , SA.fill "#ffffff"
+                                , SA.stroke "#2a2a2a"
+                                , SA.strokeWidth "3"
+                                ]
+                                []
+
+                        Other ->
+                            Svg.circle
+                                [ SA.cx (String.fromFloat cx)
+                                , SA.cy (String.fromFloat cy)
+                                , SA.r "14"
+                                , SA.fill "#ffffff"
+                                , SA.stroke "#3a3a3a"
+                                , SA.strokeWidth "1.3"
+                                ]
+                                []
+
+                textColor =
+                    case role of
+                        Root -> "#ffffff"
+                        Third -> "#ffffff"
+                        Fifth -> "#202020"
+                        Other -> "#202020"
 
                 labelNode =
                     Svg.text_
@@ -669,13 +730,7 @@ drawNoteAt model s f =
                         , SA.fontSize "13"
                         , SA.fontWeight "700"
                         , SA.fontFamily "-apple-system, Helvetica, Arial, sans-serif"
-                        , SA.fill
-                            (if isRoot then
-                                "#ffffff"
-
-                             else
-                                "#202020"
-                            )
+                        , SA.fill textColor
                         ]
                         [ Svg.text (noteName n) ]
             in
@@ -776,13 +831,18 @@ viewLegend =
         , style "font-size" "13px"
         , style "color" "#555"
         , style "display" "flex"
-        , style "gap" "16px"
+        , style "gap" "18px"
         , style "flex-wrap" "wrap"
         , style "align-items" "center"
         ]
         ([ legendText "Boxes:" ]
             ++ List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
-            ++ [ span [ style "margin-left" "12px" ] [ text "Dark square = root note" ] ]
+            ++ [ legendText "Tones:"
+               , legendMarker "square-dark" "Root"
+               , legendMarker "circle-dark" "3rd"
+               , legendMarker "circle-ring" "5th"
+               , legendMarker "circle-plain" "other"
+               ]
         )
 
 
@@ -810,6 +870,64 @@ legendSwatch ( b, lbl ) =
             []
         , text lbl
         ]
+
+
+legendMarker : String -> String -> Html Msg
+legendMarker kind lbl =
+    let
+        common =
+            [ style "display" "inline-block"
+            , style "width" "16px"
+            , style "height" "16px"
+            , style "box-sizing" "border-box"
+            ]
+
+        marker =
+            case kind of
+                "square-dark" ->
+                    span
+                        (common
+                            ++ [ style "background" "#2a2a2a"
+                               , style "border-radius" "2px"
+                               ]
+                        )
+                        []
+
+                "circle-dark" ->
+                    span
+                        (common
+                            ++ [ style "background" "#4a4a4a"
+                               , style "border-radius" "50%"
+                               ]
+                        )
+                        []
+
+                "circle-ring" ->
+                    span
+                        (common
+                            ++ [ style "background" "#ffffff"
+                               , style "border" "3px solid #2a2a2a"
+                               , style "border-radius" "50%"
+                               ]
+                        )
+                        []
+
+                _ ->
+                    span
+                        (common
+                            ++ [ style "background" "#ffffff"
+                               , style "border" "1px solid #3a3a3a"
+                               , style "border-radius" "50%"
+                               ]
+                        )
+                        []
+    in
+    span
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "gap" "6px"
+        ]
+        [ marker, text lbl ]
 
 
 
