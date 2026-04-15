@@ -5678,7 +5678,7 @@ var $author$project$Main$rootFret = function (model) {
 		case 'Ionian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 		default:
-			return A2($elm$core$Basics$modBy, 12, model.root - 4);
+			return A2($elm$core$Basics$modBy, 12, model.root - 9);
 	}
 };
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
@@ -6145,79 +6145,38 @@ var $author$project$Main$boxOf = F2(
 		}
 		return $elm$core$Maybe$Nothing;
 	});
-var $author$project$Main$dorianBoxOf = F2(
-	function (s, fRel) {
-		var _v0 = A2($author$project$Main$boxOf, s, fRel);
-		if (_v0.$ === 'Just') {
-			var b = _v0.a;
-			return $elm$core$Maybe$Just(b);
-		} else {
-			var _v1 = _Utils_Tuple2(s, fRel);
-			_v1$12:
-			while (true) {
-				switch (_v1.a) {
-					case 1:
-						switch (_v1.b) {
-							case 2:
-								return $elm$core$Maybe$Just(1);
-							case 9:
-								return $elm$core$Maybe$Just(4);
-							default:
-								break _v1$12;
-						}
-					case 2:
-						switch (_v1.b) {
-							case 2:
-								return $elm$core$Maybe$Just(1);
-							case 7:
-								return $elm$core$Maybe$Just(3);
-							default:
-								break _v1$12;
-						}
-					case 3:
-						switch (_v1.b) {
-							case 6:
-								return $elm$core$Maybe$Just(3);
-							case 11:
-								return $elm$core$Maybe$Just(5);
-							default:
-								break _v1$12;
-						}
-					case 4:
-						switch (_v1.b) {
-							case 4:
-								return $elm$core$Maybe$Just(2);
-							case 11:
-								return $elm$core$Maybe$Just(5);
-							default:
-								break _v1$12;
-						}
-					case 5:
-						switch (_v1.b) {
-							case 4:
-								return $elm$core$Maybe$Just(2);
-							case 9:
-								return $elm$core$Maybe$Just(4);
-							default:
-								break _v1$12;
-						}
-					case 6:
-						switch (_v1.b) {
-							case 2:
-								return $elm$core$Maybe$Just(1);
-							case 9:
-								return $elm$core$Maybe$Just(4);
-							default:
-								break _v1$12;
-						}
-					default:
-						break _v1$12;
-				}
-			}
-			return $elm$core$Maybe$Nothing;
-		}
+var $author$project$Main$scaleIntervals = function (st) {
+	switch (st.$) {
+		case 'MinorPent':
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
+		case 'MajorPent':
+			return _List_fromArray(
+				[0, 2, 4, 7, 9]);
+		case 'Ionian':
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 11]);
+		default:
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 9, 10]);
+	}
+};
+var $author$project$Main$scaleNotes = function (model) {
+	return A2(
+		$elm$core$List$map,
+		function (i) {
+			return A2($elm$core$Basics$modBy, 12, model.root + i);
+		},
+		$author$project$Main$scaleIntervals(model.scale));
+};
+var $author$project$Main$isInScale = F2(
+	function (model, n) {
+		return A2(
+			$elm$core$List$member,
+			A2($elm$core$Basics$modBy, 12, n),
+			$author$project$Main$scaleNotes(model));
 	});
-var $author$project$Main$ionianBoxOf = F2(
+var $author$project$Main$majorScaleBoxOf = F2(
 	function (s, fRel) {
 		var _v0 = A2($author$project$Main$boxOf, s, fRel);
 		if (_v0.$ === 'Just') {
@@ -6289,37 +6248,6 @@ var $author$project$Main$ionianBoxOf = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $author$project$Main$scaleIntervals = function (st) {
-	switch (st.$) {
-		case 'MinorPent':
-			return _List_fromArray(
-				[0, 3, 5, 7, 10]);
-		case 'MajorPent':
-			return _List_fromArray(
-				[0, 2, 4, 7, 9]);
-		case 'Ionian':
-			return _List_fromArray(
-				[0, 2, 4, 5, 7, 9, 11]);
-		default:
-			return _List_fromArray(
-				[0, 2, 3, 5, 7, 9, 10]);
-	}
-};
-var $author$project$Main$scaleNotes = function (model) {
-	return A2(
-		$elm$core$List$map,
-		function (i) {
-			return A2($elm$core$Basics$modBy, 12, model.root + i);
-		},
-		$author$project$Main$scaleIntervals(model.scale));
-};
-var $author$project$Main$isInScale = F2(
-	function (model, n) {
-		return A2(
-			$elm$core$List$member,
-			A2($elm$core$Basics$modBy, 12, n),
-			$author$project$Main$scaleNotes(model));
-	});
 var $author$project$Main$positionBox = F3(
 	function (model, s, f) {
 		if (A2(
@@ -6333,9 +6261,9 @@ var $author$project$Main$positionBox = F3(
 			var _v0 = model.scale;
 			switch (_v0.$) {
 				case 'Ionian':
-					return A2($author$project$Main$ionianBoxOf, s, fRel);
+					return A2($author$project$Main$majorScaleBoxOf, s, fRel);
 				case 'Dorian':
-					return A2($author$project$Main$dorianBoxOf, s, fRel);
+					return A2($author$project$Main$majorScaleBoxOf, s, fRel);
 				default:
 					return A2($author$project$Main$boxOf, s, fRel);
 			}

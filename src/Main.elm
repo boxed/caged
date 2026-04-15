@@ -195,14 +195,9 @@ positionBox model s f =
         Nothing
 
 
-{-| Box mapping for Ionian: pentatonic notes reuse `boxOf`, the two extra
-scale tones per string are placed in whichever pentatonic box their fret
-range already contains. Derived with F_root shifted to match MajorPent. -}
 {-| Box mapping for any mode of the major scale, when F_root is anchored at
-the parent major's relative minor on the low E. The 5 pent boxes are
-G-major-pent / E-minor-pent positions; the two per-string extras complete
-the 7-note major scale. Ionian, Dorian, etc. all reuse this table — they
-differ only in which pitch is the highlighted root. -}
+the parent major's relative minor on the low E. Ionian, Dorian, etc. all
+reuse this table — they differ only in which pitch is the highlighted root. -}
 majorScaleBoxOf : Int -> Int -> Maybe Int
 majorScaleBoxOf s fRel =
     case boxOf s fRel of
