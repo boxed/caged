@@ -5384,8 +5384,8 @@ var $author$project$Main$viewControls = function (model) {
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Aeolian')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Aeolian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian')
 					]))
 			]));
 };

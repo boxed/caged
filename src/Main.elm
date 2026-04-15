@@ -450,8 +450,8 @@ viewControls model =
             , scaleButton model MinorPent "Minor pentatonic"
             , scaleButton model MajorPent "Major pentatonic"
             , scaleButton model Ionian "Ionian"
-            , scaleButton model Dorian "Dorian"
             , scaleButton model Aeolian "Aeolian"
+            , scaleButton model Dorian "Dorian"
             ]
         ]
 
