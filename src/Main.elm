@@ -23,6 +23,7 @@ type ScaleType
     | MajorPent
     | Ionian
     | Dorian
+    | Aeolian
 
 
 
@@ -108,6 +109,9 @@ scaleIntervals st =
         Dorian ->
             [ 0, 2, 3, 5, 7, 9, 10 ]
 
+        Aeolian ->
+            [ 0, 2, 3, 5, 7, 8, 10 ]
+
 
 scaleNotes : Model -> List Int
 scaleNotes model =
@@ -137,6 +141,9 @@ rootFret model =
 
         Dorian ->
             modBy 12 (model.root - 9)
+
+        Aeolian ->
+            modBy 12 (model.root - 4)
 
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
@@ -219,6 +226,7 @@ noteRole model n =
                 MajorPent -> 4
                 Ionian -> 4
                 Dorian -> 3
+                Aeolian -> 3
     in
     if interval == 0 then
         Root
@@ -290,6 +298,7 @@ usesMajorBoxShapes st =
     case st of
         Ionian -> True
         Dorian -> True
+        Aeolian -> True
         _ -> False
 
 
@@ -397,6 +406,7 @@ viewScaleTitle model =
                         MajorPent -> "Major Pentatonic"
                         Ionian -> "Ionian (Major)"
                         Dorian -> "Dorian"
+                        Aeolian -> "Aeolian (Natural Minor)"
                    )
 
         intervalLabels =
@@ -405,6 +415,7 @@ viewScaleTitle model =
                 MajorPent -> [ "R", "2", "3", "5", "6" ]
                 Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
                 Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
+                Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
 
         notePairs =
             List.map2
@@ -440,6 +451,7 @@ viewControls model =
             , scaleButton model MajorPent "Major pentatonic"
             , scaleButton model Ionian "Ionian"
             , scaleButton model Dorian "Dorian"
+            , scaleButton model Aeolian "Aeolian"
             ]
         ]
 

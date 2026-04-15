@@ -5205,6 +5205,7 @@ var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$Aeolian = {$: 'Aeolian'};
 var $author$project$Main$Dorian = {$: 'Dorian'};
 var $author$project$Main$Ionian = {$: 'Ionian'};
 var $author$project$Main$MajorPent = {$: 'MajorPent'};
@@ -5383,7 +5384,8 @@ var $author$project$Main$viewControls = function (model) {
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Aeolian')
 					]))
 			]));
 };
@@ -5677,8 +5679,10 @@ var $author$project$Main$rootFret = function (model) {
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 		case 'Ionian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
-		default:
+		case 'Dorian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 9);
+		default:
+			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 	}
 };
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
@@ -5900,6 +5904,8 @@ var $author$project$Main$usesMajorBoxShapes = function (st) {
 		case 'Ionian':
 			return true;
 		case 'Dorian':
+			return true;
+		case 'Aeolian':
 			return true;
 		default:
 			return false;
@@ -6213,6 +6219,8 @@ var $author$project$Main$noteRole = F2(
 					return 4;
 				case 'Ionian':
 					return 4;
+				case 'Dorian':
+					return 3;
 				default:
 					return 3;
 			}
@@ -6333,9 +6341,12 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'Ionian':
 			return _List_fromArray(
 				[0, 2, 4, 5, 7, 9, 11]);
-		default:
+		case 'Dorian':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 9, 10]);
+		default:
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 8, 10]);
 	}
 };
 var $author$project$Main$scaleNotes = function (model) {
@@ -6796,8 +6807,10 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Major Pentatonic';
 			case 'Ionian':
 				return 'Ionian (Major)';
-			default:
+			case 'Dorian':
 				return 'Dorian';
+			default:
+				return 'Aeolian (Natural Minor)';
 		}
 	}());
 	var intervalLabels = function () {
@@ -6812,9 +6825,12 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'Ionian':
 				return _List_fromArray(
 					['R', '2', '3', '4', '5', '6', '7']);
-			default:
+			case 'Dorian':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '6', '♭7']);
+			default:
+				return _List_fromArray(
+					['R', '2', '♭3', '4', '5', '♭6', '♭7']);
 		}
 	}();
 	var notePairs = A3(
