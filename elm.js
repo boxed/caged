@@ -4370,8 +4370,12 @@ function _Browser_load(url)
 		}
 	}));
 }
-var $author$project$Main$MinorPent = {$: 'MinorPent'};
-var $author$project$Main$init = {root: 9, scale: $author$project$Main$MinorPent};
+var $author$project$Main$LinkClicked = function (a) {
+	return {$: 'LinkClicked', a: a};
+};
+var $author$project$Main$UrlChanged = function (a) {
+	return {$: 'UrlChanged', a: a};
+};
 var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
@@ -5160,43 +5164,338 @@ var $elm$core$Task$perform = F2(
 			$elm$core$Task$Perform(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
+var $elm$browser$Browser$application = _Browser_application;
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$MinorPent = {$: 'MinorPent'};
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$core$List$maybeCons = F3(
+	function (f, mx, xs) {
+		var _v0 = f(mx);
+		if (_v0.$ === 'Just') {
+			var x = _v0.a;
+			return A2($elm$core$List$cons, x, xs);
+		} else {
+			return xs;
+		}
+	});
+var $elm$core$List$filterMap = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			$elm$core$List$maybeCons(f),
+			_List_Nil,
+			xs);
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $author$project$Main$rootFromSlug = function (s) {
+	switch (s) {
+		case 'C':
+			return $elm$core$Maybe$Just(0);
+		case 'Cs':
+			return $elm$core$Maybe$Just(1);
+		case 'D':
+			return $elm$core$Maybe$Just(2);
+		case 'Ds':
+			return $elm$core$Maybe$Just(3);
+		case 'E':
+			return $elm$core$Maybe$Just(4);
+		case 'F':
+			return $elm$core$Maybe$Just(5);
+		case 'Fs':
+			return $elm$core$Maybe$Just(6);
+		case 'G':
+			return $elm$core$Maybe$Just(7);
+		case 'Gs':
+			return $elm$core$Maybe$Just(8);
+		case 'A':
+			return $elm$core$Maybe$Just(9);
+		case 'As':
+			return $elm$core$Maybe$Just(10);
+		case 'B':
+			return $elm$core$Maybe$Just(11);
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$Aeolian = {$: 'Aeolian'};
+var $author$project$Main$Dorian = {$: 'Dorian'};
+var $author$project$Main$Ionian = {$: 'Ionian'};
+var $author$project$Main$MajorPent = {$: 'MajorPent'};
+var $author$project$Main$scaleFromSlug = function (s) {
+	switch (s) {
+		case 'minor-pent':
+			return $elm$core$Maybe$Just($author$project$Main$MinorPent);
+		case 'major-pent':
+			return $elm$core$Maybe$Just($author$project$Main$MajorPent);
+		case 'ionian':
+			return $elm$core$Maybe$Just($author$project$Main$Ionian);
+		case 'aeolian':
+			return $elm$core$Maybe$Just($author$project$Main$Aeolian);
+		case 'dorian':
+			return $elm$core$Maybe$Just($author$project$Main$Dorian);
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$parseUrl = function (url) {
+	var pairs = A2(
+		$elm$core$List$filterMap,
+		function (pair) {
+			var _v1 = A2($elm$core$String$split, '=', pair);
+			if ((_v1.b && _v1.b.b) && (!_v1.b.b.b)) {
+				var k = _v1.a;
+				var _v2 = _v1.b;
+				var v = _v2.a;
+				return $elm$core$Maybe$Just(
+					_Utils_Tuple2(k, v));
+			} else {
+				return $elm$core$Maybe$Nothing;
+			}
+		},
+		A2(
+			$elm$core$String$split,
+			'&',
+			A2($elm$core$Maybe$withDefault, '', url.query)));
+	var lookup = function (k) {
+		return A2(
+			$elm$core$Maybe$map,
+			$elm$core$Tuple$second,
+			$elm$core$List$head(
+				A2(
+					$elm$core$List$filter,
+					function (_v0) {
+						var k2 = _v0.a;
+						return _Utils_eq(k2, k);
+					},
+					pairs)));
+	};
+	var root = A2(
+		$elm$core$Maybe$withDefault,
+		9,
+		A2(
+			$elm$core$Maybe$andThen,
+			$author$project$Main$rootFromSlug,
+			lookup('root')));
+	var scale = A2(
+		$elm$core$Maybe$withDefault,
+		$author$project$Main$MinorPent,
+		A2(
+			$elm$core$Maybe$andThen,
+			$author$project$Main$scaleFromSlug,
+			lookup('scale')));
+	return _Utils_Tuple2(root, scale);
+};
+var $author$project$Main$init = F3(
+	function (_v0, url, key) {
+		var _v1 = $author$project$Main$parseUrl(url);
+		var root = _v1.a;
+		var scale = _v1.b;
+		return _Utils_Tuple2(
+			{key: key, root: root, scale: scale},
+			$elm$core$Platform$Cmd$none);
+	});
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $elm$browser$Browser$sandbox = function (impl) {
-	return _Browser_element(
-		{
-			init: function (_v0) {
-				return _Utils_Tuple2(impl.init, $elm$core$Platform$Cmd$none);
-			},
-			subscriptions: function (_v1) {
-				return $elm$core$Platform$Sub$none;
-			},
-			update: F2(
-				function (msg, model) {
-					return _Utils_Tuple2(
-						A2(impl.update, msg, model),
-						$elm$core$Platform$Cmd$none);
-				}),
-			view: impl.view
-		});
-};
+var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Basics$modBy = _Basics_modBy;
+var $author$project$Main$rootSlug = function (n) {
+	var _v0 = A2($elm$core$Basics$modBy, 12, n);
+	switch (_v0) {
+		case 0:
+			return 'C';
+		case 1:
+			return 'Cs';
+		case 2:
+			return 'D';
+		case 3:
+			return 'Ds';
+		case 4:
+			return 'E';
+		case 5:
+			return 'F';
+		case 6:
+			return 'Fs';
+		case 7:
+			return 'G';
+		case 8:
+			return 'Gs';
+		case 9:
+			return 'A';
+		case 10:
+			return 'As';
+		case 11:
+			return 'B';
+		default:
+			return 'A';
+	}
+};
+var $author$project$Main$scaleSlug = function (s) {
+	switch (s.$) {
+		case 'MinorPent':
+			return 'minor-pent';
+		case 'MajorPent':
+			return 'major-pent';
+		case 'Ionian':
+			return 'ionian';
+		case 'Aeolian':
+			return 'aeolian';
+		default:
+			return 'dorian';
+	}
+};
+var $author$project$Main$modelUrl = function (model) {
+	return '?root=' + ($author$project$Main$rootSlug(model.root) + ('&scale=' + $author$project$Main$scaleSlug(model.scale)));
+};
+var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var $elm$browser$Browser$Navigation$replaceUrl = _Browser_replaceUrl;
+var $elm$url$Url$addPort = F2(
+	function (maybePort, starter) {
+		if (maybePort.$ === 'Nothing') {
+			return starter;
+		} else {
+			var port_ = maybePort.a;
+			return starter + (':' + $elm$core$String$fromInt(port_));
+		}
+	});
+var $elm$url$Url$addPrefixed = F3(
+	function (prefix, maybeSegment, starter) {
+		if (maybeSegment.$ === 'Nothing') {
+			return starter;
+		} else {
+			var segment = maybeSegment.a;
+			return _Utils_ap(
+				starter,
+				_Utils_ap(prefix, segment));
+		}
+	});
+var $elm$url$Url$toString = function (url) {
+	var http = function () {
+		var _v0 = url.protocol;
+		if (_v0.$ === 'Http') {
+			return 'http://';
+		} else {
+			return 'https://';
+		}
+	}();
+	return A3(
+		$elm$url$Url$addPrefixed,
+		'#',
+		url.fragment,
+		A3(
+			$elm$url$Url$addPrefixed,
+			'?',
+			url.query,
+			_Utils_ap(
+				A2(
+					$elm$url$Url$addPort,
+					url.port_,
+					_Utils_ap(http, url.host)),
+				url.path)));
+};
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		if (msg.$ === 'SetRoot') {
-			var n = msg.a;
-			return _Utils_update(
-				model,
-				{
-					root: A2($elm$core$Basics$modBy, 12, n)
-				});
-		} else {
-			var s = msg.a;
-			return _Utils_update(
-				model,
-				{scale: s});
+		switch (msg.$) {
+			case 'SetRoot':
+				var n = msg.a;
+				var newModel = _Utils_update(
+					model,
+					{
+						root: A2($elm$core$Basics$modBy, 12, n)
+					});
+				return _Utils_Tuple2(
+					newModel,
+					A2(
+						$elm$browser$Browser$Navigation$replaceUrl,
+						model.key,
+						$author$project$Main$modelUrl(newModel)));
+			case 'SetScale':
+				var s = msg.a;
+				var newModel = _Utils_update(
+					model,
+					{scale: s});
+				return _Utils_Tuple2(
+					newModel,
+					A2(
+						$elm$browser$Browser$Navigation$replaceUrl,
+						model.key,
+						$author$project$Main$modelUrl(newModel)));
+			case 'UrlChanged':
+				var url = msg.a;
+				var _v1 = $author$project$Main$parseUrl(url);
+				var root = _v1.a;
+				var scale = _v1.b;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{root: root, scale: scale}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var request = msg.a;
+				if (request.$ === 'Internal') {
+					var url = request.a;
+					return _Utils_Tuple2(
+						model,
+						A2(
+							$elm$browser$Browser$Navigation$pushUrl,
+							model.key,
+							$elm$url$Url$toString(url)));
+				} else {
+					var href = request.a;
+					return _Utils_Tuple2(
+						model,
+						$elm$browser$Browser$Navigation$load(href));
+				}
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
@@ -5205,10 +5504,6 @@ var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$Aeolian = {$: 'Aeolian'};
-var $author$project$Main$Dorian = {$: 'Dorian'};
-var $author$project$Main$Ionian = {$: 'Ionian'};
-var $author$project$Main$MajorPent = {$: 'MajorPent'};
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$label = function (s) {
 	return A2(
@@ -5505,17 +5800,6 @@ var $author$project$Main$numFrets = 22;
 var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$polygon = $elm$svg$Svg$trustedNode('polygon');
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
 var $author$project$Main$fretWidth = 58;
 var $author$project$Main$leftMargin = 18;
 var $author$project$Main$nutWidth = 70;
@@ -5523,29 +5807,11 @@ var $author$project$Main$fretCenterX = function (f) {
 	return (f <= 0) ? (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5))) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
 };
 var $elm$core$String$fromFloat = _String_fromNumber;
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $author$project$Main$stringSpacing = 36;
 var $author$project$Main$topMargin = 30;
 var $author$project$Main$stringY = function (s) {
 	return $author$project$Main$topMargin + ($author$project$Main$stringSpacing * (s - 1));
 };
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var $author$project$Main$polygonPoints = function (positions) {
 	var yMid = F2(
 		function (sa, sb) {
@@ -5877,24 +6143,6 @@ var $author$project$Main$drawOverlapStripe = F3(
 						$elm$svg$Svg$Attributes$fillOpacity('0.9')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
-	});
-var $elm$core$List$maybeCons = F3(
-	function (f, mx, xs) {
-		var _v0 = f(mx);
-		if (_v0.$ === 'Just') {
-			var x = _v0.a;
-			return A2($elm$core$List$cons, x, xs);
-		} else {
-			return xs;
-		}
-	});
-var $elm$core$List$filterMap = F2(
-	function (f, xs) {
-		return A3(
-			$elm$core$List$foldr,
-			$elm$core$List$maybeCons(f),
-			_List_Nil,
-			xs);
 	});
 var $elm$core$Basics$negate = function (n) {
 	return -n;
@@ -6876,7 +7124,7 @@ var $author$project$Main$viewScaleTitle = function (model) {
 					]))
 			]));
 };
-var $author$project$Main$view = function (model) {
+var $author$project$Main$viewBody = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -6901,7 +7149,25 @@ var $author$project$Main$view = function (model) {
 				$author$project$Main$viewLegend(model)
 			]));
 };
-var $author$project$Main$main = $elm$browser$Browser$sandbox(
-	{init: $author$project$Main$init, update: $author$project$Main$update, view: $author$project$Main$view});
+var $author$project$Main$view = function (model) {
+	return {
+		body: _List_fromArray(
+			[
+				$author$project$Main$viewBody(model)
+			]),
+		title: 'Guitar Fretboard Visualizer'
+	};
+};
+var $author$project$Main$main = $elm$browser$Browser$application(
+	{
+		init: $author$project$Main$init,
+		onUrlChange: $author$project$Main$UrlChanged,
+		onUrlRequest: $author$project$Main$LinkClicked,
+		subscriptions: function (_v0) {
+			return $elm$core$Platform$Sub$none;
+		},
+		update: $author$project$Main$update,
+		view: $author$project$Main$view
+	});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));

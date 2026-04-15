@@ -1,11 +1,13 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Navigation as Nav
 import Html exposing (Html, button, div, h1, p, span, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Svg
 import Svg.Attributes as SA
+import Url exposing (Url)
 
 
 
@@ -15,6 +17,7 @@ import Svg.Attributes as SA
 type alias Model =
     { root : Int
     , scale : ScaleType
+    , key : Nav.Key
     }
 
 
@@ -31,25 +34,153 @@ type ScaleType
 type Msg
     = SetRoot Int
     | SetScale ScaleType
+    | UrlChanged Url
+    | LinkClicked Browser.UrlRequest
 
 
-init : Model
-init =
-    { root = 9, scale = MinorPent }
+init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ url key =
+    let
+        ( root, scale ) =
+            parseUrl url
+    in
+    ( { root = root, scale = scale, key = key }, Cmd.none )
 
 
 
 -- UPDATE
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetRoot n ->
-            { model | root = modBy 12 n }
+            let
+                newModel =
+                    { model | root = modBy 12 n }
+            in
+            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
 
         SetScale s ->
-            { model | scale = s }
+            let
+                newModel =
+                    { model | scale = s }
+            in
+            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+
+        UrlChanged url ->
+            let
+                ( root, scale ) =
+                    parseUrl url
+            in
+            ( { model | root = root, scale = scale }, Cmd.none )
+
+        LinkClicked request ->
+            case request of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
+
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+
+
+-- URL SERIALIZATION
+
+
+modelUrl : Model -> String
+modelUrl model =
+    "?root=" ++ rootSlug model.root ++ "&scale=" ++ scaleSlug model.scale
+
+
+rootSlug : Int -> String
+rootSlug n =
+    case modBy 12 n of
+        0 -> "C"
+        1 -> "Cs"
+        2 -> "D"
+        3 -> "Ds"
+        4 -> "E"
+        5 -> "F"
+        6 -> "Fs"
+        7 -> "G"
+        8 -> "Gs"
+        9 -> "A"
+        10 -> "As"
+        11 -> "B"
+        _ -> "A"
+
+
+rootFromSlug : String -> Maybe Int
+rootFromSlug s =
+    case s of
+        "C" -> Just 0
+        "Cs" -> Just 1
+        "D" -> Just 2
+        "Ds" -> Just 3
+        "E" -> Just 4
+        "F" -> Just 5
+        "Fs" -> Just 6
+        "G" -> Just 7
+        "Gs" -> Just 8
+        "A" -> Just 9
+        "As" -> Just 10
+        "B" -> Just 11
+        _ -> Nothing
+
+
+scaleSlug : ScaleType -> String
+scaleSlug s =
+    case s of
+        MinorPent -> "minor-pent"
+        MajorPent -> "major-pent"
+        Ionian -> "ionian"
+        Aeolian -> "aeolian"
+        Dorian -> "dorian"
+
+
+scaleFromSlug : String -> Maybe ScaleType
+scaleFromSlug s =
+    case s of
+        "minor-pent" -> Just MinorPent
+        "major-pent" -> Just MajorPent
+        "ionian" -> Just Ionian
+        "aeolian" -> Just Aeolian
+        "dorian" -> Just Dorian
+        _ -> Nothing
+
+
+parseUrl : Url -> ( Int, ScaleType )
+parseUrl url =
+    let
+        pairs =
+            url.query
+                |> Maybe.withDefault ""
+                |> String.split "&"
+                |> List.filterMap
+                    (\pair ->
+                        case String.split "=" pair of
+                            [ k, v ] -> Just ( k, v )
+                            _ -> Nothing
+                    )
+
+        lookup k =
+            pairs
+                |> List.filter (\( k2, _ ) -> k2 == k)
+                |> List.head
+                |> Maybe.map Tuple.second
+
+        root =
+            lookup "root"
+                |> Maybe.andThen rootFromSlug
+                |> Maybe.withDefault 9
+
+        scale =
+            lookup "scale"
+                |> Maybe.andThen scaleFromSlug
+                |> Maybe.withDefault MinorPent
+    in
+    ( root, scale )
 
 
 
@@ -384,8 +515,15 @@ stringY s =
 -- VIEW
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
+    { title = "Guitar Fretboard Visualizer"
+    , body = [ viewBody model ]
+    }
+
+
+viewBody : Model -> Html Msg
+viewBody model =
     div [ style "margin" "1rem 0.5rem" ]
         [ h1 [ style "margin" "0 0 6px" ] [ text "Guitar Fretboard Visualizer" ]
         , viewScaleTitle model
@@ -1208,8 +1346,11 @@ legendMarker kind lbl =
 
 main : Program () Model Msg
 main =
-    Browser.sandbox
+    Browser.application
         { init = init
         , update = update
         , view = view
+        , subscriptions = \_ -> Sub.none
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
         }
