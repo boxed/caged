@@ -186,39 +186,16 @@ positionBox model s f =
             fRel =
                 modBy 12 (f - rootFret model)
         in
-        case model.scale of
-            Ionian -> majorScaleBoxOf s fRel
-            Dorian -> majorScaleBoxOf s fRel
-            _ -> boxOf s fRel
+        if usesMajorBoxShapes model.scale then
+            Just 0
+
+        else
+            boxOf s fRel
 
     else
         Nothing
 
 
-{-| Box mapping for any mode of the major scale, when F_root is anchored at
-the parent major's relative minor on the low E. Ionian, Dorian, etc. all
-reuse this table — they differ only in which pitch is the highlighted root. -}
-majorScaleBoxOf : Int -> Int -> Maybe Int
-majorScaleBoxOf s fRel =
-    case boxOf s fRel of
-        Just b ->
-            Just b
-
-        Nothing ->
-            case ( s, fRel ) of
-                ( 1, 2 ) -> Just 1
-                ( 1, 8 ) -> Just 4
-                ( 2, 1 ) -> Just 1
-                ( 2, 7 ) -> Just 3
-                ( 3, 5 ) -> Just 3
-                ( 3, 11 ) -> Just 5
-                ( 4, 4 ) -> Just 2
-                ( 4, 10 ) -> Just 5
-                ( 5, 3 ) -> Just 2
-                ( 5, 9 ) -> Just 4
-                ( 6, 2 ) -> Just 1
-                ( 6, 8 ) -> Just 4
-                _ -> Nothing
 
 
 
@@ -280,6 +257,40 @@ boxShape b =
 
         _ ->
             []
+
+
+{-| 5 CAGED positions of the major scale, 3 NPS, anchored at F_root (the
+relative minor of the parent major on low E).
+  1 = G shape, 2 = E shape, 3 = D shape, 4 = C shape, 5 = A shape.
+Adjacent boxes overlap by 1-3 frets per string on shared boundary notes. -}
+majorBoxShape : Int -> List ( Int, Int, Int )
+majorBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 4 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
+
+        2 ->
+            [ ( 1, 3, 7 ), ( 2, 3, 6 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
+
+        3 ->
+            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 8 ) ]
+
+        4 ->
+            [ ( 1, 7, 10 ), ( 2, 8, 11 ), ( 3, 7, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+
+        5 ->
+            [ ( 1, 10, 14 ), ( 2, 10, 13 ), ( 3, 11, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 14 ) ]
+
+        _ ->
+            []
+
+
+usesMajorBoxShapes : ScaleType -> Bool
+usesMajorBoxShapes st =
+    case st of
+        Ionian -> True
+        Dorian -> True
+        _ -> False
 
 
 boxColor : Int -> String
@@ -519,7 +530,8 @@ viewFretboard model =
         , SA.style "max-width: 100%; height: auto;"
         ]
         (List.concat
-            [ drawFretMarkers
+            [ [ stripePatternDefs ]
+            , drawFretMarkers
             , drawBoxRegions model
             , drawFretLines
             , drawStrings
@@ -539,10 +551,81 @@ drawBoxRegions model =
     let
         octaves =
             [ -1, 0, 1 ]
+
+        drawer =
+            if usesMajorBoxShapes model.scale then
+                drawOneMajorBox
+
+            else
+                drawOneBox
     in
     List.concatMap
-        (\b -> List.filterMap (drawOneBox model b) octaves)
+        (\b -> List.filterMap (drawer model b) octaves)
         [ 1, 2, 3, 4, 5 ]
+
+
+drawOneMajorBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
+drawOneMajorBox model b octave =
+    let
+        fRoot =
+            rootFret model
+
+        shift =
+            fRoot + 12 * octave
+
+        positions =
+            List.map
+                (\( s, lo, hi ) -> ( s, lo + shift, hi + shift ))
+                (majorBoxShape b)
+
+        inRange =
+            List.any
+                (\( _, lo, hi ) ->
+                    (lo >= 0 && lo <= numFrets) || (hi >= 0 && hi <= numFrets)
+                )
+                positions
+    in
+    if inRange then
+        Just
+            (Svg.polygon
+                [ SA.points (polygonPoints positions)
+                , SA.fill ("url(#stripe-" ++ String.fromInt b ++ ")")
+                , SA.stroke (boxColor b)
+                , SA.strokeOpacity "0.6"
+                , SA.strokeWidth "1"
+                , SA.strokeLinejoin "round"
+                ]
+                []
+            )
+
+    else
+        Nothing
+
+
+stripePatternDefs : Svg.Svg Msg
+stripePatternDefs =
+    Svg.defs []
+        (List.map stripePattern [ 1, 2, 3, 4, 5 ])
+
+
+stripePattern : Int -> Svg.Svg Msg
+stripePattern n =
+    Svg.pattern
+        [ SA.id ("stripe-" ++ String.fromInt n)
+        , SA.patternUnits "userSpaceOnUse"
+        , SA.width "12"
+        , SA.height "12"
+        , SA.patternTransform "rotate(45)"
+        ]
+        [ Svg.rect
+            [ SA.x (String.fromFloat (toFloat (n - 1) * 2.2))
+            , SA.y "0"
+            , SA.width "1.6"
+            , SA.height "12"
+            , SA.fill (boxColor n)
+            ]
+            []
+        ]
 
 
 drawOneBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)

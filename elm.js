@@ -5724,6 +5724,100 @@ var $author$project$Main$drawOneBox = F3(
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
+var $author$project$Main$majorBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 0, 3),
+					_Utils_Tuple3(2, 0, 3),
+					_Utils_Tuple3(3, 0, 4),
+					_Utils_Tuple3(4, 0, 4),
+					_Utils_Tuple3(5, 0, 3),
+					_Utils_Tuple3(6, 0, 3)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 3, 7),
+					_Utils_Tuple3(2, 3, 6),
+					_Utils_Tuple3(3, 4, 7),
+					_Utils_Tuple3(4, 4, 7),
+					_Utils_Tuple3(5, 3, 7),
+					_Utils_Tuple3(6, 3, 7)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 5, 8),
+					_Utils_Tuple3(2, 5, 8),
+					_Utils_Tuple3(3, 5, 9),
+					_Utils_Tuple3(4, 5, 9),
+					_Utils_Tuple3(5, 5, 9),
+					_Utils_Tuple3(6, 5, 8)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 7, 10),
+					_Utils_Tuple3(2, 8, 11),
+					_Utils_Tuple3(3, 7, 11),
+					_Utils_Tuple3(4, 7, 10),
+					_Utils_Tuple3(5, 7, 10),
+					_Utils_Tuple3(6, 7, 10)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 10, 14),
+					_Utils_Tuple3(2, 10, 13),
+					_Utils_Tuple3(3, 11, 14),
+					_Utils_Tuple3(4, 10, 14),
+					_Utils_Tuple3(5, 10, 14),
+					_Utils_Tuple3(6, 10, 14)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
+var $author$project$Main$drawOneMajorBox = F3(
+	function (model, b, octave) {
+		var fRoot = $author$project$Main$rootFret(model);
+		var shift = fRoot + (12 * octave);
+		var positions = A2(
+			$elm$core$List$map,
+			function (_v1) {
+				var s = _v1.a;
+				var lo = _v1.b;
+				var hi = _v1.c;
+				return _Utils_Tuple3(s, lo + shift, hi + shift);
+			},
+			$author$project$Main$majorBoxShape(b));
+		var inRange = A2(
+			$elm$core$List$any,
+			function (_v0) {
+				var lo = _v0.b;
+				var hi = _v0.c;
+				return ((lo >= 0) && (_Utils_cmp(lo, $author$project$Main$numFrets) < 1)) || ((hi >= 0) && (_Utils_cmp(hi, $author$project$Main$numFrets) < 1));
+			},
+			positions);
+		return inRange ? $elm$core$Maybe$Just(
+			A2(
+				$elm$svg$Svg$polygon,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$points(
+						$author$project$Main$polygonPoints(positions)),
+						$elm$svg$Svg$Attributes$fill(
+						'url(#stripe-' + ($elm$core$String$fromInt(b) + ')')),
+						$elm$svg$Svg$Attributes$stroke(
+						$author$project$Main$boxColor(b)),
+						$elm$svg$Svg$Attributes$strokeOpacity('0.6'),
+						$elm$svg$Svg$Attributes$strokeWidth('1'),
+						$elm$svg$Svg$Attributes$strokeLinejoin('round')
+					]),
+				_List_Nil)) : $elm$core$Maybe$Nothing;
+	});
 var $elm$core$List$maybeCons = F3(
 	function (f, mx, xs) {
 		var _v0 = f(mx);
@@ -5745,15 +5839,26 @@ var $elm$core$List$filterMap = F2(
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
+var $author$project$Main$usesMajorBoxShapes = function (st) {
+	switch (st.$) {
+		case 'Ionian':
+			return true;
+		case 'Dorian':
+			return true;
+		default:
+			return false;
+	}
+};
 var $author$project$Main$drawBoxRegions = function (model) {
 	var octaves = _List_fromArray(
 		[-1, 0, 1]);
+	var drawer = $author$project$Main$usesMajorBoxShapes(model.scale) ? $author$project$Main$drawOneMajorBox : $author$project$Main$drawOneBox;
 	return A2(
 		$elm$core$List$concatMap,
 		function (b) {
 			return A2(
 				$elm$core$List$filterMap,
-				A2($author$project$Main$drawOneBox, model, b),
+				A2(drawer, model, b),
 				octaves);
 		},
 		_List_fromArray(
@@ -6176,78 +6281,6 @@ var $author$project$Main$isInScale = F2(
 			A2($elm$core$Basics$modBy, 12, n),
 			$author$project$Main$scaleNotes(model));
 	});
-var $author$project$Main$majorScaleBoxOf = F2(
-	function (s, fRel) {
-		var _v0 = A2($author$project$Main$boxOf, s, fRel);
-		if (_v0.$ === 'Just') {
-			var b = _v0.a;
-			return $elm$core$Maybe$Just(b);
-		} else {
-			var _v1 = _Utils_Tuple2(s, fRel);
-			_v1$12:
-			while (true) {
-				switch (_v1.a) {
-					case 1:
-						switch (_v1.b) {
-							case 2:
-								return $elm$core$Maybe$Just(1);
-							case 8:
-								return $elm$core$Maybe$Just(4);
-							default:
-								break _v1$12;
-						}
-					case 2:
-						switch (_v1.b) {
-							case 1:
-								return $elm$core$Maybe$Just(1);
-							case 7:
-								return $elm$core$Maybe$Just(3);
-							default:
-								break _v1$12;
-						}
-					case 3:
-						switch (_v1.b) {
-							case 5:
-								return $elm$core$Maybe$Just(3);
-							case 11:
-								return $elm$core$Maybe$Just(5);
-							default:
-								break _v1$12;
-						}
-					case 4:
-						switch (_v1.b) {
-							case 4:
-								return $elm$core$Maybe$Just(2);
-							case 10:
-								return $elm$core$Maybe$Just(5);
-							default:
-								break _v1$12;
-						}
-					case 5:
-						switch (_v1.b) {
-							case 3:
-								return $elm$core$Maybe$Just(2);
-							case 9:
-								return $elm$core$Maybe$Just(4);
-							default:
-								break _v1$12;
-						}
-					case 6:
-						switch (_v1.b) {
-							case 2:
-								return $elm$core$Maybe$Just(1);
-							case 8:
-								return $elm$core$Maybe$Just(4);
-							default:
-								break _v1$12;
-						}
-					default:
-						break _v1$12;
-				}
-			}
-			return $elm$core$Maybe$Nothing;
-		}
-	});
 var $author$project$Main$positionBox = F3(
 	function (model, s, f) {
 		if (A2(
@@ -6258,15 +6291,7 @@ var $author$project$Main$positionBox = F3(
 				$elm$core$Basics$modBy,
 				12,
 				f - $author$project$Main$rootFret(model));
-			var _v0 = model.scale;
-			switch (_v0.$) {
-				case 'Ionian':
-					return A2($author$project$Main$majorScaleBoxOf, s, fRel);
-				case 'Dorian':
-					return A2($author$project$Main$majorScaleBoxOf, s, fRel);
-				default:
-					return A2($author$project$Main$boxOf, s, fRel);
-			}
+			return $author$project$Main$usesMajorBoxShapes(model.scale) ? $elm$core$Maybe$Just(0) : A2($author$project$Main$boxOf, s, fRel);
 		} else {
 			return $elm$core$Maybe$Nothing;
 		}
@@ -6430,6 +6455,48 @@ var $author$project$Main$drawStrings = function () {
 		drawLine,
 		A2($elm$core$List$range, 1, 6));
 }();
+var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
+var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
+var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
+var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTransform');
+var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
+var $author$project$Main$stripePattern = function (n) {
+	return A2(
+		$elm$svg$Svg$pattern,
+		_List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$id(
+				'stripe-' + $elm$core$String$fromInt(n)),
+				$elm$svg$Svg$Attributes$patternUnits('userSpaceOnUse'),
+				$elm$svg$Svg$Attributes$width('12'),
+				$elm$svg$Svg$Attributes$height('12'),
+				$elm$svg$Svg$Attributes$patternTransform('rotate(45)')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x(
+						$elm$core$String$fromFloat((n - 1) * 2.2)),
+						$elm$svg$Svg$Attributes$y('0'),
+						$elm$svg$Svg$Attributes$width('1.6'),
+						$elm$svg$Svg$Attributes$height('12'),
+						$elm$svg$Svg$Attributes$fill(
+						$author$project$Main$boxColor(n))
+					]),
+				_List_Nil)
+			]));
+};
+var $author$project$Main$stripePatternDefs = A2(
+	$elm$svg$Svg$defs,
+	_List_Nil,
+	A2(
+		$elm$core$List$map,
+		$author$project$Main$stripePattern,
+		_List_fromArray(
+			[1, 2, 3, 4, 5])));
 var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $author$project$Main$totalHeight = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 80;
@@ -6450,6 +6517,8 @@ var $author$project$Main$viewFretboard = function (model) {
 		$elm$core$List$concat(
 			_List_fromArray(
 				[
+					_List_fromArray(
+					[$author$project$Main$stripePatternDefs]),
 					$author$project$Main$drawFretMarkers,
 					$author$project$Main$drawBoxRegions(model),
 					$author$project$Main$drawFretLines,
