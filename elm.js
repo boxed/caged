@@ -5740,7 +5740,7 @@ var $author$project$Main$majorBoxShape = function (b) {
 			return _List_fromArray(
 				[
 					_Utils_Tuple3(1, 3, 7),
-					_Utils_Tuple3(2, 3, 6),
+					_Utils_Tuple3(2, 3, 7),
 					_Utils_Tuple3(3, 4, 7),
 					_Utils_Tuple3(4, 4, 7),
 					_Utils_Tuple3(5, 3, 7),
