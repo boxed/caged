@@ -136,7 +136,7 @@ rootFret model =
             modBy 12 (model.root - 7)
 
         Dorian ->
-            modBy 12 (model.root - 4)
+            modBy 12 (model.root - 9)
 
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
@@ -187,8 +187,8 @@ positionBox model s f =
                 modBy 12 (f - rootFret model)
         in
         case model.scale of
-            Ionian -> ionianBoxOf s fRel
-            Dorian -> dorianBoxOf s fRel
+            Ionian -> majorScaleBoxOf s fRel
+            Dorian -> majorScaleBoxOf s fRel
             _ -> boxOf s fRel
 
     else
@@ -198,8 +198,13 @@ positionBox model s f =
 {-| Box mapping for Ionian: pentatonic notes reuse `boxOf`, the two extra
 scale tones per string are placed in whichever pentatonic box their fret
 range already contains. Derived with F_root shifted to match MajorPent. -}
-ionianBoxOf : Int -> Int -> Maybe Int
-ionianBoxOf s fRel =
+{-| Box mapping for any mode of the major scale, when F_root is anchored at
+the parent major's relative minor on the low E. The 5 pent boxes are
+G-major-pent / E-minor-pent positions; the two per-string extras complete
+the 7-note major scale. Ionian, Dorian, etc. all reuse this table — they
+differ only in which pitch is the highlighted root. -}
+majorScaleBoxOf : Int -> Int -> Maybe Int
+majorScaleBoxOf s fRel =
     case boxOf s fRel of
         Just b ->
             Just b
@@ -221,30 +226,6 @@ ionianBoxOf s fRel =
                 _ -> Nothing
 
 
-{-| Box mapping for Dorian: minor-pent anchor (F_root = R-4). Dorian adds a
-major 2nd and major 6th on top of the minor pentatonic; each extra falls in
-the pentatonic box whose fret range already contains it. -}
-dorianBoxOf : Int -> Int -> Maybe Int
-dorianBoxOf s fRel =
-    case boxOf s fRel of
-        Just b ->
-            Just b
-
-        Nothing ->
-            case ( s, fRel ) of
-                ( 1, 2 ) -> Just 1
-                ( 1, 9 ) -> Just 4
-                ( 2, 2 ) -> Just 1
-                ( 2, 7 ) -> Just 3
-                ( 3, 6 ) -> Just 3
-                ( 3, 11 ) -> Just 5
-                ( 4, 4 ) -> Just 2
-                ( 4, 11 ) -> Just 5
-                ( 5, 4 ) -> Just 2
-                ( 5, 9 ) -> Just 4
-                ( 6, 2 ) -> Just 1
-                ( 6, 9 ) -> Just 4
-                _ -> Nothing
 
 
 type NoteRole
