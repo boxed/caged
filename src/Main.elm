@@ -558,10 +558,22 @@ drawBoxRegions model =
 
             else
                 drawOneBox
+
+        solids =
+            List.concatMap
+                (\b -> List.filterMap (drawer model b) octaves)
+                [ 1, 2, 3, 4, 5 ]
+
+        overlaps =
+            if usesMajorBoxShapes model.scale then
+                List.concatMap
+                    (\pair -> List.filterMap (drawOverlapStripe model pair) octaves)
+                    [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
+
+            else
+                []
     in
-    List.concatMap
-        (\b -> List.filterMap (drawer model b) octaves)
-        [ 1, 2, 3, 4, 5 ]
+    solids ++ overlaps
 
 
 drawOneMajorBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -589,11 +601,53 @@ drawOneMajorBox model b octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints positions)
-                , SA.fill ("url(#stripe-" ++ String.fromInt b ++ ")")
+                , SA.fill (boxColor b)
+                , SA.fillOpacity "0.55"
                 , SA.stroke (boxColor b)
-                , SA.strokeOpacity "0.6"
+                , SA.strokeOpacity "0.8"
                 , SA.strokeWidth "1"
                 , SA.strokeLinejoin "round"
+                ]
+                []
+            )
+
+    else
+        Nothing
+
+
+drawOverlapStripe : Model -> ( Int, Int ) -> Int -> Maybe (Svg.Svg Msg)
+drawOverlapStripe model ( b1, b2 ) octave =
+    let
+        fRoot =
+            rootFret model
+
+        shift =
+            fRoot + 12 * octave
+
+        overlapPositions =
+            List.map2
+                (\( s, lo1, hi1 ) ( _, lo2, hi2 ) ->
+                    ( s, max lo1 lo2 + shift, min hi1 hi2 + shift )
+                )
+                (majorBoxShape b1)
+                (majorBoxShape b2)
+
+        hasRealOverlap =
+            List.any (\( _, lo, hi ) -> hi > lo) overlapPositions
+
+        inRange =
+            List.any
+                (\( _, lo, hi ) ->
+                    (lo >= 0 && lo <= numFrets) || (hi >= 0 && hi <= numFrets)
+                )
+                overlapPositions
+    in
+    if hasRealOverlap && inRange then
+        Just
+            (Svg.polygon
+                [ SA.points (polygonPoints overlapPositions)
+                , SA.fill ("url(#ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
+                , SA.fillOpacity "0.9"
                 ]
                 []
             )
@@ -605,29 +659,36 @@ drawOneMajorBox model b octave =
 stripePatternDefs : Svg.Svg Msg
 stripePatternDefs =
     Svg.defs []
-        (List.map stripePattern [ 1, 2, 3, 4, 5 ])
+        (List.map overlapStripePattern [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ])
 
 
-stripePattern : Int -> Svg.Svg Msg
-stripePattern n =
+overlapStripePattern : ( Int, Int ) -> Svg.Svg Msg
+overlapStripePattern ( b1, b2 ) =
     let
-        period = 20
-        slotStep = period / 5
-        stripeWidth = period * 0.85
+        period = 14
+        half = period / 2
     in
     Svg.pattern
-        [ SA.id ("stripe-" ++ String.fromInt n)
+        [ SA.id ("ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2)
         , SA.patternUnits "userSpaceOnUse"
         , SA.width (String.fromFloat period)
         , SA.height (String.fromFloat period)
         , SA.patternTransform "rotate(45)"
         ]
         [ Svg.rect
-            [ SA.x (String.fromFloat (toFloat (n - 1) * slotStep))
+            [ SA.x "0"
             , SA.y "0"
-            , SA.width (String.fromFloat stripeWidth)
+            , SA.width (String.fromFloat half)
             , SA.height (String.fromFloat period)
-            , SA.fill (boxColor n)
+            , SA.fill (boxColor b1)
+            ]
+            []
+        , Svg.rect
+            [ SA.x (String.fromFloat half)
+            , SA.y "0"
+            , SA.width (String.fromFloat half)
+            , SA.height (String.fromFloat period)
+            , SA.fill (boxColor b2)
             ]
             []
         ]

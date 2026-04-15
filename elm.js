@@ -5809,12 +5809,68 @@ var $author$project$Main$drawOneMajorBox = F3(
 						$elm$svg$Svg$Attributes$points(
 						$author$project$Main$polygonPoints(positions)),
 						$elm$svg$Svg$Attributes$fill(
-						'url(#stripe-' + ($elm$core$String$fromInt(b) + ')')),
+						$author$project$Main$boxColor(b)),
+						$elm$svg$Svg$Attributes$fillOpacity('0.55'),
 						$elm$svg$Svg$Attributes$stroke(
 						$author$project$Main$boxColor(b)),
-						$elm$svg$Svg$Attributes$strokeOpacity('0.6'),
+						$elm$svg$Svg$Attributes$strokeOpacity('0.8'),
 						$elm$svg$Svg$Attributes$strokeWidth('1'),
 						$elm$svg$Svg$Attributes$strokeLinejoin('round')
+					]),
+				_List_Nil)) : $elm$core$Maybe$Nothing;
+	});
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
+var $author$project$Main$drawOverlapStripe = F3(
+	function (model, _v0, octave) {
+		var b1 = _v0.a;
+		var b2 = _v0.b;
+		var fRoot = $author$project$Main$rootFret(model);
+		var shift = fRoot + (12 * octave);
+		var overlapPositions = A3(
+			$elm$core$List$map2,
+			F2(
+				function (_v3, _v4) {
+					var s = _v3.a;
+					var lo1 = _v3.b;
+					var hi1 = _v3.c;
+					var lo2 = _v4.b;
+					var hi2 = _v4.c;
+					return _Utils_Tuple3(
+						s,
+						A2($elm$core$Basics$max, lo1, lo2) + shift,
+						A2($elm$core$Basics$min, hi1, hi2) + shift);
+				}),
+			$author$project$Main$majorBoxShape(b1),
+			$author$project$Main$majorBoxShape(b2));
+		var hasRealOverlap = A2(
+			$elm$core$List$any,
+			function (_v2) {
+				var lo = _v2.b;
+				var hi = _v2.c;
+				return _Utils_cmp(hi, lo) > 0;
+			},
+			overlapPositions);
+		var inRange = A2(
+			$elm$core$List$any,
+			function (_v1) {
+				var lo = _v1.b;
+				var hi = _v1.c;
+				return ((lo >= 0) && (_Utils_cmp(lo, $author$project$Main$numFrets) < 1)) || ((hi >= 0) && (_Utils_cmp(hi, $author$project$Main$numFrets) < 1));
+			},
+			overlapPositions);
+		return (hasRealOverlap && inRange) ? $elm$core$Maybe$Just(
+			A2(
+				$elm$svg$Svg$polygon,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$points(
+						$author$project$Main$polygonPoints(overlapPositions)),
+						$elm$svg$Svg$Attributes$fill(
+						'url(#ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + ($elm$core$String$fromInt(b2) + ')')))),
+						$elm$svg$Svg$Attributes$fillOpacity('0.9')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -5852,8 +5908,23 @@ var $author$project$Main$usesMajorBoxShapes = function (st) {
 var $author$project$Main$drawBoxRegions = function (model) {
 	var octaves = _List_fromArray(
 		[-1, 0, 1]);
+	var overlaps = $author$project$Main$usesMajorBoxShapes(model.scale) ? A2(
+		$elm$core$List$concatMap,
+		function (pair) {
+			return A2(
+				$elm$core$List$filterMap,
+				A2($author$project$Main$drawOverlapStripe, model, pair),
+				octaves);
+		},
+		_List_fromArray(
+			[
+				_Utils_Tuple2(1, 2),
+				_Utils_Tuple2(2, 3),
+				_Utils_Tuple2(3, 4),
+				_Utils_Tuple2(4, 5)
+			])) : _List_Nil;
 	var drawer = $author$project$Main$usesMajorBoxShapes(model.scale) ? $author$project$Main$drawOneMajorBox : $author$project$Main$drawOneBox;
-	return A2(
+	var solids = A2(
 		$elm$core$List$concatMap,
 		function (b) {
 			return A2(
@@ -5863,6 +5934,7 @@ var $author$project$Main$drawBoxRegions = function (model) {
 		},
 		_List_fromArray(
 			[1, 2, 3, 4, 5]));
+	return _Utils_ap(solids, overlaps);
 };
 var $author$project$Main$fretLineX = function (f) {
 	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
@@ -6460,16 +6532,17 @@ var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
 var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
 var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTransform');
 var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
-var $author$project$Main$stripePattern = function (n) {
-	var period = 20;
-	var slotStep = period / 5;
-	var stripeWidth = period * 0.85;
+var $author$project$Main$overlapStripePattern = function (_v0) {
+	var b1 = _v0.a;
+	var b2 = _v0.b;
+	var period = 14;
+	var half = period / 2;
 	return A2(
 		$elm$svg$Svg$pattern,
 		_List_fromArray(
 			[
 				$elm$svg$Svg$Attributes$id(
-				'stripe-' + $elm$core$String$fromInt(n)),
+				'ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + $elm$core$String$fromInt(b2)))),
 				$elm$svg$Svg$Attributes$patternUnits('userSpaceOnUse'),
 				$elm$svg$Svg$Attributes$width(
 				$elm$core$String$fromFloat(period)),
@@ -6483,15 +6556,29 @@ var $author$project$Main$stripePattern = function (n) {
 				$elm$svg$Svg$rect,
 				_List_fromArray(
 					[
-						$elm$svg$Svg$Attributes$x(
-						$elm$core$String$fromFloat((n - 1) * slotStep)),
+						$elm$svg$Svg$Attributes$x('0'),
 						$elm$svg$Svg$Attributes$y('0'),
 						$elm$svg$Svg$Attributes$width(
-						$elm$core$String$fromFloat(stripeWidth)),
+						$elm$core$String$fromFloat(half)),
 						$elm$svg$Svg$Attributes$height(
 						$elm$core$String$fromFloat(period)),
 						$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$boxColor(n))
+						$author$project$Main$boxColor(b1))
+					]),
+				_List_Nil),
+				A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x(
+						$elm$core$String$fromFloat(half)),
+						$elm$svg$Svg$Attributes$y('0'),
+						$elm$svg$Svg$Attributes$width(
+						$elm$core$String$fromFloat(half)),
+						$elm$svg$Svg$Attributes$height(
+						$elm$core$String$fromFloat(period)),
+						$elm$svg$Svg$Attributes$fill(
+						$author$project$Main$boxColor(b2))
 					]),
 				_List_Nil)
 			]));
@@ -6501,9 +6588,14 @@ var $author$project$Main$stripePatternDefs = A2(
 	_List_Nil,
 	A2(
 		$elm$core$List$map,
-		$author$project$Main$stripePattern,
+		$author$project$Main$overlapStripePattern,
 		_List_fromArray(
-			[1, 2, 3, 4, 5])));
+			[
+				_Utils_Tuple2(1, 2),
+				_Utils_Tuple2(2, 3),
+				_Utils_Tuple2(3, 4),
+				_Utils_Tuple2(4, 5)
+			])));
 var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $author$project$Main$totalHeight = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 80;
