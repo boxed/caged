@@ -6462,7 +6462,8 @@ var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTra
 var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
 var $author$project$Main$stripePattern = function (n) {
 	var period = 20;
-	var slotWidth = period / 5;
+	var slotStep = period / 5;
+	var stripeWidth = period * 0.85;
 	return A2(
 		$elm$svg$Svg$pattern,
 		_List_fromArray(
@@ -6483,10 +6484,10 @@ var $author$project$Main$stripePattern = function (n) {
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$x(
-						$elm$core$String$fromFloat((n - 1) * slotWidth)),
+						$elm$core$String$fromFloat((n - 1) * slotStep)),
 						$elm$svg$Svg$Attributes$y('0'),
 						$elm$svg$Svg$Attributes$width(
-						$elm$core$String$fromFloat(slotWidth)),
+						$elm$core$String$fromFloat(stripeWidth)),
 						$elm$svg$Svg$Attributes$height(
 						$elm$core$String$fromFloat(period)),
 						$elm$svg$Svg$Attributes$fill(
