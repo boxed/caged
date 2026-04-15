@@ -610,18 +610,22 @@ stripePatternDefs =
 
 stripePattern : Int -> Svg.Svg Msg
 stripePattern n =
+    let
+        period = 20
+        slotWidth = period / 5
+    in
     Svg.pattern
         [ SA.id ("stripe-" ++ String.fromInt n)
         , SA.patternUnits "userSpaceOnUse"
-        , SA.width "12"
-        , SA.height "12"
+        , SA.width (String.fromFloat period)
+        , SA.height (String.fromFloat period)
         , SA.patternTransform "rotate(45)"
         ]
         [ Svg.rect
-            [ SA.x (String.fromFloat (toFloat (n - 1) * 2.2))
+            [ SA.x (String.fromFloat (toFloat (n - 1) * slotWidth))
             , SA.y "0"
-            , SA.width "1.6"
-            , SA.height "12"
+            , SA.width (String.fromFloat slotWidth)
+            , SA.height (String.fromFloat period)
             , SA.fill (boxColor n)
             ]
             []

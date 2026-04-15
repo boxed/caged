@@ -6461,6 +6461,8 @@ var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
 var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTransform');
 var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
 var $author$project$Main$stripePattern = function (n) {
+	var period = 20;
+	var slotWidth = period / 5;
 	return A2(
 		$elm$svg$Svg$pattern,
 		_List_fromArray(
@@ -6468,8 +6470,10 @@ var $author$project$Main$stripePattern = function (n) {
 				$elm$svg$Svg$Attributes$id(
 				'stripe-' + $elm$core$String$fromInt(n)),
 				$elm$svg$Svg$Attributes$patternUnits('userSpaceOnUse'),
-				$elm$svg$Svg$Attributes$width('12'),
-				$elm$svg$Svg$Attributes$height('12'),
+				$elm$svg$Svg$Attributes$width(
+				$elm$core$String$fromFloat(period)),
+				$elm$svg$Svg$Attributes$height(
+				$elm$core$String$fromFloat(period)),
 				$elm$svg$Svg$Attributes$patternTransform('rotate(45)')
 			]),
 		_List_fromArray(
@@ -6479,10 +6483,12 @@ var $author$project$Main$stripePattern = function (n) {
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$x(
-						$elm$core$String$fromFloat((n - 1) * 2.2)),
+						$elm$core$String$fromFloat((n - 1) * slotWidth)),
 						$elm$svg$Svg$Attributes$y('0'),
-						$elm$svg$Svg$Attributes$width('1.6'),
-						$elm$svg$Svg$Attributes$height('12'),
+						$elm$svg$Svg$Attributes$width(
+						$elm$core$String$fromFloat(slotWidth)),
+						$elm$svg$Svg$Attributes$height(
+						$elm$core$String$fromFloat(period)),
 						$elm$svg$Svg$Attributes$fill(
 						$author$project$Main$boxColor(n))
 					]),
