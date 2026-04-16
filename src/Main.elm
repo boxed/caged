@@ -1,4 +1,4 @@
-module Main exposing
+port module Main exposing
     ( ScaleType(..)
     , main
     , majorBoxShape
@@ -24,7 +24,17 @@ type alias Model =
     { root : Int
     , scale : ScaleType
     , key : Nav.Key
+    , wakeLockOn : Bool
     }
+
+
+port requestWakeLock : () -> Cmd msg
+
+
+port releaseWakeLock : () -> Cmd msg
+
+
+port wakeLockChanged : (Bool -> msg) -> Sub msg
 
 
 type ScaleType
@@ -42,6 +52,8 @@ type Msg
     | SetScale ScaleType
     | UrlChanged Url
     | LinkClicked Browser.UrlRequest
+    | ToggleWakeLock
+    | WakeLockChanged Bool
 
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -50,7 +62,7 @@ init _ url key =
         ( root, scale ) =
             parseUrl url
     in
-    ( { root = root, scale = scale, key = key }, Cmd.none )
+    ( { root = root, scale = scale, key = key, wakeLockOn = False }, Cmd.none )
 
 
 
@@ -88,6 +100,23 @@ update msg model =
 
                 Browser.External href ->
                     ( model, Nav.load href )
+
+        ToggleWakeLock ->
+            let
+                next =
+                    not model.wakeLockOn
+
+                cmd =
+                    if next then
+                        requestWakeLock ()
+
+                    else
+                        releaseWakeLock ()
+            in
+            ( { model | wakeLockOn = next }, cmd )
+
+        WakeLockChanged on ->
+            ( { model | wakeLockOn = on }, Cmd.none )
 
 
 
@@ -566,11 +595,38 @@ view model =
 viewBody : Model -> Html Msg
 viewBody model =
     div [ style "margin" "1rem 0.5rem" ]
-        [ h1 [ style "margin" "0 0 6px" ] [ text "Guitar Fretboard Visualizer" ]
+        [ div
+            [ style "display" "flex"
+            , style "justify-content" "space-between"
+            , style "align-items" "center"
+            , style "gap" "12px"
+            , style "flex-wrap" "wrap"
+            ]
+            [ h1 [ style "margin" "0 0 6px" ] [ text "Guitar Fretboard Visualizer" ]
+            , wakeLockButton model
+            ]
         , viewScaleTitle model
         , viewControls model
         , viewFretboard model
         , viewLegend model
+        ]
+
+
+wakeLockButton : Model -> Html Msg
+wakeLockButton model =
+    button
+        ([ onClick ToggleWakeLock
+         , style "min-width" "120px"
+         ]
+            ++ buttonBaseStyle model.wakeLockOn
+        )
+        [ text
+            (if model.wakeLockOn then
+                "Screen on"
+
+             else
+                "Keep screen on"
+            )
         ]
 
 
@@ -1441,13 +1497,18 @@ legendMarker kind lbl =
 -- MAIN
 
 
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    wakeLockChanged WakeLockChanged
+
+
 main : Program () Model Msg
 main =
     Browser.application
         { init = init
         , update = update
         , view = view
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         , onUrlChange = UrlChanged
         , onUrlRequest = LinkClicked
         }

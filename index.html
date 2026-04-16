@@ -62,7 +62,44 @@
 <body>
     <script src="elm.js"></script>
     <script>
-        Elm.Main.init();
+        const app = Elm.Main.init();
+
+        let wakeLock = null;
+        let wakeLockWanted = false;
+
+        async function acquireWakeLock() {
+            if (!('wakeLock' in navigator)) {
+                app.ports.wakeLockChanged.send(false);
+                return;
+            }
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => { wakeLock = null; });
+            } catch (err) {
+                console.error('Wake lock request failed:', err);
+                wakeLockWanted = false;
+                app.ports.wakeLockChanged.send(false);
+            }
+        }
+
+        app.ports.requestWakeLock.subscribe(() => {
+            wakeLockWanted = true;
+            acquireWakeLock();
+        });
+
+        app.ports.releaseWakeLock.subscribe(async () => {
+            wakeLockWanted = false;
+            if (wakeLock !== null) {
+                try { await wakeLock.release(); } catch (err) {}
+                wakeLock = null;
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (wakeLockWanted && document.visibilityState === 'visible') {
+                acquireWakeLock();
+            }
+        });
     </script>
 </body>
 </html>

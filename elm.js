@@ -5342,11 +5342,17 @@ var $author$project$Main$init = F3(
 		var root = _v1.a;
 		var scale = _v1.b;
 		return _Utils_Tuple2(
-			{key: key, root: root, scale: scale},
+			{key: key, root: root, scale: scale, wakeLockOn: false},
 			$elm$core$Platform$Cmd$none);
 	});
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
+var $author$project$Main$WakeLockChanged = function (a) {
+	return {$: 'WakeLockChanged', a: a};
+};
+var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $author$project$Main$wakeLockChanged = _Platform_incomingPort('wakeLockChanged', $elm$json$Json$Decode$bool);
+var $author$project$Main$subscriptions = function (_v0) {
+	return $author$project$Main$wakeLockChanged($author$project$Main$WakeLockChanged);
+};
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$rootSlug = function (n) {
@@ -5397,8 +5403,20 @@ var $author$project$Main$scaleSlug = function (s) {
 var $author$project$Main$modelUrl = function (model) {
 	return '?root=' + ($author$project$Main$rootSlug(model.root) + ('&scale=' + $author$project$Main$scaleSlug(model.scale)));
 };
+var $elm$core$Basics$not = _Basics_not;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var $elm$json$Json$Encode$null = _Json_encodeNull;
+var $author$project$Main$releaseWakeLock = _Platform_outgoingPort(
+	'releaseWakeLock',
+	function ($) {
+		return $elm$json$Json$Encode$null;
+	});
 var $elm$browser$Browser$Navigation$replaceUrl = _Browser_replaceUrl;
+var $author$project$Main$requestWakeLock = _Platform_outgoingPort(
+	'requestWakeLock',
+	function ($) {
+		return $elm$json$Json$Encode$null;
+	});
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
 		if (maybePort.$ === 'Nothing') {
@@ -5480,7 +5498,7 @@ var $author$project$Main$update = F2(
 						model,
 						{root: root, scale: scale}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'LinkClicked':
 				var request = msg.a;
 				if (request.$ === 'Internal') {
 					var url = request.a;
@@ -5496,6 +5514,21 @@ var $author$project$Main$update = F2(
 						model,
 						$elm$browser$Browser$Navigation$load(href));
 				}
+			case 'ToggleWakeLock':
+				var next = !model.wakeLockOn;
+				var cmd = next ? $author$project$Main$requestWakeLock(_Utils_Tuple0) : $author$project$Main$releaseWakeLock(_Utils_Tuple0);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{wakeLockOn: next}),
+					cmd);
+			default:
+				var on = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{wakeLockOn: on}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
@@ -7244,6 +7277,23 @@ var $author$project$Main$viewScaleTitle = function (model) {
 					]))
 			]));
 };
+var $author$project$Main$ToggleWakeLock = {$: 'ToggleWakeLock'};
+var $author$project$Main$wakeLockButton = function (model) {
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick($author$project$Main$ToggleWakeLock),
+					A2($elm$html$Html$Attributes$style, 'min-width', '120px')
+				]),
+			$author$project$Main$buttonBaseStyle(model.wakeLockOn)),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				model.wakeLockOn ? 'Screen on' : 'Keep screen on')
+			]));
+};
 var $author$project$Main$viewBody = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7254,14 +7304,28 @@ var $author$project$Main$viewBody = function (model) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$h1,
+				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'margin', '0 0 6px')
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'gap', '12px'),
+						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap')
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Guitar Fretboard Visualizer')
+						A2(
+						$elm$html$Html$h1,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'margin', '0 0 6px')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Guitar Fretboard Visualizer')
+							])),
+						$author$project$Main$wakeLockButton(model)
 					])),
 				$author$project$Main$viewScaleTitle(model),
 				$author$project$Main$viewControls(model),
@@ -7279,15 +7343,6 @@ var $author$project$Main$view = function (model) {
 	};
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
-	{
-		init: $author$project$Main$init,
-		onUrlChange: $author$project$Main$UrlChanged,
-		onUrlRequest: $author$project$Main$LinkClicked,
-		subscriptions: function (_v0) {
-			return $elm$core$Platform$Sub$none;
-		},
-		update: $author$project$Main$update,
-		view: $author$project$Main$view
-	});
+	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChanged, onUrlRequest: $author$project$Main$LinkClicked, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
