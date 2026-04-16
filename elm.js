@@ -5834,9 +5834,12 @@ var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$polygon = $elm$svg$Svg$trustedNode('polygon');
 var $author$project$Main$fretWidth = 58;
-var $elm$core$String$fromFloat = _String_fromNumber;
 var $author$project$Main$leftMargin = 18;
 var $author$project$Main$nutWidth = 70;
+var $author$project$Main$fretCenterX = function (f) {
+	return (f <= 0) ? (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5))) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
+};
+var $elm$core$String$fromFloat = _String_fromNumber;
 var $author$project$Main$stringSpacing = 36;
 var $author$project$Main$topMargin = 30;
 var $author$project$Main$stringY = function (s) {
@@ -5847,16 +5850,7 @@ var $author$project$Main$polygonPoints = function (positions) {
 		function (sa, sb) {
 			return ($author$project$Main$stringY(sa) + $author$project$Main$stringY(sb)) / 2;
 		});
-	var widenLo = function (n) {
-		return n - 0.5;
-	};
-	var widenHi = function (n) {
-		return n + 0.5;
-	};
 	var pad = $author$project$Main$stringSpacing * 0.55;
-	var fretX = function (f) {
-		return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5));
-	};
 	var byString = function (s) {
 		return A2(
 			$elm$core$Maybe$withDefault,
@@ -5864,133 +5858,103 @@ var $author$project$Main$polygonPoints = function (positions) {
 			$elm$core$List$head(
 				A2(
 					$elm$core$List$filter,
-					function (_v13) {
-						var str = _v13.a;
+					function (_v7) {
+						var str = _v7.a;
 						return _Utils_eq(str, s);
 					},
 					positions)));
 	};
 	var _v0 = byString(6);
-	var lo6i = _v0.b;
-	var hi6i = _v0.c;
-	var _v1 = _Utils_Tuple2(
-		widenLo(lo6i),
-		widenHi(hi6i));
-	var lo6 = _v1.a;
-	var hi6 = _v1.b;
-	var _v2 = byString(5);
-	var lo5i = _v2.b;
-	var hi5i = _v2.c;
-	var _v3 = _Utils_Tuple2(
-		widenLo(lo5i),
-		widenHi(hi5i));
-	var lo5 = _v3.a;
-	var hi5 = _v3.b;
-	var _v4 = byString(4);
-	var lo4i = _v4.b;
-	var hi4i = _v4.c;
-	var _v5 = _Utils_Tuple2(
-		widenLo(lo4i),
-		widenHi(hi4i));
-	var lo4 = _v5.a;
-	var hi4 = _v5.b;
-	var _v6 = byString(3);
-	var lo3i = _v6.b;
-	var hi3i = _v6.c;
-	var _v7 = _Utils_Tuple2(
-		widenLo(lo3i),
-		widenHi(hi3i));
-	var lo3 = _v7.a;
-	var hi3 = _v7.b;
-	var _v8 = byString(2);
-	var lo2i = _v8.b;
-	var hi2i = _v8.c;
-	var _v9 = _Utils_Tuple2(
-		widenLo(lo2i),
-		widenHi(hi2i));
-	var lo2 = _v9.a;
-	var hi2 = _v9.b;
-	var _v10 = byString(1);
-	var lo1i = _v10.b;
-	var hi1i = _v10.c;
-	var _v11 = _Utils_Tuple2(
-		widenLo(lo1i),
-		widenHi(hi1i));
-	var lo1 = _v11.a;
-	var hi1 = _v11.b;
+	var lo6 = _v0.b;
+	var hi6 = _v0.c;
+	var _v1 = byString(5);
+	var lo5 = _v1.b;
+	var hi5 = _v1.c;
+	var _v2 = byString(4);
+	var lo4 = _v2.b;
+	var hi4 = _v2.c;
+	var _v3 = byString(3);
+	var lo3 = _v3.b;
+	var hi3 = _v3.c;
+	var _v4 = byString(2);
+	var lo2 = _v4.b;
+	var hi2 = _v4.c;
+	var _v5 = byString(1);
+	var lo1 = _v5.b;
+	var hi1 = _v5.c;
 	var verts = _List_fromArray(
 		[
 			_Utils_Tuple2(
-			fretX(lo1),
+			$author$project$Main$fretCenterX(lo1),
 			$author$project$Main$stringY(1) - pad),
 			_Utils_Tuple2(
-			fretX(hi1),
+			$author$project$Main$fretCenterX(hi1),
 			$author$project$Main$stringY(1) - pad),
 			_Utils_Tuple2(
-			fretX(hi1),
+			$author$project$Main$fretCenterX(hi1),
 			A2(yMid, 1, 2)),
 			_Utils_Tuple2(
-			fretX(hi2),
+			$author$project$Main$fretCenterX(hi2),
 			A2(yMid, 1, 2)),
 			_Utils_Tuple2(
-			fretX(hi2),
+			$author$project$Main$fretCenterX(hi2),
 			A2(yMid, 2, 3)),
 			_Utils_Tuple2(
-			fretX(hi3),
+			$author$project$Main$fretCenterX(hi3),
 			A2(yMid, 2, 3)),
 			_Utils_Tuple2(
-			fretX(hi3),
+			$author$project$Main$fretCenterX(hi3),
 			A2(yMid, 3, 4)),
 			_Utils_Tuple2(
-			fretX(hi4),
+			$author$project$Main$fretCenterX(hi4),
 			A2(yMid, 3, 4)),
 			_Utils_Tuple2(
-			fretX(hi4),
+			$author$project$Main$fretCenterX(hi4),
 			A2(yMid, 4, 5)),
 			_Utils_Tuple2(
-			fretX(hi5),
+			$author$project$Main$fretCenterX(hi5),
 			A2(yMid, 4, 5)),
 			_Utils_Tuple2(
-			fretX(hi5),
+			$author$project$Main$fretCenterX(hi5),
 			A2(yMid, 5, 6)),
 			_Utils_Tuple2(
-			fretX(hi6),
+			$author$project$Main$fretCenterX(hi6),
 			A2(yMid, 5, 6)),
 			_Utils_Tuple2(
-			fretX(hi6),
+			$author$project$Main$fretCenterX(hi6),
 			$author$project$Main$stringY(6) + pad),
 			_Utils_Tuple2(
-			fretX(lo6),
+			$author$project$Main$fretCenterX(lo6),
 			$author$project$Main$stringY(6) + pad),
 			_Utils_Tuple2(
-			fretX(lo6),
+			$author$project$Main$fretCenterX(lo6),
 			A2(yMid, 5, 6)),
 			_Utils_Tuple2(
-			fretX(lo5),
+			$author$project$Main$fretCenterX(lo5),
 			A2(yMid, 5, 6)),
 			_Utils_Tuple2(
-			fretX(lo5),
+			$author$project$Main$fretCenterX(lo5),
 			A2(yMid, 4, 5)),
 			_Utils_Tuple2(
-			fretX(lo4),
+			$author$project$Main$fretCenterX(lo4),
 			A2(yMid, 4, 5)),
 			_Utils_Tuple2(
-			fretX(lo4),
+			$author$project$Main$fretCenterX(lo4),
 			A2(yMid, 3, 4)),
 			_Utils_Tuple2(
-			fretX(lo3),
+			$author$project$Main$fretCenterX(lo3),
 			A2(yMid, 3, 4)),
 			_Utils_Tuple2(
-			fretX(lo3),
+			$author$project$Main$fretCenterX(lo3),
 			A2(yMid, 2, 3)),
 			_Utils_Tuple2(
-			fretX(lo2),
+			$author$project$Main$fretCenterX(lo2),
 			A2(yMid, 2, 3)),
 			_Utils_Tuple2(
-			fretX(lo2),
+			$author$project$Main$fretCenterX(lo2),
 			A2(yMid, 1, 2)),
 			_Utils_Tuple2(
-			fretX(lo1),
+			$author$project$Main$fretCenterX(lo1),
 			A2(yMid, 1, 2))
 		]);
 	return A2(
@@ -5998,9 +5962,9 @@ var $author$project$Main$polygonPoints = function (positions) {
 		' ',
 		A2(
 			$elm$core$List$map,
-			function (_v12) {
-				var x = _v12.a;
-				var y = _v12.b;
+			function (_v6) {
+				var x = _v6.a;
+				var y = _v6.b;
 				return $elm$core$String$fromFloat(x) + (',' + $elm$core$String$fromFloat(y));
 			},
 			verts));
