@@ -5994,7 +5994,7 @@ var $author$project$Main$drawOneBox = F3(
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
-var $author$project$Main$majorBoxShape = function (b) {
+var $author$project$Main$dorianBoxShape = function (b) {
 	switch (b) {
 		case 1:
 			return _List_fromArray(
@@ -6050,6 +6050,70 @@ var $author$project$Main$majorBoxShape = function (b) {
 			return _List_Nil;
 	}
 };
+var $author$project$Main$ionianBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 0, 3),
+					_Utils_Tuple3(2, 0, 3),
+					_Utils_Tuple3(3, 0, 4),
+					_Utils_Tuple3(4, 0, 4),
+					_Utils_Tuple3(5, 0, 3),
+					_Utils_Tuple3(6, 0, 3)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 3, 7),
+					_Utils_Tuple3(2, 3, 7),
+					_Utils_Tuple3(3, 4, 7),
+					_Utils_Tuple3(4, 4, 7),
+					_Utils_Tuple3(5, 3, 7),
+					_Utils_Tuple3(6, 3, 7)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 5, 8),
+					_Utils_Tuple3(2, 5, 8),
+					_Utils_Tuple3(3, 5, 9),
+					_Utils_Tuple3(4, 5, 9),
+					_Utils_Tuple3(5, 5, 9),
+					_Utils_Tuple3(6, 5, 8)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 7, 10),
+					_Utils_Tuple3(2, 8, 11),
+					_Utils_Tuple3(3, 7, 11),
+					_Utils_Tuple3(4, 7, 10),
+					_Utils_Tuple3(5, 7, 10),
+					_Utils_Tuple3(6, 7, 10)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 10, 14),
+					_Utils_Tuple3(2, 10, 13),
+					_Utils_Tuple3(3, 11, 14),
+					_Utils_Tuple3(4, 10, 14),
+					_Utils_Tuple3(5, 10, 14),
+					_Utils_Tuple3(6, 10, 14)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
+var $author$project$Main$majorBoxShape = F2(
+	function (scale, b) {
+		if (scale.$ === 'Dorian') {
+			return $author$project$Main$dorianBoxShape(b);
+		} else {
+			return $author$project$Main$ionianBoxShape(b);
+		}
+	});
 var $author$project$Main$drawOneMajorBox = F3(
 	function (model, b, octave) {
 		var fRoot = $author$project$Main$rootFret(model);
@@ -6062,7 +6126,7 @@ var $author$project$Main$drawOneMajorBox = F3(
 				var hi = _v1.c;
 				return _Utils_Tuple3(s, lo + shift, hi + shift);
 			},
-			$author$project$Main$majorBoxShape(b));
+			A2($author$project$Main$majorBoxShape, model.scale, b));
 		var inRange = A2(
 			$elm$core$List$any,
 			function (_v0) {
@@ -6113,8 +6177,8 @@ var $author$project$Main$drawOverlapStripe = F3(
 						A2($elm$core$Basics$max, lo1, lo2) + shift,
 						A2($elm$core$Basics$min, hi1, hi2) + shift);
 				}),
-			$author$project$Main$majorBoxShape(b1),
-			$author$project$Main$majorBoxShape(b2));
+			A2($author$project$Main$majorBoxShape, model.scale, b1),
+			A2($author$project$Main$majorBoxShape, model.scale, b2));
 		var hasRealOverlap = A2(
 			$elm$core$List$any,
 			function (_v2) {
@@ -6163,8 +6227,8 @@ var $author$project$Main$drawWrapOverlap = F2(
 						A2($elm$core$Basics$max, lo5 + shift5, lo1 + shift1),
 						A2($elm$core$Basics$min, hi5 + shift5, hi1 + shift1));
 				}),
-			$author$project$Main$majorBoxShape(5),
-			$author$project$Main$majorBoxShape(1));
+			A2($author$project$Main$majorBoxShape, model.scale, 5),
+			A2($author$project$Main$majorBoxShape, model.scale, 1));
 		var hasRealOverlap = A2(
 			$elm$core$List$any,
 			function (_v1) {

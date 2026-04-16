@@ -398,13 +398,47 @@ boxShape b =
             []
 
 
-{-| 5 patterns of the major scale (modes), per-string fret ranges relative
-to F_root. Derived from Dean Arnold's dorian patterns:
-https://www.deanarnoldguitar.com/post/dorian-scale-patterns-for-guitar
-F_root anchors at the modal root's relative minor on low E (R-7 mod 12).
-Adjacent patterns overlap by 1-2 frets at boundary notes. -}
-majorBoxShape : Int -> List ( Int, Int, Int )
-majorBoxShape b =
+{-| 5 box shapes for the modes of the major scale. Mode-specific because
+each mode's interval pattern places notes at different frets, so the box
+extents differ. Each entry is (string, lo_fret, hi_fret) relative to F_root. -}
+majorBoxShape : ScaleType -> Int -> List ( Int, Int, Int )
+majorBoxShape scale b =
+    case scale of
+        Dorian ->
+            dorianBoxShape b
+
+        _ ->
+            ionianBoxShape b
+
+
+{-| Ionian-shape major scale boxes — also used for Aeolian since the two
+modes have the same intervallic structure relative to their pent skeleton. -}
+ionianBoxShape : Int -> List ( Int, Int, Int )
+ionianBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 4 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
+
+        2 ->
+            [ ( 1, 3, 7 ), ( 2, 3, 7 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
+
+        3 ->
+            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 8 ) ]
+
+        4 ->
+            [ ( 1, 7, 10 ), ( 2, 8, 11 ), ( 3, 7, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+
+        5 ->
+            [ ( 1, 10, 14 ), ( 2, 10, 13 ), ( 3, 11, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 14 ) ]
+
+        _ ->
+            []
+
+
+{-| Dorian box shapes from Dean Arnold:
+https://www.deanarnoldguitar.com/post/dorian-scale-patterns-for-guitar -}
+dorianBoxShape : Int -> List ( Int, Int, Int )
+dorianBoxShape b =
     case b of
         1 ->
             [ ( 1, 0, 3 ), ( 2, 1, 3 ), ( 3, 0, 3 ), ( 4, 0, 3 ), ( 5, 1, 3 ), ( 6, 0, 3 ) ]
@@ -746,7 +780,7 @@ drawOneMajorBox model b octave =
         positions =
             List.map
                 (\( s, lo, hi ) -> ( s, lo + shift, hi + shift ))
-                (majorBoxShape b)
+                (majorBoxShape model.scale b)
 
         inRange =
             List.any
@@ -787,8 +821,8 @@ drawOverlapStripe model ( b1, b2 ) octave =
                 (\( s, lo1, hi1 ) ( _, lo2, hi2 ) ->
                     ( s, max lo1 lo2 + shift, min hi1 hi2 + shift )
                 )
-                (majorBoxShape b1)
-                (majorBoxShape b2)
+                (majorBoxShape model.scale b1)
+                (majorBoxShape model.scale b2)
 
         hasRealOverlap =
             List.any (\( _, lo, hi ) -> hi > lo) overlapPositions
@@ -842,8 +876,8 @@ drawWrapOverlap model octave =
                     , min (hi5 + shift5) (hi1 + shift1)
                     )
                 )
-                (majorBoxShape 5)
-                (majorBoxShape 1)
+                (majorBoxShape model.scale 5)
+                (majorBoxShape model.scale 1)
 
         hasRealOverlap =
             List.any (\( _, lo, hi ) -> hi > lo) overlapPositions
