@@ -1,4 +1,4 @@
-module BoxShapeTests exposing (suite)
+module BoxShapeTests exposing (overlapCoverage, suite)
 
 {-| Validates that every box-shape edge (the per-string `lo` and `hi`
 relative-fret values returned by `majorBoxShape`) actually falls on a note
@@ -135,3 +135,167 @@ suite : Test
 suite =
     describe "Box shape edges land on scale notes"
         (List.map testsForScale modesWithMajorShapes)
+
+
+
+-- Coverage test: where 2+ solid boxes cover a position, an overlap
+-- stripe must cover it too (with non-zero width on that string).
+
+
+fretboardFrets : List Int
+fretboardFrets =
+    List.range 0 22
+
+
+octaves : List Int
+octaves =
+    [ -1, 0, 1 ]
+
+
+rangeOnString : List ( Int, Int, Int ) -> Int -> Maybe ( Int, Int )
+rangeOnString shape s =
+    shape
+        |> List.filter (\( s2, _, _ ) -> s2 == s)
+        |> List.head
+        |> Maybe.map (\( _, lo, hi ) -> ( lo, hi ))
+
+
+solidBoxCount : ScaleType -> Int -> Int -> Int -> Int
+solidBoxCount scale root s f =
+    let
+        fRoot =
+            fRootFor scale root
+    in
+    [ 1, 2, 3, 4, 5 ]
+        |> List.concatMap
+            (\b ->
+                case rangeOnString (majorBoxShape scale b) s of
+                    Just ( lo, hi ) ->
+                        octaves
+                            |> List.filter
+                                (\o ->
+                                    let
+                                        shift =
+                                            fRoot + 12 * o
+                                    in
+                                    lo + shift <= f && f <= hi + shift
+                                )
+
+                    Nothing ->
+                        []
+            )
+        |> List.length
+
+
+overlapStripeCount : ScaleType -> Int -> Int -> Int -> Int
+overlapStripeCount scale root s f =
+    let
+        fRoot =
+            fRootFor scale root
+
+        adjacent =
+            [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
+
+        adjCovers ( b1, b2 ) o =
+            case ( rangeOnString (majorBoxShape scale b1) s, rangeOnString (majorBoxShape scale b2) s ) of
+                ( Just ( lo1, hi1 ), Just ( lo2, hi2 ) ) ->
+                    let
+                        shift =
+                            fRoot + 12 * o
+
+                        ovlpLo =
+                            max lo1 lo2 + shift
+
+                        ovlpHi =
+                            min hi1 hi2 + shift
+                    in
+                    ovlpHi >= ovlpLo && ovlpLo <= f && f <= ovlpHi
+
+                _ ->
+                    False
+
+        wrapCovers o =
+            case ( rangeOnString (majorBoxShape scale 5) s, rangeOnString (majorBoxShape scale 1) s ) of
+                ( Just ( lo5, hi5 ), Just ( lo1, hi1 ) ) ->
+                    let
+                        shift5 =
+                            fRoot + 12 * o
+
+                        shift1 =
+                            fRoot + 12 * (o + 1)
+
+                        ovlpLo =
+                            max (lo5 + shift5) (lo1 + shift1)
+
+                        ovlpHi =
+                            min (hi5 + shift5) (hi1 + shift1)
+                    in
+                    ovlpHi >= ovlpLo && ovlpLo <= f && f <= ovlpHi
+
+                _ ->
+                    False
+
+        adjCount =
+            adjacent
+                |> List.concatMap (\pair -> List.filter (adjCovers pair) octaves)
+                |> List.length
+
+        wrapCount =
+            octaves
+                |> List.filter wrapCovers
+                |> List.length
+    in
+    adjCount + wrapCount
+
+
+coverageForScale : ScaleType -> Test
+coverageForScale scale =
+    test ("Solid overlaps covered by stripe in " ++ scaleName scale) <|
+        \_ ->
+            let
+                violations =
+                    List.concatMap
+                        (\s ->
+                            List.filterMap
+                                (\f ->
+                                    let
+                                        solids =
+                                            solidBoxCount scale testRoot s f
+
+                                        stripes =
+                                            overlapStripeCount scale testRoot s f
+                                    in
+                                    if solids > 1 && stripes == 0 then
+                                        Just
+                                            ("S"
+                                                ++ String.fromInt s
+                                                ++ " fret "
+                                                ++ String.fromInt f
+                                                ++ " covered by "
+                                                ++ String.fromInt solids
+                                                ++ " solid boxes, no overlap stripe"
+                                            )
+
+                                    else
+                                        Nothing
+                                )
+                                fretboardFrets
+                        )
+                        (List.range 1 6)
+            in
+            if List.isEmpty violations then
+                Expect.pass
+
+            else
+                Expect.fail
+                    ("Found "
+                        ++ String.fromInt (List.length violations)
+                        ++ " positions where solid boxes overlap without a stripe:\n  "
+                        ++ String.join "\n  " violations
+                    )
+
+
+overlapCoverage : Test
+overlapCoverage =
+    describe "Where 2+ solid boxes overlap, an overlap stripe must cover the same position"
+        (List.map coverageForScale modesWithMajorShapes)

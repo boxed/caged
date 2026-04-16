@@ -6176,6 +6176,140 @@ var $elm$core$Basics$min = F2(
 	function (x, y) {
 		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
+var $author$project$Main$overlapPolygonPoints = function (positions) {
+	var yMid = F2(
+		function (sa, sb) {
+			return ($author$project$Main$stringY(sa) + $author$project$Main$stringY(sb)) / 2;
+		});
+	var widened = function (_v8) {
+		var s = _v8.a;
+		var lo = _v8.b;
+		var hi = _v8.c;
+		return _Utils_eq(hi, lo) ? _Utils_Tuple3(s, lo - 0.5, hi + 0.5) : _Utils_Tuple3(s, lo, hi);
+	};
+	var wp = A2($elm$core$List$map, widened, positions);
+	var pad = $author$project$Main$stringSpacing * 0.55;
+	var fretX = function (f) {
+		return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5));
+	};
+	var byString = function (s) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			_Utils_Tuple3(s, 0, 0),
+			$elm$core$List$head(
+				A2(
+					$elm$core$List$filter,
+					function (_v7) {
+						var str = _v7.a;
+						return _Utils_eq(str, s);
+					},
+					wp)));
+	};
+	var _v0 = byString(6);
+	var lo6 = _v0.b;
+	var hi6 = _v0.c;
+	var _v1 = byString(5);
+	var lo5 = _v1.b;
+	var hi5 = _v1.c;
+	var _v2 = byString(4);
+	var lo4 = _v2.b;
+	var hi4 = _v2.c;
+	var _v3 = byString(3);
+	var lo3 = _v3.b;
+	var hi3 = _v3.c;
+	var _v4 = byString(2);
+	var lo2 = _v4.b;
+	var hi2 = _v4.c;
+	var _v5 = byString(1);
+	var lo1 = _v5.b;
+	var hi1 = _v5.c;
+	var verts = _List_fromArray(
+		[
+			_Utils_Tuple2(
+			fretX(lo1),
+			$author$project$Main$stringY(1) - pad),
+			_Utils_Tuple2(
+			fretX(hi1),
+			$author$project$Main$stringY(1) - pad),
+			_Utils_Tuple2(
+			fretX(hi1),
+			A2(yMid, 1, 2)),
+			_Utils_Tuple2(
+			fretX(hi2),
+			A2(yMid, 1, 2)),
+			_Utils_Tuple2(
+			fretX(hi2),
+			A2(yMid, 2, 3)),
+			_Utils_Tuple2(
+			fretX(hi3),
+			A2(yMid, 2, 3)),
+			_Utils_Tuple2(
+			fretX(hi3),
+			A2(yMid, 3, 4)),
+			_Utils_Tuple2(
+			fretX(hi4),
+			A2(yMid, 3, 4)),
+			_Utils_Tuple2(
+			fretX(hi4),
+			A2(yMid, 4, 5)),
+			_Utils_Tuple2(
+			fretX(hi5),
+			A2(yMid, 4, 5)),
+			_Utils_Tuple2(
+			fretX(hi5),
+			A2(yMid, 5, 6)),
+			_Utils_Tuple2(
+			fretX(hi6),
+			A2(yMid, 5, 6)),
+			_Utils_Tuple2(
+			fretX(hi6),
+			$author$project$Main$stringY(6) + pad),
+			_Utils_Tuple2(
+			fretX(lo6),
+			$author$project$Main$stringY(6) + pad),
+			_Utils_Tuple2(
+			fretX(lo6),
+			A2(yMid, 5, 6)),
+			_Utils_Tuple2(
+			fretX(lo5),
+			A2(yMid, 5, 6)),
+			_Utils_Tuple2(
+			fretX(lo5),
+			A2(yMid, 4, 5)),
+			_Utils_Tuple2(
+			fretX(lo4),
+			A2(yMid, 4, 5)),
+			_Utils_Tuple2(
+			fretX(lo4),
+			A2(yMid, 3, 4)),
+			_Utils_Tuple2(
+			fretX(lo3),
+			A2(yMid, 3, 4)),
+			_Utils_Tuple2(
+			fretX(lo3),
+			A2(yMid, 2, 3)),
+			_Utils_Tuple2(
+			fretX(lo2),
+			A2(yMid, 2, 3)),
+			_Utils_Tuple2(
+			fretX(lo2),
+			A2(yMid, 1, 2)),
+			_Utils_Tuple2(
+			fretX(lo1),
+			A2(yMid, 1, 2))
+		]);
+	return A2(
+		$elm$core$String$join,
+		' ',
+		A2(
+			$elm$core$List$map,
+			function (_v6) {
+				var x = _v6.a;
+				var y = _v6.b;
+				return $elm$core$String$fromFloat(x) + (',' + $elm$core$String$fromFloat(y));
+			},
+			verts));
+};
 var $author$project$Main$drawOverlapStripe = F3(
 	function (model, _v0, octave) {
 		var b1 = _v0.a;
@@ -6203,7 +6337,7 @@ var $author$project$Main$drawOverlapStripe = F3(
 			function (_v2) {
 				var lo = _v2.b;
 				var hi = _v2.c;
-				return _Utils_cmp(hi, lo) > 0;
+				return _Utils_cmp(hi, lo) > -1;
 			},
 			overlapPositions);
 		var inRange = A2(
@@ -6220,10 +6354,9 @@ var $author$project$Main$drawOverlapStripe = F3(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$points(
-						$author$project$Main$polygonPoints(overlapPositions)),
+						$author$project$Main$overlapPolygonPoints(overlapPositions)),
 						$elm$svg$Svg$Attributes$fill(
-						'url(#ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + ($elm$core$String$fromInt(b2) + ')')))),
-						$elm$svg$Svg$Attributes$fillOpacity('0.55')
+						'url(#ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + ($elm$core$String$fromInt(b2) + ')'))))
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -6253,7 +6386,7 @@ var $author$project$Main$drawWrapOverlap = F2(
 			function (_v1) {
 				var lo = _v1.b;
 				var hi = _v1.c;
-				return _Utils_cmp(hi, lo) > 0;
+				return _Utils_cmp(hi, lo) > -1;
 			},
 			overlapPositions);
 		var inRange = A2(
@@ -6270,9 +6403,8 @@ var $author$project$Main$drawWrapOverlap = F2(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$points(
-						$author$project$Main$polygonPoints(overlapPositions)),
-						$elm$svg$Svg$Attributes$fill('url(#ovlp-5-1)'),
-						$elm$svg$Svg$Attributes$fillOpacity('0.55')
+						$author$project$Main$overlapPolygonPoints(overlapPositions)),
+						$elm$svg$Svg$Attributes$fill('url(#ovlp-5-1)')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -6936,6 +7068,9 @@ var $author$project$Main$overlapStripePattern = function (_v0) {
 	var b2 = _v0.b;
 	var period = 14;
 	var half = period / 2;
+	var blended = function (b) {
+		return 'color-mix(in srgb, ' + ($author$project$Main$boxColor(b) + ' 55%, var(--bg) 45%)');
+	};
 	return A2(
 		$elm$svg$Svg$pattern,
 		_List_fromArray(
@@ -6962,7 +7097,7 @@ var $author$project$Main$overlapStripePattern = function (_v0) {
 						$elm$svg$Svg$Attributes$height(
 						$elm$core$String$fromFloat(period)),
 						$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$boxColor(b1))
+						blended(b1))
 					]),
 				_List_Nil),
 				A2(
@@ -6977,7 +7112,7 @@ var $author$project$Main$overlapStripePattern = function (_v0) {
 						$elm$svg$Svg$Attributes$height(
 						$elm$core$String$fromFloat(period)),
 						$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$boxColor(b2))
+						blended(b2))
 					]),
 				_List_Nil)
 			]));

@@ -883,7 +883,7 @@ drawOverlapStripe model ( b1, b2 ) octave =
                 (majorBoxShape model.scale b2)
 
         hasRealOverlap =
-            List.any (\( _, lo, hi ) -> hi > lo) overlapPositions
+            List.any (\( _, lo, hi ) -> hi >= lo) overlapPositions
 
         inRange =
             List.any
@@ -895,9 +895,8 @@ drawOverlapStripe model ( b1, b2 ) octave =
     if hasRealOverlap && inRange then
         Just
             (Svg.polygon
-                [ SA.points (polygonPoints overlapPositions)
+                [ SA.points (overlapPolygonPoints overlapPositions)
                 , SA.fill ("url(#ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
-                , SA.fillOpacity "0.55"
                 ]
                 []
             )
@@ -938,7 +937,7 @@ drawWrapOverlap model octave =
                 (majorBoxShape model.scale 1)
 
         hasRealOverlap =
-            List.any (\( _, lo, hi ) -> hi > lo) overlapPositions
+            List.any (\( _, lo, hi ) -> hi >= lo) overlapPositions
 
         inRange =
             List.any
@@ -950,9 +949,8 @@ drawWrapOverlap model octave =
     if hasRealOverlap && inRange then
         Just
             (Svg.polygon
-                [ SA.points (polygonPoints overlapPositions)
+                [ SA.points (overlapPolygonPoints overlapPositions)
                 , SA.fill "url(#ovlp-5-1)"
-                , SA.fillOpacity "0.55"
                 ]
                 []
             )
@@ -966,6 +964,12 @@ overlapStripePattern ( b1, b2 ) =
     let
         period = 14
         half = period / 2
+
+        -- Pre-blend the box color with the page background at the same ratio
+        -- as solid boxes (fill-opacity 0.55), so opaque stripes visually
+        -- match adjacent solid box regions.
+        blended b =
+            "color-mix(in srgb, " ++ boxColor b ++ " 55%, var(--bg) 45%)"
     in
     Svg.pattern
         [ SA.id ("ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2)
@@ -979,7 +983,7 @@ overlapStripePattern ( b1, b2 ) =
             , SA.y "0"
             , SA.width (String.fromFloat half)
             , SA.height (String.fromFloat period)
-            , SA.fill (boxColor b1)
+            , SA.fill (blended b1)
             ]
             []
         , Svg.rect
@@ -987,10 +991,91 @@ overlapStripePattern ( b1, b2 ) =
             , SA.y "0"
             , SA.width (String.fromFloat half)
             , SA.height (String.fromFloat period)
-            , SA.fill (boxColor b2)
+            , SA.fill (blended b2)
             ]
             []
         ]
+
+
+{-| Polygon points for overlap stripes. Same vertex layout as
+`polygonPoints`, but per-string pinch overlaps (lo == hi) are widened to
+span a full fret cell so the stripe is visually present at boundary frets. -}
+overlapPolygonPoints : List ( Int, Int, Int ) -> String
+overlapPolygonPoints positions =
+    let
+        pad =
+            stringSpacing * 0.55
+
+        widened ( s, lo, hi ) =
+            if hi == lo then
+                ( s, toFloat lo - 0.5, toFloat hi + 0.5 )
+
+            else
+                ( s, toFloat lo, toFloat hi )
+
+        wp =
+            List.map widened positions
+
+        byString s =
+            wp
+                |> List.filter (\( str, _, _ ) -> str == s)
+                |> List.head
+                |> Maybe.withDefault ( s, 0, 0 )
+
+        ( _, lo1, hi1 ) =
+            byString 1
+
+        ( _, lo2, hi2 ) =
+            byString 2
+
+        ( _, lo3, hi3 ) =
+            byString 3
+
+        ( _, lo4, hi4 ) =
+            byString 4
+
+        ( _, lo5, hi5 ) =
+            byString 5
+
+        ( _, lo6, hi6 ) =
+            byString 6
+
+        fretX f =
+            leftMargin + nutWidth + fretWidth * (f - 0.5)
+
+        yMid sa sb =
+            (stringY sa + stringY sb) / 2
+
+        verts =
+            [ ( fretX lo1, stringY 1 - pad )
+            , ( fretX hi1, stringY 1 - pad )
+            , ( fretX hi1, yMid 1 2 )
+            , ( fretX hi2, yMid 1 2 )
+            , ( fretX hi2, yMid 2 3 )
+            , ( fretX hi3, yMid 2 3 )
+            , ( fretX hi3, yMid 3 4 )
+            , ( fretX hi4, yMid 3 4 )
+            , ( fretX hi4, yMid 4 5 )
+            , ( fretX hi5, yMid 4 5 )
+            , ( fretX hi5, yMid 5 6 )
+            , ( fretX hi6, yMid 5 6 )
+            , ( fretX hi6, stringY 6 + pad )
+            , ( fretX lo6, stringY 6 + pad )
+            , ( fretX lo6, yMid 5 6 )
+            , ( fretX lo5, yMid 5 6 )
+            , ( fretX lo5, yMid 4 5 )
+            , ( fretX lo4, yMid 4 5 )
+            , ( fretX lo4, yMid 3 4 )
+            , ( fretX lo3, yMid 3 4 )
+            , ( fretX lo3, yMid 2 3 )
+            , ( fretX lo2, yMid 2 3 )
+            , ( fretX lo2, yMid 1 2 )
+            , ( fretX lo1, yMid 1 2 )
+            ]
+    in
+    verts
+        |> List.map (\( x, y ) -> String.fromFloat x ++ "," ++ String.fromFloat y)
+        |> String.join " "
 
 
 drawOneBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
