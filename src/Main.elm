@@ -857,10 +857,6 @@ drawOneMajorBox model b octave =
                 [ SA.points (polygonPoints positions)
                 , SA.fill (boxColor b)
                 , SA.fillOpacity "0.55"
-                , SA.stroke (boxColor b)
-                , SA.strokeOpacity "0.8"
-                , SA.strokeWidth "1"
-                , SA.strokeLinejoin "round"
                 ]
                 []
             )
@@ -901,7 +897,7 @@ drawOverlapStripe model ( b1, b2 ) octave =
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
                 , SA.fill ("url(#ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
-                , SA.fillOpacity "0.9"
+                , SA.fillOpacity "0.55"
                 ]
                 []
             )
@@ -956,7 +952,7 @@ drawWrapOverlap model octave =
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
                 , SA.fill "url(#ovlp-5-1)"
-                , SA.fillOpacity "0.9"
+                , SA.fillOpacity "0.55"
                 ]
                 []
             )
@@ -1024,10 +1020,6 @@ drawOneBox model b octave =
                 [ SA.points (polygonPoints positions)
                 , SA.fill (boxColor b)
                 , SA.fillOpacity "0.45"
-                , SA.stroke (boxColor b)
-                , SA.strokeOpacity "0.85"
-                , SA.strokeWidth "1"
-                , SA.strokeLinejoin "round"
                 ]
                 []
             )

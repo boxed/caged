@@ -5984,10 +5984,6 @@ var $author$project$Main$rootFret = function (model) {
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 	}
 };
-var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
-var $elm$svg$Svg$Attributes$strokeLinejoin = _VirtualDom_attribute('stroke-linejoin');
-var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
-var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $author$project$Main$drawOneBox = F3(
 	function (model, b, octave) {
 		var fRoot = $author$project$Main$rootFret(model);
@@ -6018,12 +6014,7 @@ var $author$project$Main$drawOneBox = F3(
 						$author$project$Main$polygonPoints(positions)),
 						$elm$svg$Svg$Attributes$fill(
 						$author$project$Main$boxColor(b)),
-						$elm$svg$Svg$Attributes$fillOpacity('0.45'),
-						$elm$svg$Svg$Attributes$stroke(
-						$author$project$Main$boxColor(b)),
-						$elm$svg$Svg$Attributes$strokeOpacity('0.85'),
-						$elm$svg$Svg$Attributes$strokeWidth('1'),
-						$elm$svg$Svg$Attributes$strokeLinejoin('round')
+						$elm$svg$Svg$Attributes$fillOpacity('0.45')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -6177,12 +6168,7 @@ var $author$project$Main$drawOneMajorBox = F3(
 						$author$project$Main$polygonPoints(positions)),
 						$elm$svg$Svg$Attributes$fill(
 						$author$project$Main$boxColor(b)),
-						$elm$svg$Svg$Attributes$fillOpacity('0.55'),
-						$elm$svg$Svg$Attributes$stroke(
-						$author$project$Main$boxColor(b)),
-						$elm$svg$Svg$Attributes$strokeOpacity('0.8'),
-						$elm$svg$Svg$Attributes$strokeWidth('1'),
-						$elm$svg$Svg$Attributes$strokeLinejoin('round')
+						$elm$svg$Svg$Attributes$fillOpacity('0.55')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -6237,7 +6223,7 @@ var $author$project$Main$drawOverlapStripe = F3(
 						$author$project$Main$polygonPoints(overlapPositions)),
 						$elm$svg$Svg$Attributes$fill(
 						'url(#ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + ($elm$core$String$fromInt(b2) + ')')))),
-						$elm$svg$Svg$Attributes$fillOpacity('0.9')
+						$elm$svg$Svg$Attributes$fillOpacity('0.55')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -6286,7 +6272,7 @@ var $author$project$Main$drawWrapOverlap = F2(
 						$elm$svg$Svg$Attributes$points(
 						$author$project$Main$polygonPoints(overlapPositions)),
 						$elm$svg$Svg$Attributes$fill('url(#ovlp-5-1)'),
-						$elm$svg$Svg$Attributes$fillOpacity('0.9')
+						$elm$svg$Svg$Attributes$fillOpacity('0.55')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -6347,7 +6333,9 @@ var $author$project$Main$fretLineX = function (f) {
 };
 var $author$project$Main$fretboardHeight = $author$project$Main$stringSpacing * 5;
 var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$svg$Svg$Attributes$strokeLinecap = _VirtualDom_attribute('stroke-linecap');
+var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
 var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
 var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
