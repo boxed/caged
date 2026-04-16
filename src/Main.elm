@@ -895,7 +895,7 @@ drawOverlapStripe model ( b1, b2 ) octave =
     if hasRealOverlap && inRange then
         Just
             (Svg.polygon
-                [ SA.points (overlapPolygonPoints overlapPositions)
+                [ SA.points (polygonPoints overlapPositions)
                 , SA.fill ("url(#ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
                 ]
                 []
@@ -949,7 +949,7 @@ drawWrapOverlap model octave =
     if hasRealOverlap && inRange then
         Just
             (Svg.polygon
-                [ SA.points (overlapPolygonPoints overlapPositions)
+                [ SA.points (polygonPoints overlapPositions)
                 , SA.fill "url(#ovlp-5-1)"
                 ]
                 []
@@ -997,85 +997,6 @@ overlapStripePattern ( b1, b2 ) =
         ]
 
 
-{-| Polygon points for overlap stripes. Same vertex layout as
-`polygonPoints`, but per-string pinch overlaps (lo == hi) are widened to
-span a full fret cell so the stripe is visually present at boundary frets. -}
-overlapPolygonPoints : List ( Int, Int, Int ) -> String
-overlapPolygonPoints positions =
-    let
-        pad =
-            stringSpacing * 0.55
-
-        widened ( s, lo, hi ) =
-            if hi == lo then
-                ( s, toFloat lo - 0.5, toFloat hi + 0.5 )
-
-            else
-                ( s, toFloat lo, toFloat hi )
-
-        wp =
-            List.map widened positions
-
-        byString s =
-            wp
-                |> List.filter (\( str, _, _ ) -> str == s)
-                |> List.head
-                |> Maybe.withDefault ( s, 0, 0 )
-
-        ( _, lo1, hi1 ) =
-            byString 1
-
-        ( _, lo2, hi2 ) =
-            byString 2
-
-        ( _, lo3, hi3 ) =
-            byString 3
-
-        ( _, lo4, hi4 ) =
-            byString 4
-
-        ( _, lo5, hi5 ) =
-            byString 5
-
-        ( _, lo6, hi6 ) =
-            byString 6
-
-        fretX f =
-            leftMargin + nutWidth + fretWidth * (f - 0.5)
-
-        yMid sa sb =
-            (stringY sa + stringY sb) / 2
-
-        verts =
-            [ ( fretX lo1, stringY 1 - pad )
-            , ( fretX hi1, stringY 1 - pad )
-            , ( fretX hi1, yMid 1 2 )
-            , ( fretX hi2, yMid 1 2 )
-            , ( fretX hi2, yMid 2 3 )
-            , ( fretX hi3, yMid 2 3 )
-            , ( fretX hi3, yMid 3 4 )
-            , ( fretX hi4, yMid 3 4 )
-            , ( fretX hi4, yMid 4 5 )
-            , ( fretX hi5, yMid 4 5 )
-            , ( fretX hi5, yMid 5 6 )
-            , ( fretX hi6, yMid 5 6 )
-            , ( fretX hi6, stringY 6 + pad )
-            , ( fretX lo6, stringY 6 + pad )
-            , ( fretX lo6, yMid 5 6 )
-            , ( fretX lo5, yMid 5 6 )
-            , ( fretX lo5, yMid 4 5 )
-            , ( fretX lo4, yMid 4 5 )
-            , ( fretX lo4, yMid 3 4 )
-            , ( fretX lo3, yMid 3 4 )
-            , ( fretX lo3, yMid 2 3 )
-            , ( fretX lo2, yMid 2 3 )
-            , ( fretX lo2, yMid 1 2 )
-            , ( fretX lo1, yMid 1 2 )
-            ]
-    in
-    verts
-        |> List.map (\( x, y ) -> String.fromFloat x ++ "," ++ String.fromFloat y)
-        |> String.join " "
 
 
 drawOneBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -1113,6 +1034,11 @@ drawOneBox model b octave =
         Nothing
 
 
+{-| Polygon points for a per-string `(string, lo_fret, hi_fret)` shape.
+Edges are widened by half a fret on each side so they land at fret-line
+positions (between cells) — the boundary scale notes at `lo` and `hi`
+end up *inside* the polygon, not on its edge. This applies to both solid
+boxes and stripe overlaps for visual consistency. -}
 polygonPoints : List ( Int, Int, Int ) -> String
 polygonPoints positions =
     let
@@ -1125,41 +1051,54 @@ polygonPoints positions =
                 |> List.head
                 |> Maybe.withDefault ( s, 0, 0 )
 
-        ( _, lo1, hi1 ) = byString 1
-        ( _, lo2, hi2 ) = byString 2
-        ( _, lo3, hi3 ) = byString 3
-        ( _, lo4, hi4 ) = byString 4
-        ( _, lo5, hi5 ) = byString 5
-        ( _, lo6, hi6 ) = byString 6
+        ( _, lo1i, hi1i ) = byString 1
+        ( _, lo2i, hi2i ) = byString 2
+        ( _, lo3i, hi3i ) = byString 3
+        ( _, lo4i, hi4i ) = byString 4
+        ( _, lo5i, hi5i ) = byString 5
+        ( _, lo6i, hi6i ) = byString 6
+
+        widenLo n = toFloat n - 0.5
+        widenHi n = toFloat n + 0.5
+
+        ( lo1, hi1 ) = ( widenLo lo1i, widenHi hi1i )
+        ( lo2, hi2 ) = ( widenLo lo2i, widenHi hi2i )
+        ( lo3, hi3 ) = ( widenLo lo3i, widenHi hi3i )
+        ( lo4, hi4 ) = ( widenLo lo4i, widenHi hi4i )
+        ( lo5, hi5 ) = ( widenLo lo5i, widenHi hi5i )
+        ( lo6, hi6 ) = ( widenLo lo6i, widenHi hi6i )
+
+        fretX f =
+            leftMargin + nutWidth + fretWidth * (f - 0.5)
 
         yMid sa sb =
             (stringY sa + stringY sb) / 2
 
         verts =
-            [ ( fretCenterX lo1, stringY 1 - pad )
-            , ( fretCenterX hi1, stringY 1 - pad )
-            , ( fretCenterX hi1, yMid 1 2 )
-            , ( fretCenterX hi2, yMid 1 2 )
-            , ( fretCenterX hi2, yMid 2 3 )
-            , ( fretCenterX hi3, yMid 2 3 )
-            , ( fretCenterX hi3, yMid 3 4 )
-            , ( fretCenterX hi4, yMid 3 4 )
-            , ( fretCenterX hi4, yMid 4 5 )
-            , ( fretCenterX hi5, yMid 4 5 )
-            , ( fretCenterX hi5, yMid 5 6 )
-            , ( fretCenterX hi6, yMid 5 6 )
-            , ( fretCenterX hi6, stringY 6 + pad )
-            , ( fretCenterX lo6, stringY 6 + pad )
-            , ( fretCenterX lo6, yMid 5 6 )
-            , ( fretCenterX lo5, yMid 5 6 )
-            , ( fretCenterX lo5, yMid 4 5 )
-            , ( fretCenterX lo4, yMid 4 5 )
-            , ( fretCenterX lo4, yMid 3 4 )
-            , ( fretCenterX lo3, yMid 3 4 )
-            , ( fretCenterX lo3, yMid 2 3 )
-            , ( fretCenterX lo2, yMid 2 3 )
-            , ( fretCenterX lo2, yMid 1 2 )
-            , ( fretCenterX lo1, yMid 1 2 )
+            [ ( fretX lo1, stringY 1 - pad )
+            , ( fretX hi1, stringY 1 - pad )
+            , ( fretX hi1, yMid 1 2 )
+            , ( fretX hi2, yMid 1 2 )
+            , ( fretX hi2, yMid 2 3 )
+            , ( fretX hi3, yMid 2 3 )
+            , ( fretX hi3, yMid 3 4 )
+            , ( fretX hi4, yMid 3 4 )
+            , ( fretX hi4, yMid 4 5 )
+            , ( fretX hi5, yMid 4 5 )
+            , ( fretX hi5, yMid 5 6 )
+            , ( fretX hi6, yMid 5 6 )
+            , ( fretX hi6, stringY 6 + pad )
+            , ( fretX lo6, stringY 6 + pad )
+            , ( fretX lo6, yMid 5 6 )
+            , ( fretX lo5, yMid 5 6 )
+            , ( fretX lo5, yMid 4 5 )
+            , ( fretX lo4, yMid 4 5 )
+            , ( fretX lo4, yMid 3 4 )
+            , ( fretX lo3, yMid 3 4 )
+            , ( fretX lo3, yMid 2 3 )
+            , ( fretX lo2, yMid 2 3 )
+            , ( fretX lo2, yMid 1 2 )
+            , ( fretX lo1, yMid 1 2 )
             ]
     in
     verts

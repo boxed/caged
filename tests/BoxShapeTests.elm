@@ -1,4 +1,4 @@
-module BoxShapeTests exposing (overlapCoverage, suite)
+module BoxShapeTests exposing (overlapCoverage, stripeEdges, suite)
 
 {-| Validates that every box-shape edge (the per-string `lo` and `hi`
 relative-fret values returned by `majorBoxShape`) actually falls on a note
@@ -299,3 +299,113 @@ overlapCoverage : Test
 overlapCoverage =
     describe "Where 2+ solid boxes overlap, an overlap stripe must cover the same position"
         (List.map coverageForScale modesWithMajorShapes)
+
+
+
+-- Stripe-edge test: every per-string lo/hi value of every stripe overlap
+-- polygon must be a scale note on its string. polygonPoints widens edges
+-- by half a fret in either direction, so this check ensures the rendered
+-- polygon ends "between two bands, underneath a note".
+
+
+stripeEdgeTest : ScaleType -> String -> Int -> Int -> ( () -> Expect.Expectation )
+stripeEdgeTest scale label s fRel =
+    \_ ->
+        let
+            absFret =
+                fRootFor scale testRoot + fRel
+
+            note =
+                noteAt s absFret
+
+            notes =
+                scaleNotes scale testRoot
+        in
+        if List.member note notes then
+            Expect.pass
+
+        else
+            Expect.fail
+                (label
+                    ++ " edge fRel "
+                    ++ String.fromInt fRel
+                    ++ " (abs "
+                    ++ String.fromInt absFret
+                    ++ ", pitch class "
+                    ++ String.fromInt note
+                    ++ ") is not a scale note"
+                )
+
+
+adjacentStripeEdges : ScaleType -> ( Int, Int ) -> List Test
+adjacentStripeEdges scale ( b1, b2 ) =
+    List.map2 Tuple.pair (majorBoxShape scale b1) (majorBoxShape scale b2)
+        |> List.concatMap
+            (\( ( s, lo1, hi1 ), ( _, lo2, hi2 ) ) ->
+                let
+                    ovlpLo =
+                        max lo1 lo2
+
+                    ovlpHi =
+                        min hi1 hi2
+
+                    label =
+                        scaleName scale
+                            ++ " stripe "
+                            ++ String.fromInt b1
+                            ++ "-"
+                            ++ String.fromInt b2
+                            ++ " S"
+                            ++ String.fromInt s
+                in
+                if ovlpHi >= ovlpLo then
+                    [ test (label ++ " lo") (stripeEdgeTest scale (label ++ " lo") s ovlpLo)
+                    , test (label ++ " hi") (stripeEdgeTest scale (label ++ " hi") s ovlpHi)
+                    ]
+
+                else
+                    []
+            )
+
+
+wrapStripeEdges : ScaleType -> List Test
+wrapStripeEdges scale =
+    List.map2 Tuple.pair (majorBoxShape scale 5) (majorBoxShape scale 1)
+        |> List.concatMap
+            (\( ( s, lo5, hi5 ), ( _, lo1, hi1 ) ) ->
+                let
+                    -- Box 5 at octave N, box 1 at octave N+1. Relative to
+                    -- a single F_root, box 1's positions sit 12 frets up.
+                    ovlpLo =
+                        max lo5 (lo1 + 12)
+
+                    ovlpHi =
+                        min hi5 (hi1 + 12)
+
+                    label =
+                        scaleName scale
+                            ++ " wrap stripe 5-1 S"
+                            ++ String.fromInt s
+                in
+                if ovlpHi >= ovlpLo then
+                    [ test (label ++ " lo") (stripeEdgeTest scale (label ++ " lo") s ovlpLo)
+                    , test (label ++ " hi") (stripeEdgeTest scale (label ++ " hi") s ovlpHi)
+                    ]
+
+                else
+                    []
+            )
+
+
+stripeEdgesForScale : ScaleType -> Test
+stripeEdgesForScale scale =
+    describe (scaleName scale)
+        (List.concatMap (adjacentStripeEdges scale) [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
+            ++ wrapStripeEdges scale
+        )
+
+
+stripeEdges : Test
+stripeEdges =
+    describe "Stripe overlap edges land on scale notes (so polygons end at fret lines underneath notes)"
+        (List.map stripeEdgesForScale modesWithMajorShapes)
