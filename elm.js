@@ -6086,7 +6086,7 @@ var $author$project$Main$ionianBoxShape = function (b) {
 			return _List_fromArray(
 				[
 					_Utils_Tuple3(1, 7, 10),
-					_Utils_Tuple3(2, 8, 11),
+					_Utils_Tuple3(2, 7, 10),
 					_Utils_Tuple3(3, 7, 11),
 					_Utils_Tuple3(4, 7, 10),
 					_Utils_Tuple3(5, 7, 10),

@@ -1,4 +1,10 @@
-module Main exposing (main)
+module Main exposing
+    ( ScaleType(..)
+    , main
+    , majorBoxShape
+    , noteAt
+    , scaleIntervals
+    )
 
 import Browser
 import Browser.Navigation as Nav
@@ -426,7 +432,7 @@ ionianBoxShape b =
             [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 8 ) ]
 
         4 ->
-            [ ( 1, 7, 10 ), ( 2, 8, 11 ), ( 3, 7, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+            [ ( 1, 7, 10 ), ( 2, 7, 10 ), ( 3, 7, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
 
         5 ->
             [ ( 1, 10, 14 ), ( 2, 10, 13 ), ( 3, 11, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 14 ) ]
