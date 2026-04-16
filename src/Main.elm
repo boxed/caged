@@ -722,8 +722,15 @@ drawBoxRegions model =
 
             else
                 []
+
+        wrapOverlaps =
+            if usesMajorBoxShapes model.scale then
+                List.filterMap (drawWrapOverlap model) octaves
+
+            else
+                []
     in
-    solids ++ overlaps
+    solids ++ overlaps ++ wrapOverlaps
 
 
 drawOneMajorBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -809,7 +816,56 @@ drawOverlapStripe model ( b1, b2 ) octave =
 stripePatternDefs : Svg.Svg Msg
 stripePatternDefs =
     Svg.defs []
-        (List.map overlapStripePattern [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ])
+        (List.map overlapStripePattern
+            [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ), ( 5, 1 ) ]
+        )
+
+
+drawWrapOverlap : Model -> Int -> Maybe (Svg.Svg Msg)
+drawWrapOverlap model octave =
+    let
+        fRoot =
+            rootFret model
+
+        shift5 =
+            fRoot + 12 * octave
+
+        shift1 =
+            fRoot + 12 * (octave + 1)
+
+        overlapPositions =
+            List.map2
+                (\( s, lo5, hi5 ) ( _, lo1, hi1 ) ->
+                    ( s
+                    , max (lo5 + shift5) (lo1 + shift1)
+                    , min (hi5 + shift5) (hi1 + shift1)
+                    )
+                )
+                (majorBoxShape 5)
+                (majorBoxShape 1)
+
+        hasRealOverlap =
+            List.any (\( _, lo, hi ) -> hi > lo) overlapPositions
+
+        inRange =
+            List.any
+                (\( _, lo, hi ) ->
+                    (lo >= 0 && lo <= numFrets) || (hi >= 0 && hi <= numFrets)
+                )
+                overlapPositions
+    in
+    if hasRealOverlap && inRange then
+        Just
+            (Svg.polygon
+                [ SA.points (polygonPoints overlapPositions)
+                , SA.fill "url(#ovlp-5-1)"
+                , SA.fillOpacity "0.9"
+                ]
+                []
+            )
+
+    else
+        Nothing
 
 
 overlapStripePattern : ( Int, Int ) -> Svg.Svg Msg

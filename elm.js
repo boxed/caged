@@ -6144,6 +6144,55 @@ var $author$project$Main$drawOverlapStripe = F3(
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
+var $author$project$Main$drawWrapOverlap = F2(
+	function (model, octave) {
+		var fRoot = $author$project$Main$rootFret(model);
+		var shift1 = fRoot + (12 * (octave + 1));
+		var shift5 = fRoot + (12 * octave);
+		var overlapPositions = A3(
+			$elm$core$List$map2,
+			F2(
+				function (_v2, _v3) {
+					var s = _v2.a;
+					var lo5 = _v2.b;
+					var hi5 = _v2.c;
+					var lo1 = _v3.b;
+					var hi1 = _v3.c;
+					return _Utils_Tuple3(
+						s,
+						A2($elm$core$Basics$max, lo5 + shift5, lo1 + shift1),
+						A2($elm$core$Basics$min, hi5 + shift5, hi1 + shift1));
+				}),
+			$author$project$Main$majorBoxShape(5),
+			$author$project$Main$majorBoxShape(1));
+		var hasRealOverlap = A2(
+			$elm$core$List$any,
+			function (_v1) {
+				var lo = _v1.b;
+				var hi = _v1.c;
+				return _Utils_cmp(hi, lo) > 0;
+			},
+			overlapPositions);
+		var inRange = A2(
+			$elm$core$List$any,
+			function (_v0) {
+				var lo = _v0.b;
+				var hi = _v0.c;
+				return ((lo >= 0) && (_Utils_cmp(lo, $author$project$Main$numFrets) < 1)) || ((hi >= 0) && (_Utils_cmp(hi, $author$project$Main$numFrets) < 1));
+			},
+			overlapPositions);
+		return (hasRealOverlap && inRange) ? $elm$core$Maybe$Just(
+			A2(
+				$elm$svg$Svg$polygon,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$points(
+						$author$project$Main$polygonPoints(overlapPositions)),
+						$elm$svg$Svg$Attributes$fill('url(#ovlp-5-1)'),
+						$elm$svg$Svg$Attributes$fillOpacity('0.9')
+					]),
+				_List_Nil)) : $elm$core$Maybe$Nothing;
+	});
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
@@ -6177,6 +6226,10 @@ var $author$project$Main$drawBoxRegions = function (model) {
 				_Utils_Tuple2(3, 4),
 				_Utils_Tuple2(4, 5)
 			])) : _List_Nil;
+	var wrapOverlaps = $author$project$Main$usesMajorBoxShapes(model.scale) ? A2(
+		$elm$core$List$filterMap,
+		$author$project$Main$drawWrapOverlap(model),
+		octaves) : _List_Nil;
 	var drawer = $author$project$Main$usesMajorBoxShapes(model.scale) ? $author$project$Main$drawOneMajorBox : $author$project$Main$drawOneBox;
 	var solids = A2(
 		$elm$core$List$concatMap,
@@ -6188,7 +6241,9 @@ var $author$project$Main$drawBoxRegions = function (model) {
 		},
 		_List_fromArray(
 			[1, 2, 3, 4, 5]));
-	return _Utils_ap(solids, overlaps);
+	return _Utils_ap(
+		solids,
+		_Utils_ap(overlaps, wrapOverlaps));
 };
 var $author$project$Main$fretLineX = function (f) {
 	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
@@ -6853,7 +6908,8 @@ var $author$project$Main$stripePatternDefs = A2(
 				_Utils_Tuple2(1, 2),
 				_Utils_Tuple2(2, 3),
 				_Utils_Tuple2(3, 4),
-				_Utils_Tuple2(4, 5)
+				_Utils_Tuple2(4, 5),
+				_Utils_Tuple2(5, 1)
 			])));
 var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
