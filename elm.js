@@ -5946,7 +5946,7 @@ var $author$project$Main$rootFret = function (model) {
 		case 'Ionian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 		case 'Dorian':
-			return A2($elm$core$Basics$modBy, 12, model.root - 9);
+			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 		default:
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 	}
@@ -6000,21 +6000,21 @@ var $author$project$Main$majorBoxShape = function (b) {
 			return _List_fromArray(
 				[
 					_Utils_Tuple3(1, 0, 3),
-					_Utils_Tuple3(2, 0, 3),
-					_Utils_Tuple3(3, 0, 4),
-					_Utils_Tuple3(4, 0, 4),
-					_Utils_Tuple3(5, 0, 3),
+					_Utils_Tuple3(2, 1, 3),
+					_Utils_Tuple3(3, 0, 3),
+					_Utils_Tuple3(4, 0, 3),
+					_Utils_Tuple3(5, 1, 3),
 					_Utils_Tuple3(6, 0, 3)
 				]);
 		case 2:
 			return _List_fromArray(
 				[
-					_Utils_Tuple3(1, 3, 7),
-					_Utils_Tuple3(2, 3, 7),
-					_Utils_Tuple3(3, 4, 7),
-					_Utils_Tuple3(4, 4, 7),
-					_Utils_Tuple3(5, 3, 7),
-					_Utils_Tuple3(6, 3, 7)
+					_Utils_Tuple3(1, 3, 6),
+					_Utils_Tuple3(2, 3, 6),
+					_Utils_Tuple3(3, 2, 5),
+					_Utils_Tuple3(4, 2, 5),
+					_Utils_Tuple3(5, 3, 5),
+					_Utils_Tuple3(6, 3, 6)
 				]);
 		case 3:
 			return _List_fromArray(
@@ -6022,29 +6022,29 @@ var $author$project$Main$majorBoxShape = function (b) {
 					_Utils_Tuple3(1, 5, 8),
 					_Utils_Tuple3(2, 5, 8),
 					_Utils_Tuple3(3, 5, 9),
-					_Utils_Tuple3(4, 5, 9),
-					_Utils_Tuple3(5, 5, 9),
+					_Utils_Tuple3(4, 5, 8),
+					_Utils_Tuple3(5, 5, 8),
 					_Utils_Tuple3(6, 5, 8)
 				]);
 		case 4:
 			return _List_fromArray(
 				[
-					_Utils_Tuple3(1, 7, 10),
+					_Utils_Tuple3(1, 8, 10),
 					_Utils_Tuple3(2, 8, 11),
-					_Utils_Tuple3(3, 7, 11),
+					_Utils_Tuple3(3, 7, 10),
 					_Utils_Tuple3(4, 7, 10),
 					_Utils_Tuple3(5, 7, 10),
-					_Utils_Tuple3(6, 7, 10)
+					_Utils_Tuple3(6, 8, 10)
 				]);
 		case 5:
 			return _List_fromArray(
 				[
-					_Utils_Tuple3(1, 10, 14),
+					_Utils_Tuple3(1, 10, 13),
 					_Utils_Tuple3(2, 10, 13),
-					_Utils_Tuple3(3, 11, 14),
+					_Utils_Tuple3(3, 10, 14),
 					_Utils_Tuple3(4, 10, 14),
-					_Utils_Tuple3(5, 10, 14),
-					_Utils_Tuple3(6, 10, 14)
+					_Utils_Tuple3(5, 10, 13),
+					_Utils_Tuple3(6, 10, 13)
 				]);
 		default:
 			return _List_Nil;

@@ -271,7 +271,7 @@ rootFret model =
             modBy 12 (model.root - 7)
 
         Dorian ->
-            modBy 12 (model.root - 9)
+            modBy 12 (model.root - 7)
 
         Aeolian ->
             modBy 12 (model.root - 4)
@@ -398,27 +398,28 @@ boxShape b =
             []
 
 
-{-| 5 CAGED positions of the major scale, 3 NPS, anchored at F_root (the
-relative minor of the parent major on low E).
-  1 = G shape, 2 = E shape, 3 = D shape, 4 = C shape, 5 = A shape.
-Adjacent boxes overlap by 1-3 frets per string on shared boundary notes. -}
+{-| 5 patterns of the major scale (modes), per-string fret ranges relative
+to F_root. Derived from Dean Arnold's dorian patterns:
+https://www.deanarnoldguitar.com/post/dorian-scale-patterns-for-guitar
+F_root anchors at the modal root's relative minor on low E (R-7 mod 12).
+Adjacent patterns overlap by 1-2 frets at boundary notes. -}
 majorBoxShape : Int -> List ( Int, Int, Int )
 majorBoxShape b =
     case b of
         1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 4 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
+            [ ( 1, 0, 3 ), ( 2, 1, 3 ), ( 3, 0, 3 ), ( 4, 0, 3 ), ( 5, 1, 3 ), ( 6, 0, 3 ) ]
 
         2 ->
-            [ ( 1, 3, 7 ), ( 2, 3, 7 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
+            [ ( 1, 3, 6 ), ( 2, 3, 6 ), ( 3, 2, 5 ), ( 4, 2, 5 ), ( 5, 3, 5 ), ( 6, 3, 6 ) ]
 
         3 ->
-            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 8 ) ]
+            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 8 ), ( 5, 5, 8 ), ( 6, 5, 8 ) ]
 
         4 ->
-            [ ( 1, 7, 10 ), ( 2, 8, 11 ), ( 3, 7, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+            [ ( 1, 8, 10 ), ( 2, 8, 11 ), ( 3, 7, 10 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 8, 10 ) ]
 
         5 ->
-            [ ( 1, 10, 14 ), ( 2, 10, 13 ), ( 3, 11, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 14 ) ]
+            [ ( 1, 10, 13 ), ( 2, 10, 13 ), ( 3, 10, 14 ), ( 4, 10, 14 ), ( 5, 10, 13 ), ( 6, 10, 13 ) ]
 
         _ ->
             []
