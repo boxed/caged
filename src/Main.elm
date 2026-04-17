@@ -44,6 +44,7 @@ type ScaleType
     | Dorian
     | Aeolian
     | Mixolydian
+    | Phrygian
 
 
 
@@ -173,6 +174,7 @@ scaleSlug s =
         Ionian -> "ionian"
         Aeolian -> "aeolian"
         Mixolydian -> "mixolydian"
+        Phrygian -> "phrygian"
         Dorian -> "dorian"
 
 
@@ -185,6 +187,7 @@ scaleFromSlug s =
         "aeolian" -> Just Aeolian
         "dorian" -> Just Dorian
         "mixolydian" -> Just Mixolydian
+        "phrygian" -> Just Phrygian
         _ -> Nothing
 
 
@@ -284,6 +287,9 @@ scaleIntervals st =
         Mixolydian ->
             [ 0, 2, 4, 5, 7, 9, 10 ]
 
+        Phrygian ->
+            [ 0, 1, 3, 5, 7, 8, 10 ]
+
 
 scaleNotes : Model -> List Int
 scaleNotes model =
@@ -318,6 +324,9 @@ rootFret model =
             modBy 12 (model.root - 4)
 
         Mixolydian ->
+            modBy 12 (model.root - 7)
+
+        Phrygian ->
             modBy 12 (model.root - 7)
 
 
@@ -403,6 +412,7 @@ noteRole model n =
                 Dorian -> 3
                 Aeolian -> 3
                 Mixolydian -> 4
+                Phrygian -> 3
     in
     if interval == 0 then
         Root
@@ -454,6 +464,9 @@ majorBoxShape scale b =
 
         Mixolydian ->
             mixolydianBoxShape b
+
+        Phrygian ->
+            phrygianBoxShape b
 
         _ ->
             ionianBoxShape b
@@ -529,6 +542,28 @@ mixolydianBoxShape b =
             []
 
 
+phrygianBoxShape : Int -> List ( Int, Int, Int )
+phrygianBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 1, 4 ), ( 2, 1, 4 ), ( 3, 0, 3 ), ( 4, 0, 3 ), ( 5, 1, 3 ), ( 6, 1, 4 ) ]
+
+        2 ->
+            [ ( 1, 3, 6 ), ( 2, 3, 6 ), ( 3, 3, 5 ), ( 4, 3, 6 ), ( 5, 3, 6 ), ( 6, 3, 6 ) ]
+
+        3 ->
+            [ ( 1, 6, 8 ), ( 2, 6, 9 ), ( 3, 5, 8 ), ( 4, 5, 8 ), ( 5, 5, 8 ), ( 6, 6, 8 ) ]
+
+        4 ->
+            [ ( 1, 8, 11 ), ( 2, 8, 11 ), ( 3, 7, 10 ), ( 4, 8, 10 ), ( 5, 8, 11 ), ( 6, 8, 11 ) ]
+
+        5 ->
+            [ ( 1, 10, 13 ), ( 2, 9, 13 ), ( 3, 10, 13 ), ( 4, 10, 13 ), ( 5, 10, 13 ), ( 6, 10, 13 ) ]
+
+        _ ->
+            []
+
+
 usesMajorBoxShapes : ScaleType -> Bool
 usesMajorBoxShapes st =
     case st of
@@ -536,6 +571,7 @@ usesMajorBoxShapes st =
         Dorian -> True
         Aeolian -> True
         Mixolydian -> True
+        Phrygian -> True
         _ -> False
 
 
@@ -679,6 +715,7 @@ viewScaleTitle model =
                         Dorian -> "Dorian"
                         Aeolian -> "Aeolian (Natural Minor)"
                         Mixolydian -> "Mixolydian"
+                        Phrygian -> "Phrygian"
                    )
 
         intervalLabels =
@@ -689,6 +726,7 @@ viewScaleTitle model =
                 Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
                 Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
                 Mixolydian -> [ "R", "2", "3", "4", "5", "6", "♭7" ]
+                Phrygian -> [ "R", "♭2", "♭3", "4", "5", "♭6", "♭7" ]
 
         notePairs =
             List.map2
@@ -726,6 +764,7 @@ viewControls model =
             , scaleButton model Aeolian "Aeolian"
             , scaleButton model Dorian "Dorian"
             , scaleButton model Mixolydian "Mixolydian"
+            , scaleButton model Phrygian "Phrygian"
             ]
         ]
 
