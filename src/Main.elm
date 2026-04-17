@@ -43,6 +43,7 @@ type ScaleType
     | Ionian
     | Dorian
     | Aeolian
+    | Mixolydian
 
 
 
@@ -171,6 +172,7 @@ scaleSlug s =
         MajorPent -> "major-pent"
         Ionian -> "ionian"
         Aeolian -> "aeolian"
+        Mixolydian -> "mixolydian"
         Dorian -> "dorian"
 
 
@@ -182,6 +184,7 @@ scaleFromSlug s =
         "ionian" -> Just Ionian
         "aeolian" -> Just Aeolian
         "dorian" -> Just Dorian
+        "mixolydian" -> Just Mixolydian
         _ -> Nothing
 
 
@@ -278,6 +281,9 @@ scaleIntervals st =
         Aeolian ->
             [ 0, 2, 3, 5, 7, 8, 10 ]
 
+        Mixolydian ->
+            [ 0, 2, 4, 5, 7, 9, 10 ]
+
 
 scaleNotes : Model -> List Int
 scaleNotes model =
@@ -310,6 +316,9 @@ rootFret model =
 
         Aeolian ->
             modBy 12 (model.root - 4)
+
+        Mixolydian ->
+            modBy 12 (model.root - 7)
 
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
@@ -393,6 +402,7 @@ noteRole model n =
                 Ionian -> 4
                 Dorian -> 3
                 Aeolian -> 3
+                Mixolydian -> 4
     in
     if interval == 0 then
         Root
@@ -441,6 +451,9 @@ majorBoxShape scale b =
     case scale of
         Dorian ->
             dorianBoxShape b
+
+        Mixolydian ->
+            mixolydianBoxShape b
 
         _ ->
             ionianBoxShape b
@@ -494,12 +507,35 @@ dorianBoxShape b =
             []
 
 
+mixolydianBoxShape : Int -> List ( Int, Int, Int )
+mixolydianBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 3 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
+
+        2 ->
+            [ ( 1, 3, 7 ), ( 2, 3, 6 ), ( 3, 4, 7 ), ( 4, 3, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
+
+        3 ->
+            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 8 ), ( 6, 5, 8 ) ]
+
+        4 ->
+            [ ( 1, 7, 10 ), ( 2, 6, 10 ), ( 3, 7, 10 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+
+        5 ->
+            [ ( 1, 10, 13 ), ( 2, 10, 13 ), ( 3, 10, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 13 ) ]
+
+        _ ->
+            []
+
+
 usesMajorBoxShapes : ScaleType -> Bool
 usesMajorBoxShapes st =
     case st of
         Ionian -> True
         Dorian -> True
         Aeolian -> True
+        Mixolydian -> True
         _ -> False
 
 
@@ -642,6 +678,7 @@ viewScaleTitle model =
                         Ionian -> "Ionian (Major)"
                         Dorian -> "Dorian"
                         Aeolian -> "Aeolian (Natural Minor)"
+                        Mixolydian -> "Mixolydian"
                    )
 
         intervalLabels =
@@ -651,6 +688,7 @@ viewScaleTitle model =
                 Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
                 Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
                 Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
+                Mixolydian -> [ "R", "2", "3", "4", "5", "6", "♭7" ]
 
         notePairs =
             List.map2
@@ -687,6 +725,7 @@ viewControls model =
             , scaleButton model Ionian "Ionian"
             , scaleButton model Aeolian "Aeolian"
             , scaleButton model Dorian "Dorian"
+            , scaleButton model Mixolydian "Mixolydian"
             ]
         ]
 

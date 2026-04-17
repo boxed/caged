@@ -14,7 +14,7 @@ import Test exposing (Test, describe, test)
 {-| All modes whose box rendering goes through `majorBoxShape`. -}
 modesWithMajorShapes : List ScaleType
 modesWithMajorShapes =
-    [ Ionian, Dorian, Aeolian ]
+    [ Ionian, Dorian, Aeolian, Mixolydian ]
 
 
 {-| Pick A (=9) as the test root for every scale. Choice is arbitrary; the
@@ -42,6 +42,9 @@ fRootFor scale root =
         Aeolian ->
             modBy 12 (root - 4)
 
+        Mixolydian ->
+            modBy 12 (root - 7)
+
 
 scaleNotes : ScaleType -> Int -> List Int
 scaleNotes scale root =
@@ -66,6 +69,9 @@ scaleName scale =
 
         MajorPent ->
             "MajorPent"
+
+        Mixolydian ->
+            "Mixolydian"
 
 
 {-| Test one (scale, box, string, edge label, fRel) combination. Pass if

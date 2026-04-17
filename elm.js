@@ -5259,6 +5259,7 @@ var $author$project$Main$Aeolian = {$: 'Aeolian'};
 var $author$project$Main$Dorian = {$: 'Dorian'};
 var $author$project$Main$Ionian = {$: 'Ionian'};
 var $author$project$Main$MajorPent = {$: 'MajorPent'};
+var $author$project$Main$Mixolydian = {$: 'Mixolydian'};
 var $author$project$Main$scaleFromSlug = function (s) {
 	switch (s) {
 		case 'minor-pent':
@@ -5271,6 +5272,8 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$Aeolian);
 		case 'dorian':
 			return $elm$core$Maybe$Just($author$project$Main$Dorian);
+		case 'mixolydian':
+			return $elm$core$Maybe$Just($author$project$Main$Mixolydian);
 		default:
 			return $elm$core$Maybe$Nothing;
 	}
@@ -5396,6 +5399,8 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'ionian';
 		case 'Aeolian':
 			return 'aeolian';
+		case 'Mixolydian':
+			return 'mixolydian';
 		default:
 			return 'dorian';
 	}
@@ -5713,7 +5718,8 @@ var $author$project$Main$viewControls = function (model) {
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Aeolian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Mixolydian, 'Mixolydian')
 					]))
 			]));
 };
@@ -5980,8 +5986,10 @@ var $author$project$Main$rootFret = function (model) {
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 		case 'Dorian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
-		default:
+		case 'Aeolian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
+		default:
+			return A2($elm$core$Basics$modBy, 12, model.root - 7);
 	}
 };
 var $author$project$Main$drawOneBox = F3(
@@ -6130,12 +6138,71 @@ var $author$project$Main$ionianBoxShape = function (b) {
 			return _List_Nil;
 	}
 };
+var $author$project$Main$mixolydianBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 0, 3),
+					_Utils_Tuple3(2, 0, 3),
+					_Utils_Tuple3(3, 0, 4),
+					_Utils_Tuple3(4, 0, 3),
+					_Utils_Tuple3(5, 0, 3),
+					_Utils_Tuple3(6, 0, 3)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 3, 7),
+					_Utils_Tuple3(2, 3, 6),
+					_Utils_Tuple3(3, 4, 7),
+					_Utils_Tuple3(4, 3, 7),
+					_Utils_Tuple3(5, 3, 7),
+					_Utils_Tuple3(6, 3, 7)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 5, 8),
+					_Utils_Tuple3(2, 5, 8),
+					_Utils_Tuple3(3, 5, 9),
+					_Utils_Tuple3(4, 5, 9),
+					_Utils_Tuple3(5, 5, 8),
+					_Utils_Tuple3(6, 5, 8)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 7, 10),
+					_Utils_Tuple3(2, 6, 10),
+					_Utils_Tuple3(3, 7, 10),
+					_Utils_Tuple3(4, 7, 10),
+					_Utils_Tuple3(5, 7, 10),
+					_Utils_Tuple3(6, 7, 10)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 10, 13),
+					_Utils_Tuple3(2, 10, 13),
+					_Utils_Tuple3(3, 10, 14),
+					_Utils_Tuple3(4, 10, 14),
+					_Utils_Tuple3(5, 10, 14),
+					_Utils_Tuple3(6, 10, 13)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
 var $author$project$Main$majorBoxShape = F2(
 	function (scale, b) {
-		if (scale.$ === 'Dorian') {
-			return $author$project$Main$dorianBoxShape(b);
-		} else {
-			return $author$project$Main$ionianBoxShape(b);
+		switch (scale.$) {
+			case 'Dorian':
+				return $author$project$Main$dorianBoxShape(b);
+			case 'Mixolydian':
+				return $author$project$Main$mixolydianBoxShape(b);
+			default:
+				return $author$project$Main$ionianBoxShape(b);
 		}
 	});
 var $author$project$Main$drawOneMajorBox = F3(
@@ -6284,6 +6351,8 @@ var $author$project$Main$usesMajorBoxShapes = function (st) {
 		case 'Dorian':
 			return true;
 		case 'Aeolian':
+			return true;
+		case 'Mixolydian':
 			return true;
 		default:
 			return false;
@@ -6607,8 +6676,10 @@ var $author$project$Main$noteRole = F2(
 					return 4;
 				case 'Dorian':
 					return 3;
-				default:
+				case 'Aeolian':
 					return 3;
+				default:
+					return 4;
 			}
 		}();
 		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
@@ -6730,9 +6801,12 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'Dorian':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 9, 10]);
-		default:
+		case 'Aeolian':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 8, 10]);
+		default:
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 10]);
 	}
 };
 var $author$project$Main$scaleNotes = function (model) {
@@ -7199,8 +7273,10 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Ionian (Major)';
 			case 'Dorian':
 				return 'Dorian';
-			default:
+			case 'Aeolian':
 				return 'Aeolian (Natural Minor)';
+			default:
+				return 'Mixolydian';
 		}
 	}());
 	var intervalLabels = function () {
@@ -7218,9 +7294,12 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'Dorian':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '6', '♭7']);
-			default:
+			case 'Aeolian':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '♭6', '♭7']);
+			default:
+				return _List_fromArray(
+					['R', '2', '3', '4', '5', '6', '♭7']);
 		}
 	}();
 	var notePairs = A3(
