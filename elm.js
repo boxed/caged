@@ -6074,62 +6074,6 @@ var $author$project$Main$drawOneBox = F3(
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
-var $author$project$Main$bluesBoxShape = function (b) {
-	switch (b) {
-		case 1:
-			return _List_fromArray(
-				[
-					_Utils_Tuple3(1, 0, 3),
-					_Utils_Tuple3(2, 0, 3),
-					_Utils_Tuple3(3, 0, 2),
-					_Utils_Tuple3(4, 0, 2),
-					_Utils_Tuple3(5, 0, 1),
-					_Utils_Tuple3(6, 0, 3)
-				]);
-		case 2:
-			return _List_fromArray(
-				[
-					_Utils_Tuple3(1, 3, 5),
-					_Utils_Tuple3(2, 3, 5),
-					_Utils_Tuple3(3, 2, 3),
-					_Utils_Tuple3(4, 2, 5),
-					_Utils_Tuple3(5, 1, 2),
-					_Utils_Tuple3(6, 3, 5)
-				]);
-		case 3:
-			return _List_fromArray(
-				[
-					_Utils_Tuple3(1, 5, 6),
-					_Utils_Tuple3(2, 5, 8),
-					_Utils_Tuple3(3, 3, 4),
-					_Utils_Tuple3(4, 5, 7),
-					_Utils_Tuple3(5, 2, 5),
-					_Utils_Tuple3(6, 5, 6)
-				]);
-		case 4:
-			return _List_fromArray(
-				[
-					_Utils_Tuple3(1, 6, 7),
-					_Utils_Tuple3(2, 8, 10),
-					_Utils_Tuple3(3, 4, 7),
-					_Utils_Tuple3(4, 7, 8),
-					_Utils_Tuple3(5, 5, 7),
-					_Utils_Tuple3(6, 6, 7)
-				]);
-		case 5:
-			return _List_fromArray(
-				[
-					_Utils_Tuple3(1, 7, 10),
-					_Utils_Tuple3(2, 10, 11),
-					_Utils_Tuple3(3, 7, 9),
-					_Utils_Tuple3(4, 8, 9),
-					_Utils_Tuple3(5, 7, 10),
-					_Utils_Tuple3(6, 7, 10)
-				]);
-		default:
-			return _List_Nil;
-	}
-};
 var $author$project$Main$dorianBoxShape = function (b) {
 	switch (b) {
 		case 1:
@@ -6595,8 +6539,6 @@ var $author$project$Main$majorBoxShape = F2(
 				return $author$project$Main$harmonicMinorBoxShape(b);
 			case 'MelodicMinor':
 				return $author$project$Main$melodicMinorBoxShape(b);
-			case 'Blues':
-				return $author$project$Main$bluesBoxShape(b);
 			default:
 				return $author$project$Main$ionianBoxShape(b);
 		}
@@ -6759,8 +6701,6 @@ var $author$project$Main$usesMajorBoxShapes = function (st) {
 		case 'HarmonicMinor':
 			return true;
 		case 'MelodicMinor':
-			return true;
-		case 'Blues':
 			return true;
 		default:
 			return false;
@@ -7207,6 +7147,57 @@ var $author$project$Main$boxOf = F2(
 		}
 		return $elm$core$Maybe$Nothing;
 	});
+var $author$project$Main$bluesBoxOf = F2(
+	function (s, fRel) {
+		var _v0 = A2($author$project$Main$boxOf, s, fRel);
+		if (_v0.$ === 'Just') {
+			var b = _v0.a;
+			return $elm$core$Maybe$Just(b);
+		} else {
+			var _v1 = _Utils_Tuple2(s, fRel);
+			_v1$6:
+			while (true) {
+				switch (_v1.b) {
+					case 11:
+						if (_v1.a === 2) {
+							return $elm$core$Maybe$Just(5);
+						} else {
+							break _v1$6;
+						}
+					case 3:
+						if (_v1.a === 3) {
+							return $elm$core$Maybe$Just(2);
+						} else {
+							break _v1$6;
+						}
+					case 8:
+						if (_v1.a === 4) {
+							return $elm$core$Maybe$Just(4);
+						} else {
+							break _v1$6;
+						}
+					case 1:
+						if (_v1.a === 5) {
+							return $elm$core$Maybe$Just(1);
+						} else {
+							break _v1$6;
+						}
+					case 6:
+						switch (_v1.a) {
+							case 1:
+								return $elm$core$Maybe$Just(3);
+							case 6:
+								return $elm$core$Maybe$Just(3);
+							default:
+								break _v1$6;
+						}
+					default:
+						break _v1$6;
+				}
+			}
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Main$scaleIntervals = function (st) {
 	switch (st.$) {
 		case 'MinorPent':
@@ -7272,7 +7263,7 @@ var $author$project$Main$positionBox = F3(
 				$elm$core$Basics$modBy,
 				12,
 				f - $author$project$Main$rootFret(model));
-			return $author$project$Main$usesMajorBoxShapes(model.scale) ? $elm$core$Maybe$Just(0) : A2($author$project$Main$boxOf, s, fRel);
+			return $author$project$Main$usesMajorBoxShapes(model.scale) ? $elm$core$Maybe$Just(0) : (_Utils_eq(model.scale, $author$project$Main$Blues) ? A2($author$project$Main$bluesBoxOf, s, fRel) : A2($author$project$Main$boxOf, s, fRel));
 		} else {
 			return $elm$core$Maybe$Nothing;
 		}

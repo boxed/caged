@@ -14,7 +14,7 @@ import Test exposing (Test, describe, test)
 {-| All modes whose box rendering goes through `majorBoxShape`. -}
 modesWithMajorShapes : List ScaleType
 modesWithMajorShapes =
-    [ Ionian, Dorian, Aeolian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMinor, MelodicMinor ]
+    [ Ionian, Dorian, Aeolian, Mixolydian, Phrygian, Lydian, Locrian, HarmonicMinor, MelodicMinor ]
 
 
 {-| Pick A (=9) as the test root for every scale. Choice is arbitrary; the

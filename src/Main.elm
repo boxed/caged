@@ -425,6 +425,9 @@ positionBox model s f =
         if usesMajorBoxShapes model.scale then
             Just 0
 
+        else if model.scale == Blues then
+            bluesBoxOf s fRel
+
         else
             boxOf s fRel
 
@@ -530,9 +533,6 @@ majorBoxShape scale b =
         MelodicMinor ->
             melodicMinorBoxShape b
 
-        Blues ->
-            bluesBoxShape b
-
         _ ->
             ionianBoxShape b
 
@@ -629,26 +629,25 @@ phrygianBoxShape b =
             []
 
 
-bluesBoxShape : Int -> List ( Int, Int, Int )
-bluesBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 2 ), ( 4, 0, 2 ), ( 5, 0, 1 ), ( 6, 0, 3 ) ]
+{-| Blues = minor pent + blue note (b5). Uses pent box positions (boxOf)
+for the 5 pent tones. The blue note on each string falls inside one of
+those pent boxes based on its f_rel — mapped here. These f_rel values are
+root-independent (computed from string tuning offsets only). -}
+bluesBoxOf : Int -> Int -> Maybe Int
+bluesBoxOf s fRel =
+    case boxOf s fRel of
+        Just b ->
+            Just b
 
-        2 ->
-            [ ( 1, 3, 5 ), ( 2, 3, 5 ), ( 3, 2, 3 ), ( 4, 2, 5 ), ( 5, 1, 2 ), ( 6, 3, 5 ) ]
-
-        3 ->
-            [ ( 1, 5, 6 ), ( 2, 5, 8 ), ( 3, 3, 4 ), ( 4, 5, 7 ), ( 5, 2, 5 ), ( 6, 5, 6 ) ]
-
-        4 ->
-            [ ( 1, 6, 7 ), ( 2, 8, 10 ), ( 3, 4, 7 ), ( 4, 7, 8 ), ( 5, 5, 7 ), ( 6, 6, 7 ) ]
-
-        5 ->
-            [ ( 1, 7, 10 ), ( 2, 10, 11 ), ( 3, 7, 9 ), ( 4, 8, 9 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
-
-        _ ->
-            []
+        Nothing ->
+            case ( s, fRel ) of
+                ( 1, 6 ) -> Just 3
+                ( 2, 11 ) -> Just 5
+                ( 3, 3 ) -> Just 2
+                ( 4, 8 ) -> Just 4
+                ( 5, 1 ) -> Just 1
+                ( 6, 6 ) -> Just 3
+                _ -> Nothing
 
 
 lydianBoxShape : Int -> List ( Int, Int, Int )
@@ -751,7 +750,6 @@ usesMajorBoxShapes st =
         Locrian -> True
         HarmonicMinor -> True
         MelodicMinor -> True
-        Blues -> True
         _ -> False
 
 
