@@ -45,6 +45,11 @@ type ScaleType
     | Aeolian
     | Mixolydian
     | Phrygian
+    | Lydian
+    | Locrian
+    | Blues
+    | HarmonicMinor
+    | MelodicMinor
 
 
 
@@ -175,6 +180,11 @@ scaleSlug s =
         Aeolian -> "aeolian"
         Mixolydian -> "mixolydian"
         Phrygian -> "phrygian"
+        Lydian -> "lydian"
+        Locrian -> "locrian"
+        Blues -> "blues"
+        HarmonicMinor -> "harmonic-minor"
+        MelodicMinor -> "melodic-minor"
         Dorian -> "dorian"
 
 
@@ -188,6 +198,11 @@ scaleFromSlug s =
         "dorian" -> Just Dorian
         "mixolydian" -> Just Mixolydian
         "phrygian" -> Just Phrygian
+        "lydian" -> Just Lydian
+        "locrian" -> Just Locrian
+        "blues" -> Just Blues
+        "harmonic-minor" -> Just HarmonicMinor
+        "melodic-minor" -> Just MelodicMinor
         _ -> Nothing
 
 
@@ -290,6 +305,21 @@ scaleIntervals st =
         Phrygian ->
             [ 0, 1, 3, 5, 7, 8, 10 ]
 
+        Lydian ->
+            [ 0, 2, 4, 6, 7, 9, 11 ]
+
+        Locrian ->
+            [ 0, 1, 3, 5, 6, 8, 10 ]
+
+        Blues ->
+            [ 0, 3, 5, 6, 7, 10 ]
+
+        HarmonicMinor ->
+            [ 0, 2, 3, 5, 7, 8, 11 ]
+
+        MelodicMinor ->
+            [ 0, 2, 3, 5, 7, 9, 11 ]
+
 
 scaleNotes : Model -> List Int
 scaleNotes model =
@@ -328,6 +358,21 @@ rootFret model =
 
         Phrygian ->
             modBy 12 (model.root - 7)
+
+        Lydian ->
+            modBy 12 (model.root - 7)
+
+        Locrian ->
+            modBy 12 (model.root - 7)
+
+        Blues ->
+            modBy 12 (model.root - 4)
+
+        HarmonicMinor ->
+            modBy 12 (model.root - 4)
+
+        MelodicMinor ->
+            modBy 12 (model.root - 4)
 
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
@@ -413,6 +458,11 @@ noteRole model n =
                 Aeolian -> 3
                 Mixolydian -> 4
                 Phrygian -> 3
+                Lydian -> 4
+                Locrian -> 3
+                Blues -> 3
+                HarmonicMinor -> 3
+                MelodicMinor -> 3
     in
     if interval == 0 then
         Root
@@ -467,6 +517,21 @@ majorBoxShape scale b =
 
         Phrygian ->
             phrygianBoxShape b
+
+        Lydian ->
+            lydianBoxShape b
+
+        Locrian ->
+            locrianBoxShape b
+
+        HarmonicMinor ->
+            harmonicMinorBoxShape b
+
+        MelodicMinor ->
+            melodicMinorBoxShape b
+
+        Blues ->
+            bluesBoxShape b
 
         _ ->
             ionianBoxShape b
@@ -564,6 +629,116 @@ phrygianBoxShape b =
             []
 
 
+bluesBoxShape : Int -> List ( Int, Int, Int )
+bluesBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 2 ), ( 4, 0, 2 ), ( 5, 0, 1 ), ( 6, 0, 3 ) ]
+
+        2 ->
+            [ ( 1, 3, 5 ), ( 2, 3, 5 ), ( 3, 2, 3 ), ( 4, 2, 5 ), ( 5, 1, 2 ), ( 6, 3, 5 ) ]
+
+        3 ->
+            [ ( 1, 5, 6 ), ( 2, 5, 8 ), ( 3, 3, 4 ), ( 4, 5, 7 ), ( 5, 2, 5 ), ( 6, 5, 6 ) ]
+
+        4 ->
+            [ ( 1, 6, 7 ), ( 2, 8, 10 ), ( 3, 4, 7 ), ( 4, 7, 8 ), ( 5, 5, 7 ), ( 6, 6, 7 ) ]
+
+        5 ->
+            [ ( 1, 7, 10 ), ( 2, 10, 11 ), ( 3, 7, 9 ), ( 4, 8, 9 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+
+        _ ->
+            []
+
+
+lydianBoxShape : Int -> List ( Int, Int, Int )
+lydianBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 4 ), ( 5, 0, 4 ), ( 6, 0, 3 ) ]
+
+        2 ->
+            [ ( 1, 3, 7 ), ( 2, 3, 7 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 4, 7 ), ( 6, 3, 7 ) ]
+
+        3 ->
+            [ ( 1, 5, 9 ), ( 2, 5, 8 ), ( 3, 6, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 9 ) ]
+
+        4 ->
+            [ ( 1, 7, 10 ), ( 2, 7, 10 ), ( 3, 7, 11 ), ( 4, 7, 11 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+
+        5 ->
+            [ ( 1, 9, 12 ), ( 2, 8, 12 ), ( 3, 9, 12 ), ( 4, 9, 12 ), ( 5, 9, 12 ), ( 6, 9, 12 ) ]
+
+        _ ->
+            []
+
+
+locrianBoxShape : Int -> List ( Int, Int, Int )
+locrianBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 1, 4 ), ( 2, 1, 4 ), ( 3, 0, 3 ), ( 4, 1, 5 ), ( 5, 1, 4 ), ( 6, 1, 4 ) ]
+
+        2 ->
+            [ ( 1, 4, 8 ), ( 2, 4, 8 ), ( 3, 3, 6 ), ( 4, 5, 8 ), ( 5, 4, 8 ), ( 6, 4, 8 ) ]
+
+        3 ->
+            [ ( 1, 6, 9 ), ( 2, 6, 9 ), ( 3, 5, 8 ), ( 4, 6, 10 ), ( 5, 6, 10 ), ( 6, 6, 9 ) ]
+
+        4 ->
+            [ ( 1, 8, 11 ), ( 2, 8, 11 ), ( 3, 6, 10 ), ( 4, 8, 11 ), ( 5, 8, 11 ), ( 6, 8, 11 ) ]
+
+        5 ->
+            [ ( 1, 9, 13 ), ( 2, 9, 13 ), ( 3, 8, 12 ), ( 4, 10, 13 ), ( 5, 10, 13 ), ( 6, 9, 13 ) ]
+
+        _ ->
+            []
+
+
+harmonicMinorBoxShape : Int -> List ( Int, Int, Int )
+harmonicMinorBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 0, 3 ), ( 2, 0, 4 ), ( 3, 0, 4 ), ( 4, 1, 4 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
+
+        2 ->
+            [ ( 1, 3, 7 ), ( 2, 4, 7 ), ( 3, 4, 8 ), ( 4, 4, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
+
+        3 ->
+            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 6, 9 ), ( 6, 5, 8 ) ]
+
+        4 ->
+            [ ( 1, 7, 11 ), ( 2, 7, 10 ), ( 3, 8, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 11 ) ]
+
+        5 ->
+            [ ( 1, 8, 12 ), ( 2, 8, 12 ), ( 3, 9, 12 ), ( 4, 9, 13 ), ( 5, 9, 12 ), ( 6, 8, 12 ) ]
+
+        _ ->
+            []
+
+
+melodicMinorBoxShape : Int -> List ( Int, Int, Int )
+melodicMinorBoxShape b =
+    case b of
+        1 ->
+            [ ( 1, 0, 3 ), ( 2, 0, 4 ), ( 3, 0, 4 ), ( 4, 1, 4 ), ( 5, 0, 4 ), ( 6, 0, 3 ) ]
+
+        2 ->
+            [ ( 1, 3, 7 ), ( 2, 4, 7 ), ( 3, 4, 8 ), ( 4, 4, 7 ), ( 5, 4, 7 ), ( 6, 3, 7 ) ]
+
+        3 ->
+            [ ( 1, 5, 9 ), ( 2, 5, 8 ), ( 3, 6, 9 ), ( 4, 5, 9 ), ( 5, 6, 9 ), ( 6, 5, 9 ) ]
+
+        4 ->
+            [ ( 1, 7, 11 ), ( 2, 7, 10 ), ( 3, 8, 11 ), ( 4, 7, 11 ), ( 5, 7, 10 ), ( 6, 7, 11 ) ]
+
+        5 ->
+            [ ( 1, 9, 12 ), ( 2, 8, 12 ), ( 3, 9, 12 ), ( 4, 9, 13 ), ( 5, 9, 12 ), ( 6, 9, 12 ) ]
+
+        _ ->
+            []
+
+
 usesMajorBoxShapes : ScaleType -> Bool
 usesMajorBoxShapes st =
     case st of
@@ -572,6 +747,11 @@ usesMajorBoxShapes st =
         Aeolian -> True
         Mixolydian -> True
         Phrygian -> True
+        Lydian -> True
+        Locrian -> True
+        HarmonicMinor -> True
+        MelodicMinor -> True
+        Blues -> True
         _ -> False
 
 
@@ -716,6 +896,11 @@ viewScaleTitle model =
                         Aeolian -> "Aeolian (Natural Minor)"
                         Mixolydian -> "Mixolydian"
                         Phrygian -> "Phrygian"
+                        Lydian -> "Lydian"
+                        Locrian -> "Locrian"
+                        Blues -> "Blues"
+                        HarmonicMinor -> "Harmonic Minor"
+                        MelodicMinor -> "Melodic Minor"
                    )
 
         intervalLabels =
@@ -727,6 +912,11 @@ viewScaleTitle model =
                 Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
                 Mixolydian -> [ "R", "2", "3", "4", "5", "6", "♭7" ]
                 Phrygian -> [ "R", "♭2", "♭3", "4", "5", "♭6", "♭7" ]
+                Lydian -> [ "R", "2", "3", "♯4", "5", "6", "7" ]
+                Locrian -> [ "R", "♭2", "♭3", "4", "♭5", "♭6", "♭7" ]
+                Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
+                HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
+                MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
 
         notePairs =
             List.map2
@@ -765,6 +955,11 @@ viewControls model =
             , scaleButton model Dorian "Dorian"
             , scaleButton model Mixolydian "Mixolydian"
             , scaleButton model Phrygian "Phrygian"
+            , scaleButton model Lydian "Lydian"
+            , scaleButton model Locrian "Locrian"
+            , scaleButton model Blues "Blues"
+            , scaleButton model HarmonicMinor "Harmonic minor"
+            , scaleButton model MelodicMinor "Melodic minor"
             ]
         ]
 

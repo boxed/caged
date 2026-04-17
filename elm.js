@@ -5256,9 +5256,14 @@ var $author$project$Main$rootFromSlug = function (s) {
 	}
 };
 var $author$project$Main$Aeolian = {$: 'Aeolian'};
+var $author$project$Main$Blues = {$: 'Blues'};
 var $author$project$Main$Dorian = {$: 'Dorian'};
+var $author$project$Main$HarmonicMinor = {$: 'HarmonicMinor'};
 var $author$project$Main$Ionian = {$: 'Ionian'};
+var $author$project$Main$Locrian = {$: 'Locrian'};
+var $author$project$Main$Lydian = {$: 'Lydian'};
 var $author$project$Main$MajorPent = {$: 'MajorPent'};
+var $author$project$Main$MelodicMinor = {$: 'MelodicMinor'};
 var $author$project$Main$Mixolydian = {$: 'Mixolydian'};
 var $author$project$Main$Phrygian = {$: 'Phrygian'};
 var $author$project$Main$scaleFromSlug = function (s) {
@@ -5277,6 +5282,16 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$Mixolydian);
 		case 'phrygian':
 			return $elm$core$Maybe$Just($author$project$Main$Phrygian);
+		case 'lydian':
+			return $elm$core$Maybe$Just($author$project$Main$Lydian);
+		case 'locrian':
+			return $elm$core$Maybe$Just($author$project$Main$Locrian);
+		case 'blues':
+			return $elm$core$Maybe$Just($author$project$Main$Blues);
+		case 'harmonic-minor':
+			return $elm$core$Maybe$Just($author$project$Main$HarmonicMinor);
+		case 'melodic-minor':
+			return $elm$core$Maybe$Just($author$project$Main$MelodicMinor);
 		default:
 			return $elm$core$Maybe$Nothing;
 	}
@@ -5406,6 +5421,16 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'mixolydian';
 		case 'Phrygian':
 			return 'phrygian';
+		case 'Lydian':
+			return 'lydian';
+		case 'Locrian':
+			return 'locrian';
+		case 'Blues':
+			return 'blues';
+		case 'HarmonicMinor':
+			return 'harmonic-minor';
+		case 'MelodicMinor':
+			return 'melodic-minor';
 		default:
 			return 'dorian';
 	}
@@ -5725,7 +5750,12 @@ var $author$project$Main$viewControls = function (model) {
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Aeolian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Mixolydian, 'Mixolydian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Phrygian, 'Phrygian')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Phrygian, 'Phrygian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Lydian, 'Lydian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Locrian, 'Locrian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Blues, 'Blues'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMinor, 'Harmonic minor'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMinor, 'Melodic minor')
 					]))
 			]));
 };
@@ -5996,8 +6026,18 @@ var $author$project$Main$rootFret = function (model) {
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 		case 'Mixolydian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
-		default:
+		case 'Phrygian':
 			return A2($elm$core$Basics$modBy, 12, model.root - 7);
+		case 'Lydian':
+			return A2($elm$core$Basics$modBy, 12, model.root - 7);
+		case 'Locrian':
+			return A2($elm$core$Basics$modBy, 12, model.root - 7);
+		case 'Blues':
+			return A2($elm$core$Basics$modBy, 12, model.root - 4);
+		case 'HarmonicMinor':
+			return A2($elm$core$Basics$modBy, 12, model.root - 4);
+		default:
+			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 	}
 };
 var $author$project$Main$drawOneBox = F3(
@@ -6034,6 +6074,62 @@ var $author$project$Main$drawOneBox = F3(
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
+var $author$project$Main$bluesBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 0, 3),
+					_Utils_Tuple3(2, 0, 3),
+					_Utils_Tuple3(3, 0, 2),
+					_Utils_Tuple3(4, 0, 2),
+					_Utils_Tuple3(5, 0, 1),
+					_Utils_Tuple3(6, 0, 3)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 3, 5),
+					_Utils_Tuple3(2, 3, 5),
+					_Utils_Tuple3(3, 2, 3),
+					_Utils_Tuple3(4, 2, 5),
+					_Utils_Tuple3(5, 1, 2),
+					_Utils_Tuple3(6, 3, 5)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 5, 6),
+					_Utils_Tuple3(2, 5, 8),
+					_Utils_Tuple3(3, 3, 4),
+					_Utils_Tuple3(4, 5, 7),
+					_Utils_Tuple3(5, 2, 5),
+					_Utils_Tuple3(6, 5, 6)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 6, 7),
+					_Utils_Tuple3(2, 8, 10),
+					_Utils_Tuple3(3, 4, 7),
+					_Utils_Tuple3(4, 7, 8),
+					_Utils_Tuple3(5, 5, 7),
+					_Utils_Tuple3(6, 6, 7)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 7, 10),
+					_Utils_Tuple3(2, 10, 11),
+					_Utils_Tuple3(3, 7, 9),
+					_Utils_Tuple3(4, 8, 9),
+					_Utils_Tuple3(5, 7, 10),
+					_Utils_Tuple3(6, 7, 10)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
 var $author$project$Main$dorianBoxShape = function (b) {
 	switch (b) {
 		case 1:
@@ -6090,6 +6186,62 @@ var $author$project$Main$dorianBoxShape = function (b) {
 			return _List_Nil;
 	}
 };
+var $author$project$Main$harmonicMinorBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 0, 3),
+					_Utils_Tuple3(2, 0, 4),
+					_Utils_Tuple3(3, 0, 4),
+					_Utils_Tuple3(4, 1, 4),
+					_Utils_Tuple3(5, 0, 3),
+					_Utils_Tuple3(6, 0, 3)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 3, 7),
+					_Utils_Tuple3(2, 4, 7),
+					_Utils_Tuple3(3, 4, 8),
+					_Utils_Tuple3(4, 4, 7),
+					_Utils_Tuple3(5, 3, 7),
+					_Utils_Tuple3(6, 3, 7)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 5, 8),
+					_Utils_Tuple3(2, 5, 8),
+					_Utils_Tuple3(3, 5, 9),
+					_Utils_Tuple3(4, 5, 9),
+					_Utils_Tuple3(5, 6, 9),
+					_Utils_Tuple3(6, 5, 8)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 7, 11),
+					_Utils_Tuple3(2, 7, 10),
+					_Utils_Tuple3(3, 8, 11),
+					_Utils_Tuple3(4, 7, 10),
+					_Utils_Tuple3(5, 7, 10),
+					_Utils_Tuple3(6, 7, 11)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 8, 12),
+					_Utils_Tuple3(2, 8, 12),
+					_Utils_Tuple3(3, 9, 12),
+					_Utils_Tuple3(4, 9, 13),
+					_Utils_Tuple3(5, 9, 12),
+					_Utils_Tuple3(6, 8, 12)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
 var $author$project$Main$ionianBoxShape = function (b) {
 	switch (b) {
 		case 1:
@@ -6141,6 +6293,174 @@ var $author$project$Main$ionianBoxShape = function (b) {
 					_Utils_Tuple3(4, 10, 14),
 					_Utils_Tuple3(5, 10, 14),
 					_Utils_Tuple3(6, 10, 14)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
+var $author$project$Main$locrianBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 1, 4),
+					_Utils_Tuple3(2, 1, 4),
+					_Utils_Tuple3(3, 0, 3),
+					_Utils_Tuple3(4, 1, 5),
+					_Utils_Tuple3(5, 1, 4),
+					_Utils_Tuple3(6, 1, 4)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 4, 8),
+					_Utils_Tuple3(2, 4, 8),
+					_Utils_Tuple3(3, 3, 6),
+					_Utils_Tuple3(4, 5, 8),
+					_Utils_Tuple3(5, 4, 8),
+					_Utils_Tuple3(6, 4, 8)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 6, 9),
+					_Utils_Tuple3(2, 6, 9),
+					_Utils_Tuple3(3, 5, 8),
+					_Utils_Tuple3(4, 6, 10),
+					_Utils_Tuple3(5, 6, 10),
+					_Utils_Tuple3(6, 6, 9)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 8, 11),
+					_Utils_Tuple3(2, 8, 11),
+					_Utils_Tuple3(3, 6, 10),
+					_Utils_Tuple3(4, 8, 11),
+					_Utils_Tuple3(5, 8, 11),
+					_Utils_Tuple3(6, 8, 11)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 9, 13),
+					_Utils_Tuple3(2, 9, 13),
+					_Utils_Tuple3(3, 8, 12),
+					_Utils_Tuple3(4, 10, 13),
+					_Utils_Tuple3(5, 10, 13),
+					_Utils_Tuple3(6, 9, 13)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
+var $author$project$Main$lydianBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 0, 3),
+					_Utils_Tuple3(2, 0, 3),
+					_Utils_Tuple3(3, 0, 4),
+					_Utils_Tuple3(4, 0, 4),
+					_Utils_Tuple3(5, 0, 4),
+					_Utils_Tuple3(6, 0, 3)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 3, 7),
+					_Utils_Tuple3(2, 3, 7),
+					_Utils_Tuple3(3, 4, 7),
+					_Utils_Tuple3(4, 4, 7),
+					_Utils_Tuple3(5, 4, 7),
+					_Utils_Tuple3(6, 3, 7)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 5, 9),
+					_Utils_Tuple3(2, 5, 8),
+					_Utils_Tuple3(3, 6, 9),
+					_Utils_Tuple3(4, 5, 9),
+					_Utils_Tuple3(5, 5, 9),
+					_Utils_Tuple3(6, 5, 9)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 7, 10),
+					_Utils_Tuple3(2, 7, 10),
+					_Utils_Tuple3(3, 7, 11),
+					_Utils_Tuple3(4, 7, 11),
+					_Utils_Tuple3(5, 7, 10),
+					_Utils_Tuple3(6, 7, 10)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 9, 12),
+					_Utils_Tuple3(2, 8, 12),
+					_Utils_Tuple3(3, 9, 12),
+					_Utils_Tuple3(4, 9, 12),
+					_Utils_Tuple3(5, 9, 12),
+					_Utils_Tuple3(6, 9, 12)
+				]);
+		default:
+			return _List_Nil;
+	}
+};
+var $author$project$Main$melodicMinorBoxShape = function (b) {
+	switch (b) {
+		case 1:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 0, 3),
+					_Utils_Tuple3(2, 0, 4),
+					_Utils_Tuple3(3, 0, 4),
+					_Utils_Tuple3(4, 1, 4),
+					_Utils_Tuple3(5, 0, 4),
+					_Utils_Tuple3(6, 0, 3)
+				]);
+		case 2:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 3, 7),
+					_Utils_Tuple3(2, 4, 7),
+					_Utils_Tuple3(3, 4, 8),
+					_Utils_Tuple3(4, 4, 7),
+					_Utils_Tuple3(5, 4, 7),
+					_Utils_Tuple3(6, 3, 7)
+				]);
+		case 3:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 5, 9),
+					_Utils_Tuple3(2, 5, 8),
+					_Utils_Tuple3(3, 6, 9),
+					_Utils_Tuple3(4, 5, 9),
+					_Utils_Tuple3(5, 6, 9),
+					_Utils_Tuple3(6, 5, 9)
+				]);
+		case 4:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 7, 11),
+					_Utils_Tuple3(2, 7, 10),
+					_Utils_Tuple3(3, 8, 11),
+					_Utils_Tuple3(4, 7, 11),
+					_Utils_Tuple3(5, 7, 10),
+					_Utils_Tuple3(6, 7, 11)
+				]);
+		case 5:
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(1, 9, 12),
+					_Utils_Tuple3(2, 8, 12),
+					_Utils_Tuple3(3, 9, 12),
+					_Utils_Tuple3(4, 9, 13),
+					_Utils_Tuple3(5, 9, 12),
+					_Utils_Tuple3(6, 9, 12)
 				]);
 		default:
 			return _List_Nil;
@@ -6267,6 +6587,16 @@ var $author$project$Main$majorBoxShape = F2(
 				return $author$project$Main$mixolydianBoxShape(b);
 			case 'Phrygian':
 				return $author$project$Main$phrygianBoxShape(b);
+			case 'Lydian':
+				return $author$project$Main$lydianBoxShape(b);
+			case 'Locrian':
+				return $author$project$Main$locrianBoxShape(b);
+			case 'HarmonicMinor':
+				return $author$project$Main$harmonicMinorBoxShape(b);
+			case 'MelodicMinor':
+				return $author$project$Main$melodicMinorBoxShape(b);
+			case 'Blues':
+				return $author$project$Main$bluesBoxShape(b);
 			default:
 				return $author$project$Main$ionianBoxShape(b);
 		}
@@ -6421,6 +6751,16 @@ var $author$project$Main$usesMajorBoxShapes = function (st) {
 		case 'Mixolydian':
 			return true;
 		case 'Phrygian':
+			return true;
+		case 'Lydian':
+			return true;
+		case 'Locrian':
+			return true;
+		case 'HarmonicMinor':
+			return true;
+		case 'MelodicMinor':
+			return true;
+		case 'Blues':
 			return true;
 		default:
 			return false;
@@ -6748,6 +7088,16 @@ var $author$project$Main$noteRole = F2(
 					return 3;
 				case 'Mixolydian':
 					return 4;
+				case 'Phrygian':
+					return 3;
+				case 'Lydian':
+					return 4;
+				case 'Locrian':
+					return 3;
+				case 'Blues':
+					return 3;
+				case 'HarmonicMinor':
+					return 3;
 				default:
 					return 3;
 			}
@@ -6877,9 +7227,24 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'Mixolydian':
 			return _List_fromArray(
 				[0, 2, 4, 5, 7, 9, 10]);
-		default:
+		case 'Phrygian':
 			return _List_fromArray(
 				[0, 1, 3, 5, 7, 8, 10]);
+		case 'Lydian':
+			return _List_fromArray(
+				[0, 2, 4, 6, 7, 9, 11]);
+		case 'Locrian':
+			return _List_fromArray(
+				[0, 1, 3, 5, 6, 8, 10]);
+		case 'Blues':
+			return _List_fromArray(
+				[0, 3, 5, 6, 7, 10]);
+		case 'HarmonicMinor':
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 8, 11]);
+		default:
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 9, 11]);
 	}
 };
 var $author$project$Main$scaleNotes = function (model) {
@@ -7350,8 +7715,18 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Aeolian (Natural Minor)';
 			case 'Mixolydian':
 				return 'Mixolydian';
-			default:
+			case 'Phrygian':
 				return 'Phrygian';
+			case 'Lydian':
+				return 'Lydian';
+			case 'Locrian':
+				return 'Locrian';
+			case 'Blues':
+				return 'Blues';
+			case 'HarmonicMinor':
+				return 'Harmonic Minor';
+			default:
+				return 'Melodic Minor';
 		}
 	}());
 	var intervalLabels = function () {
@@ -7375,9 +7750,24 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'Mixolydian':
 				return _List_fromArray(
 					['R', '2', '3', '4', '5', '6', '♭7']);
-			default:
+			case 'Phrygian':
 				return _List_fromArray(
 					['R', '♭2', '♭3', '4', '5', '♭6', '♭7']);
+			case 'Lydian':
+				return _List_fromArray(
+					['R', '2', '3', '♯4', '5', '6', '7']);
+			case 'Locrian':
+				return _List_fromArray(
+					['R', '♭2', '♭3', '4', '♭5', '♭6', '♭7']);
+			case 'Blues':
+				return _List_fromArray(
+					['R', '♭3', '4', '♭5', '5', '♭7']);
+			case 'HarmonicMinor':
+				return _List_fromArray(
+					['R', '2', '♭3', '4', '5', '♭6', '7']);
+			default:
+				return _List_fromArray(
+					['R', '2', '♭3', '4', '5', '6', '7']);
 		}
 	}();
 	var notePairs = A3(
