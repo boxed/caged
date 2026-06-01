@@ -5257,6 +5257,8 @@ var $author$project$Main$rootFromSlug = function (s) {
 };
 var $author$project$Main$Aeolian = {$: 'Aeolian'};
 var $author$project$Main$Blues = {$: 'Blues'};
+var $author$project$Main$DiagonalMajorPent = {$: 'DiagonalMajorPent'};
+var $author$project$Main$DiagonalPent = {$: 'DiagonalPent'};
 var $author$project$Main$Dorian = {$: 'Dorian'};
 var $author$project$Main$HarmonicMinor = {$: 'HarmonicMinor'};
 var $author$project$Main$Ionian = {$: 'Ionian'};
@@ -5292,6 +5294,10 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$HarmonicMinor);
 		case 'melodic-minor':
 			return $elm$core$Maybe$Just($author$project$Main$MelodicMinor);
+		case 'diagonal-pent':
+			return $elm$core$Maybe$Just($author$project$Main$DiagonalPent);
+		case 'diagonal-major-pent':
+			return $elm$core$Maybe$Just($author$project$Main$DiagonalMajorPent);
 		default:
 			return $elm$core$Maybe$Nothing;
 	}
@@ -5431,6 +5437,10 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'harmonic-minor';
 		case 'MelodicMinor':
 			return 'melodic-minor';
+		case 'DiagonalPent':
+			return 'diagonal-pent';
+		case 'DiagonalMajorPent':
+			return 'diagonal-major-pent';
 		default:
 			return 'dorian';
 	}
@@ -5740,7 +5750,10 @@ var $author$project$Main$viewControls = function (model) {
 					])),
 				A2(
 				$elm$html$Html$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
 				_List_fromArray(
 					[
 						$author$project$Main$label('Scale'),
@@ -5756,6 +5769,15 @@ var $author$project$Main$viewControls = function (model) {
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Blues, 'Blues'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMinor, 'Harmonic minor'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMinor, 'Melodic minor')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$author$project$Main$label('Diag. Scale'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor pentatonic'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic')
 					]))
 			]));
 };
@@ -6011,6 +6033,14 @@ var $author$project$Main$polygonPoints = function (positions) {
 			},
 			verts));
 };
+var $author$project$Main$diagonalAnchor = F2(
+	function (scale, root) {
+		if (scale.$ === 'DiagonalMajorPent') {
+			return A2($elm$core$Basics$modBy, 12, root - 4);
+		} else {
+			return A2($elm$core$Basics$modBy, 12, root - 1);
+		}
+	});
 var $author$project$Main$rootFret = function (model) {
 	var _v0 = model.scale;
 	switch (_v0.$) {
@@ -6036,8 +6066,12 @@ var $author$project$Main$rootFret = function (model) {
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 		case 'HarmonicMinor':
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
-		default:
+		case 'MelodicMinor':
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
+		case 'DiagonalPent':
+			return A2($author$project$Main$diagonalAnchor, $author$project$Main$DiagonalPent, model.root);
+		default:
+			return A2($author$project$Main$diagonalAnchor, $author$project$Main$DiagonalMajorPent, model.root);
 	}
 };
 var $author$project$Main$drawOneBox = F3(
@@ -6706,7 +6740,7 @@ var $author$project$Main$usesMajorBoxShapes = function (st) {
 			return false;
 	}
 };
-var $author$project$Main$drawBoxRegions = function (model) {
+var $author$project$Main$drawBoxRegionsBoxes = function (model) {
 	var octaves = _List_fromArray(
 		[-1, 0, 1]);
 	var overlaps = $author$project$Main$usesMajorBoxShapes(model.scale) ? A2(
@@ -6742,6 +6776,154 @@ var $author$project$Main$drawBoxRegions = function (model) {
 	return _Utils_ap(
 		solids,
 		_Utils_ap(overlaps, wrapOverlaps));
+};
+var $author$project$Main$diagonalShapes = _List_fromArray(
+	[
+		{
+		color: 1,
+		lower: 6,
+		lowerRels: _List_fromArray(
+			[0, 2, 4]),
+		upper: 5,
+		upperRels: _List_fromArray(
+			[2, 4])
+	},
+		{
+		color: 1,
+		lower: 4,
+		lowerRels: _List_fromArray(
+			[2, 4, 6]),
+		upper: 3,
+		upperRels: _List_fromArray(
+			[4, 6])
+	},
+		{
+		color: 1,
+		lower: 2,
+		lowerRels: _List_fromArray(
+			[5, 7, 9]),
+		upper: 1,
+		upperRels: _List_fromArray(
+			[7, 9])
+	}
+	]);
+var $elm$core$List$maximum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$List$minimum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$min, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$drawDiagonalShape = F4(
+	function (scale, root, shape, octave) {
+		var yMid = ($author$project$Main$stringY(shape.lower) + $author$project$Main$stringY(shape.upper)) / 2;
+		var shift = A2($author$project$Main$diagonalAnchor, scale, root) + (12 * octave);
+		var pad = $author$project$Main$stringSpacing * 0.55;
+		var yLoBot = $author$project$Main$stringY(shape.lower) + pad;
+		var yUpTop = $author$project$Main$stringY(shape.upper) - pad;
+		var loU = shift + A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$minimum(shape.upperRels));
+		var loL = shift + A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$minimum(shape.lowerRels));
+		var hiU = shift + A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$maximum(shape.upperRels));
+		var hiL = shift + A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$maximum(shape.lowerRels));
+		var inRange = A2(
+			$elm$core$List$any,
+			function (_v1) {
+				var lo = _v1.a;
+				var hi = _v1.b;
+				return ((lo >= 0) && (_Utils_cmp(lo, $author$project$Main$numFrets) < 1)) || ((hi >= 0) && (_Utils_cmp(hi, $author$project$Main$numFrets) < 1));
+			},
+			_List_fromArray(
+				[
+					_Utils_Tuple2(loL, hiL),
+					_Utils_Tuple2(loU, hiU)
+				]));
+		var verts = _List_fromArray(
+			[
+				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(loL),
+				yLoBot),
+				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(hiL),
+				yLoBot),
+				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(hiU),
+				yUpTop),
+				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(loU),
+				yUpTop),
+				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(loU),
+				yMid),
+				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(loL),
+				yMid)
+			]);
+		var pointsStr = A2(
+			$elm$core$String$join,
+			' ',
+			A2(
+				$elm$core$List$map,
+				function (_v0) {
+					var x = _v0.a;
+					var y = _v0.b;
+					return $elm$core$String$fromFloat(x) + (',' + $elm$core$String$fromFloat(y));
+				},
+				verts));
+		return inRange ? $elm$core$Maybe$Just(
+			A2(
+				$elm$svg$Svg$polygon,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$points(pointsStr),
+						$elm$svg$Svg$Attributes$fill(
+						$author$project$Main$boxColor(shape.color)),
+						$elm$svg$Svg$Attributes$fillOpacity('0.45')
+					]),
+				_List_Nil)) : $elm$core$Maybe$Nothing;
+	});
+var $author$project$Main$drawDiagonalRegions = function (model) {
+	var octaves = _List_fromArray(
+		[-2, -1, 0, 1, 2]);
+	return A2(
+		$elm$core$List$concatMap,
+		function (shape) {
+			return A2(
+				$elm$core$List$filterMap,
+				A3($author$project$Main$drawDiagonalShape, model.scale, model.root, shape),
+				octaves);
+		},
+		$author$project$Main$diagonalShapes);
+};
+var $author$project$Main$isDiagonal = function (scale) {
+	return _Utils_eq(scale, $author$project$Main$DiagonalPent) || _Utils_eq(scale, $author$project$Main$DiagonalMajorPent);
+};
+var $author$project$Main$drawBoxRegions = function (model) {
+	return $author$project$Main$isDiagonal(model.scale) ? $author$project$Main$drawDiagonalRegions(model) : $author$project$Main$drawBoxRegionsBoxes(model);
 };
 var $author$project$Main$fretLineX = function (f) {
 	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
@@ -7038,8 +7220,12 @@ var $author$project$Main$noteRole = F2(
 					return 3;
 				case 'HarmonicMinor':
 					return 3;
-				default:
+				case 'MelodicMinor':
 					return 3;
+				case 'DiagonalPent':
+					return 3;
+				default:
+					return 4;
 			}
 		}();
 		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
@@ -7198,6 +7384,18 @@ var $author$project$Main$bluesBoxOf = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $author$project$Main$diagonalBoxOf = F4(
+	function (scale, root, s, f) {
+		var rel = A2(
+			$elm$core$Basics$modBy,
+			12,
+			f - A2($author$project$Main$diagonalAnchor, scale, root));
+		var matches = function (shape) {
+			return ((_Utils_eq(s, shape.lower) && A2($elm$core$List$member, rel, shape.lowerRels)) || (_Utils_eq(s, shape.upper) && A2($elm$core$List$member, rel, shape.upperRels))) ? $elm$core$Maybe$Just(shape.color) : $elm$core$Maybe$Nothing;
+		};
+		return $elm$core$List$head(
+			A2($elm$core$List$filterMap, matches, $author$project$Main$diagonalShapes));
+	});
 var $author$project$Main$scaleIntervals = function (st) {
 	switch (st.$) {
 		case 'MinorPent':
@@ -7233,9 +7431,15 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'HarmonicMinor':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 8, 11]);
-		default:
+		case 'MelodicMinor':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 9, 11]);
+		case 'DiagonalPent':
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
+		default:
+			return _List_fromArray(
+				[0, 2, 4, 7, 9]);
 	}
 };
 var $author$project$Main$scaleNotes = function (model) {
@@ -7255,17 +7459,21 @@ var $author$project$Main$isInScale = F2(
 	});
 var $author$project$Main$positionBox = F3(
 	function (model, s, f) {
-		if (A2(
-			$author$project$Main$isInScale,
-			model,
-			A2($author$project$Main$noteAt, s, f))) {
-			var fRel = A2(
-				$elm$core$Basics$modBy,
-				12,
-				f - $author$project$Main$rootFret(model));
-			return $author$project$Main$usesMajorBoxShapes(model.scale) ? $elm$core$Maybe$Just(0) : (_Utils_eq(model.scale, $author$project$Main$Blues) ? A2($author$project$Main$bluesBoxOf, s, fRel) : A2($author$project$Main$boxOf, s, fRel));
+		if ($author$project$Main$isDiagonal(model.scale)) {
+			return A4($author$project$Main$diagonalBoxOf, model.scale, model.root, s, f);
 		} else {
-			return $elm$core$Maybe$Nothing;
+			if (A2(
+				$author$project$Main$isInScale,
+				model,
+				A2($author$project$Main$noteAt, s, f))) {
+				var fRel = A2(
+					$elm$core$Basics$modBy,
+					12,
+					f - $author$project$Main$rootFret(model));
+				return $author$project$Main$usesMajorBoxShapes(model.scale) ? $elm$core$Maybe$Just(0) : (_Utils_eq(model.scale, $author$project$Main$Blues) ? A2($author$project$Main$bluesBoxOf, s, fRel) : A2($author$project$Main$boxOf, s, fRel));
+			} else {
+				return $elm$core$Maybe$Nothing;
+			}
 		}
 	});
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
@@ -7653,7 +7861,21 @@ var $author$project$Main$legendText = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
-var $author$project$Main$viewLegend = function (_v0) {
+var $author$project$Main$viewLegend = function (model) {
+	var boxes = $author$project$Main$isDiagonal(model.scale) ? _List_Nil : A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Boxes:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendSwatch,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(1, '1'),
+					_Utils_Tuple2(2, '2'),
+					_Utils_Tuple2(3, '3'),
+					_Utils_Tuple2(4, '4'),
+					_Utils_Tuple2(5, '5')
+				])));
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -7666,29 +7888,16 @@ var $author$project$Main$viewLegend = function (_v0) {
 				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
 				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 			]),
-		A2(
-			$elm$core$List$cons,
-			$author$project$Main$legendText('Boxes:'),
-			_Utils_ap(
-				A2(
-					$elm$core$List$map,
-					$author$project$Main$legendSwatch,
-					_List_fromArray(
-						[
-							_Utils_Tuple2(1, '1'),
-							_Utils_Tuple2(2, '2'),
-							_Utils_Tuple2(3, '3'),
-							_Utils_Tuple2(4, '4'),
-							_Utils_Tuple2(5, '5')
-						])),
-				_List_fromArray(
-					[
-						$author$project$Main$legendText('Tones:'),
-						A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
-						A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
-						A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
-						A2($author$project$Main$legendMarker, 'circle-plain', 'other')
-					]))));
+		_Utils_ap(
+			boxes,
+			_List_fromArray(
+				[
+					$author$project$Main$legendText('Tones:'),
+					A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+					A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
+					A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
+					A2($author$project$Main$legendMarker, 'circle-plain', 'other')
+				])));
 };
 var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = $author$project$Main$noteName(model.root) + (' ' + function () {
@@ -7716,8 +7925,12 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Blues';
 			case 'HarmonicMinor':
 				return 'Harmonic Minor';
-			default:
+			case 'MelodicMinor':
 				return 'Melodic Minor';
+			case 'DiagonalPent':
+				return 'Diagonal Minor Pentatonic';
+			default:
+				return 'Diagonal Major Pentatonic';
 		}
 	}());
 	var intervalLabels = function () {
@@ -7756,9 +7969,15 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'HarmonicMinor':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '♭6', '7']);
-			default:
+			case 'MelodicMinor':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '6', '7']);
+			case 'DiagonalPent':
+				return _List_fromArray(
+					['R', '♭3', '4', '5', '♭7']);
+			default:
+				return _List_fromArray(
+					['R', '2', '3', '5', '6']);
 		}
 	}();
 	var notePairs = A3(

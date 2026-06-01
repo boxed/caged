@@ -1,4 +1,4 @@
-module BoxShapeTests exposing (overlapCoverage, stripeEdges, suite)
+module BoxShapeTests exposing (diagonalCells, overlapCoverage, stripeEdges, suite)
 
 {-| Validates that every box-shape edge (the per-string `lo` and `hi`
 relative-fret values returned by `majorBoxShape`) actually falls on a note
@@ -7,7 +7,7 @@ note on that string, the polygon would render with empty space at its edge.
 -}
 
 import Expect
-import Main exposing (ScaleType(..), majorBoxShape, noteAt, scaleIntervals)
+import Main exposing (ScaleType(..), diagonalAnchor, diagonalShapes, majorBoxShape, noteAt, scaleIntervals)
 import Test exposing (Test, describe, test)
 
 
@@ -63,6 +63,12 @@ fRootFor scale root =
         MelodicMinor ->
             modBy 12 (root - 4)
 
+        DiagonalPent ->
+            modBy 12 (root - 1)
+
+        DiagonalMajorPent ->
+            modBy 12 (root - 4)
+
 
 scaleNotes : ScaleType -> Int -> List Int
 scaleNotes scale root =
@@ -108,6 +114,12 @@ scaleName scale =
 
         MelodicMinor ->
             "MelodicMinor"
+
+        DiagonalPent ->
+            "DiagonalPent"
+
+        DiagonalMajorPent ->
+            "DiagonalMajorPent"
 
 
 {-| Test one (scale, box, string, edge label, fRel) combination. Pass if
@@ -451,3 +463,52 @@ stripeEdges : Test
 stripeEdges =
     describe "Stripe overlap edges land on scale notes (so polygons end at fret lines underneath notes)"
         (List.map stripeEdgesForScale modesWithMajorShapes)
+
+
+
+-- Diagonal pentatonic: the same shape, anchored differently per variant.
+-- Minor's lower string carries ♭3, 4, 5 and upper ♭7, R; major's lower carries
+-- R, 2, 3 and upper 5, 6. Each lower/upper string must hit those exact scale
+-- degrees (in fret order) for any root — validating the fixed relative-fret
+-- offsets against the guitar tuning and the per-variant anchor.
+
+
+diagonalRootCells : ScaleType -> ( List Int, List Int ) -> Int -> List Test
+diagonalRootCells scale ( lowerDegrees, upperDegrees ) root =
+    let
+        a =
+            diagonalAnchor scale root
+
+        noteOf s rel =
+            noteAt s (a + rel)
+
+        expected degrees =
+            List.map (\i -> modBy 12 (root + i)) degrees
+
+        expect label degrees actual =
+            test label <|
+                \_ -> Expect.equal (expected degrees) actual
+    in
+    diagonalShapes
+        |> List.concatMap
+            (\shape ->
+                let
+                    tag =
+                        scaleName scale ++ " root " ++ String.fromInt root ++ " shape " ++ String.fromInt shape.color
+                in
+                [ expect (tag ++ " lower")
+                    lowerDegrees
+                    (List.map (noteOf shape.lower) (List.sort shape.lowerRels))
+                , expect (tag ++ " upper")
+                    upperDegrees
+                    (List.map (noteOf shape.upper) (List.sort shape.upperRels))
+                ]
+            )
+
+
+diagonalCells : Test
+diagonalCells =
+    describe "Diagonal pentatonic shapes carry the right scale degrees on each string"
+        (List.concatMap (diagonalRootCells DiagonalPent ( [ 3, 5, 7 ], [ 10, 0 ] )) (List.range 0 11)
+            ++ List.concatMap (diagonalRootCells DiagonalMajorPent ( [ 0, 2, 4 ], [ 7, 9 ] )) (List.range 0 11)
+        )

@@ -1,5 +1,7 @@
 port module Main exposing
     ( ScaleType(..)
+    , diagonalAnchor
+    , diagonalShapes
     , main
     , majorBoxShape
     , noteAt
@@ -50,6 +52,8 @@ type ScaleType
     | Blues
     | HarmonicMinor
     | MelodicMinor
+    | DiagonalPent
+    | DiagonalMajorPent
 
 
 
@@ -185,6 +189,8 @@ scaleSlug s =
         Blues -> "blues"
         HarmonicMinor -> "harmonic-minor"
         MelodicMinor -> "melodic-minor"
+        DiagonalPent -> "diagonal-pent"
+        DiagonalMajorPent -> "diagonal-major-pent"
         Dorian -> "dorian"
 
 
@@ -203,6 +209,8 @@ scaleFromSlug s =
         "blues" -> Just Blues
         "harmonic-minor" -> Just HarmonicMinor
         "melodic-minor" -> Just MelodicMinor
+        "diagonal-pent" -> Just DiagonalPent
+        "diagonal-major-pent" -> Just DiagonalMajorPent
         _ -> Nothing
 
 
@@ -320,6 +328,12 @@ scaleIntervals st =
         MelodicMinor ->
             [ 0, 2, 3, 5, 7, 9, 11 ]
 
+        DiagonalPent ->
+            [ 0, 3, 5, 7, 10 ]
+
+        DiagonalMajorPent ->
+            [ 0, 2, 4, 7, 9 ]
+
 
 scaleNotes : Model -> List Int
 scaleNotes model =
@@ -374,6 +388,12 @@ rootFret model =
         MelodicMinor ->
             modBy 12 (model.root - 4)
 
+        DiagonalPent ->
+            diagonalAnchor DiagonalPent model.root
+
+        DiagonalMajorPent ->
+            diagonalAnchor DiagonalMajorPent model.root
+
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
 fret (mod 12) from the shape anchor. The box is the one where this
@@ -415,9 +435,17 @@ boxOf s fRel =
         _ -> Nothing
 
 
+isDiagonal : ScaleType -> Bool
+isDiagonal scale =
+    scale == DiagonalPent || scale == DiagonalMajorPent
+
+
 positionBox : Model -> Int -> Int -> Maybe Int
 positionBox model s f =
-    if isInScale model (noteAt s f) then
+    if isDiagonal model.scale then
+        diagonalBoxOf model.scale model.root s f
+
+    else if isInScale model (noteAt s f) then
         let
             fRel =
                 modBy 12 (f - rootFret model)
@@ -433,6 +461,60 @@ positionBox model s f =
 
     else
         Nothing
+
+
+{-| Diagonal pentatonic: a 2-string climbing shape. The shape is identical for
+the minor and major variants — only the anchor moves. Minor starts on the ♭3
+(lower string carries ♭3, 4, 5; upper string ♭7, R); major is the same shape
+shifted down so it starts on the root (lower string R, 2, 3; upper string 5, 6).
+`color` tints the shape; `lower`/`upper` are the two strings and `lowerRels`/
+`upperRels` are their frets measured from the anchor fret on the low-E string.
+The +1 shift on the top pair absorbs the G→B major-third tuning offset. -}
+type alias DiagShape =
+    { color : Int
+    , lower : Int
+    , lowerRels : List Int
+    , upper : Int
+    , upperRels : List Int
+    }
+
+
+diagonalShapes : List DiagShape
+diagonalShapes =
+    [ { color = 1, lower = 6, lowerRels = [ 0, 2, 4 ], upper = 5, upperRels = [ 2, 4 ] }
+    , { color = 1, lower = 4, lowerRels = [ 2, 4, 6 ], upper = 3, upperRels = [ 4, 6 ] }
+    , { color = 1, lower = 2, lowerRels = [ 5, 7, 9 ], upper = 1, upperRels = [ 7, 9 ] }
+    ]
+
+
+{-| Anchor fret on the low-E string (open = pitch 4). Minor anchors on the ♭3
+(root + 3 - 4 = root - 1); major anchors on the root (root - 4). -}
+diagonalAnchor : ScaleType -> Int -> Int
+diagonalAnchor scale root =
+    case scale of
+        DiagonalMajorPent ->
+            modBy 12 (root - 4)
+
+        _ ->
+            modBy 12 (root - 1)
+
+
+diagonalBoxOf : ScaleType -> Int -> Int -> Int -> Maybe Int
+diagonalBoxOf scale root s f =
+    let
+        rel =
+            modBy 12 (f - diagonalAnchor scale root)
+
+        matches shape =
+            if (s == shape.lower && List.member rel shape.lowerRels) || (s == shape.upper && List.member rel shape.upperRels) then
+                Just shape.color
+
+            else
+                Nothing
+    in
+    diagonalShapes
+        |> List.filterMap matches
+        |> List.head
 
 
 
@@ -466,6 +548,8 @@ noteRole model n =
                 Blues -> 3
                 HarmonicMinor -> 3
                 MelodicMinor -> 3
+                DiagonalPent -> 3
+                DiagonalMajorPent -> 4
     in
     if interval == 0 then
         Root
@@ -899,6 +983,8 @@ viewScaleTitle model =
                         Blues -> "Blues"
                         HarmonicMinor -> "Harmonic Minor"
                         MelodicMinor -> "Melodic Minor"
+                        DiagonalPent -> "Diagonal Minor Pentatonic"
+                        DiagonalMajorPent -> "Diagonal Major Pentatonic"
                    )
 
         intervalLabels =
@@ -915,6 +1001,8 @@ viewScaleTitle model =
                 Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
                 HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
                 MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
+                DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
+                DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
 
         notePairs =
             List.map2
@@ -944,7 +1032,7 @@ viewControls model =
     div [ style "margin-bottom" "18px" ]
         [ div [ style "margin-bottom" "8px" ]
             [ label "Root" , noteButtonRow model ]
-        , div []
+        , div [ style "margin-bottom" "8px" ]
             [ label "Scale"
             , scaleButton model MinorPent "Minor pentatonic"
             , scaleButton model MajorPent "Major pentatonic"
@@ -958,6 +1046,11 @@ viewControls model =
             , scaleButton model Blues "Blues"
             , scaleButton model HarmonicMinor "Harmonic minor"
             , scaleButton model MelodicMinor "Melodic minor"
+            ]
+        , div []
+            [ label "Diag. Scale"
+            , scaleButton model DiagonalPent "Minor pentatonic"
+            , scaleButton model DiagonalMajorPent "Major pentatonic"
             ]
         ]
 
@@ -1066,6 +1159,15 @@ viewFretboard model =
 
 drawBoxRegions : Model -> List (Svg.Svg Msg)
 drawBoxRegions model =
+    if isDiagonal model.scale then
+        drawDiagonalRegions model
+
+    else
+        drawBoxRegionsBoxes model
+
+
+drawBoxRegionsBoxes : Model -> List (Svg.Svg Msg)
+drawBoxRegionsBoxes model =
     let
         octaves =
             [ -1, 0, 1 ]
@@ -1099,6 +1201,86 @@ drawBoxRegions model =
                 []
     in
     solids ++ overlaps ++ wrapOverlaps
+
+
+drawDiagonalRegions : Model -> List (Svg.Svg Msg)
+drawDiagonalRegions model =
+    let
+        octaves =
+            [ -2, -1, 0, 1, 2 ]
+    in
+    List.concatMap
+        (\shape -> List.filterMap (drawDiagonalShape model.scale model.root shape) octaves)
+        diagonalShapes
+
+
+{-| One diagonal shape: a stepped parallelogram spanning two adjacent strings.
+The right edge is vertical (the lower string's top note and the upper string's
+top note share a fret); the left edge steps in by the lower/upper offset. The
+shape repeats every 12 frets (one octave) to fill the neck. -}
+drawDiagonalShape : ScaleType -> Int -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
+drawDiagonalShape scale root shape octave =
+    let
+        shift =
+            diagonalAnchor scale root + 12 * octave
+
+        loL =
+            shift + (List.minimum shape.lowerRels |> Maybe.withDefault 0)
+
+        hiL =
+            shift + (List.maximum shape.lowerRels |> Maybe.withDefault 0)
+
+        loU =
+            shift + (List.minimum shape.upperRels |> Maybe.withDefault 0)
+
+        hiU =
+            shift + (List.maximum shape.upperRels |> Maybe.withDefault 0)
+
+        inRange =
+            List.any
+                (\( lo, hi ) ->
+                    (lo >= 0 && lo <= numFrets) || (hi >= 0 && hi <= numFrets)
+                )
+                [ ( loL, hiL ), ( loU, hiU ) ]
+
+        pad =
+            stringSpacing * 0.55
+
+        yLoBot =
+            stringY shape.lower + pad
+
+        yMid =
+            (stringY shape.lower + stringY shape.upper) / 2
+
+        yUpTop =
+            stringY shape.upper - pad
+
+        verts =
+            [ ( fretCenterX loL, yLoBot )
+            , ( fretCenterX hiL, yLoBot )
+            , ( fretCenterX hiU, yUpTop )
+            , ( fretCenterX loU, yUpTop )
+            , ( fretCenterX loU, yMid )
+            , ( fretCenterX loL, yMid )
+            ]
+
+        pointsStr =
+            verts
+                |> List.map (\( x, y ) -> String.fromFloat x ++ "," ++ String.fromFloat y)
+                |> String.join " "
+    in
+    if inRange then
+        Just
+            (Svg.polygon
+                [ SA.points pointsStr
+                , SA.fill (boxColor shape.color)
+                , SA.fillOpacity "0.45"
+                ]
+                []
+            )
+
+    else
+        Nothing
 
 
 drawOneMajorBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -1662,7 +1844,16 @@ drawInlayDots =
 
 
 viewLegend : Model -> Html Msg
-viewLegend _ =
+viewLegend model =
+    let
+        boxes =
+            if isDiagonal model.scale then
+                []
+
+            else
+                legendText "Boxes:"
+                    :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
+    in
     div
         [ style "margin-top" "16px"
         , style "font-size" "13px"
@@ -1672,8 +1863,7 @@ viewLegend _ =
         , style "flex-wrap" "wrap"
         , style "align-items" "center"
         ]
-        (legendText "Boxes:"
-            :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
+        (boxes
             ++ [ legendText "Tones:"
                , legendMarker "square-dark" "Root"
                , legendMarker "circle-dashed" "3rd"
