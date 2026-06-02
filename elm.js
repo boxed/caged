@@ -6898,6 +6898,12 @@ var $author$project$Main$drawDiagonalShape = F4(
 				$author$project$Main$fretCenterX(hiL),
 				yLoBot),
 				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(hiL),
+				yMid),
+				_Utils_Tuple2(
+				$author$project$Main$fretCenterX(hiU),
+				yMid),
+				_Utils_Tuple2(
 				$author$project$Main$fretCenterX(hiU),
 				yUpTop),
 				_Utils_Tuple2(

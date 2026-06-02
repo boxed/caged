@@ -1229,10 +1229,11 @@ drawDiagonalRegions model =
         diagonalShapes
 
 
-{-| One diagonal shape: a stepped parallelogram spanning two adjacent strings.
-The right edge is vertical (the lower string's top note and the upper string's
-top note share a fret); the left edge steps in by the lower/upper offset. The
-shape repeats every 12 frets (one octave) to fill the neck. -}
+{-| One diagonal shape: a stepped polygon spanning two adjacent strings.
+Both edges are staircases that step at the midline between the strings; an
+edge where both strings share a fret (pattern 1's right, pattern 2's left)
+collapses to a vertical line. The shape repeats every 12 frets (one octave)
+to fill the neck. -}
 drawDiagonalShape : ScaleType -> Int -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
 drawDiagonalShape scale root shape octave =
     let
@@ -1273,6 +1274,8 @@ drawDiagonalShape scale root shape octave =
         verts =
             [ ( fretCenterX loL, yLoBot )
             , ( fretCenterX hiL, yLoBot )
+            , ( fretCenterX hiL, yMid )
+            , ( fretCenterX hiU, yMid )
             , ( fretCenterX hiU, yUpTop )
             , ( fretCenterX loU, yUpTop )
             , ( fretCenterX loU, yMid )
