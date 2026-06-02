@@ -463,13 +463,17 @@ positionBox model s f =
         Nothing
 
 
-{-| Diagonal pentatonic: a 2-string climbing shape. The shape is identical for
-the minor and major variants — only the anchor moves. Minor starts on the ♭3
-(lower string carries ♭3, 4, 5; upper string ♭7, R); major is the same shape
-shifted down so it starts on the root (lower string R, 2, 3; upper string 5, 6).
-`color` tints the shape; `lower`/`upper` are the two strings and `lowerRels`/
-`upperRels` are their frets measured from the anchor fret on the low-E string.
-The +1 shift on the top pair absorbs the G→B major-third tuning offset. -}
+{-| Diagonal pentatonic: a 2-string climbing shape. The shapes are identical
+for the minor and major variants — only the anchor moves. Minor starts on the
+♭3 (pattern 1's lower string carries ♭3, 4, 5; upper string ♭7, R); major is
+the same shape shifted down so it starts on the root (lower string R, 2, 3;
+upper string 5, 6). There are two patterns: pattern 2 is each pattern-1 shape
+rotated 180° and offset 5 frets left, so its strings swap note content (lower
+carries ♭7, R; upper ♭3, 4, 5 for minor). Together the two patterns partition
+every pentatonic note on the neck. `color` tints the shape (one color per
+pattern); `lower`/`upper` are the two strings and `lowerRels`/`upperRels` are
+their frets measured from the anchor fret on the low-E string. The +1 shift on
+the top pair absorbs the G→B major-third tuning offset. -}
 type alias DiagShape =
     { color : Int
     , lower : Int
@@ -481,9 +485,16 @@ type alias DiagShape =
 
 diagonalShapes : List DiagShape
 diagonalShapes =
+    -- Pattern 1: three notes on the lower string, two right-aligned on the upper.
     [ { color = 1, lower = 6, lowerRels = [ 0, 2, 4 ], upper = 5, upperRels = [ 2, 4 ] }
     , { color = 1, lower = 4, lowerRels = [ 2, 4, 6 ], upper = 3, upperRels = [ 4, 6 ] }
     , { color = 1, lower = 2, lowerRels = [ 5, 7, 9 ], upper = 1, upperRels = [ 7, 9 ] }
+
+    -- Pattern 2: each pattern-1 shape rotated 180° and offset 5 frets left —
+    -- two notes on the lower string, three left-aligned on the upper.
+    , { color = 2, lower = 6, lowerRels = [ -5, -3 ], upper = 5, upperRels = [ -5, -3, -1 ] }
+    , { color = 2, lower = 4, lowerRels = [ -3, -1 ], upper = 3, upperRels = [ -3, -1, 1 ] }
+    , { color = 2, lower = 2, lowerRels = [ 0, 2 ], upper = 1, upperRels = [ 0, 2, 4 ] }
     ]
 
 
@@ -506,7 +517,11 @@ diagonalBoxOf scale root s f =
             modBy 12 (f - diagonalAnchor scale root)
 
         matches shape =
-            if (s == shape.lower && List.member rel shape.lowerRels) || (s == shape.upper && List.member rel shape.upperRels) then
+            let
+                memberMod rels =
+                    List.member rel (List.map (modBy 12) rels)
+            in
+            if (s == shape.lower && memberMod shape.lowerRels) || (s == shape.upper && memberMod shape.upperRels) then
                 Just shape.color
 
             else
@@ -1848,7 +1863,8 @@ viewLegend model =
     let
         boxes =
             if isDiagonal model.scale then
-                []
+                legendText "Patterns:"
+                    :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ) ]
 
             else
                 legendText "Boxes:"

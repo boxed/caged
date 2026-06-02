@@ -466,11 +466,13 @@ stripeEdges =
 
 
 
--- Diagonal pentatonic: the same shape, anchored differently per variant.
--- Minor's lower string carries ♭3, 4, 5 and upper ♭7, R; major's lower carries
--- R, 2, 3 and upper 5, 6. Each lower/upper string must hit those exact scale
--- degrees (in fret order) for any root — validating the fixed relative-fret
--- offsets against the guitar tuning and the per-variant anchor.
+-- Diagonal pentatonic: the same shapes, anchored differently per variant.
+-- In pattern 1 (color 1) minor's lower string carries ♭3, 4, 5 and upper ♭7, R;
+-- major's lower carries R, 2, 3 and upper 5, 6. Pattern 2 (color 2) is each
+-- shape rotated 180°, so its strings swap degree content. Each lower/upper
+-- string must hit those exact scale degrees (in fret order) for any root —
+-- validating the fixed relative-fret offsets against the guitar tuning and
+-- the per-variant anchor.
 
 
 diagonalRootCells : ScaleType -> ( List Int, List Int ) -> Int -> List Test
@@ -494,13 +496,30 @@ diagonalRootCells scale ( lowerDegrees, upperDegrees ) root =
             (\shape ->
                 let
                     tag =
-                        scaleName scale ++ " root " ++ String.fromInt root ++ " shape " ++ String.fromInt shape.color
+                        scaleName scale
+                            ++ " root "
+                            ++ String.fromInt root
+                            ++ " pattern "
+                            ++ String.fromInt shape.color
+                            ++ " strings "
+                            ++ String.fromInt shape.lower
+                            ++ "/"
+                            ++ String.fromInt shape.upper
+
+                    -- Pattern 2 is pattern 1 rotated 180°: the strings
+                    -- swap degree content.
+                    ( lowDeg, upDeg ) =
+                        if shape.color == 2 then
+                            ( upperDegrees, lowerDegrees )
+
+                        else
+                            ( lowerDegrees, upperDegrees )
                 in
                 [ expect (tag ++ " lower")
-                    lowerDegrees
+                    lowDeg
                     (List.map (noteOf shape.lower) (List.sort shape.lowerRels))
                 , expect (tag ++ " upper")
-                    upperDegrees
+                    upDeg
                     (List.map (noteOf shape.upper) (List.sort shape.upperRels))
                 ]
             )

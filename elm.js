@@ -6805,6 +6805,33 @@ var $author$project$Main$diagonalShapes = _List_fromArray(
 		upper: 1,
 		upperRels: _List_fromArray(
 			[7, 9])
+	},
+		{
+		color: 2,
+		lower: 6,
+		lowerRels: _List_fromArray(
+			[-5, -3]),
+		upper: 5,
+		upperRels: _List_fromArray(
+			[-5, -3, -1])
+	},
+		{
+		color: 2,
+		lower: 4,
+		lowerRels: _List_fromArray(
+			[-3, -1]),
+		upper: 3,
+		upperRels: _List_fromArray(
+			[-3, -1, 1])
+	},
+		{
+		color: 2,
+		lower: 2,
+		lowerRels: _List_fromArray(
+			[0, 2]),
+		upper: 1,
+		upperRels: _List_fromArray(
+			[0, 2, 4])
 	}
 	]);
 var $elm$core$List$maximum = function (list) {
@@ -7391,7 +7418,16 @@ var $author$project$Main$diagonalBoxOf = F4(
 			12,
 			f - A2($author$project$Main$diagonalAnchor, scale, root));
 		var matches = function (shape) {
-			return ((_Utils_eq(s, shape.lower) && A2($elm$core$List$member, rel, shape.lowerRels)) || (_Utils_eq(s, shape.upper) && A2($elm$core$List$member, rel, shape.upperRels))) ? $elm$core$Maybe$Just(shape.color) : $elm$core$Maybe$Nothing;
+			var memberMod = function (rels) {
+				return A2(
+					$elm$core$List$member,
+					rel,
+					A2(
+						$elm$core$List$map,
+						$elm$core$Basics$modBy(12),
+						rels));
+			};
+			return ((_Utils_eq(s, shape.lower) && memberMod(shape.lowerRels)) || (_Utils_eq(s, shape.upper) && memberMod(shape.upperRels))) ? $elm$core$Maybe$Just(shape.color) : $elm$core$Maybe$Nothing;
 		};
 		return $elm$core$List$head(
 			A2($elm$core$List$filterMap, matches, $author$project$Main$diagonalShapes));
@@ -7862,7 +7898,17 @@ var $author$project$Main$legendText = function (s) {
 			]));
 };
 var $author$project$Main$viewLegend = function (model) {
-	var boxes = $author$project$Main$isDiagonal(model.scale) ? _List_Nil : A2(
+	var boxes = $author$project$Main$isDiagonal(model.scale) ? A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Patterns:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendSwatch,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(1, '1'),
+					_Utils_Tuple2(2, '2')
+				]))) : A2(
 		$elm$core$List$cons,
 		$author$project$Main$legendText('Boxes:'),
 		A2(
