@@ -7,7 +7,7 @@ note on that string, the polygon would render with empty space at its edge.
 -}
 
 import Expect
-import Main exposing (ScaleType(..), diagonalAnchor, diagonalShapes, majorBoxShape, noteAt, scaleIntervals)
+import Main exposing (ScaleType(..), diagonalAnchor, diagonalShapesFor, majorBoxShape, noteAt, scaleIntervals)
 import Test exposing (Test, describe, test)
 
 
@@ -69,6 +69,9 @@ fRootFor scale root =
         DiagonalMajorPent ->
             modBy 12 (root - 4)
 
+        DiagonalBlues ->
+            modBy 12 (root - 1)
+
 
 scaleNotes : ScaleType -> Int -> List Int
 scaleNotes scale root =
@@ -120,6 +123,9 @@ scaleName scale =
 
         DiagonalMajorPent ->
             "DiagonalMajorPent"
+
+        DiagonalBlues ->
+            "DiagonalBlues"
 
 
 {-| Test one (scale, box, string, edge label, fRel) combination. Pass if
@@ -491,7 +497,7 @@ diagonalRootCells scale ( lowerDegrees, upperDegrees ) root =
             test label <|
                 \_ -> Expect.equal (expected degrees) actual
     in
-    diagonalShapes
+    diagonalShapesFor scale
         |> List.concatMap
             (\shape ->
                 let
@@ -530,4 +536,5 @@ diagonalCells =
     describe "Diagonal pentatonic shapes carry the right scale degrees on each string"
         (List.concatMap (diagonalRootCells DiagonalPent ( [ 3, 5, 7 ], [ 10, 0 ] )) (List.range 0 11)
             ++ List.concatMap (diagonalRootCells DiagonalMajorPent ( [ 0, 2, 4 ], [ 7, 9 ] )) (List.range 0 11)
+            ++ List.concatMap (diagonalRootCells DiagonalBlues ( [ 3, 5, 6, 7 ], [ 10, 0 ] )) (List.range 0 11)
         )

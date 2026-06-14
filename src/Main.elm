@@ -2,6 +2,7 @@ port module Main exposing
     ( ScaleType(..)
     , diagonalAnchor
     , diagonalShapes
+    , diagonalShapesFor
     , main
     , majorBoxShape
     , noteAt
@@ -54,6 +55,7 @@ type ScaleType
     | MelodicMinor
     | DiagonalPent
     | DiagonalMajorPent
+    | DiagonalBlues
 
 
 
@@ -191,6 +193,7 @@ scaleSlug s =
         MelodicMinor -> "melodic-minor"
         DiagonalPent -> "diagonal-pent"
         DiagonalMajorPent -> "diagonal-major-pent"
+        DiagonalBlues -> "diagonal-blues"
         Dorian -> "dorian"
 
 
@@ -211,6 +214,7 @@ scaleFromSlug s =
         "melodic-minor" -> Just MelodicMinor
         "diagonal-pent" -> Just DiagonalPent
         "diagonal-major-pent" -> Just DiagonalMajorPent
+        "diagonal-blues" -> Just DiagonalBlues
         _ -> Nothing
 
 
@@ -334,6 +338,9 @@ scaleIntervals st =
         DiagonalMajorPent ->
             [ 0, 2, 4, 7, 9 ]
 
+        DiagonalBlues ->
+            [ 0, 3, 5, 6, 7, 10 ]
+
 
 scaleNotes : Model -> List Int
 scaleNotes model =
@@ -394,6 +401,9 @@ rootFret model =
         DiagonalMajorPent ->
             diagonalAnchor DiagonalMajorPent model.root
 
+        DiagonalBlues ->
+            diagonalAnchor DiagonalBlues model.root
+
 
 {-| Returns which box (1-5) a note belongs to, based on its relative
 fret (mod 12) from the shape anchor. The box is the one where this
@@ -437,7 +447,7 @@ boxOf s fRel =
 
 isDiagonal : ScaleType -> Bool
 isDiagonal scale =
-    scale == DiagonalPent || scale == DiagonalMajorPent
+    scale == DiagonalPent || scale == DiagonalMajorPent || scale == DiagonalBlues
 
 
 positionBox : Model -> Int -> Int -> Maybe Int
@@ -485,17 +495,41 @@ type alias DiagShape =
 
 diagonalShapes : List DiagShape
 diagonalShapes =
-    -- Pattern 1: three notes on the lower string, two right-aligned on the upper.
-    [ { color = 1, lower = 6, lowerRels = [ 0, 2, 4 ], upper = 5, upperRels = [ 2, 4 ] }
-    , { color = 1, lower = 4, lowerRels = [ 2, 4, 6 ], upper = 3, upperRels = [ 4, 6 ] }
-    , { color = 1, lower = 2, lowerRels = [ 5, 7, 9 ], upper = 1, upperRels = [ 7, 9 ] }
+    diagonalShapesFor DiagonalPent
 
-    -- Pattern 2: each pattern-1 shape rotated 180° and offset 5 frets left —
-    -- two notes on the lower string, three left-aligned on the upper.
-    , { color = 2, lower = 6, lowerRels = [ -5, -3 ], upper = 5, upperRels = [ -5, -3, -1 ] }
-    , { color = 2, lower = 4, lowerRels = [ -3, -1 ], upper = 3, upperRels = [ -3, -1, 1 ] }
-    , { color = 2, lower = 2, lowerRels = [ 0, 2 ], upper = 1, upperRels = [ 0, 2, 4 ] }
-    ]
+
+{-| The diagonal shapes for a given scale. Minor and major pentatonic share the
+same six shapes (only the anchor differs, handled by `diagonalAnchor`). Blues
+reuses the minor-pent shapes and inserts the ♭5 blue note on each shape's
+♭3-4-5 string, where it sits between the 4 and the 5. Because the blue note is
+interior to a string's existing fret span, the shape polygons are unchanged. -}
+diagonalShapesFor : ScaleType -> List DiagShape
+diagonalShapesFor scale =
+    case scale of
+        DiagonalBlues ->
+            -- Pattern 1: ♭5 added between 4 and 5 on the lower string.
+            [ { color = 1, lower = 6, lowerRels = [ 0, 2, 3, 4 ], upper = 5, upperRels = [ 2, 4 ] }
+            , { color = 1, lower = 4, lowerRels = [ 2, 4, 5, 6 ], upper = 3, upperRels = [ 4, 6 ] }
+            , { color = 1, lower = 2, lowerRels = [ 5, 7, 8, 9 ], upper = 1, upperRels = [ 7, 9 ] }
+
+            -- Pattern 2: ♭5 added between 4 and 5 on the upper string.
+            , { color = 2, lower = 6, lowerRels = [ -5, -3 ], upper = 5, upperRels = [ -5, -3, -2, -1 ] }
+            , { color = 2, lower = 4, lowerRels = [ -3, -1 ], upper = 3, upperRels = [ -3, -1, 0, 1 ] }
+            , { color = 2, lower = 2, lowerRels = [ 0, 2 ], upper = 1, upperRels = [ 0, 2, 3, 4 ] }
+            ]
+
+        _ ->
+            -- Pattern 1: three notes on the lower string, two right-aligned on the upper.
+            [ { color = 1, lower = 6, lowerRels = [ 0, 2, 4 ], upper = 5, upperRels = [ 2, 4 ] }
+            , { color = 1, lower = 4, lowerRels = [ 2, 4, 6 ], upper = 3, upperRels = [ 4, 6 ] }
+            , { color = 1, lower = 2, lowerRels = [ 5, 7, 9 ], upper = 1, upperRels = [ 7, 9 ] }
+
+            -- Pattern 2: each pattern-1 shape rotated 180° and offset 5 frets left —
+            -- two notes on the lower string, three left-aligned on the upper.
+            , { color = 2, lower = 6, lowerRels = [ -5, -3 ], upper = 5, upperRels = [ -5, -3, -1 ] }
+            , { color = 2, lower = 4, lowerRels = [ -3, -1 ], upper = 3, upperRels = [ -3, -1, 1 ] }
+            , { color = 2, lower = 2, lowerRels = [ 0, 2 ], upper = 1, upperRels = [ 0, 2, 4 ] }
+            ]
 
 
 {-| Anchor fret on the low-E string (open = pitch 4). Minor anchors on the ♭3
@@ -527,7 +561,7 @@ diagonalBoxOf scale root s f =
             else
                 Nothing
     in
-    diagonalShapes
+    diagonalShapesFor scale
         |> List.filterMap matches
         |> List.head
 
@@ -565,6 +599,7 @@ noteRole model n =
                 MelodicMinor -> 3
                 DiagonalPent -> 3
                 DiagonalMajorPent -> 4
+                DiagonalBlues -> 3
     in
     if interval == 0 then
         Root
@@ -1000,6 +1035,7 @@ viewScaleTitle model =
                         MelodicMinor -> "Melodic Minor"
                         DiagonalPent -> "Diagonal Minor Pentatonic"
                         DiagonalMajorPent -> "Diagonal Major Pentatonic"
+                        DiagonalBlues -> "Diagonal Blues"
                    )
 
         intervalLabels =
@@ -1018,6 +1054,7 @@ viewScaleTitle model =
                 MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
                 DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
+                DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
 
         notePairs =
             List.map2
@@ -1066,6 +1103,7 @@ viewControls model =
             [ label "Diag. Scale"
             , scaleButton model DiagonalPent "Minor pentatonic"
             , scaleButton model DiagonalMajorPent "Major pentatonic"
+            , scaleButton model DiagonalBlues "Blues"
             ]
         ]
 
@@ -1226,7 +1264,7 @@ drawDiagonalRegions model =
     in
     List.concatMap
         (\shape -> List.filterMap (drawDiagonalShape model.scale model.root shape) octaves)
-        diagonalShapes
+        (diagonalShapesFor model.scale)
 
 
 {-| One diagonal shape: a stepped polygon spanning two adjacent strings.

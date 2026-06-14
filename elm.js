@@ -5257,6 +5257,7 @@ var $author$project$Main$rootFromSlug = function (s) {
 };
 var $author$project$Main$Aeolian = {$: 'Aeolian'};
 var $author$project$Main$Blues = {$: 'Blues'};
+var $author$project$Main$DiagonalBlues = {$: 'DiagonalBlues'};
 var $author$project$Main$DiagonalMajorPent = {$: 'DiagonalMajorPent'};
 var $author$project$Main$DiagonalPent = {$: 'DiagonalPent'};
 var $author$project$Main$Dorian = {$: 'Dorian'};
@@ -5298,6 +5299,8 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$DiagonalPent);
 		case 'diagonal-major-pent':
 			return $elm$core$Maybe$Just($author$project$Main$DiagonalMajorPent);
+		case 'diagonal-blues':
+			return $elm$core$Maybe$Just($author$project$Main$DiagonalBlues);
 		default:
 			return $elm$core$Maybe$Nothing;
 	}
@@ -5441,6 +5444,8 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'diagonal-pent';
 		case 'DiagonalMajorPent':
 			return 'diagonal-major-pent';
+		case 'DiagonalBlues':
+			return 'diagonal-blues';
 		default:
 			return 'dorian';
 	}
@@ -5777,7 +5782,8 @@ var $author$project$Main$viewControls = function (model) {
 					[
 						$author$project$Main$label('Diag. Scale'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor pentatonic'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalBlues, 'Blues')
 					]))
 			]));
 };
@@ -6070,8 +6076,10 @@ var $author$project$Main$rootFret = function (model) {
 			return A2($elm$core$Basics$modBy, 12, model.root - 4);
 		case 'DiagonalPent':
 			return A2($author$project$Main$diagonalAnchor, $author$project$Main$DiagonalPent, model.root);
-		default:
+		case 'DiagonalMajorPent':
 			return A2($author$project$Main$diagonalAnchor, $author$project$Main$DiagonalMajorPent, model.root);
+		default:
+			return A2($author$project$Main$diagonalAnchor, $author$project$Main$DiagonalBlues, model.root);
 	}
 };
 var $author$project$Main$drawOneBox = F3(
@@ -6777,63 +6785,125 @@ var $author$project$Main$drawBoxRegionsBoxes = function (model) {
 		solids,
 		_Utils_ap(overlaps, wrapOverlaps));
 };
-var $author$project$Main$diagonalShapes = _List_fromArray(
-	[
-		{
-		color: 1,
-		lower: 6,
-		lowerRels: _List_fromArray(
-			[0, 2, 4]),
-		upper: 5,
-		upperRels: _List_fromArray(
-			[2, 4])
-	},
-		{
-		color: 1,
-		lower: 4,
-		lowerRels: _List_fromArray(
-			[2, 4, 6]),
-		upper: 3,
-		upperRels: _List_fromArray(
-			[4, 6])
-	},
-		{
-		color: 1,
-		lower: 2,
-		lowerRels: _List_fromArray(
-			[5, 7, 9]),
-		upper: 1,
-		upperRels: _List_fromArray(
-			[7, 9])
-	},
-		{
-		color: 2,
-		lower: 6,
-		lowerRels: _List_fromArray(
-			[-5, -3]),
-		upper: 5,
-		upperRels: _List_fromArray(
-			[-5, -3, -1])
-	},
-		{
-		color: 2,
-		lower: 4,
-		lowerRels: _List_fromArray(
-			[-3, -1]),
-		upper: 3,
-		upperRels: _List_fromArray(
-			[-3, -1, 1])
-	},
-		{
-		color: 2,
-		lower: 2,
-		lowerRels: _List_fromArray(
-			[0, 2]),
-		upper: 1,
-		upperRels: _List_fromArray(
-			[0, 2, 4])
+var $author$project$Main$diagonalShapesFor = function (scale) {
+	if (scale.$ === 'DiagonalBlues') {
+		return _List_fromArray(
+			[
+				{
+				color: 1,
+				lower: 6,
+				lowerRels: _List_fromArray(
+					[0, 2, 3, 4]),
+				upper: 5,
+				upperRels: _List_fromArray(
+					[2, 4])
+			},
+				{
+				color: 1,
+				lower: 4,
+				lowerRels: _List_fromArray(
+					[2, 4, 5, 6]),
+				upper: 3,
+				upperRels: _List_fromArray(
+					[4, 6])
+			},
+				{
+				color: 1,
+				lower: 2,
+				lowerRels: _List_fromArray(
+					[5, 7, 8, 9]),
+				upper: 1,
+				upperRels: _List_fromArray(
+					[7, 9])
+			},
+				{
+				color: 2,
+				lower: 6,
+				lowerRels: _List_fromArray(
+					[-5, -3]),
+				upper: 5,
+				upperRels: _List_fromArray(
+					[-5, -3, -2, -1])
+			},
+				{
+				color: 2,
+				lower: 4,
+				lowerRels: _List_fromArray(
+					[-3, -1]),
+				upper: 3,
+				upperRels: _List_fromArray(
+					[-3, -1, 0, 1])
+			},
+				{
+				color: 2,
+				lower: 2,
+				lowerRels: _List_fromArray(
+					[0, 2]),
+				upper: 1,
+				upperRels: _List_fromArray(
+					[0, 2, 3, 4])
+			}
+			]);
+	} else {
+		return _List_fromArray(
+			[
+				{
+				color: 1,
+				lower: 6,
+				lowerRels: _List_fromArray(
+					[0, 2, 4]),
+				upper: 5,
+				upperRels: _List_fromArray(
+					[2, 4])
+			},
+				{
+				color: 1,
+				lower: 4,
+				lowerRels: _List_fromArray(
+					[2, 4, 6]),
+				upper: 3,
+				upperRels: _List_fromArray(
+					[4, 6])
+			},
+				{
+				color: 1,
+				lower: 2,
+				lowerRels: _List_fromArray(
+					[5, 7, 9]),
+				upper: 1,
+				upperRels: _List_fromArray(
+					[7, 9])
+			},
+				{
+				color: 2,
+				lower: 6,
+				lowerRels: _List_fromArray(
+					[-5, -3]),
+				upper: 5,
+				upperRels: _List_fromArray(
+					[-5, -3, -1])
+			},
+				{
+				color: 2,
+				lower: 4,
+				lowerRels: _List_fromArray(
+					[-3, -1]),
+				upper: 3,
+				upperRels: _List_fromArray(
+					[-3, -1, 1])
+			},
+				{
+				color: 2,
+				lower: 2,
+				lowerRels: _List_fromArray(
+					[0, 2]),
+				upper: 1,
+				upperRels: _List_fromArray(
+					[0, 2, 4])
+			}
+			]);
 	}
-	]);
+};
 var $elm$core$List$maximum = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -6950,10 +7020,10 @@ var $author$project$Main$drawDiagonalRegions = function (model) {
 				A3($author$project$Main$drawDiagonalShape, model.scale, model.root, shape),
 				octaves);
 		},
-		$author$project$Main$diagonalShapes);
+		$author$project$Main$diagonalShapesFor(model.scale));
 };
 var $author$project$Main$isDiagonal = function (scale) {
-	return _Utils_eq(scale, $author$project$Main$DiagonalPent) || _Utils_eq(scale, $author$project$Main$DiagonalMajorPent);
+	return _Utils_eq(scale, $author$project$Main$DiagonalPent) || (_Utils_eq(scale, $author$project$Main$DiagonalMajorPent) || _Utils_eq(scale, $author$project$Main$DiagonalBlues));
 };
 var $author$project$Main$drawBoxRegions = function (model) {
 	return $author$project$Main$isDiagonal(model.scale) ? $author$project$Main$drawDiagonalRegions(model) : $author$project$Main$drawBoxRegionsBoxes(model);
@@ -7257,8 +7327,10 @@ var $author$project$Main$noteRole = F2(
 					return 3;
 				case 'DiagonalPent':
 					return 3;
-				default:
+				case 'DiagonalMajorPent':
 					return 4;
+				default:
+					return 3;
 			}
 		}();
 		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
@@ -7436,7 +7508,10 @@ var $author$project$Main$diagonalBoxOf = F4(
 			return ((_Utils_eq(s, shape.lower) && memberMod(shape.lowerRels)) || (_Utils_eq(s, shape.upper) && memberMod(shape.upperRels))) ? $elm$core$Maybe$Just(shape.color) : $elm$core$Maybe$Nothing;
 		};
 		return $elm$core$List$head(
-			A2($elm$core$List$filterMap, matches, $author$project$Main$diagonalShapes));
+			A2(
+				$elm$core$List$filterMap,
+				matches,
+				$author$project$Main$diagonalShapesFor(scale)));
 	});
 var $author$project$Main$scaleIntervals = function (st) {
 	switch (st.$) {
@@ -7479,9 +7554,12 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'DiagonalPent':
 			return _List_fromArray(
 				[0, 3, 5, 7, 10]);
-		default:
+		case 'DiagonalMajorPent':
 			return _List_fromArray(
 				[0, 2, 4, 7, 9]);
+		default:
+			return _List_fromArray(
+				[0, 3, 5, 6, 7, 10]);
 	}
 };
 var $author$project$Main$scaleNotes = function (model) {
@@ -7981,8 +8059,10 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Melodic Minor';
 			case 'DiagonalPent':
 				return 'Diagonal Minor Pentatonic';
-			default:
+			case 'DiagonalMajorPent':
 				return 'Diagonal Major Pentatonic';
+			default:
+				return 'Diagonal Blues';
 		}
 	}());
 	var intervalLabels = function () {
@@ -8027,9 +8107,12 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'DiagonalPent':
 				return _List_fromArray(
 					['R', '♭3', '4', '5', '♭7']);
-			default:
+			case 'DiagonalMajorPent':
 				return _List_fromArray(
 					['R', '2', '3', '5', '6']);
+			default:
+				return _List_fromArray(
+					['R', '♭3', '4', '♭5', '5', '♭7']);
 		}
 	}();
 	var notePairs = A3(
