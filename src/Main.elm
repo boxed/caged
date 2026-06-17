@@ -574,6 +574,7 @@ type NoteRole
     = Root
     | Third
     | Fifth
+    | Seventh
     | Other
 
 
@@ -600,6 +601,24 @@ noteRole model n =
                 DiagonalPent -> 3
                 DiagonalMajorPent -> 4
                 DiagonalBlues -> 3
+
+        seventhInterval =
+            case model.scale of
+                MinorPent -> 10
+                MajorPent -> -1
+                Ionian -> 11
+                Dorian -> 10
+                Aeolian -> 10
+                Mixolydian -> 10
+                Phrygian -> 10
+                Lydian -> 11
+                Locrian -> 10
+                Blues -> 10
+                HarmonicMinor -> 11
+                MelodicMinor -> 11
+                DiagonalPent -> 10
+                DiagonalMajorPent -> -1
+                DiagonalBlues -> 10
     in
     if interval == 0 then
         Root
@@ -609,6 +628,9 @@ noteRole model n =
 
     else if interval == 7 then
         Fifth
+
+    else if interval == seventhInterval then
+        Seventh
 
     else
         Other
@@ -1755,6 +1777,19 @@ drawNoteAt model s f =
                                 ]
                                 []
 
+                        Seventh ->
+                            Svg.circle
+                                [ SA.cx (String.fromFloat cx)
+                                , SA.cy (String.fromFloat cy)
+                                , SA.r "14"
+                                , SA.fill "var(--note-bg)"
+                                , SA.stroke "var(--chord-bd)"
+                                , SA.strokeWidth "1.5"
+                                , SA.strokeDasharray "4 3"
+                                , SA.strokeOpacity "0.5"
+                                ]
+                                []
+
                         Other ->
                             Svg.circle
                                 [ SA.cx (String.fromFloat cx)
@@ -1763,6 +1798,7 @@ drawNoteAt model s f =
                                 , SA.fill "var(--note-bg)"
                                 , SA.stroke "var(--note-bd)"
                                 , SA.strokeWidth "1.3"
+                                , SA.strokeOpacity "0.5"
                                 ]
                                 []
 
@@ -1771,6 +1807,7 @@ drawNoteAt model s f =
                         Root -> "var(--root-text)"
                         Third -> "var(--note-text)"
                         Fifth -> "var(--note-text)"
+                        Seventh -> "var(--note-text)"
                         Other -> "var(--note-text)"
 
                 labelNode =
@@ -1925,6 +1962,7 @@ viewLegend model =
                , legendMarker "square-dark" "Root"
                , legendMarker "circle-dashed" "3rd"
                , legendMarker "circle-dotted" "5th"
+               , legendMarker "circle-double" "7th"
                , legendMarker "circle-plain" "other"
                ]
         )
@@ -1997,12 +2035,24 @@ legendMarker kind lbl =
                         )
                         []
 
+                "circle-double" ->
+                    span
+                        (common
+                            ++ [ style "background" "var(--note-bg)"
+                               , style "border" "1.5px dashed var(--chord-bd)"
+                               , style "border-radius" "50%"
+                               , style "opacity" "0.5"
+                               ]
+                        )
+                        []
+
                 _ ->
                     span
                         (common
                             ++ [ style "background" "var(--note-bg)"
                                , style "border" "1px solid var(--note-bd)"
                                , style "border-radius" "50%"
+                               , style "opacity" "0.5"
                                ]
                         )
                         []

@@ -7295,12 +7295,13 @@ var $author$project$Main$noteAt = F2(
 var $author$project$Main$Fifth = {$: 'Fifth'};
 var $author$project$Main$Other = {$: 'Other'};
 var $author$project$Main$Root = {$: 'Root'};
+var $author$project$Main$Seventh = {$: 'Seventh'};
 var $author$project$Main$Third = {$: 'Third'};
 var $author$project$Main$noteRole = F2(
 	function (model, n) {
 		var thirdInterval = function () {
-			var _v0 = model.scale;
-			switch (_v0.$) {
+			var _v1 = model.scale;
+			switch (_v1.$) {
 				case 'MinorPent':
 					return 3;
 				case 'MajorPent':
@@ -7333,8 +7334,43 @@ var $author$project$Main$noteRole = F2(
 					return 3;
 			}
 		}();
+		var seventhInterval = function () {
+			var _v0 = model.scale;
+			switch (_v0.$) {
+				case 'MinorPent':
+					return 10;
+				case 'MajorPent':
+					return -1;
+				case 'Ionian':
+					return 11;
+				case 'Dorian':
+					return 10;
+				case 'Aeolian':
+					return 10;
+				case 'Mixolydian':
+					return 10;
+				case 'Phrygian':
+					return 10;
+				case 'Lydian':
+					return 11;
+				case 'Locrian':
+					return 10;
+				case 'Blues':
+					return 10;
+				case 'HarmonicMinor':
+					return 11;
+				case 'MelodicMinor':
+					return 11;
+				case 'DiagonalPent':
+					return 10;
+				case 'DiagonalMajorPent':
+					return -1;
+				default:
+					return 10;
+			}
+		}();
 		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
-		return (!interval) ? $author$project$Main$Root : (_Utils_eq(interval, thirdInterval) ? $author$project$Main$Third : ((interval === 7) ? $author$project$Main$Fifth : $author$project$Main$Other));
+		return (!interval) ? $author$project$Main$Root : (_Utils_eq(interval, thirdInterval) ? $author$project$Main$Third : ((interval === 7) ? $author$project$Main$Fifth : (_Utils_eq(interval, seventhInterval) ? $author$project$Main$Seventh : $author$project$Main$Other)));
 	});
 var $author$project$Main$boxOf = F2(
 	function (s, fRel) {
@@ -7597,6 +7633,7 @@ var $author$project$Main$positionBox = F3(
 		}
 	});
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
+var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
 var $author$project$Main$drawNoteAt = F3(
 	function (model, s, f) {
 		var _v0 = A3($author$project$Main$positionBox, model, s, f);
@@ -7610,6 +7647,8 @@ var $author$project$Main$drawNoteAt = F3(
 					case 'Third':
 						return 'var(--note-text)';
 					case 'Fifth':
+						return 'var(--note-text)';
+					case 'Seventh':
 						return 'var(--note-text)';
 					default:
 						return 'var(--note-text)';
@@ -7688,6 +7727,23 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$strokeDasharray('0.1 4')
 								]),
 							_List_Nil);
+					case 'Seventh':
+						return A2(
+							$elm$svg$Svg$circle,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$cx(
+									$elm$core$String$fromFloat(cx)),
+									$elm$svg$Svg$Attributes$cy(
+									$elm$core$String$fromFloat(cy)),
+									$elm$svg$Svg$Attributes$r('14'),
+									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+									$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
+									$elm$svg$Svg$Attributes$strokeWidth('1.5'),
+									$elm$svg$Svg$Attributes$strokeDasharray('4 3'),
+									$elm$svg$Svg$Attributes$strokeOpacity('0.5')
+								]),
+							_List_Nil);
 					default:
 						return A2(
 							$elm$svg$Svg$circle,
@@ -7700,7 +7756,8 @@ var $author$project$Main$drawNoteAt = F3(
 									$elm$svg$Svg$Attributes$r('14'),
 									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
 									$elm$svg$Svg$Attributes$stroke('var(--note-bd)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.3')
+									$elm$svg$Svg$Attributes$strokeWidth('1.3'),
+									$elm$svg$Svg$Attributes$strokeOpacity('0.5')
 								]),
 							_List_Nil);
 				}
@@ -7905,6 +7962,19 @@ var $author$project$Main$legendMarker = F2(
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
 								])),
 						_List_Nil);
+				case 'circle-double':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.5px dashed var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+									A2($elm$html$Html$Attributes$style, 'opacity', '0.5')
+								])),
+						_List_Nil);
 				default:
 					return A2(
 						$elm$html$Html$span,
@@ -7914,7 +7984,8 @@ var $author$project$Main$legendMarker = F2(
 								[
 									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
 									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+									A2($elm$html$Html$Attributes$style, 'opacity', '0.5')
 								])),
 						_List_Nil);
 			}
@@ -8026,6 +8097,7 @@ var $author$project$Main$viewLegend = function (model) {
 					A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
 					A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
 					A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
+					A2($author$project$Main$legendMarker, 'circle-double', '7th'),
 					A2($author$project$Main$legendMarker, 'circle-plain', 'other')
 				])));
 };
