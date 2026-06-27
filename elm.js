@@ -8184,6 +8184,18 @@ var $author$project$Main$viewFretboard = function (model) {
 					$author$project$Main$drawInlayDots
 				])));
 };
+var $author$project$Main$legendGroup = function (children) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '18px')
+			]),
+		children);
+};
 var $author$project$Main$legendMarker = F2(
 	function (kind, lbl) {
 		var common = _List_fromArray(
@@ -8321,6 +8333,15 @@ var $author$project$Main$legendText = function (s) {
 			]));
 };
 var $author$project$Main$viewLegend = function (model) {
+	var tones = _List_fromArray(
+		[
+			$author$project$Main$legendText('Tones:'),
+			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+			A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
+			A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
+			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
+			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
+		]);
 	var boxes = $author$project$Main$isDiagonal(model.scale) ? A2(
 		$elm$core$List$cons,
 		$author$project$Main$legendText('Patterns:'),
@@ -8357,17 +8378,11 @@ var $author$project$Main$viewLegend = function (model) {
 				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
 				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 			]),
-		_Utils_ap(
-			boxes,
-			_List_fromArray(
-				[
-					$author$project$Main$legendText('Tones:'),
-					A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
-					A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
-					A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
-					A2($author$project$Main$legendMarker, 'circle-double', '7th'),
-					A2($author$project$Main$legendMarker, 'circle-plain', 'other')
-				])));
+		_List_fromArray(
+			[
+				$author$project$Main$legendGroup(boxes),
+				$author$project$Main$legendGroup(tones)
+			]));
 };
 var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = A2($author$project$Main$rootSpelling, model.scale, model.root) + (' ' + function () {

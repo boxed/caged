@@ -2142,6 +2142,15 @@ viewLegend model =
             else
                 legendText "Boxes:"
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
+
+        tones =
+            [ legendText "Tones:"
+            , legendMarker "square-dark" "Root"
+            , legendMarker "circle-dashed" "3rd"
+            , legendMarker "circle-dotted" "5th"
+            , legendMarker "circle-double" "7th"
+            , legendMarker "circle-plain" "other"
+            ]
     in
     div
         [ style "margin-top" "16px"
@@ -2152,15 +2161,24 @@ viewLegend model =
         , style "flex-wrap" "wrap"
         , style "align-items" "center"
         ]
-        (boxes
-            ++ [ legendText "Tones:"
-               , legendMarker "square-dark" "Root"
-               , legendMarker "circle-dashed" "3rd"
-               , legendMarker "circle-dotted" "5th"
-               , legendMarker "circle-double" "7th"
-               , legendMarker "circle-plain" "other"
-               ]
-        )
+        [ legendGroup boxes
+        , legendGroup tones
+        ]
+
+
+{-| A label plus its swatches/markers, kept together so the label never
+line-breaks away from the icons it explains. The group wraps as a unit
+relative to its siblings (and only wraps internally on very narrow screens).
+-}
+legendGroup : List (Html Msg) -> Html Msg
+legendGroup children =
+    div
+        [ style "display" "inline-flex"
+        , style "flex-wrap" "wrap"
+        , style "align-items" "center"
+        , style "gap" "18px"
+        ]
+        children
 
 
 legendText : String -> Html Msg
