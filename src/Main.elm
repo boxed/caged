@@ -6,7 +6,10 @@ port module Main exposing
     , main
     , majorBoxShape
     , noteAt
+    , rootSpelling
+    , scaleDegrees
     , scaleIntervals
+    , spell
     )
 
 import Browser
@@ -271,6 +274,200 @@ noteName n =
         10 -> "A\u{266F}"
         11 -> "B"
         _ -> ""
+
+
+{-| Enharmonically correct spelling.
+
+Notes are spelled so each letter (A–G) is used once per octave, in order
+starting from the root's letter. Accidentals — including double-sharps and
+double-flats — are added to reach the right pitch class.
+
+The root's letter is chosen to minimise the scale's total accidentals (see
+`bestRootLetterIndex`): the same pitch class is spelled D♭ in a flat-leaning
+scale but C♯ in a sharp-leaning one, and the absurd double-sharp keys
+(e.g. naively spelling A♭ major as G♯ major with an F𝄪) never appear.
+-}
+letterCharForIndex : Int -> String
+letterCharForIndex li =
+    case li of
+        0 -> "C"
+        1 -> "D"
+        2 -> "E"
+        3 -> "F"
+        4 -> "G"
+        5 -> "A"
+        6 -> "B"
+        _ -> ""
+
+
+letterPitchForIndex : Int -> Int
+letterPitchForIndex li =
+    case li of
+        0 -> 0
+        1 -> 2
+        2 -> 4
+        3 -> 5
+        4 -> 7
+        5 -> 9
+        6 -> 11
+        _ -> 0
+
+
+{-| Accidental (signed semitones) needed to spell pitch class `pc` with letter
+`li`, normalised to the range [-2, 2] band around the letter's natural pitch. -}
+accidentalFor : Int -> Int -> Int
+accidentalFor li pc =
+    let
+        raw =
+            modBy 12 (pc - letterPitchForIndex li)
+    in
+    if raw <= 6 then
+        raw
+
+    else
+        raw - 12
+
+
+{-| Candidate letters for spelling a root: those needing at most a double
+accidental (|acc| ≤ 2). -}
+rootLetterCandidates : Int -> List Int
+rootLetterCandidates pc =
+    List.filter (\li -> abs (accidentalFor li pc) <= 2) (List.range 0 6)
+
+
+{-| Cost of spelling a scale with a given root letter: the sum of squared
+accidentals. Squaring penalises double accidentals (cost 4) far more than two
+single ones (cost 2), so the minimal-cost spelling matches the conventional
+key signature. -}
+spellingCost : Int -> Int -> ScaleType -> Int
+spellingCost root rootLi scale =
+    List.map2
+        (\i d ->
+            let
+                acc =
+                    accidentalFor (modBy 7 (rootLi + (d - 1))) (modBy 12 (root + i))
+            in
+            acc * acc
+        )
+        (scaleIntervals scale)
+        (scaleDegrees scale)
+        |> List.sum
+
+
+{-| Letter index (0=C … 6=B) for the root that spells the scale with the fewest
+accidentals. Ties (e.g. F♯ vs G♭ major, both 6 accidentals) break toward the
+sharp spelling. -}
+bestRootLetterIndex : Int -> ScaleType -> Int
+bestRootLetterIndex root scale =
+    rootLetterCandidates (modBy 12 root)
+        |> List.sortBy
+            (\li ->
+                -- primary: total cost; tiebreak: prefer larger root accidental (sharps)
+                ( spellingCost root li scale, negate (accidentalFor li (modBy 12 root)) )
+            )
+        |> List.head
+        |> Maybe.withDefault (rootLetterCandidates (modBy 12 root) |> List.head |> Maybe.withDefault 0)
+
+
+accidentalGlyph : Int -> String
+accidentalGlyph a =
+    if a == 0 then
+        ""
+
+    else if a == 1 then
+        "\u{266F}"
+
+    else if a == 2 then
+        "x"
+
+    else if a == -1 then
+        "\u{266D}"
+
+    else if a == -2 then
+        "\u{266D}\u{266D}"
+
+    else if a > 0 then
+        String.repeat a "\u{266F}"
+
+    else
+        String.repeat (negate a) "\u{266D}"
+
+
+{-| Spell pitch class `pc` as the given scale `degree` (1–7) above a root whose
+chosen letter index is `rootLi`. -}
+spellDegree : Int -> Int -> Int -> String
+spellDegree rootLi degree pc =
+    let
+        li =
+            modBy 7 (rootLi + (degree - 1))
+    in
+    letterCharForIndex li ++ accidentalGlyph (accidentalFor li pc)
+
+
+{-| Enharmonically spelled names for a `scale` rooted on pitch class `root`,
+parallel to `scaleIntervals scale`. The root letter is chosen to minimise
+accidentals across the whole scale. -}
+spell : Int -> ScaleType -> List String
+spell root scale =
+    let
+        rootLi =
+            bestRootLetterIndex root scale
+    in
+    List.map2
+        (\i d -> spellDegree rootLi d (modBy 12 (root + i)))
+        (scaleIntervals scale)
+        (scaleDegrees scale)
+
+
+{-| The root's own spelled name under the given scale (the root-button label). -}
+rootSpelling : ScaleType -> Int -> String
+rootSpelling scale root =
+    spellDegree (bestRootLetterIndex root scale) 1 (modBy 12 root)
+
+
+{-| Scale-degree number (1–7) of each interval, parallel to `scaleIntervals`.
+Pentatonics skip the missing degrees; the blues blue-note shares the 5th letter
+(spelled ♭5, matching the interval labels). -}
+scaleDegrees : ScaleType -> List Int
+scaleDegrees st =
+    case st of
+        MinorPent -> [ 1, 3, 4, 5, 7 ]
+        MajorPent -> [ 1, 2, 3, 5, 6 ]
+        Ionian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Dorian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Aeolian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Mixolydian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Phrygian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Lydian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Locrian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Blues -> [ 1, 3, 4, 5, 5, 7 ]
+        HarmonicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        DiagonalPent -> [ 1, 3, 4, 5, 7 ]
+        DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
+        DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
+
+
+{-| Enharmonically spelled names for the scale's notes, parallel to
+`scaleIntervals model.scale`. -}
+spelledNotes : Model -> List String
+spelledNotes model =
+    spell model.root model.scale
+
+
+{-| Spelled name for a given pitch class within the current scale. Falls back to
+the plain sharp name for pitch classes outside the scale. -}
+spelledName : Model -> Int -> String
+spelledName model n =
+    let
+        pc =
+            modBy 12 n
+    in
+    List.map2 Tuple.pair (scaleNotes model) (spelledNotes model)
+        |> List.filter (\( p, _ ) -> p == pc)
+        |> List.head
+        |> Maybe.map Tuple.second
+        |> Maybe.withDefault (noteName n)
 
 
 {-| String 1 is the high E (top of diagram), string 6 is the low E (bottom).
@@ -1040,7 +1237,7 @@ viewScaleTitle : Model -> Html Msg
 viewScaleTitle model =
     let
         scaleName =
-            noteName model.root
+            rootSpelling model.scale model.root
                 ++ " "
                 ++ (case model.scale of
                         MinorPent -> "Minor Pentatonic"
@@ -1080,10 +1277,8 @@ viewScaleTitle model =
 
         notePairs =
             List.map2
-                (\i lbl ->
-                    noteName (modBy 12 (model.root + i)) ++ " (" ++ lbl ++ ")"
-                )
-                (scaleIntervals model.scale)
+                (\nm lbl -> nm ++ " (" ++ lbl ++ ")")
+                (spelledNotes model)
                 intervalLabels
     in
     div [ style "margin-bottom" "14px" ]
@@ -1161,7 +1356,7 @@ rootButton model n =
          ]
             ++ buttonBaseStyle active
         )
-        [ text (noteName n) ]
+        [ text (rootSpelling model.scale n) ]
 
 
 scaleButton : Model -> ScaleType -> String -> Html Msg
@@ -1820,7 +2015,7 @@ drawNoteAt model s f =
                         , SA.fontFamily "-apple-system, Helvetica, Arial, sans-serif"
                         , SA.fill textColor
                         ]
-                        [ Svg.text (noteName n) ]
+                        [ Svg.text (spelledName model n) ]
             in
             Just (Svg.g [] [ background, labelNode ])
 

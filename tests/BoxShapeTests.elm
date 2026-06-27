@@ -1,4 +1,4 @@
-module BoxShapeTests exposing (diagonalCells, overlapCoverage, stripeEdges, suite)
+module BoxShapeTests exposing (diagonalCells, overlapCoverage, spelling, stripeEdges, suite)
 
 {-| Validates that every box-shape edge (the per-string `lo` and `hi`
 relative-fret values returned by `majorBoxShape`) actually falls on a note
@@ -6,9 +6,90 @@ that's part of the scale. If a box's lo/hi extends to a fret with no scale
 note on that string, the polygon would render with empty space at its edge.
 -}
 
+import Dict
 import Expect
-import Main exposing (ScaleType(..), diagonalAnchor, diagonalShapesFor, majorBoxShape, noteAt, scaleIntervals)
+import Main exposing (ScaleType(..), diagonalAnchor, diagonalShapesFor, majorBoxShape, noteAt, rootSpelling, scaleDegrees, scaleIntervals, spell)
 import Test exposing (Test, describe, test)
+
+
+{-| The bare letter (first char) of each spelling. -}
+letters : List String -> List Char
+letters =
+    List.filterMap (String.uncons >> Maybe.map Tuple.first)
+
+
+{-| Count of accidental glyphs (♯, ♭, x) across a list of spellings. -}
+accidentalCount : List String -> Int
+accidentalCount =
+    List.map
+        (\s ->
+            String.toList s
+                |> List.filter (\c -> c == '\u{266F}' || c == '\u{266D}' || c == 'x')
+                |> List.length
+        )
+        >> List.sum
+
+
+diatonicModes : List ScaleType
+diatonicModes =
+    [ Ionian, Dorian, Aeolian, Mixolydian, Phrygian, Lydian, Locrian, HarmonicMinor, MelodicMinor ]
+
+
+spelling : Test
+spelling =
+    describe "enharmonic spelling"
+        [ test "C major = C D E F G A B" <|
+            \_ ->
+                Expect.equal
+                    [ "C", "D", "E", "F", "G", "A", "B" ]
+                    (spell 0 Ionian)
+        , test "F major uses B\u{266D}, not A\u{266F}" <|
+            \_ ->
+                Expect.equal
+                    [ "F", "G", "A", "B\u{266D}", "C", "D", "E" ]
+                    (spell 5 Ionian)
+        , test "pitch class 8 major spells as A\u{266D} (4 flats), not G\u{266F} (no double-sharps)" <|
+            \_ ->
+                Expect.equal
+                    [ "A\u{266D}", "B\u{266D}", "C", "D\u{266D}", "E\u{266D}", "F", "G" ]
+                    (spell 8 Ionian)
+        , test "pitch class 6 major breaks the tie toward F\u{266F} (sharps)" <|
+            \_ ->
+                Expect.equal "F\u{266F}" (rootSpelling Ionian 6)
+        , test "the major-scale root picker matches the conventional key names" <|
+            \_ ->
+                Expect.equal
+                    [ "C", "D\u{266D}", "D", "E\u{266D}", "E", "F", "F\u{266F}", "G", "A\u{266D}", "A", "B\u{266D}", "B" ]
+                    (List.map (rootSpelling Ionian) (List.range 0 11))
+        , describe "every 7-note diatonic mode uses each letter A\u{2013}G exactly once, from every root" <|
+            List.map
+                (\( root, scale ) ->
+                    test (String.fromInt root ++ " " ++ Debug.toString scale) <|
+                        \_ ->
+                            Expect.equal
+                                7
+                                (letters (spell root scale)
+                                    |> List.map (\c -> ( c, () ))
+                                    |> Dict.fromList
+                                    |> Dict.size
+                                )
+                )
+                (List.concatMap
+                    (\root -> List.map (\scale -> ( root, scale )) diatonicModes)
+                    (List.range 0 11)
+                )
+        , describe "no diatonic-mode key needs more than 7 accidentals (proper enharmonic choice)" <|
+            List.map
+                (\( root, scale ) ->
+                    test (String.fromInt root ++ " " ++ Debug.toString scale) <|
+                        \_ ->
+                            Expect.atMost 7 (accidentalCount (spell root scale))
+                )
+                (List.concatMap
+                    (\root -> List.map (\scale -> ( root, scale )) diatonicModes)
+                    (List.range 0 11)
+                )
+        ]
 
 
 {-| All modes whose box rendering goes through `majorBoxShape`. -}

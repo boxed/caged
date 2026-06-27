@@ -4370,6 +4370,43 @@ function _Browser_load(url)
 		}
 	}));
 }
+
+
+
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
 var $author$project$Main$LinkClicked = function (a) {
 	return {$: 'LinkClicked', a: a};
 };
@@ -5634,37 +5671,6 @@ var $author$project$Main$buttonBaseStyle = function (active) {
 			active ? '600' : '500')
 		]);
 };
-var $author$project$Main$noteName = function (n) {
-	var _v0 = A2($elm$core$Basics$modBy, 12, n);
-	switch (_v0) {
-		case 0:
-			return 'C';
-		case 1:
-			return 'C\u266F';
-		case 2:
-			return 'D';
-		case 3:
-			return 'D\u266F';
-		case 4:
-			return 'E';
-		case 5:
-			return 'F';
-		case 6:
-			return 'F\u266F';
-		case 7:
-			return 'G';
-		case 8:
-			return 'G\u266F';
-		case 9:
-			return 'A';
-		case 10:
-			return 'A\u266F';
-		case 11:
-			return 'B';
-		default:
-			return '';
-	}
-};
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -5682,6 +5688,244 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $author$project$Main$letterPitchForIndex = function (li) {
+	switch (li) {
+		case 0:
+			return 0;
+		case 1:
+			return 2;
+		case 2:
+			return 4;
+		case 3:
+			return 5;
+		case 4:
+			return 7;
+		case 5:
+			return 9;
+		case 6:
+			return 11;
+		default:
+			return 0;
+	}
+};
+var $author$project$Main$accidentalFor = F2(
+	function (li, pc) {
+		var raw = A2(
+			$elm$core$Basics$modBy,
+			12,
+			pc - $author$project$Main$letterPitchForIndex(li));
+		return (raw <= 6) ? raw : (raw - 12);
+	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $author$project$Main$rootLetterCandidates = function (pc) {
+	return A2(
+		$elm$core$List$filter,
+		function (li) {
+			return $elm$core$Basics$abs(
+				A2($author$project$Main$accidentalFor, li, pc)) <= 2;
+		},
+		A2($elm$core$List$range, 0, 6));
+};
+var $elm$core$List$sortBy = _List_sortBy;
+var $author$project$Main$scaleDegrees = function (st) {
+	switch (st.$) {
+		case 'MinorPent':
+			return _List_fromArray(
+				[1, 3, 4, 5, 7]);
+		case 'MajorPent':
+			return _List_fromArray(
+				[1, 2, 3, 5, 6]);
+		case 'Ionian':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Dorian':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Aeolian':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Mixolydian':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Phrygian':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Lydian':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Locrian':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Blues':
+			return _List_fromArray(
+				[1, 3, 4, 5, 5, 7]);
+		case 'HarmonicMinor':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'MelodicMinor':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'DiagonalPent':
+			return _List_fromArray(
+				[1, 3, 4, 5, 7]);
+		case 'DiagonalMajorPent':
+			return _List_fromArray(
+				[1, 2, 3, 5, 6]);
+		default:
+			return _List_fromArray(
+				[1, 3, 4, 5, 5, 7]);
+	}
+};
+var $author$project$Main$scaleIntervals = function (st) {
+	switch (st.$) {
+		case 'MinorPent':
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
+		case 'MajorPent':
+			return _List_fromArray(
+				[0, 2, 4, 7, 9]);
+		case 'Ionian':
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 11]);
+		case 'Dorian':
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 9, 10]);
+		case 'Aeolian':
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 8, 10]);
+		case 'Mixolydian':
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 10]);
+		case 'Phrygian':
+			return _List_fromArray(
+				[0, 1, 3, 5, 7, 8, 10]);
+		case 'Lydian':
+			return _List_fromArray(
+				[0, 2, 4, 6, 7, 9, 11]);
+		case 'Locrian':
+			return _List_fromArray(
+				[0, 1, 3, 5, 6, 8, 10]);
+		case 'Blues':
+			return _List_fromArray(
+				[0, 3, 5, 6, 7, 10]);
+		case 'HarmonicMinor':
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 8, 11]);
+		case 'MelodicMinor':
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 9, 11]);
+		case 'DiagonalPent':
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
+		case 'DiagonalMajorPent':
+			return _List_fromArray(
+				[0, 2, 4, 7, 9]);
+		default:
+			return _List_fromArray(
+				[0, 3, 5, 6, 7, 10]);
+	}
+};
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $author$project$Main$spellingCost = F3(
+	function (root, rootLi, scale) {
+		return $elm$core$List$sum(
+			A3(
+				$elm$core$List$map2,
+				F2(
+					function (i, d) {
+						var acc = A2(
+							$author$project$Main$accidentalFor,
+							A2($elm$core$Basics$modBy, 7, rootLi + (d - 1)),
+							A2($elm$core$Basics$modBy, 12, root + i));
+						return acc * acc;
+					}),
+				$author$project$Main$scaleIntervals(scale),
+				$author$project$Main$scaleDegrees(scale)));
+	});
+var $author$project$Main$bestRootLetterIndex = F2(
+	function (root, scale) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$List$head(
+					$author$project$Main$rootLetterCandidates(
+						A2($elm$core$Basics$modBy, 12, root)))),
+			$elm$core$List$head(
+				A2(
+					$elm$core$List$sortBy,
+					function (li) {
+						return _Utils_Tuple2(
+							A3($author$project$Main$spellingCost, root, li, scale),
+							-A2(
+								$author$project$Main$accidentalFor,
+								li,
+								A2($elm$core$Basics$modBy, 12, root)));
+					},
+					$author$project$Main$rootLetterCandidates(
+						A2($elm$core$Basics$modBy, 12, root)))));
+	});
+var $elm$core$Bitwise$and = _Bitwise_and;
+var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var $elm$core$String$repeatHelp = F3(
+	function (n, chunk, result) {
+		return (n <= 0) ? result : A3(
+			$elm$core$String$repeatHelp,
+			n >> 1,
+			_Utils_ap(chunk, chunk),
+			(!(n & 1)) ? result : _Utils_ap(result, chunk));
+	});
+var $elm$core$String$repeat = F2(
+	function (n, chunk) {
+		return A3($elm$core$String$repeatHelp, n, chunk, '');
+	});
+var $author$project$Main$accidentalGlyph = function (a) {
+	return (!a) ? '' : ((a === 1) ? '\u266F' : ((a === 2) ? 'x' : (_Utils_eq(a, -1) ? '\u266D' : (_Utils_eq(a, -2) ? '\u266D\u266D' : ((a > 0) ? A2($elm$core$String$repeat, a, '\u266F') : A2($elm$core$String$repeat, -a, '\u266D'))))));
+};
+var $author$project$Main$letterCharForIndex = function (li) {
+	switch (li) {
+		case 0:
+			return 'C';
+		case 1:
+			return 'D';
+		case 2:
+			return 'E';
+		case 3:
+			return 'F';
+		case 4:
+			return 'G';
+		case 5:
+			return 'A';
+		case 6:
+			return 'B';
+		default:
+			return '';
+	}
+};
+var $author$project$Main$spellDegree = F3(
+	function (rootLi, degree, pc) {
+		var li = A2($elm$core$Basics$modBy, 7, rootLi + (degree - 1));
+		return _Utils_ap(
+			$author$project$Main$letterCharForIndex(li),
+			$author$project$Main$accidentalGlyph(
+				A2($author$project$Main$accidentalFor, li, pc)));
+	});
+var $author$project$Main$rootSpelling = F2(
+	function (scale, root) {
+		return A3(
+			$author$project$Main$spellDegree,
+			A2($author$project$Main$bestRootLetterIndex, root, scale),
+			1,
+			A2($elm$core$Basics$modBy, 12, root));
+	});
 var $author$project$Main$rootButton = F2(
 	function (model, n) {
 		var active = _Utils_eq(
@@ -5700,7 +5944,7 @@ var $author$project$Main$rootButton = F2(
 			_List_fromArray(
 				[
 					$elm$html$Html$text(
-					$author$project$Main$noteName(n))
+					A2($author$project$Main$rootSpelling, model.scale, n))
 				]));
 	});
 var $author$project$Main$noteButtonRow = function (model) {
@@ -6721,9 +6965,6 @@ var $author$project$Main$drawWrapOverlap = F2(
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $author$project$Main$usesMajorBoxShapes = function (st) {
 	switch (st.$) {
 		case 'Ionian':
@@ -7549,55 +7790,6 @@ var $author$project$Main$diagonalBoxOf = F4(
 				matches,
 				$author$project$Main$diagonalShapesFor(scale)));
 	});
-var $author$project$Main$scaleIntervals = function (st) {
-	switch (st.$) {
-		case 'MinorPent':
-			return _List_fromArray(
-				[0, 3, 5, 7, 10]);
-		case 'MajorPent':
-			return _List_fromArray(
-				[0, 2, 4, 7, 9]);
-		case 'Ionian':
-			return _List_fromArray(
-				[0, 2, 4, 5, 7, 9, 11]);
-		case 'Dorian':
-			return _List_fromArray(
-				[0, 2, 3, 5, 7, 9, 10]);
-		case 'Aeolian':
-			return _List_fromArray(
-				[0, 2, 3, 5, 7, 8, 10]);
-		case 'Mixolydian':
-			return _List_fromArray(
-				[0, 2, 4, 5, 7, 9, 10]);
-		case 'Phrygian':
-			return _List_fromArray(
-				[0, 1, 3, 5, 7, 8, 10]);
-		case 'Lydian':
-			return _List_fromArray(
-				[0, 2, 4, 6, 7, 9, 11]);
-		case 'Locrian':
-			return _List_fromArray(
-				[0, 1, 3, 5, 6, 8, 10]);
-		case 'Blues':
-			return _List_fromArray(
-				[0, 3, 5, 6, 7, 10]);
-		case 'HarmonicMinor':
-			return _List_fromArray(
-				[0, 2, 3, 5, 7, 8, 11]);
-		case 'MelodicMinor':
-			return _List_fromArray(
-				[0, 2, 3, 5, 7, 9, 11]);
-		case 'DiagonalPent':
-			return _List_fromArray(
-				[0, 3, 5, 7, 10]);
-		case 'DiagonalMajorPent':
-			return _List_fromArray(
-				[0, 2, 4, 7, 9]);
-		default:
-			return _List_fromArray(
-				[0, 3, 5, 6, 7, 10]);
-	}
-};
 var $author$project$Main$scaleNotes = function (model) {
 	return A2(
 		$elm$core$List$map,
@@ -7631,6 +7823,82 @@ var $author$project$Main$positionBox = F3(
 				return $elm$core$Maybe$Nothing;
 			}
 		}
+	});
+var $author$project$Main$noteName = function (n) {
+	var _v0 = A2($elm$core$Basics$modBy, 12, n);
+	switch (_v0) {
+		case 0:
+			return 'C';
+		case 1:
+			return 'C\u266F';
+		case 2:
+			return 'D';
+		case 3:
+			return 'D\u266F';
+		case 4:
+			return 'E';
+		case 5:
+			return 'F';
+		case 6:
+			return 'F\u266F';
+		case 7:
+			return 'G';
+		case 8:
+			return 'G\u266F';
+		case 9:
+			return 'A';
+		case 10:
+			return 'A\u266F';
+		case 11:
+			return 'B';
+		default:
+			return '';
+	}
+};
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $author$project$Main$spell = F2(
+	function (root, scale) {
+		var rootLi = A2($author$project$Main$bestRootLetterIndex, root, scale);
+		return A3(
+			$elm$core$List$map2,
+			F2(
+				function (i, d) {
+					return A3(
+						$author$project$Main$spellDegree,
+						rootLi,
+						d,
+						A2($elm$core$Basics$modBy, 12, root + i));
+				}),
+			$author$project$Main$scaleIntervals(scale),
+			$author$project$Main$scaleDegrees(scale));
+	});
+var $author$project$Main$spelledNotes = function (model) {
+	return A2($author$project$Main$spell, model.root, model.scale);
+};
+var $author$project$Main$spelledName = F2(
+	function (model, n) {
+		var pc = A2($elm$core$Basics$modBy, 12, n);
+		return A2(
+			$elm$core$Maybe$withDefault,
+			$author$project$Main$noteName(n),
+			A2(
+				$elm$core$Maybe$map,
+				$elm$core$Tuple$second,
+				$elm$core$List$head(
+					A2(
+						$elm$core$List$filter,
+						function (_v0) {
+							var p = _v0.a;
+							return _Utils_eq(p, pc);
+						},
+						A3(
+							$elm$core$List$map2,
+							$elm$core$Tuple$pair,
+							$author$project$Main$scaleNotes(model),
+							$author$project$Main$spelledNotes(model))))));
 	});
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
 var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
@@ -7673,7 +7941,7 @@ var $author$project$Main$drawNoteAt = F3(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$text(
-						$author$project$Main$noteName(n))
+						A2($author$project$Main$spelledName, model, n))
 					]));
 			var background = function () {
 				switch (role.$) {
@@ -8102,7 +8370,7 @@ var $author$project$Main$viewLegend = function (model) {
 				])));
 };
 var $author$project$Main$viewScaleTitle = function (model) {
-	var scaleName = $author$project$Main$noteName(model.root) + (' ' + function () {
+	var scaleName = A2($author$project$Main$rootSpelling, model.scale, model.root) + (' ' + function () {
 		var _v1 = model.scale;
 		switch (_v1.$) {
 			case 'MinorPent':
@@ -8190,11 +8458,10 @@ var $author$project$Main$viewScaleTitle = function (model) {
 	var notePairs = A3(
 		$elm$core$List$map2,
 		F2(
-			function (i, lbl) {
-				return $author$project$Main$noteName(
-					A2($elm$core$Basics$modBy, 12, model.root + i)) + (' (' + (lbl + ')'));
+			function (nm, lbl) {
+				return nm + (' (' + (lbl + ')'));
 			}),
-		$author$project$Main$scaleIntervals(model.scale),
+		$author$project$Main$spelledNotes(model),
 		intervalLabels);
 	return A2(
 		$elm$html$Html$div,
