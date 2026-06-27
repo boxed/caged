@@ -5994,17 +5994,6 @@ var $author$project$Main$viewControls = function (model) {
 					]),
 				_List_fromArray(
 					[
-						$author$project$Main$label('Root'),
-						$author$project$Main$noteButtonRow(model)
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				_List_fromArray(
-					[
 						$author$project$Main$label('Scale'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major pentatonic'),
@@ -6021,13 +6010,24 @@ var $author$project$Main$viewControls = function (model) {
 					])),
 				A2(
 				$elm$html$Html$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
 				_List_fromArray(
 					[
 						$author$project$Main$label('Diag. Scale'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalBlues, 'Blues')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$author$project$Main$label('Root'),
+						$author$project$Main$noteButtonRow(model)
 					]))
 			]));
 };

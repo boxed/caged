@@ -1300,8 +1300,6 @@ viewControls : Model -> Html Msg
 viewControls model =
     div [ style "margin-bottom" "18px" ]
         [ div [ style "margin-bottom" "8px" ]
-            [ label "Root" , noteButtonRow model ]
-        , div [ style "margin-bottom" "8px" ]
             [ label "Scale"
             , scaleButton model MinorPent "Minor pentatonic"
             , scaleButton model MajorPent "Major pentatonic"
@@ -1316,12 +1314,14 @@ viewControls model =
             , scaleButton model HarmonicMinor "Harmonic minor"
             , scaleButton model MelodicMinor "Melodic minor"
             ]
-        , div []
+        , div [ style "margin-bottom" "8px" ]
             [ label "Diag. Scale"
             , scaleButton model DiagonalPent "Minor pentatonic"
             , scaleButton model DiagonalMajorPent "Major pentatonic"
             , scaleButton model DiagonalBlues "Blues"
             ]
+        , div []
+            [ label "Root" , noteButtonRow model ]
         ]
 
 
