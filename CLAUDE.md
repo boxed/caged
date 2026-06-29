@@ -16,7 +16,7 @@ Live site: https://boxed.github.io/caged/
 
 ```sh
 elm make src/Main.elm --output=elm.js   # compile
-elm-test                                 # run tests (363 tests)
+elm-test                                 # run tests (~5300 tests)
 ```
 
 `elm.js` **is committed** — Pages has no build step, so the compiled artifact
@@ -37,50 +37,88 @@ commit both files together.
 
 ## Scales and modes
 
-Five scale types: `MinorPent`, `MajorPent`, `Ionian`, `Dorian`, `Aeolian`.
+Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
+`HarmonicMinor`, `MelodicMinor`, and three diagonal climbing variants
+(`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`).
 
-Adding a new mode of the major scale requires:
+Adding a new mode no longer needs per-mode box tables — `deriveBox` generates
+the shapes from the intervals. It requires:
 1. Add constructor to `ScaleType`.
 2. Add intervals to `scaleIntervals`.
-3. Add `rootFret` case (R−7 for major-flavored, R−4 for minor-flavored).
-4. Add `thirdInterval` case in `noteRole` (3 for minor 3rd, 4 for major 3rd).
-5. Add to `usesMajorBoxShapes` (True for 7-note modes).
-6. If the mode's interval pattern differs from ionian/dorian on specific
-   strings, add a dedicated box shape function and dispatch in `majorBoxShape`.
+3. Add `rootFret` case (`majorAnchor` for major-flavored, `minorAnchor` for
+   minor-flavored — these already fold in the tuning's low-E open pitch).
+4. Add `majorFlavored` case (True iff box 1 anchors on the relative minor —
+   matches the `majorAnchor` choice in step 3).
+5. Add `thirdInterval`/`seventhInterval` cases in `noteRole`.
+6. Add to `usesMajorBoxShapes` (True for 7-note modes → renders overlap stripes).
 7. Add button, title, and interval labels in the view.
-8. Run `elm-test` — the edge tests will catch any shape where lo/hi extends
-   to a non-scale-note fret.
+8. Run `elm-test` — `coverage` checks every scale note sits in a box and
+   `edgeSanity` checks every box is well-formed in every tuning.
 
 ## Music theory model
 
 - **Notes**: `Int` pitch classes 0–11 (C=0).
 - **String numbering**: S1 = high E (top), S6 = low E (bottom).
-- **rootFret** anchors boxes on the low-E string:
-  - MinorPent, Aeolian: `(R − 4) mod 12` — root on low E.
-  - MajorPent, Ionian, Dorian: `(R − 7) mod 12` — relative minor on low E.
+- **Tuning**: `{ name, slug, strings }` where `strings` is the six open-string
+  pitch classes (S1→S6). `openString tuning s` indexes it; `noteAt tuning s f`
+  is the pitch class at a fret. Standard tuning = `[4,11,7,2,9,4]`.
+- **rootFret** anchors boxes on the low-E string, following its open pitch:
+  - Minor-flavored (MinorPent, Aeolian, Blues, Harmonic/Melodic minor):
+    `(R − openLowE) mod 12` — root on low E (= `R − 4` in standard tuning).
+  - Major-flavored (MajorPent, Ionian, Dorian, Mixolydian, …):
+    `(R − 3 − openLowE) mod 12` — relative minor on low E (= `R − 7` standard).
 - **Note roles** (`noteRole`): Root / Third / Fifth / Other. Scale-wide, not
   per-box. 3rd = interval 3 (minor) or 4 (major). 5th = interval 7 always.
 
-## Box shapes — two systems
+## Tunings
 
-### Pentatonic boxes (`boxShape`)
-- 5 non-overlapping boxes, 2 notes per string, clean partition.
-- Used for MinorPent and MajorPent.
-- Each note belongs to exactly one box via `boxOf`.
+The selector offers preset tunings (Standard, Drop D, Eb/D Standard, Drop C,
+DADGAD, Open G/D/E) **plus arbitrary custom tunings** via per-string ▲/▼
+steppers (shown only after pressing **Custom**). A custom tuning round-trips
+through the URL as six dash-joined note slugs (`?tuning=D-A-G-D-A-D`); presets
+use their slug. A note-encoded slug always stays "Custom" so `Nav.replaceUrl`
+re-firing `UrlChanged` can't collapse it back to a preset.
 
-### Major-scale-mode boxes (`majorBoxShape`)
-- Mode-specific shapes dispatched by `ScaleType`:
-  - **Ionian/Aeolian** use `ionianBoxShape` — wider boxes derived from
-    standard major-scale CAGED positions.
-  - **Dorian** uses `dorianBoxShape` — derived from Dean Arnold's dorian
-    patterns (https://www.deanarnoldguitar.com/post/dorian-scale-patterns-for-guitar).
-- Adjacent boxes overlap (shared boundary notes). Overlaps are rendered as
-  diagonal stripe patterns; non-overlap regions are solid fills.
-- Box shapes differ between modes because each mode's intervals place notes
-  at different frets — a shape derived for ionian will have empty extensions
-  when applied to dorian (and vice versa). The test suite catches this.
-- The 5→1 wrap overlap (box 5 of one octave overlapping box 1 of the next)
-  is handled separately in `drawWrapOverlap`.
+## Box shapes — one derivation (`deriveBox`)
+
+`deriveBox tuning scale b` is the **single source of truth** for all CAGED box
+geometry — no per-mode or per-tuning tables. A box is a *playing position* that
+**must contain the complete scale** (every degree, somewhere across its strings)
+so you can play the whole scale within it — that is the hard requirement.
+Ergonomics (a compact fret window) is secondary and yields when it conflicts.
+It works for any tuning because it reads the actual open-string pitches rather
+than offsetting a standard-tuning shape.
+
+- **Anchors**: the 5 boxes sit on the minor-pentatonic degrees of the low string
+  relative to `rootFret` — `pentAnchor` = `[0,3,5,7,10]`.
+- **Window** (`boxWindow`): base window `[A−1, A+3]` for ≤6-note scales
+  (pentatonic/blues), `[A, A+4]` for 7-note scales (one fret higher so each
+  position holds ~3 notes/string) — a compact 5-fret CAGED position.
+- **Completeness growth**: the box's upper bound grows past the base window until
+  every scale degree is present. For every ordinary tuning the base window is
+  already complete, so nothing grows; only degenerate tunings (e.g. all six
+  strings the same pitch — where a compact box *cannot* hold all degrees) force
+  wider, heavily-overlapping boxes. Guarded by the `completeness` test.
+- **Membership** (`anchorScaleSet`): a note at relative fret `off` on string `s`
+  is in the box iff `(open s − open 6 + off) mod 12` is a scale degree. Major-
+  flavored scales (`majorFlavored`) rotate the intervals up a minor third because
+  box 1 anchors on the relative minor. The root cancels, so shapes are
+  root-independent.
+- **Reproduces the canon**: in standard tuning this yields the exact textbook
+  pentatonic and Ionian/Aeolian shapes — locked by the `canonicalShapes` test.
+  Dorian/Lydian/Locrian etc. are now the algorithm's consistent CAGED shapes
+  (they used to be hand-tuned / imported and differed slightly).
+- **Overlaps**: wherever adjacent box windows overlap, the shared band is drawn
+  as diagonal two-color stripes (`drawOverlapStripe`), plus the 5→1 octave wrap
+  (`drawWrapOverlap`). This is computed for *every* non-diagonal scale, since
+  `deriveBox` can produce real overlaps in any tuning (e.g. pentatonic in Open
+  G). In standard tuning pentatonic boxes only touch, so those overlaps collapse
+  to invisible zero-width pinches. Solid fill (`boxFillOpacity`) and the stripe
+  pre-blend (`boxBlendPct`) share one ratio so a stripe reads like the solids
+  around it.
+- **Diagonal scales** are a separate climbing-shape system (`DiagShape`,
+  `drawDiagonalShape`) and still use the pitch-preserving `boxShift` offset,
+  since those are fixed shapes meant to be slid.
 
 ## Rendering
 
@@ -109,9 +147,10 @@ for opaque rendering.
 
 ## URL state
 
-`Browser.application` syncs root + scale to query params:
-`?root=A&scale=dorian`. Sharp notes use `Cs`, `Ds`, etc. to avoid
-URL-encoding `#`. `Nav.replaceUrl` (not push) on each change.
+`Browser.application` syncs root + scale + tuning to query params:
+`?root=A&scale=dorian&tuning=drop-d`. Sharp notes use `Cs`, `Ds`, etc. to avoid
+URL-encoding `#`. The `tuning` param is omitted for Standard. `Nav.replaceUrl`
+(not push) on each change.
 
 ## Ports (Wake Lock)
 
@@ -121,15 +160,24 @@ and `wakeLockChanged` (incoming). `index.html` wires these to
 
 ## Tests (`tests/BoxShapeTests.elm`)
 
-Three test suites (363 tests total):
+Test suites (~6800 tests total):
 
-1. **`suite`** — for every (mode, box, string) the per-string `lo` and `hi`
-   f_rel values land on actual scale notes. Catches shape definitions that
-   extend to non-scale frets.
-2. **`overlapCoverage`** — for every (string, fret) on the fretboard, if 2+
-   solid boxes cover it, an overlap stripe must also cover it.
-3. **`stripeEdges`** — for every stripe overlap polygon (adjacent + wrap),
-   the per-string lo/hi values are scale notes.
+1. **`canonicalShapes`** — `deriveBox` in standard tuning reproduces the textbook
+   pentatonic and Ionian/Aeolian CAGED shapes exactly. This is the spec: the
+   clean algorithm must yield the known-good shapes.
+2. **`completeness`** — the hard requirement: every box contains the complete
+   scale (all degrees), for every tuning including pathological ones (all six
+   strings the same pitch). Guards that no box is ever missing a scale degree.
+3. **`coverage`** — for every tuning and scale, every scale note on the neck
+   sits inside some box, so every rendered note marker has a box behind it
+   (guards that the boxes tile).
+4. **`edgeSanity`** — every box covers all 6 strings with lo ≤ hi, in every
+   tuning.
+5. **`overlapCoverage`** — for every non-diagonal scale, wherever 2+ boxes
+   overlap an overlap stripe covers the same position, in every tuning.
+6. **`stripeEdges`** — stripe overlap edges land on scale notes.
+7. **`diagonalCells`** — the diagonal climbing shapes carry the right scale
+   degrees on each string.
 
 ## Deployment
 

@@ -1,15 +1,19 @@
 port module Main exposing
     ( ScaleType(..)
+    , Tuning
+    , deriveBox
     , diagonalAnchor
     , diagonalShapes
     , diagonalShapesFor
     , main
-    , majorBoxShape
     , noteAt
+    , openString
     , rootSpelling
     , scaleDegrees
     , scaleIntervals
     , spell
+    , standardTuning
+    , tunings
     )
 
 import Browser
@@ -29,8 +33,20 @@ import Url exposing (Url)
 type alias Model =
     { root : Int
     , scale : ScaleType
+    , tuning : Tuning
     , key : Nav.Key
     , wakeLockOn : Bool
+    }
+
+
+{-| A guitar tuning is fully described by its six open-string pitch classes,
+ordered string 1 (high E in standard) down to string 6 (low E). Everything
+else — which notes are in the scale, where the CAGED boxes land, how the
+diagonal shapes climb — is derived from these six numbers at runtime. -}
+type alias Tuning =
+    { name : String
+    , slug : String
+    , strings : List Int
     }
 
 
@@ -66,6 +82,8 @@ type ScaleType
 type Msg
     = SetRoot Int
     | SetScale ScaleType
+    | SetTuning Tuning
+    | TuneString Int Int
     | UrlChanged Url
     | LinkClicked Browser.UrlRequest
     | ToggleWakeLock
@@ -75,10 +93,10 @@ type Msg
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
-        ( root, scale ) =
+        ( root, scale, tuning ) =
             parseUrl url
     in
-    ( { root = root, scale = scale, key = key, wakeLockOn = False }, Cmd.none )
+    ( { root = root, scale = scale, tuning = tuning, key = key, wakeLockOn = False }, Cmd.none )
 
 
 
@@ -102,12 +120,37 @@ update msg model =
             in
             ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
 
+        SetTuning t ->
+            let
+                newModel =
+                    { model | tuning = t }
+            in
+            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+
+        TuneString s delta ->
+            let
+                newStrings =
+                    List.indexedMap
+                        (\i n ->
+                            if i == s - 1 then
+                                modBy 12 (n + delta)
+
+                            else
+                                n
+                        )
+                        model.tuning.strings
+
+                newModel =
+                    { model | tuning = customFrom newStrings }
+            in
+            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+
         UrlChanged url ->
             let
-                ( root, scale ) =
+                ( root, scale, tuning ) =
                     parseUrl url
             in
-            ( { model | root = root, scale = scale }, Cmd.none )
+            ( { model | root = root, scale = scale, tuning = tuning }, Cmd.none )
 
         LinkClicked request ->
             case request of
@@ -141,7 +184,15 @@ update msg model =
 
 modelUrl : Model -> String
 modelUrl model =
-    "?root=" ++ rootSlug model.root ++ "&scale=" ++ scaleSlug model.scale
+    let
+        base =
+            "?root=" ++ rootSlug model.root ++ "&scale=" ++ scaleSlug model.scale
+    in
+    if model.tuning.slug == standardTuning.slug then
+        base
+
+    else
+        base ++ "&tuning=" ++ model.tuning.slug
 
 
 rootSlug : Int -> String
@@ -221,7 +272,7 @@ scaleFromSlug s =
         _ -> Nothing
 
 
-parseUrl : Url -> ( Int, ScaleType )
+parseUrl : Url -> ( Int, ScaleType, Tuning )
 parseUrl url =
     let
         pairs =
@@ -250,8 +301,47 @@ parseUrl url =
             lookup "scale"
                 |> Maybe.andThen scaleFromSlug
                 |> Maybe.withDefault MinorPent
+
+        tuning =
+            lookup "tuning"
+                |> Maybe.andThen tuningFromSlug
+                |> Maybe.withDefault standardTuning
     in
-    ( root, scale )
+    ( root, scale, tuning )
+
+
+{-| Named presets resolve by their slug; anything else is parsed as a custom
+tuning encoded as six dash-joined note slugs, high string to low (e.g.
+`E-A-D-G-B-E`). A note-encoded slug always stays Custom — even when its notes
+match a preset — so editing/entering custom mode round-trips through the URL
+(`Nav.replaceUrl` re-fires `UrlChanged`) without collapsing back to a preset. -}
+tuningFromSlug : String -> Maybe Tuning
+tuningFromSlug s =
+    case List.filter (\t -> t.slug == s) tunings of
+        match :: _ ->
+            Just match
+
+        [] ->
+            let
+                parsed =
+                    String.split "-" s |> List.filterMap rootFromSlug
+            in
+            if List.length parsed == 6 then
+                Just (customFrom parsed)
+
+            else
+                Nothing
+
+
+{-| A custom tuning from six pitch classes, always named "Custom" so the UI
+stays in custom mode (steppers visible) even when the notes happen to match a
+preset. The slug encodes the notes so it round-trips through the URL. -}
+customFrom : List Int -> Tuning
+customFrom strings =
+    { name = "Custom"
+    , slug = String.join "-" (List.map rootSlug strings)
+    , strings = strings
+    }
 
 
 
@@ -470,24 +560,67 @@ spelledName model n =
         |> Maybe.withDefault (noteName n)
 
 
-{-| String 1 is the high E (top of diagram), string 6 is the low E (bottom).
-Returns the open-string pitch class (C=0).
--}
-openString : Int -> Int
-openString s =
-    case s of
-        1 -> 4
-        2 -> 11
-        3 -> 7
-        4 -> 2
-        5 -> 9
-        6 -> 4
-        _ -> 0
+{-| Standard tuning: string 1 is the high E (top of diagram), string 6 is the
+low E (bottom). Stored as open-string pitch classes (C=0), string 1 → 6. -}
+standardTuning : Tuning
+standardTuning =
+    { name = "Standard", slug = "standard", strings = [ 4, 11, 7, 2, 9, 4 ] }
 
 
-noteAt : Int -> Int -> Int
-noteAt s f =
-    modBy 12 (openString s + f)
+{-| Built-in tunings offered in the selector. `strings` lists the six open
+pitch classes high (string 1) to low (string 6). Any tuning not in this list
+is still fully supported as a custom tuning — the geometry is derived, not
+table-driven. -}
+tunings : List Tuning
+tunings =
+    [ standardTuning
+    , { name = "Drop D", slug = "drop-d", strings = [ 4, 11, 7, 2, 9, 2 ] }
+    , { name = "Eb Standard", slug = "eb-standard", strings = [ 3, 10, 6, 1, 8, 3 ] }
+    , { name = "D Standard", slug = "d-standard", strings = [ 2, 9, 5, 0, 7, 2 ] }
+    , { name = "Drop C", slug = "drop-c", strings = [ 2, 9, 5, 0, 7, 0 ] }
+    , { name = "DADGAD", slug = "dadgad", strings = [ 2, 9, 7, 2, 9, 2 ] }
+    , { name = "Open G", slug = "open-g", strings = [ 2, 11, 7, 2, 7, 2 ] }
+    , { name = "Open D", slug = "open-d", strings = [ 2, 9, 6, 2, 9, 2 ] }
+    , { name = "Open E", slug = "open-e", strings = [ 4, 11, 8, 4, 11, 4 ] }
+    ]
+
+
+{-| Open-string pitch class for string `s` (1 = high E … 6 = low E). -}
+openString : Tuning -> Int -> Int
+openString tuning s =
+    tuning.strings |> List.drop (s - 1) |> List.head |> Maybe.withDefault 0
+
+
+noteAt : Tuning -> Int -> Int -> Int
+noteAt tuning s f =
+    modBy 12 (openString tuning s + f)
+
+
+{-| How far string `s` is detuned from standard, as the smallest signed
+semitone distance (e.g. Drop D's low E reads +2: a note now sounds two frets
+higher than in standard). -}
+stringDelta : Tuning -> Int -> Int
+stringDelta tuning s =
+    let
+        d =
+            modBy 12 (openString standardTuning s - openString tuning s)
+    in
+    if d > 6 then
+        d - 12
+
+    else
+        d
+
+
+{-| The per-string fret shift that re-derives a standard-tuning box shape for
+an arbitrary tuning. The anchor lives on the low E (string 6); a box keeps the
+*same pitches*, so on each string its frets move by how that string detuned
+relative to the anchor string. Standard tuning gives 0 for every string, so all
+existing shapes are unchanged. The shift preserves the pitch class at every box
+edge, which is why boxes and note markers stay aligned for any tuning. -}
+boxShift : Tuning -> Int -> Int
+boxShift tuning s =
+    stringDelta tuning s - stringDelta tuning 6
 
 
 scaleIntervals : ScaleType -> List Int
@@ -555,91 +688,64 @@ Major pent of R → relative minor (R - 3)'s fret on low E.
 -}
 rootFret : Model -> Int
 rootFret model =
+    let
+        -- The anchor is the root's (or relative minor's) fret on the low-E
+        -- string, so it follows the low E's open pitch in any tuning. In
+        -- standard tuning (low E = 4) these reduce to the familiar −4 / −7.
+        lowE =
+            openString model.tuning 6
+
+        minorAnchor =
+            modBy 12 (model.root - lowE)
+
+        majorAnchor =
+            modBy 12 (model.root - 3 - lowE)
+    in
     case model.scale of
         MinorPent ->
-            modBy 12 (model.root - 4)
+            minorAnchor
 
         MajorPent ->
-            modBy 12 (model.root - 7)
+            majorAnchor
 
         Ionian ->
-            modBy 12 (model.root - 7)
+            majorAnchor
 
         Dorian ->
-            modBy 12 (model.root - 7)
+            majorAnchor
 
         Aeolian ->
-            modBy 12 (model.root - 4)
+            minorAnchor
 
         Mixolydian ->
-            modBy 12 (model.root - 7)
+            majorAnchor
 
         Phrygian ->
-            modBy 12 (model.root - 7)
+            majorAnchor
 
         Lydian ->
-            modBy 12 (model.root - 7)
+            majorAnchor
 
         Locrian ->
-            modBy 12 (model.root - 7)
+            majorAnchor
 
         Blues ->
-            modBy 12 (model.root - 4)
+            minorAnchor
 
         HarmonicMinor ->
-            modBy 12 (model.root - 4)
+            minorAnchor
 
         MelodicMinor ->
-            modBy 12 (model.root - 4)
+            minorAnchor
 
         DiagonalPent ->
-            diagonalAnchor DiagonalPent model.root
+            diagonalAnchor model.tuning DiagonalPent model.root
 
         DiagonalMajorPent ->
-            diagonalAnchor DiagonalMajorPent model.root
+            diagonalAnchor model.tuning DiagonalMajorPent model.root
 
         DiagonalBlues ->
-            diagonalAnchor DiagonalBlues model.root
-
-
-{-| Returns which box (1-5) a note belongs to, based on its relative
-fret (mod 12) from the shape anchor. The box is the one where this
-position serves as the *lower* of the two notes on its string.
--}
-boxOf : Int -> Int -> Maybe Int
-boxOf s fRel =
-    case ( s, fRel ) of
-        ( 1, 0 ) -> Just 1
-        ( 1, 3 ) -> Just 2
-        ( 1, 5 ) -> Just 3
-        ( 1, 7 ) -> Just 4
-        ( 1, 10 ) -> Just 5
-        ( 2, 0 ) -> Just 1
-        ( 2, 3 ) -> Just 2
-        ( 2, 5 ) -> Just 3
-        ( 2, 8 ) -> Just 4
-        ( 2, 10 ) -> Just 5
-        ( 3, 0 ) -> Just 1
-        ( 3, 2 ) -> Just 2
-        ( 3, 4 ) -> Just 3
-        ( 3, 7 ) -> Just 4
-        ( 3, 9 ) -> Just 5
-        ( 4, 0 ) -> Just 1
-        ( 4, 2 ) -> Just 2
-        ( 4, 5 ) -> Just 3
-        ( 4, 7 ) -> Just 4
-        ( 4, 9 ) -> Just 5
-        ( 5, 0 ) -> Just 1
-        ( 5, 2 ) -> Just 2
-        ( 5, 5 ) -> Just 3
-        ( 5, 7 ) -> Just 4
-        ( 5, 10 ) -> Just 5
-        ( 6, 0 ) -> Just 1
-        ( 6, 3 ) -> Just 2
-        ( 6, 5 ) -> Just 3
-        ( 6, 7 ) -> Just 4
-        ( 6, 10 ) -> Just 5
-        _ -> Nothing
+            diagonalAnchor model.tuning DiagonalBlues model.root
 
 
 isDiagonal : ScaleType -> Bool
@@ -647,24 +753,162 @@ isDiagonal scale =
     scale == DiagonalPent || scale == DiagonalMajorPent || scale == DiagonalBlues
 
 
+{-| The five box anchors are the minor-pentatonic degrees on the lowest string,
+relative to the shape anchor (`rootFret`). Box 1 sits on the root (or, for
+major-flavored scales, the relative minor); the rest climb the pentatonic
+skeleton. -}
+pentAnchor : Int -> Int
+pentAnchor b =
+    case b of
+        1 -> 0
+        2 -> 3
+        3 -> 5
+        4 -> 7
+        _ -> 10
+
+
+{-| Major-flavored scales anchor box 1 on the relative minor (a minor third
+below the root), exactly as `rootFret` does. Measured from that anchor note the
+scale's intervals rotate up a minor third. Minor-flavored scales anchor on the
+root and need no rotation. -}
+majorFlavored : ScaleType -> Bool
+majorFlavored scale =
+    case scale of
+        MajorPent -> True
+        Ionian -> True
+        Dorian -> True
+        Mixolydian -> True
+        Phrygian -> True
+        Lydian -> True
+        Locrian -> True
+        _ -> False
+
+
+{-| A box is a compact playing position: a fixed fret window on every string.
+A denser (7-note) scale takes a window a fret higher so each position holds
+about three notes per string; pentatonic-family scales sit one fret lower with
+about two per string. Width is always five frets (a four-fret hand span). -}
+boxWindow : ScaleType -> ( Int, Int )
+boxWindow scale =
+    if List.length (scaleIntervals scale) >= 7 then
+        ( 0, 4 )
+
+    else
+        ( -1, 3 )
+
+
+{-| Pitch classes that count as scale notes *measured from a box's anchor note*
+(see `majorFlavored`). -}
+anchorScaleSet : ScaleType -> List Int
+anchorScaleSet scale =
+    let
+        rotation =
+            if majorFlavored scale then
+                3
+
+            else
+                0
+    in
+    List.map (\i -> modBy 12 (i + rotation)) (scaleIntervals scale)
+
+
+{-| Derive box `b` (1–5) for a tuning and scale as `(string, lo, hi)` frets
+relative to the shape anchor. Each box is the position window around the box's
+pentatonic anchor; on every string it spans from the lowest to the highest
+scale note inside that window.
+
+A box must **contain the complete scale** — every degree, somewhere across its
+strings — so it is a self-contained position you can play the whole scale in.
+That is the hard requirement; ergonomics is secondary. The base window is the
+compact CAGED position (≤4-fret span); if a tuning's string spacing means that
+window misses some degree, the upper bound grows until every degree is present.
+For every ordinary tuning the base window is already complete, so nothing grows
+and standard tuning reproduces the canonical pentatonic and Ionian shapes. Only
+degenerate tunings (e.g. all six strings the same pitch) force wider boxes.
+
+It is the single source of truth for all CAGED box geometry — no per-mode or
+per-tuning tables — and is root-independent (the root cancels against the
+anchor). -}
+deriveBox : Tuning -> ScaleType -> Int -> List ( Int, Int, Int )
+deriveBox tuning scale b =
+    let
+        ( loOff, hiOff ) =
+            boxWindow scale
+
+        anchor =
+            pentAnchor b
+
+        scaleSet =
+            anchorScaleSet scale
+
+        lo =
+            anchor + loOff
+
+        -- A note at relative fret `off` on string `s` is in the scale when its
+        -- pitch class, measured from the anchor note on the low E, is in the
+        -- set. open(s) − open(6) is the string's interval above the low E.
+        degreeAt s off =
+            modBy 12 (openString tuning s - openString tuning 6 + off)
+
+        inScale s off =
+            List.member (degreeAt s off) scaleSet
+
+        -- Distinct scale degrees reachable on any string within [lo, upper].
+        degreesIn upper =
+            List.range 1 6
+                |> List.concatMap
+                    (\s ->
+                        List.range lo upper
+                            |> List.filterMap
+                                (\off ->
+                                    if inScale s off then
+                                        Just (degreeAt s off)
+
+                                    else
+                                        Nothing
+                                )
+                    )
+                |> List.foldl
+                    (\d acc ->
+                        if List.member d acc then
+                            acc
+
+                        else
+                            d :: acc
+                    )
+                    []
+
+        -- Grow the upper bound until the box holds every degree (capped well
+        -- inside two octaves as a backstop). A no-op for ordinary tunings.
+        grow upper =
+            if List.length (degreesIn upper) >= List.length scaleSet || upper - lo >= 24 then
+                upper
+
+            else
+                grow (upper + 1)
+
+        hi =
+            grow (anchor + hiOff)
+
+        forString s =
+            let
+                offs =
+                    List.filter (inScale s) (List.range lo hi)
+            in
+            Maybe.map2 (\loF hiF -> ( s, loF, hiF )) (List.minimum offs) (List.maximum offs)
+    in
+    List.filterMap forString (List.range 1 6)
+
+
 positionBox : Model -> Int -> Int -> Maybe Int
 positionBox model s f =
     if isDiagonal model.scale then
-        diagonalBoxOf model.scale model.root s f
+        diagonalBoxOf model.tuning model.scale model.root s f
 
-    else if isInScale model (noteAt s f) then
-        let
-            fRel =
-                modBy 12 (f - rootFret model)
-        in
-        if usesMajorBoxShapes model.scale then
-            Just 0
-
-        else if model.scale == Blues then
-            bluesBoxOf s fRel
-
-        else
-            boxOf s fRel
+    else if isInScale model (noteAt model.tuning s f) then
+        -- The five boxes tile the neck, so every scale note belongs to a box;
+        -- the marker is colored by role, not by box.
+        Just 0
 
     else
         Nothing
@@ -731,21 +975,25 @@ diagonalShapesFor scale =
 
 {-| Anchor fret on the low-E string (open = pitch 4). Minor anchors on the ♭3
 (root + 3 - 4 = root - 1); major anchors on the root (root - 4). -}
-diagonalAnchor : ScaleType -> Int -> Int
-diagonalAnchor scale root =
+diagonalAnchor : Tuning -> ScaleType -> Int -> Int
+diagonalAnchor tuning scale root =
+    let
+        lowE =
+            openString tuning 6
+    in
     case scale of
         DiagonalMajorPent ->
-            modBy 12 (root - 4)
+            modBy 12 (root - lowE)
 
         _ ->
-            modBy 12 (root - 1)
+            modBy 12 (root + 3 - lowE)
 
 
-diagonalBoxOf : ScaleType -> Int -> Int -> Int -> Maybe Int
-diagonalBoxOf scale root s f =
+diagonalBoxOf : Tuning -> ScaleType -> Int -> Int -> Int -> Maybe Int
+diagonalBoxOf tuning scale root s f =
     let
         rel =
-            modBy 12 (f - diagonalAnchor scale root)
+            modBy 12 (f - diagonalAnchor tuning scale root - boxShift tuning s)
 
         matches shape =
             let
@@ -833,279 +1081,6 @@ noteRole model n =
         Other
 
 
-{-| Relative-fret pattern of each box per string: (lower, upper).
-These are the two scale notes of that box on that string,
-where "upper" of box N equals "lower" of box N+1.
--}
-boxShape : Int -> List ( Int, Int, Int )
-boxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 2 ), ( 4, 0, 2 ), ( 5, 0, 2 ), ( 6, 0, 3 ) ]
-
-        2 ->
-            [ ( 1, 3, 5 ), ( 2, 3, 5 ), ( 3, 2, 4 ), ( 4, 2, 5 ), ( 5, 2, 5 ), ( 6, 3, 5 ) ]
-
-        3 ->
-            [ ( 1, 5, 7 ), ( 2, 5, 8 ), ( 3, 4, 7 ), ( 4, 5, 7 ), ( 5, 5, 7 ), ( 6, 5, 7 ) ]
-
-        4 ->
-            [ ( 1, 7, 10 ), ( 2, 8, 10 ), ( 3, 7, 9 ), ( 4, 7, 9 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
-
-        5 ->
-            [ ( 1, 10, 12 ), ( 2, 10, 12 ), ( 3, 9, 12 ), ( 4, 9, 12 ), ( 5, 10, 12 ), ( 6, 10, 12 ) ]
-
-        _ ->
-            []
-
-
-{-| 5 box shapes for the modes of the major scale. Mode-specific because
-each mode's interval pattern places notes at different frets, so the box
-extents differ. Each entry is (string, lo_fret, hi_fret) relative to F_root. -}
-majorBoxShape : ScaleType -> Int -> List ( Int, Int, Int )
-majorBoxShape scale b =
-    case scale of
-        Dorian ->
-            dorianBoxShape b
-
-        Mixolydian ->
-            mixolydianBoxShape b
-
-        Phrygian ->
-            phrygianBoxShape b
-
-        Lydian ->
-            lydianBoxShape b
-
-        Locrian ->
-            locrianBoxShape b
-
-        HarmonicMinor ->
-            harmonicMinorBoxShape b
-
-        MelodicMinor ->
-            melodicMinorBoxShape b
-
-        _ ->
-            ionianBoxShape b
-
-
-{-| Ionian-shape major scale boxes — also used for Aeolian since the two
-modes have the same intervallic structure relative to their pent skeleton. -}
-ionianBoxShape : Int -> List ( Int, Int, Int )
-ionianBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 4 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
-
-        2 ->
-            [ ( 1, 3, 7 ), ( 2, 3, 7 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
-
-        3 ->
-            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 8 ) ]
-
-        4 ->
-            [ ( 1, 7, 10 ), ( 2, 7, 10 ), ( 3, 7, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
-
-        5 ->
-            [ ( 1, 10, 14 ), ( 2, 10, 13 ), ( 3, 11, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 14 ) ]
-
-        _ ->
-            []
-
-
-{-| Dorian box shapes from Dean Arnold:
-https://www.deanarnoldguitar.com/post/dorian-scale-patterns-for-guitar -}
-dorianBoxShape : Int -> List ( Int, Int, Int )
-dorianBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 1, 3 ), ( 3, 0, 3 ), ( 4, 0, 3 ), ( 5, 1, 3 ), ( 6, 0, 3 ) ]
-
-        2 ->
-            [ ( 1, 3, 6 ), ( 2, 3, 6 ), ( 3, 2, 5 ), ( 4, 2, 5 ), ( 5, 3, 5 ), ( 6, 3, 6 ) ]
-
-        3 ->
-            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 8 ), ( 5, 5, 8 ), ( 6, 5, 8 ) ]
-
-        4 ->
-            [ ( 1, 8, 10 ), ( 2, 8, 11 ), ( 3, 7, 10 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 8, 10 ) ]
-
-        5 ->
-            [ ( 1, 10, 13 ), ( 2, 10, 13 ), ( 3, 10, 14 ), ( 4, 10, 14 ), ( 5, 10, 13 ), ( 6, 10, 13 ) ]
-
-        _ ->
-            []
-
-
-mixolydianBoxShape : Int -> List ( Int, Int, Int )
-mixolydianBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 3 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
-
-        2 ->
-            [ ( 1, 3, 7 ), ( 2, 3, 6 ), ( 3, 4, 7 ), ( 4, 3, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
-
-        3 ->
-            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 8 ), ( 6, 5, 8 ) ]
-
-        4 ->
-            [ ( 1, 7, 10 ), ( 2, 6, 10 ), ( 3, 7, 10 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
-
-        5 ->
-            [ ( 1, 10, 13 ), ( 2, 10, 13 ), ( 3, 10, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 13 ) ]
-
-        _ ->
-            []
-
-
-phrygianBoxShape : Int -> List ( Int, Int, Int )
-phrygianBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 1, 4 ), ( 2, 1, 4 ), ( 3, 0, 3 ), ( 4, 0, 3 ), ( 5, 1, 3 ), ( 6, 1, 4 ) ]
-
-        2 ->
-            [ ( 1, 3, 6 ), ( 2, 3, 6 ), ( 3, 3, 5 ), ( 4, 3, 6 ), ( 5, 3, 6 ), ( 6, 3, 6 ) ]
-
-        3 ->
-            [ ( 1, 6, 8 ), ( 2, 6, 9 ), ( 3, 5, 8 ), ( 4, 5, 8 ), ( 5, 5, 8 ), ( 6, 6, 8 ) ]
-
-        4 ->
-            [ ( 1, 8, 11 ), ( 2, 8, 11 ), ( 3, 7, 10 ), ( 4, 8, 10 ), ( 5, 8, 11 ), ( 6, 8, 11 ) ]
-
-        5 ->
-            [ ( 1, 10, 13 ), ( 2, 9, 13 ), ( 3, 10, 13 ), ( 4, 10, 13 ), ( 5, 10, 13 ), ( 6, 10, 13 ) ]
-
-        _ ->
-            []
-
-
-{-| Blues = minor pent + blue note (b5). Uses pent box positions (boxOf)
-for the 5 pent tones. The blue note on each string falls inside one of
-those pent boxes based on its f_rel — mapped here. These f_rel values are
-root-independent (computed from string tuning offsets only). -}
-bluesBoxOf : Int -> Int -> Maybe Int
-bluesBoxOf s fRel =
-    case boxOf s fRel of
-        Just b ->
-            Just b
-
-        Nothing ->
-            case ( s, fRel ) of
-                ( 1, 6 ) -> Just 3
-                ( 2, 11 ) -> Just 5
-                ( 3, 3 ) -> Just 2
-                ( 4, 8 ) -> Just 4
-                ( 5, 1 ) -> Just 1
-                ( 6, 6 ) -> Just 3
-                _ -> Nothing
-
-
-lydianBoxShape : Int -> List ( Int, Int, Int )
-lydianBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 4 ), ( 5, 0, 4 ), ( 6, 0, 3 ) ]
-
-        2 ->
-            [ ( 1, 3, 7 ), ( 2, 3, 7 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 4, 7 ), ( 6, 3, 7 ) ]
-
-        3 ->
-            [ ( 1, 5, 9 ), ( 2, 5, 8 ), ( 3, 6, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 9 ) ]
-
-        4 ->
-            [ ( 1, 7, 10 ), ( 2, 7, 10 ), ( 3, 7, 11 ), ( 4, 7, 11 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
-
-        5 ->
-            [ ( 1, 9, 12 ), ( 2, 8, 12 ), ( 3, 9, 12 ), ( 4, 9, 12 ), ( 5, 9, 12 ), ( 6, 9, 12 ) ]
-
-        _ ->
-            []
-
-
-locrianBoxShape : Int -> List ( Int, Int, Int )
-locrianBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 1, 4 ), ( 2, 1, 4 ), ( 3, 0, 3 ), ( 4, 1, 5 ), ( 5, 1, 4 ), ( 6, 1, 4 ) ]
-
-        2 ->
-            [ ( 1, 4, 8 ), ( 2, 4, 8 ), ( 3, 3, 6 ), ( 4, 5, 8 ), ( 5, 4, 8 ), ( 6, 4, 8 ) ]
-
-        3 ->
-            [ ( 1, 6, 9 ), ( 2, 6, 9 ), ( 3, 5, 8 ), ( 4, 6, 10 ), ( 5, 6, 10 ), ( 6, 6, 9 ) ]
-
-        4 ->
-            [ ( 1, 8, 11 ), ( 2, 8, 11 ), ( 3, 6, 10 ), ( 4, 8, 11 ), ( 5, 8, 11 ), ( 6, 8, 11 ) ]
-
-        5 ->
-            [ ( 1, 9, 13 ), ( 2, 9, 13 ), ( 3, 8, 12 ), ( 4, 10, 13 ), ( 5, 10, 13 ), ( 6, 9, 13 ) ]
-
-        _ ->
-            []
-
-
-harmonicMinorBoxShape : Int -> List ( Int, Int, Int )
-harmonicMinorBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 4 ), ( 3, 0, 4 ), ( 4, 1, 4 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
-
-        2 ->
-            [ ( 1, 3, 7 ), ( 2, 4, 7 ), ( 3, 4, 8 ), ( 4, 4, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
-
-        3 ->
-            [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 6, 9 ), ( 6, 5, 8 ) ]
-
-        4 ->
-            [ ( 1, 7, 11 ), ( 2, 7, 10 ), ( 3, 8, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 11 ) ]
-
-        5 ->
-            [ ( 1, 8, 12 ), ( 2, 8, 12 ), ( 3, 9, 12 ), ( 4, 9, 13 ), ( 5, 9, 12 ), ( 6, 8, 12 ) ]
-
-        _ ->
-            []
-
-
-melodicMinorBoxShape : Int -> List ( Int, Int, Int )
-melodicMinorBoxShape b =
-    case b of
-        1 ->
-            [ ( 1, 0, 3 ), ( 2, 0, 4 ), ( 3, 0, 4 ), ( 4, 1, 4 ), ( 5, 0, 4 ), ( 6, 0, 3 ) ]
-
-        2 ->
-            [ ( 1, 3, 7 ), ( 2, 4, 7 ), ( 3, 4, 8 ), ( 4, 4, 7 ), ( 5, 4, 7 ), ( 6, 3, 7 ) ]
-
-        3 ->
-            [ ( 1, 5, 9 ), ( 2, 5, 8 ), ( 3, 6, 9 ), ( 4, 5, 9 ), ( 5, 6, 9 ), ( 6, 5, 9 ) ]
-
-        4 ->
-            [ ( 1, 7, 11 ), ( 2, 7, 10 ), ( 3, 8, 11 ), ( 4, 7, 11 ), ( 5, 7, 10 ), ( 6, 7, 11 ) ]
-
-        5 ->
-            [ ( 1, 9, 12 ), ( 2, 8, 12 ), ( 3, 9, 12 ), ( 4, 9, 13 ), ( 5, 9, 12 ), ( 6, 9, 12 ) ]
-
-        _ ->
-            []
-
-
-usesMajorBoxShapes : ScaleType -> Bool
-usesMajorBoxShapes st =
-    case st of
-        Ionian -> True
-        Dorian -> True
-        Aeolian -> True
-        Mixolydian -> True
-        Phrygian -> True
-        Lydian -> True
-        Locrian -> True
-        HarmonicMinor -> True
-        MelodicMinor -> True
-        _ -> False
-
-
 boxColor : Int -> String
 boxColor b =
     case b of
@@ -1115,6 +1090,19 @@ boxColor b =
         4 -> "var(--box-4)"
         5 -> "var(--box-5)"
         _ -> "var(--surface-bd)"
+
+
+{-| Solid box fill opacity. Overlap stripes pre-blend the box colors with the
+background at the matching ratio (`boxBlendPct`) so a striped overlap reads the
+same as the solid boxes around it — keep the two in sync. -}
+boxFillOpacity : String
+boxFillOpacity =
+    "0.55"
+
+
+boxBlendPct : String
+boxBlendPct =
+    "55%"
 
 
 
@@ -1320,9 +1308,95 @@ viewControls model =
             , scaleButton model DiagonalMajorPent "Major pentatonic"
             , scaleButton model DiagonalBlues "Blues"
             ]
-        , div []
+        , div [ style "margin-bottom" "8px" ]
             [ label "Root" , noteButtonRow model ]
+        , div [ style "margin-bottom" "8px" ]
+            (label "Tuning"
+                :: List.map (tuningButton model) tunings
+                ++ [ customButton model ]
+            )
+        , if model.tuning.name == "Custom" then
+            div [ style "display" "flex", style "align-items" "center" ]
+                [ label "Strings"
+                , span [] (List.map (stringStepper model) (List.range 1 6))
+                ]
+
+          else
+            text ""
         ]
+
+
+tuningButton : Model -> Tuning -> Html Msg
+tuningButton model t =
+    button
+        ([ onClick (SetTuning t)
+         , style "min-width" "80px"
+         ]
+            ++ buttonBaseStyle (model.tuning.slug == t.slug)
+        )
+        [ text t.name ]
+
+
+{-| Enters custom mode (revealing the per-string steppers), seeded from the
+current tuning's notes. -}
+customButton : Model -> Html Msg
+customButton model =
+    button
+        ([ onClick (SetTuning (customFrom model.tuning.strings))
+         , style "min-width" "80px"
+         ]
+            ++ buttonBaseStyle (model.tuning.name == "Custom")
+        )
+        [ text "Custom" ]
+
+
+{-| Per-string up/down stepper. Editing any string yields a custom tuning,
+which the box/scale geometry derives at runtime exactly like a preset. Strings
+are shown low (6) to high (1), matching how a player reads the neck. -}
+stringStepper : Model -> Int -> Html Msg
+stringStepper model uiIndex =
+    let
+        s =
+            7 - uiIndex
+
+        note =
+            openString model.tuning s
+    in
+    div
+        [ style "display" "inline-flex"
+        , style "flex-direction" "column"
+        , style "align-items" "center"
+        , style "margin" "0 3px"
+        ]
+        [ stepperButton (TuneString s 1) "▲"
+        , span
+            [ style "font-size" "13px"
+            , style "font-weight" "600"
+            , style "padding" "2px 0"
+            , style "min-width" "26px"
+            , style "text-align" "center"
+            , style "color" "var(--text-1)"
+            ]
+            [ text (noteName note) ]
+        , stepperButton (TuneString s -1) "▼"
+        ]
+
+
+stepperButton : Msg -> String -> Html Msg
+stepperButton msg glyph =
+    button
+        [ onClick msg
+        , style "padding" "0 6px"
+        , style "border" "1px solid var(--btn-bd)"
+        , style "border-radius" "4px"
+        , style "cursor" "pointer"
+        , style "font-size" "11px"
+        , style "line-height" "1.4"
+        , style "font-family" "inherit"
+        , style "background" "var(--btn-bg)"
+        , style "color" "var(--btn-text)"
+        ]
+        [ text glyph ]
 
 
 label : String -> Html Msg
@@ -1442,33 +1516,23 @@ drawBoxRegionsBoxes model =
         octaves =
             [ -1, 0, 1 ]
 
-        drawer =
-            if usesMajorBoxShapes model.scale then
-                drawOneMajorBox
-
-            else
-                drawOneBox
-
         solids =
             List.concatMap
-                (\b -> List.filterMap (drawer model b) octaves)
+                (\b -> List.filterMap (drawSolidBox model b) octaves)
                 [ 1, 2, 3, 4, 5 ]
 
+        -- Adjacent boxes share notes wherever the position windows overlap; the
+        -- overlap is rendered as a striped two-color band. With `deriveBox` this
+        -- can happen for any scale (e.g. pentatonic in Open G), not just the
+        -- 7-note modes. In standard tuning pentatonic boxes only touch, so the
+        -- overlaps collapse to invisible zero-width pinches.
         overlaps =
-            if usesMajorBoxShapes model.scale then
-                List.concatMap
-                    (\pair -> List.filterMap (drawOverlapStripe model pair) octaves)
-                    [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
-
-            else
-                []
+            List.concatMap
+                (\pair -> List.filterMap (drawOverlapStripe model pair) octaves)
+                [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
 
         wrapOverlaps =
-            if usesMajorBoxShapes model.scale then
-                List.filterMap (drawWrapOverlap model) octaves
-
-            else
-                []
+            List.filterMap (drawWrapOverlap model) octaves
     in
     solids ++ overlaps ++ wrapOverlaps
 
@@ -1480,7 +1544,7 @@ drawDiagonalRegions model =
             [ -2, -1, 0, 1, 2 ]
     in
     List.concatMap
-        (\shape -> List.filterMap (drawDiagonalShape model.scale model.root shape) octaves)
+        (\shape -> List.filterMap (drawDiagonalShape model.tuning model.scale model.root shape) octaves)
         (diagonalShapesFor model.scale)
 
 
@@ -1489,23 +1553,29 @@ Both edges are staircases that step at the midline between the strings; an
 edge where both strings share a fret (pattern 1's right, pattern 2's left)
 collapses to a vertical line. The shape repeats every 12 frets (one octave)
 to fill the neck. -}
-drawDiagonalShape : ScaleType -> Int -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
-drawDiagonalShape scale root shape octave =
+drawDiagonalShape : Tuning -> ScaleType -> Int -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
+drawDiagonalShape tuning scale root shape octave =
     let
         shift =
-            diagonalAnchor scale root + 12 * octave
+            diagonalAnchor tuning scale root + 12 * octave
+
+        shiftL =
+            shift + boxShift tuning shape.lower
+
+        shiftU =
+            shift + boxShift tuning shape.upper
 
         loL =
-            shift + (List.minimum shape.lowerRels |> Maybe.withDefault 0)
+            shiftL + (List.minimum shape.lowerRels |> Maybe.withDefault 0)
 
         hiL =
-            shift + (List.maximum shape.lowerRels |> Maybe.withDefault 0)
+            shiftL + (List.maximum shape.lowerRels |> Maybe.withDefault 0)
 
         loU =
-            shift + (List.minimum shape.upperRels |> Maybe.withDefault 0)
+            shiftU + (List.minimum shape.upperRels |> Maybe.withDefault 0)
 
         hiU =
-            shift + (List.maximum shape.upperRels |> Maybe.withDefault 0)
+            shiftU + (List.maximum shape.upperRels |> Maybe.withDefault 0)
 
         inRange =
             List.any
@@ -1556,8 +1626,8 @@ drawDiagonalShape scale root shape octave =
         Nothing
 
 
-drawOneMajorBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
-drawOneMajorBox model b octave =
+drawSolidBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
+drawSolidBox model b octave =
     let
         fRoot =
             rootFret model
@@ -1568,7 +1638,7 @@ drawOneMajorBox model b octave =
         positions =
             List.map
                 (\( s, lo, hi ) -> ( s, lo + shift, hi + shift ))
-                (majorBoxShape model.scale b)
+                (deriveBox model.tuning model.scale b)
 
         inRange =
             List.any
@@ -1582,7 +1652,7 @@ drawOneMajorBox model b octave =
             (Svg.polygon
                 [ SA.points (polygonPoints positions)
                 , SA.fill (boxColor b)
-                , SA.fillOpacity "0.55"
+                , SA.fillOpacity boxFillOpacity
                 ]
                 []
             )
@@ -1605,8 +1675,8 @@ drawOverlapStripe model ( b1, b2 ) octave =
                 (\( s, lo1, hi1 ) ( _, lo2, hi2 ) ->
                     ( s, max lo1 lo2 + shift, min hi1 hi2 + shift )
                 )
-                (majorBoxShape model.scale b1)
-                (majorBoxShape model.scale b2)
+                (deriveBox model.tuning model.scale b1)
+                (deriveBox model.tuning model.scale b2)
 
         hasRealOverlap =
             List.any (\( _, lo, hi ) -> hi >= lo) overlapPositions
@@ -1659,8 +1729,8 @@ drawWrapOverlap model octave =
                     , min (hi5 + shift5) (hi1 + shift1)
                     )
                 )
-                (majorBoxShape model.scale 5)
-                (majorBoxShape model.scale 1)
+                (deriveBox model.tuning model.scale 5)
+                (deriveBox model.tuning model.scale 1)
 
         hasRealOverlap =
             List.any (\( _, lo, hi ) -> hi >= lo) overlapPositions
@@ -1692,10 +1762,10 @@ overlapStripePattern ( b1, b2 ) =
         half = period / 2
 
         -- Pre-blend the box color with the page background at the same ratio
-        -- as solid boxes (fill-opacity 0.55), so opaque stripes visually
-        -- match adjacent solid box regions.
+        -- as solid boxes (`boxFillOpacity`), so opaque stripes visually match
+        -- adjacent solid box regions.
         blended b =
-            "color-mix(in srgb, " ++ boxColor b ++ " 55%, var(--bg) 45%)"
+            "color-mix(in srgb, " ++ boxColor b ++ " " ++ boxBlendPct ++ ", var(--bg))"
     in
     Svg.pattern
         [ SA.id ("ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2)
@@ -1723,41 +1793,6 @@ overlapStripePattern ( b1, b2 ) =
         ]
 
 
-
-
-drawOneBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
-drawOneBox model b octave =
-    let
-        fRoot =
-            rootFret model
-
-        shift =
-            fRoot + 12 * octave
-
-        positions =
-            List.map
-                (\( s, lo, hi ) -> ( s, lo + shift, hi + shift ))
-                (boxShape b)
-
-        inRange =
-            List.any
-                (\( _, lo, hi ) ->
-                    (lo >= 0 && lo <= numFrets) || (hi >= 0 && hi <= numFrets)
-                )
-                positions
-    in
-    if inRange then
-        Just
-            (Svg.polygon
-                [ SA.points (polygonPoints positions)
-                , SA.fill (boxColor b)
-                , SA.fillOpacity "0.45"
-                ]
-                []
-            )
-
-    else
-        Nothing
 
 
 {-| Polygon points for a per-string `(string, lo_fret, hi_fret)` shape.
@@ -1927,7 +1962,7 @@ drawNoteAt model s f =
     case positionBox model s f of
         Just _ ->
             let
-                n = noteAt s f
+                n = noteAt model.tuning s f
                 role = noteRole model n
                 cx = noteX f
                 cy = stringY s
