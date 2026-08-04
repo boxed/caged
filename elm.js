@@ -6430,11 +6430,8 @@ var $author$project$Main$anchorScaleSet = function (scale) {
 		},
 		$author$project$Main$scaleIntervals(scale));
 };
+var $author$project$Main$boxWindow = _Utils_Tuple2(-1, 3);
 var $elm$core$Basics$ge = _Utils_ge;
-var $author$project$Main$boxWindow = function (scale) {
-	return ($elm$core$List$length(
-		$author$project$Main$scaleIntervals(scale)) >= 7) ? _Utils_Tuple2(0, 4) : _Utils_Tuple2(-1, 3);
-};
 var $elm$core$Maybe$map2 = F3(
 	function (func, ma, mb) {
 		if (ma.$ === 'Nothing') {
@@ -6515,7 +6512,7 @@ var $author$project$Main$deriveBox = F3(
 					scaleSet);
 			});
 		var anchor = $author$project$Main$pentAnchor(b);
-		var _v0 = $author$project$Main$boxWindow(scale);
+		var _v0 = $author$project$Main$boxWindow;
 		var loOff = _v0.a;
 		var hiOff = _v0.b;
 		var lo = anchor + loOff;

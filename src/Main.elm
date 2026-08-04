@@ -784,17 +784,17 @@ majorFlavored scale =
         _ -> False
 
 
-{-| A box is a compact playing position: a fixed fret window on every string.
-A denser (7-note) scale takes a window a fret higher so each position holds
-about three notes per string; pentatonic-family scales sit one fret lower with
-about two per string. Width is always five frets (a four-fret hand span). -}
-boxWindow : ScaleType -> ( Int, Int )
-boxWindow scale =
-    if List.length (scaleIntervals scale) >= 7 then
-        ( 0, 4 )
+{-| A box is a compact playing position: a five-fret window (a four-fret hand
+span) on every string, starting one fret below the box's anchor note.
 
-    else
-        ( -1, 3 )
+Every scale uses the *same* window, pentatonic or seven-note. The five major-
+scale positions sit exactly on top of the pentatonic boxes — the two extra
+degrees fill in inside the same window rather than pushing the position up the
+neck — so a mode's box 1 and the pentatonic's box 1 are the same hand position.
+-}
+boxWindow : ( Int, Int )
+boxWindow =
+    ( -1, 3 )
 
 
 {-| Pitch classes that count as scale notes *measured from a box's anchor note*
@@ -823,7 +823,8 @@ That is the hard requirement; ergonomics is secondary. The base window is the
 compact CAGED position (≤4-fret span); if a tuning's string spacing means that
 window misses some degree, the upper bound grows until every degree is present.
 For every ordinary tuning the base window is already complete, so nothing grows
-and standard tuning reproduces the canonical pentatonic and Ionian shapes. Only
+and standard tuning reproduces the canonical pentatonic and Ionian shapes — the
+major-scale positions land on the same windows as the pentatonic boxes. Only
 degenerate tunings (e.g. all six strings the same pitch) force wider boxes.
 
 It is the single source of truth for all CAGED box geometry — no per-mode or
@@ -833,7 +834,7 @@ deriveBox : Tuning -> ScaleType -> Int -> List ( Int, Int, Int )
 deriveBox tuning scale b =
     let
         ( loOff, hiOff ) =
-            boxWindow scale
+            boxWindow
 
         anchor =
             pentAnchor b

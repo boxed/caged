@@ -91,9 +91,12 @@ than offsetting a standard-tuning shape.
 
 - **Anchors**: the 5 boxes sit on the minor-pentatonic degrees of the low string
   relative to `rootFret` — `pentAnchor` = `[0,3,5,7,10]`.
-- **Window** (`boxWindow`): base window `[A−1, A+3]` for ≤6-note scales
-  (pentatonic/blues), `[A, A+4]` for 7-note scales (one fret higher so each
-  position holds ~3 notes/string) — a compact 5-fret CAGED position.
+- **Window** (`boxWindow`): base window `[A−1, A+3]` for *every* scale — a
+  compact 5-fret CAGED position. Seven-note modes use the same window as the
+  pentatonic, so mode box N and pentatonic box N are the same hand position;
+  the two extra degrees fill in inside the window instead of pushing the
+  position up the neck. (An earlier `[A, A+4]` for 7-note scales put boxes 1,
+  2, 3 and 5 a fret too high versus published major-scale position charts.)
 - **Completeness growth**: the box's upper bound grows past the base window until
   every scale degree is present. For every ordinary tuning the base window is
   already complete, so nothing grows; only degenerate tunings (e.g. all six

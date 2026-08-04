@@ -163,14 +163,19 @@ pentReference =
     ]
 
 
-{-| The textbook Ionian (major-scale) CAGED boxes (relative to the anchor). -}
+{-| The textbook Ionian (major-scale) CAGED boxes (relative to the anchor).
+
+These are the five standard major-scale positions: each one sits on the *same*
+five-fret window as the pentatonic box of the same number (see `pentReference`),
+with the two extra degrees filling in. Transcribed from a published A-major
+position chart, so this is the spec `deriveBox` has to reproduce. -}
 ionianReference : List (List ( Int, Int, Int ))
 ionianReference =
-    [ [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, 0, 4 ), ( 4, 0, 4 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
-    , [ ( 1, 3, 7 ), ( 2, 3, 7 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 3, 7 ), ( 6, 3, 7 ) ]
-    , [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 5, 9 ), ( 4, 5, 9 ), ( 5, 5, 9 ), ( 6, 5, 8 ) ]
-    , [ ( 1, 7, 10 ), ( 2, 7, 10 ), ( 3, 7, 11 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
-    , [ ( 1, 10, 14 ), ( 2, 10, 13 ), ( 3, 11, 14 ), ( 4, 10, 14 ), ( 5, 10, 14 ), ( 6, 10, 14 ) ]
+    [ [ ( 1, 0, 3 ), ( 2, 0, 3 ), ( 3, -1, 2 ), ( 4, 0, 2 ), ( 5, 0, 3 ), ( 6, 0, 3 ) ]
+    , [ ( 1, 2, 5 ), ( 2, 3, 5 ), ( 3, 2, 5 ), ( 4, 2, 5 ), ( 5, 2, 5 ), ( 6, 2, 5 ) ]
+    , [ ( 1, 5, 8 ), ( 2, 5, 8 ), ( 3, 4, 7 ), ( 4, 4, 7 ), ( 5, 5, 7 ), ( 6, 5, 8 ) ]
+    , [ ( 1, 7, 10 ), ( 2, 7, 10 ), ( 3, 7, 9 ), ( 4, 7, 10 ), ( 5, 7, 10 ), ( 6, 7, 10 ) ]
+    , [ ( 1, 10, 12 ), ( 2, 10, 13 ), ( 3, 9, 12 ), ( 4, 9, 12 ), ( 5, 9, 12 ), ( 6, 10, 12 ) ]
     ]
 
 
