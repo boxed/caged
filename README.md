@@ -23,9 +23,13 @@ color — matching the style of `fretboard-reference.jpeg`.
   - Box 5 — green
 - **Note names printed on every scale tone**, with the root shown in a dark
   square and every other note in a white circle.
-- **All notes** mode (under "No scale") — not a scale at all, just every note
-  on the whole neck, with the chosen root marked so you can orient yourself.
-  No box shading; useful for learning note names across the fretboard.
+- **All notes (minor)** and **All notes (major)** modes (under "No scale") —
+  not scales at all, just every note on the whole neck, with no box shading.
+  Each note is colored by pitch class (hues run round the circle of fifths, so
+  neighboring frets never look alike and the naturals come out warm, the
+  accidentals cool), and the chord tones relative to your chosen root are
+  ringed: root, ♭3/5/♭7 in the minor map, 3/5/7 in the major one. Useful for
+  learning note names across the fretboard and for spotting arpeggio shapes.
 - **Fret markers** at 3, 5, 7, 9, 12 (double), 15, 17, 19, 21 and fret numbers
   labeled below the neck.
 

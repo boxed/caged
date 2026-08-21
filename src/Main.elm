@@ -72,7 +72,8 @@ type ScaleType
     | Blues
     | HarmonicMinor
     | MelodicMinor
-    | Chromatic
+    | ChromaticMinor
+    | ChromaticMajor
     | DiagonalPent
     | DiagonalMajorPent
     | DiagonalBlues
@@ -246,7 +247,8 @@ scaleSlug s =
         Blues -> "blues"
         HarmonicMinor -> "harmonic-minor"
         MelodicMinor -> "melodic-minor"
-        Chromatic -> "all-notes"
+        ChromaticMinor -> "all-notes-minor"
+        ChromaticMajor -> "all-notes-major"
         DiagonalPent -> "diagonal-pent"
         DiagonalMajorPent -> "diagonal-major-pent"
         DiagonalBlues -> "diagonal-blues"
@@ -268,7 +270,10 @@ scaleFromSlug s =
         "blues" -> Just Blues
         "harmonic-minor" -> Just HarmonicMinor
         "melodic-minor" -> Just MelodicMinor
-        "all-notes" -> Just Chromatic
+        "all-notes-minor" -> Just ChromaticMinor
+        "all-notes-major" -> Just ChromaticMajor
+        -- The all-notes map used to be a single mode; keep old links working.
+        "all-notes" -> Just ChromaticMinor
         "diagonal-pent" -> Just DiagonalPent
         "diagonal-major-pent" -> Just DiagonalMajorPent
         "diagonal-blues" -> Just DiagonalBlues
@@ -517,7 +522,7 @@ The all-notes map has no key signature to spell against, so it uses the plain
 sharp names — matching what the fretboard shows there. -}
 rootSpelling : ScaleType -> Int -> String
 rootSpelling scale root =
-    if scale == Chromatic then
+    if isChromatic scale then
         noteName root
 
     else
@@ -542,7 +547,8 @@ scaleDegrees st =
         Blues -> [ 1, 3, 4, 5, 5, 7 ]
         HarmonicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
-        Chromatic -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
+        ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
+        ChromaticMajor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         DiagonalPent -> [ 1, 3, 4, 5, 7 ]
         DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
         DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
@@ -559,7 +565,7 @@ spelledNotes model =
 the plain sharp name for pitch classes outside the scale. -}
 spelledName : Model -> Int -> String
 spelledName model n =
-    if model.scale == Chromatic then
+    if isChromatic model.scale then
         -- All twelve pitch classes are present, so there is no key to spell
         -- against; the conventional sharp names keep the map readable.
         noteName n
@@ -678,7 +684,10 @@ scaleIntervals st =
         MelodicMinor ->
             [ 0, 2, 3, 5, 7, 9, 11 ]
 
-        Chromatic ->
+        ChromaticMinor ->
+            List.range 0 11
+
+        ChromaticMajor ->
             List.range 0 11
 
         DiagonalPent ->
@@ -757,10 +766,13 @@ rootFret model =
         MelodicMinor ->
             minorAnchor
 
-        Chromatic ->
-            -- No boxes are drawn for the all-notes map, so the anchor is
-            -- unused; the root's own fret is the sane value.
+        ChromaticMinor ->
+            -- No boxes are drawn for the all-notes maps, so the anchor is
+            -- unused; the matching flavor's anchor is the sane value.
             minorAnchor
+
+        ChromaticMajor ->
+            majorAnchor
 
         DiagonalPent ->
             diagonalAnchor model.tuning DiagonalPent model.root
@@ -775,6 +787,14 @@ rootFret model =
 isDiagonal : ScaleType -> Bool
 isDiagonal scale =
     scale == DiagonalPent || scale == DiagonalMajorPent || scale == DiagonalBlues
+
+
+{-| The two all-notes maps — every note on the neck, with the chord tones read
+through a minor (♭3, 5, ♭7) or major (3, 5, 7) lens. Neither is a scale, so they
+share every special case in the code; only `noteRole` tells them apart. -}
+isChromatic : ScaleType -> Bool
+isChromatic scale =
+    scale == ChromaticMinor || scale == ChromaticMajor
 
 
 {-| The five box anchors are the minor-pentatonic degrees on the lowest string,
@@ -1050,32 +1070,28 @@ type NoteRole
 
 noteRole : Model -> Int -> NoteRole
 noteRole model n =
-    if model.scale == Chromatic then
-        -- Intervals from the chosen root are still meaningful here, but with
-        -- no scale there is nothing to pick *which* third or seventh is the
-        -- diatonic one, so both flavors carry the marker: minor and major 3rd,
-        -- flat and major 7th. The 5th (7 semitones) is unambiguous.
-        case modBy 12 (n - model.root) of
-            0 ->
-                Root
+    if isChromatic model.scale then
+        -- The all-notes maps have no scale to pick *which* third or seventh is
+        -- the diatonic one, so the mode itself says: minor marks ♭3/♭7, major
+        -- marks 3/7. The 5th (7 semitones) is the same either way.
+        let
+            interval =
+                modBy 12 (n - model.root)
+        in
+        if interval == 0 then
+            Root
 
-            3 ->
-                Third
+        else if interval == chromaticThird model.scale then
+            Third
 
-            4 ->
-                Third
+        else if interval == 7 then
+            Fifth
 
-            7 ->
-                Fifth
+        else if interval == chromaticSeventh model.scale then
+            Seventh
 
-            10 ->
-                Seventh
-
-            11 ->
-                Seventh
-
-            _ ->
-                Other
+        else
+            Other
 
     else
     let
@@ -1096,7 +1112,8 @@ noteRole model n =
                 Blues -> 3
                 HarmonicMinor -> 3
                 MelodicMinor -> 3
-                Chromatic -> -1
+                ChromaticMinor -> -1
+                ChromaticMajor -> -1
                 DiagonalPent -> 3
                 DiagonalMajorPent -> 4
                 DiagonalBlues -> 3
@@ -1115,7 +1132,8 @@ noteRole model n =
                 Blues -> 10
                 HarmonicMinor -> 11
                 MelodicMinor -> 11
-                Chromatic -> -1
+                ChromaticMinor -> -1
+                ChromaticMajor -> -1
                 DiagonalPent -> 10
                 DiagonalMajorPent -> -1
                 DiagonalBlues -> 10
@@ -1134,6 +1152,26 @@ noteRole model n =
 
     else
         Other
+
+
+{-| Which third and seventh the all-notes maps mark. `ChromaticMajor` uses the
+major flavors, everything else the minor ones. -}
+chromaticThird : ScaleType -> Int
+chromaticThird scale =
+    if scale == ChromaticMajor then
+        4
+
+    else
+        3
+
+
+chromaticSeventh : ScaleType -> Int
+chromaticSeventh scale =
+    if scale == ChromaticMajor then
+        11
+
+    else
+        10
 
 
 {-| All-notes mode paints each marker with its pitch-class color, so the neck
@@ -1368,7 +1406,8 @@ viewScaleTitle model =
                         Blues -> "Blues"
                         HarmonicMinor -> "Harmonic Minor"
                         MelodicMinor -> "Melodic Minor"
-                        Chromatic -> "— All Notes"
+                        ChromaticMinor -> "— All Notes (minor)"
+                        ChromaticMajor -> "— All Notes (major)"
                         DiagonalPent -> "Diagonal Minor Pentatonic"
                         DiagonalMajorPent -> "Diagonal Major Pentatonic"
                         DiagonalBlues -> "Diagonal Blues"
@@ -1388,7 +1427,8 @@ viewScaleTitle model =
                 Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
                 HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
                 MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
-                Chromatic -> List.repeat 12 ""
+                ChromaticMinor -> List.repeat 12 ""
+                ChromaticMajor -> List.repeat 12 ""
                 DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
                 DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
@@ -1400,10 +1440,16 @@ viewScaleTitle model =
                 intervalLabels
 
         subtitle =
-            if model.scale == Chromatic then
-                "Every note on the neck · hue = note · intervals from "
+            if isChromatic model.scale then
+                "Every note on the neck · hue = note · "
+                    ++ (if model.scale == ChromaticMajor then
+                            "3 · 5 · 7"
+
+                        else
+                            "♭3 · 5 · ♭7"
+                       )
+                    ++ " marked from "
                     ++ noteName model.root
-                    ++ " (both 3rds and both 7ths marked)"
 
             else
                 "Notes: " ++ String.join "  ·  " notePairs
@@ -1449,7 +1495,8 @@ viewControls model =
             ]
         , div [ style "margin-bottom" "8px" ]
             [ label "No scale"
-            , scaleButton model Chromatic "All notes"
+            , scaleButton model ChromaticMinor "All notes (minor)"
+            , scaleButton model ChromaticMajor "All notes (major)"
             ]
         , div [ style "margin-bottom" "8px" ]
             [ label "Root" , noteButtonRow model ]
@@ -1646,7 +1693,7 @@ viewFretboard model =
 
 drawBoxRegions : Model -> List (Svg.Svg Msg)
 drawBoxRegions model =
-    if model.scale == Chromatic then
+    if isChromatic model.scale then
         -- The all-notes map is not a scale: every fret is a scale tone, so a
         -- CAGED box would cover the whole neck. Show the bare fretboard.
         []
@@ -2116,7 +2163,7 @@ drawNoteAt model s f =
                 cy = stringY s
 
                 background =
-                    if model.scale == Chromatic then
+                    if isChromatic model.scale then
                         chromaticMarker role cx cy n
 
                     else
@@ -2185,7 +2232,7 @@ drawNoteAt model s f =
                                 []
 
                 textColor =
-                    if model.scale == Chromatic then
+                    if isChromatic model.scale then
                         -- Pastel in light mode, deep in dark mode: the ordinary
                         -- note text color reads on every pitch-class fill.
                         "var(--note-text)"
@@ -2328,7 +2375,7 @@ viewLegend : Model -> Html Msg
 viewLegend model =
     let
         boxes =
-            if model.scale == Chromatic then
+            if isChromatic model.scale then
                 []
 
             else if isDiagonal model.scale then
@@ -2340,12 +2387,24 @@ viewLegend model =
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
 
         tones =
-            if model.scale == Chromatic then
+            if isChromatic model.scale then
                 [ legendText "Tones:"
                 , legendMarker "square-pc" "Root"
-                , legendMarker "circle-pc-dashed" "3rds"
+                , legendMarker "circle-pc-dashed"
+                    (if model.scale == ChromaticMajor then
+                        "3rd"
+
+                     else
+                        "♭3"
+                    )
                 , legendMarker "circle-pc-dotted" "5th"
-                , legendMarker "circle-pc-double" "7ths"
+                , legendMarker "circle-pc-double"
+                    (if model.scale == ChromaticMajor then
+                        "7th"
+
+                     else
+                        "♭7"
+                    )
                 , legendMarker "circle-pc" "other"
                 , legendText "hue = note"
                 ]
