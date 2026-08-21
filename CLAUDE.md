@@ -49,12 +49,21 @@ through the code:
 - `drawBoxRegions` returns `[]` for it — with all 12 degrees present a CAGED
   box would swallow the neck, so no box polygons or overlap stripes are drawn.
   It is therefore excluded from `boxScales` in the tests.
-- `noteRole` short-circuits: only the chosen root is marked (as an orientation
-  anchor). With no key there is no meaningful 3rd/5th/7th.
+- `noteRole` short-circuits to interval families measured from the chosen root:
+  root, *both* thirds (3 and 4), the 5th (7), and *both* sevenths (10 and 11).
+  With no scale there is nothing to pick which third or seventh is the diatonic
+  one, so both flavors carry the same glyph and the printed note name tells you
+  which is which.
+- Every marker is filled with its pitch-class color (`pitchColor`, the `--pc-*`
+  vars). Hues follow the circle of fifths, so a semitone step is half the wheel
+  away (adjacent frets never look alike) and the naturals land in the warm half,
+  the accidentals in the cool half. Markers are drawn by `chromaticMarker`;
+  the label uses `--note-text` on every fill.
 - `rootSpelling` and `spelledName` short-circuit to `noteName` — all twelve
   pitch classes are present, so there is no key signature to spell against and
   the conventional sharp names are used on both the fretboard and root buttons.
-- The legend drops the box swatches and lists only Root / other.
+- The legend drops the box swatches and shows pitch-gradient chips for
+  Root / 3rds / 5th / 7ths / other plus a "hue = note" note.
 
 Adding a new mode no longer needs per-mode box tables — `deriveBox` generates
 the shapes from the intervals. It requires:

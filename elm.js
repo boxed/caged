@@ -7438,44 +7438,80 @@ var $author$project$Main$pitchColor = function (n) {
 	return 'var(--pc-' + ($elm$core$String$fromInt(
 		A2($elm$core$Basics$modBy, 12, n)) + ')');
 };
+var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
 var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
 var $author$project$Main$chromaticMarker = F4(
 	function (role, cx, cy, n) {
-		if (role.$ === 'Root') {
-			return A2(
-				$elm$svg$Svg$rect,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$x(
-						$elm$core$String$fromFloat(cx - 14)),
-						$elm$svg$Svg$Attributes$y(
-						$elm$core$String$fromFloat(cy - 14)),
-						$elm$svg$Svg$Attributes$width('28'),
-						$elm$svg$Svg$Attributes$height('28'),
-						$elm$svg$Svg$Attributes$rx('3'),
-						$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$pitchColor(n)),
-						$elm$svg$Svg$Attributes$stroke('var(--nut)'),
-						$elm$svg$Svg$Attributes$strokeWidth('2.5')
-					]),
-				_List_Nil);
-		} else {
+		var ring = function (extra) {
 			return A2(
 				$elm$svg$Svg$circle,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$cx(
-						$elm$core$String$fromFloat(cx)),
-						$elm$svg$Svg$Attributes$cy(
-						$elm$core$String$fromFloat(cy)),
-						$elm$svg$Svg$Attributes$r('14'),
-						$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$pitchColor(n)),
-						$elm$svg$Svg$Attributes$stroke('var(--note-bd)'),
-						$elm$svg$Svg$Attributes$strokeWidth('1.3'),
-						$elm$svg$Svg$Attributes$strokeOpacity('0.6')
-					]),
+				_Utils_ap(
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$cx(
+							$elm$core$String$fromFloat(cx)),
+							$elm$svg$Svg$Attributes$cy(
+							$elm$core$String$fromFloat(cy)),
+							$elm$svg$Svg$Attributes$r('14'),
+							$elm$svg$Svg$Attributes$fill(
+							$author$project$Main$pitchColor(n))
+						]),
+					extra),
 				_List_Nil);
+		};
+		switch (role.$) {
+			case 'Root':
+				return A2(
+					$elm$svg$Svg$rect,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$x(
+							$elm$core$String$fromFloat(cx - 14)),
+							$elm$svg$Svg$Attributes$y(
+							$elm$core$String$fromFloat(cy - 14)),
+							$elm$svg$Svg$Attributes$width('28'),
+							$elm$svg$Svg$Attributes$height('28'),
+							$elm$svg$Svg$Attributes$rx('3'),
+							$elm$svg$Svg$Attributes$fill(
+							$author$project$Main$pitchColor(n)),
+							$elm$svg$Svg$Attributes$stroke('var(--nut)'),
+							$elm$svg$Svg$Attributes$strokeWidth('2.5')
+						]),
+					_List_Nil);
+			case 'Third':
+				return ring(
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
+							$elm$svg$Svg$Attributes$strokeWidth('2'),
+							$elm$svg$Svg$Attributes$strokeDasharray('4 3')
+						]));
+			case 'Fifth':
+				return ring(
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
+							$elm$svg$Svg$Attributes$strokeWidth('2'),
+							$elm$svg$Svg$Attributes$strokeLinecap('round'),
+							$elm$svg$Svg$Attributes$strokeDasharray('0.1 4')
+						]));
+			case 'Seventh':
+				return ring(
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
+							$elm$svg$Svg$Attributes$strokeWidth('1.6'),
+							$elm$svg$Svg$Attributes$strokeDasharray('4 3'),
+							$elm$svg$Svg$Attributes$strokeOpacity('0.5')
+						]));
+			default:
+				return ring(
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$stroke('var(--note-bd)'),
+							$elm$svg$Svg$Attributes$strokeWidth('1.3'),
+							$elm$svg$Svg$Attributes$strokeOpacity('0.6')
+						]));
 		}
 	});
 var $elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
@@ -7495,11 +7531,27 @@ var $author$project$Main$Third = {$: 'Third'};
 var $author$project$Main$noteRole = F2(
 	function (model, n) {
 		if (_Utils_eq(model.scale, $author$project$Main$Chromatic)) {
-			return (!A2($elm$core$Basics$modBy, 12, n - model.root)) ? $author$project$Main$Root : $author$project$Main$Other;
+			var _v0 = A2($elm$core$Basics$modBy, 12, n - model.root);
+			switch (_v0) {
+				case 0:
+					return $author$project$Main$Root;
+				case 3:
+					return $author$project$Main$Third;
+				case 4:
+					return $author$project$Main$Third;
+				case 7:
+					return $author$project$Main$Fifth;
+				case 10:
+					return $author$project$Main$Seventh;
+				case 11:
+					return $author$project$Main$Seventh;
+				default:
+					return $author$project$Main$Other;
+			}
 		} else {
 			var thirdInterval = function () {
-				var _v1 = model.scale;
-				switch (_v1.$) {
+				var _v2 = model.scale;
+				switch (_v2.$) {
 					case 'MinorPent':
 						return 3;
 					case 'MajorPent':
@@ -7535,8 +7587,8 @@ var $author$project$Main$noteRole = F2(
 				}
 			}();
 			var seventhInterval = function () {
-				var _v0 = model.scale;
-				switch (_v0.$) {
+				var _v1 = model.scale;
+				switch (_v1.$) {
 					case 'MinorPent':
 						return 10;
 					case 'MajorPent':
@@ -7670,7 +7722,6 @@ var $author$project$Main$spelledName = F2(
 								$author$project$Main$spelledNotes(model))))));
 		}
 	});
-var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
 var $author$project$Main$drawNoteAt = F3(
 	function (model, s, f) {
 		var _v0 = A3($author$project$Main$positionBox, model, s, f);
@@ -8052,6 +8103,43 @@ var $author$project$Main$legendMarker = F2(
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
 								])),
 						_List_Nil);
+				case 'circle-pc-dashed':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '2px dashed var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-pc-dotted':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '2px dotted var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-pc-double':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '1.6px dashed var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+									A2($elm$html$Html$Attributes$style, 'opacity', '0.6')
+								])),
+						_List_Nil);
 				case 'circle-double':
 					return A2(
 						$elm$html$Html$span,
@@ -8147,6 +8235,9 @@ var $author$project$Main$viewLegend = function (model) {
 		[
 			$author$project$Main$legendText('Tones:'),
 			A2($author$project$Main$legendMarker, 'square-pc', 'Root'),
+			A2($author$project$Main$legendMarker, 'circle-pc-dashed', '3rds'),
+			A2($author$project$Main$legendMarker, 'circle-pc-dotted', '5th'),
+			A2($author$project$Main$legendMarker, 'circle-pc-double', '7ths'),
 			A2($author$project$Main$legendMarker, 'circle-pc', 'other'),
 			$author$project$Main$legendText('hue = note')
 		]) : _List_fromArray(
@@ -8322,7 +8413,7 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			}),
 		$author$project$Main$spelledNotes(model),
 		intervalLabels);
-	var subtitle = _Utils_eq(model.scale, $author$project$Main$Chromatic) ? ('Every note on the neck · ' + ($author$project$Main$noteName(model.root) + ' marked as the root')) : ('Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs));
+	var subtitle = _Utils_eq(model.scale, $author$project$Main$Chromatic) ? ('Every note on the neck · hue = note · intervals from ' + ($author$project$Main$noteName(model.root) + ' (both 3rds and both 7ths marked)')) : ('Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs));
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(

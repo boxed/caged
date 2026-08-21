@@ -1051,14 +1051,31 @@ type NoteRole
 noteRole : Model -> Int -> NoteRole
 noteRole model n =
     if model.scale == Chromatic then
-        -- The all-notes map has no key, so no interval is a "3rd" or "7th"
-        -- in any meaningful sense. Only the chosen root is marked, as an
-        -- orientation anchor.
-        if modBy 12 (n - model.root) == 0 then
-            Root
+        -- Intervals from the chosen root are still meaningful here, but with
+        -- no scale there is nothing to pick *which* third or seventh is the
+        -- diatonic one, so both flavors carry the marker: minor and major 3rd,
+        -- flat and major 7th. The 5th (7 semitones) is unambiguous.
+        case modBy 12 (n - model.root) of
+            0 ->
+                Root
 
-        else
-            Other
+            3 ->
+                Third
+
+            4 ->
+                Third
+
+            7 ->
+                Fifth
+
+            10 ->
+                Seventh
+
+            11 ->
+                Seventh
+
+            _ ->
+                Other
 
     else
     let
@@ -1135,6 +1152,18 @@ so the shape only has to say root-or-not (square vs circle).
 -}
 chromaticMarker : NoteRole -> Float -> Float -> Int -> Svg.Svg Msg
 chromaticMarker role cx cy n =
+    let
+        ring extra =
+            Svg.circle
+                ([ SA.cx (String.fromFloat cx)
+                 , SA.cy (String.fromFloat cy)
+                 , SA.r "14"
+                 , SA.fill (pitchColor n)
+                 ]
+                    ++ extra
+                )
+                []
+    in
     case role of
         Root ->
             Svg.rect
@@ -1149,17 +1178,35 @@ chromaticMarker role cx cy n =
                 ]
                 []
 
-        _ ->
-            Svg.circle
-                [ SA.cx (String.fromFloat cx)
-                , SA.cy (String.fromFloat cy)
-                , SA.r "14"
-                , SA.fill (pitchColor n)
-                , SA.stroke "var(--note-bd)"
+        Third ->
+            ring
+                [ SA.stroke "var(--chord-bd)"
+                , SA.strokeWidth "2"
+                , SA.strokeDasharray "4 3"
+                ]
+
+        Fifth ->
+            ring
+                [ SA.stroke "var(--chord-bd)"
+                , SA.strokeWidth "2"
+                , SA.strokeLinecap "round"
+                , SA.strokeDasharray "0.1 4"
+                ]
+
+        Seventh ->
+            ring
+                [ SA.stroke "var(--chord-bd)"
+                , SA.strokeWidth "1.6"
+                , SA.strokeDasharray "4 3"
+                , SA.strokeOpacity "0.5"
+                ]
+
+        Other ->
+            ring
+                [ SA.stroke "var(--note-bd)"
                 , SA.strokeWidth "1.3"
                 , SA.strokeOpacity "0.6"
                 ]
-                []
 
 
 boxColor : Int -> String
@@ -1354,9 +1401,9 @@ viewScaleTitle model =
 
         subtitle =
             if model.scale == Chromatic then
-                "Every note on the neck · "
+                "Every note on the neck · hue = note · intervals from "
                     ++ noteName model.root
-                    ++ " marked as the root"
+                    ++ " (both 3rds and both 7ths marked)"
 
             else
                 "Notes: " ++ String.join "  ·  " notePairs
@@ -2296,6 +2343,9 @@ viewLegend model =
             if model.scale == Chromatic then
                 [ legendText "Tones:"
                 , legendMarker "square-pc" "Root"
+                , legendMarker "circle-pc-dashed" "3rds"
+                , legendMarker "circle-pc-dotted" "5th"
+                , legendMarker "circle-pc-double" "7ths"
                 , legendMarker "circle-pc" "other"
                 , legendText "hue = note"
                 ]
@@ -2428,6 +2478,37 @@ legendMarker kind lbl =
                             ++ [ style "background" pcGradient
                                , style "border" "1px solid var(--note-bd)"
                                , style "border-radius" "50%"
+                               ]
+                        )
+                        []
+
+                "circle-pc-dashed" ->
+                    span
+                        (common
+                            ++ [ style "background" pcGradient
+                               , style "border" "2px dashed var(--chord-bd)"
+                               , style "border-radius" "50%"
+                               ]
+                        )
+                        []
+
+                "circle-pc-dotted" ->
+                    span
+                        (common
+                            ++ [ style "background" pcGradient
+                               , style "border" "2px dotted var(--chord-bd)"
+                               , style "border-radius" "50%"
+                               ]
+                        )
+                        []
+
+                "circle-pc-double" ->
+                    span
+                        (common
+                            ++ [ style "background" pcGradient
+                               , style "border" "1.6px dashed var(--chord-bd)"
+                               , style "border-radius" "50%"
+                               , style "opacity" "0.6"
                                ]
                         )
                         []
