@@ -7434,6 +7434,50 @@ var $author$project$Main$drawInlayDots = function () {
 			},
 			doubles));
 }();
+var $author$project$Main$pitchColor = function (n) {
+	return 'var(--pc-' + ($elm$core$String$fromInt(
+		A2($elm$core$Basics$modBy, 12, n)) + ')');
+};
+var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
+var $author$project$Main$chromaticMarker = F4(
+	function (role, cx, cy, n) {
+		if (role.$ === 'Root') {
+			return A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x(
+						$elm$core$String$fromFloat(cx - 14)),
+						$elm$svg$Svg$Attributes$y(
+						$elm$core$String$fromFloat(cy - 14)),
+						$elm$svg$Svg$Attributes$width('28'),
+						$elm$svg$Svg$Attributes$height('28'),
+						$elm$svg$Svg$Attributes$rx('3'),
+						$elm$svg$Svg$Attributes$fill(
+						$author$project$Main$pitchColor(n)),
+						$elm$svg$Svg$Attributes$stroke('var(--nut)'),
+						$elm$svg$Svg$Attributes$strokeWidth('2.5')
+					]),
+				_List_Nil);
+		} else {
+			return A2(
+				$elm$svg$Svg$circle,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$cx(
+						$elm$core$String$fromFloat(cx)),
+						$elm$svg$Svg$Attributes$cy(
+						$elm$core$String$fromFloat(cy)),
+						$elm$svg$Svg$Attributes$r('14'),
+						$elm$svg$Svg$Attributes$fill(
+						$author$project$Main$pitchColor(n)),
+						$elm$svg$Svg$Attributes$stroke('var(--note-bd)'),
+						$elm$svg$Svg$Attributes$strokeWidth('1.3'),
+						$elm$svg$Svg$Attributes$strokeOpacity('0.6')
+					]),
+				_List_Nil);
+		}
+	});
 var $elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
 var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
 var $author$project$Main$noteAt = F3(
@@ -7627,7 +7671,6 @@ var $author$project$Main$spelledName = F2(
 		}
 	});
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
-var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
 var $author$project$Main$drawNoteAt = F3(
 	function (model, s, f) {
 		var _v0 = A3($author$project$Main$positionBox, model, s, f);
@@ -7635,17 +7678,21 @@ var $author$project$Main$drawNoteAt = F3(
 			var n = A3($author$project$Main$noteAt, model.tuning, s, f);
 			var role = A2($author$project$Main$noteRole, model, n);
 			var textColor = function () {
-				switch (role.$) {
-					case 'Root':
-						return 'var(--root-text)';
-					case 'Third':
-						return 'var(--note-text)';
-					case 'Fifth':
-						return 'var(--note-text)';
-					case 'Seventh':
-						return 'var(--note-text)';
-					default:
-						return 'var(--note-text)';
+				if (_Utils_eq(model.scale, $author$project$Main$Chromatic)) {
+					return 'var(--note-text)';
+				} else {
+					switch (role.$) {
+						case 'Root':
+							return 'var(--root-text)';
+						case 'Third':
+							return 'var(--note-text)';
+						case 'Fifth':
+							return 'var(--note-text)';
+						case 'Seventh':
+							return 'var(--note-text)';
+						default:
+							return 'var(--note-text)';
+					}
 				}
 			}();
 			var cy = $author$project$Main$stringY(s);
@@ -7670,90 +7717,94 @@ var $author$project$Main$drawNoteAt = F3(
 						A2($author$project$Main$spelledName, model, n))
 					]));
 			var background = function () {
-				switch (role.$) {
-					case 'Root':
-						return A2(
-							$elm$svg$Svg$rect,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$x(
-									$elm$core$String$fromFloat(cx - 14)),
-									$elm$svg$Svg$Attributes$y(
-									$elm$core$String$fromFloat(cy - 14)),
-									$elm$svg$Svg$Attributes$width('28'),
-									$elm$svg$Svg$Attributes$height('28'),
-									$elm$svg$Svg$Attributes$rx('3'),
-									$elm$svg$Svg$Attributes$fill('var(--root-bg)'),
-									$elm$svg$Svg$Attributes$stroke('var(--root-bg)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1')
-								]),
-							_List_Nil);
-					case 'Third':
-						return A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx(
-									$elm$core$String$fromFloat(cx)),
-									$elm$svg$Svg$Attributes$cy(
-									$elm$core$String$fromFloat(cy)),
-									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
-									$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.8'),
-									$elm$svg$Svg$Attributes$strokeDasharray('4 3')
-								]),
-							_List_Nil);
-					case 'Fifth':
-						return A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx(
-									$elm$core$String$fromFloat(cx)),
-									$elm$svg$Svg$Attributes$cy(
-									$elm$core$String$fromFloat(cy)),
-									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
-									$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.8'),
-									$elm$svg$Svg$Attributes$strokeLinecap('round'),
-									$elm$svg$Svg$Attributes$strokeDasharray('0.1 4')
-								]),
-							_List_Nil);
-					case 'Seventh':
-						return A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx(
-									$elm$core$String$fromFloat(cx)),
-									$elm$svg$Svg$Attributes$cy(
-									$elm$core$String$fromFloat(cy)),
-									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
-									$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.5'),
-									$elm$svg$Svg$Attributes$strokeDasharray('4 3'),
-									$elm$svg$Svg$Attributes$strokeOpacity('0.5')
-								]),
-							_List_Nil);
-					default:
-						return A2(
-							$elm$svg$Svg$circle,
-							_List_fromArray(
-								[
-									$elm$svg$Svg$Attributes$cx(
-									$elm$core$String$fromFloat(cx)),
-									$elm$svg$Svg$Attributes$cy(
-									$elm$core$String$fromFloat(cy)),
-									$elm$svg$Svg$Attributes$r('14'),
-									$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
-									$elm$svg$Svg$Attributes$stroke('var(--note-bd)'),
-									$elm$svg$Svg$Attributes$strokeWidth('1.3'),
-									$elm$svg$Svg$Attributes$strokeOpacity('0.5')
-								]),
-							_List_Nil);
+				if (_Utils_eq(model.scale, $author$project$Main$Chromatic)) {
+					return A4($author$project$Main$chromaticMarker, role, cx, cy, n);
+				} else {
+					switch (role.$) {
+						case 'Root':
+							return A2(
+								$elm$svg$Svg$rect,
+								_List_fromArray(
+									[
+										$elm$svg$Svg$Attributes$x(
+										$elm$core$String$fromFloat(cx - 14)),
+										$elm$svg$Svg$Attributes$y(
+										$elm$core$String$fromFloat(cy - 14)),
+										$elm$svg$Svg$Attributes$width('28'),
+										$elm$svg$Svg$Attributes$height('28'),
+										$elm$svg$Svg$Attributes$rx('3'),
+										$elm$svg$Svg$Attributes$fill('var(--root-bg)'),
+										$elm$svg$Svg$Attributes$stroke('var(--root-bg)'),
+										$elm$svg$Svg$Attributes$strokeWidth('1')
+									]),
+								_List_Nil);
+						case 'Third':
+							return A2(
+								$elm$svg$Svg$circle,
+								_List_fromArray(
+									[
+										$elm$svg$Svg$Attributes$cx(
+										$elm$core$String$fromFloat(cx)),
+										$elm$svg$Svg$Attributes$cy(
+										$elm$core$String$fromFloat(cy)),
+										$elm$svg$Svg$Attributes$r('14'),
+										$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+										$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
+										$elm$svg$Svg$Attributes$strokeWidth('1.8'),
+										$elm$svg$Svg$Attributes$strokeDasharray('4 3')
+									]),
+								_List_Nil);
+						case 'Fifth':
+							return A2(
+								$elm$svg$Svg$circle,
+								_List_fromArray(
+									[
+										$elm$svg$Svg$Attributes$cx(
+										$elm$core$String$fromFloat(cx)),
+										$elm$svg$Svg$Attributes$cy(
+										$elm$core$String$fromFloat(cy)),
+										$elm$svg$Svg$Attributes$r('14'),
+										$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+										$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
+										$elm$svg$Svg$Attributes$strokeWidth('1.8'),
+										$elm$svg$Svg$Attributes$strokeLinecap('round'),
+										$elm$svg$Svg$Attributes$strokeDasharray('0.1 4')
+									]),
+								_List_Nil);
+						case 'Seventh':
+							return A2(
+								$elm$svg$Svg$circle,
+								_List_fromArray(
+									[
+										$elm$svg$Svg$Attributes$cx(
+										$elm$core$String$fromFloat(cx)),
+										$elm$svg$Svg$Attributes$cy(
+										$elm$core$String$fromFloat(cy)),
+										$elm$svg$Svg$Attributes$r('14'),
+										$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+										$elm$svg$Svg$Attributes$stroke('var(--chord-bd)'),
+										$elm$svg$Svg$Attributes$strokeWidth('1.5'),
+										$elm$svg$Svg$Attributes$strokeDasharray('4 3'),
+										$elm$svg$Svg$Attributes$strokeOpacity('0.5')
+									]),
+								_List_Nil);
+						default:
+							return A2(
+								$elm$svg$Svg$circle,
+								_List_fromArray(
+									[
+										$elm$svg$Svg$Attributes$cx(
+										$elm$core$String$fromFloat(cx)),
+										$elm$svg$Svg$Attributes$cy(
+										$elm$core$String$fromFloat(cy)),
+										$elm$svg$Svg$Attributes$r('14'),
+										$elm$svg$Svg$Attributes$fill('var(--note-bg)'),
+										$elm$svg$Svg$Attributes$stroke('var(--note-bd)'),
+										$elm$svg$Svg$Attributes$strokeWidth('1.3'),
+										$elm$svg$Svg$Attributes$strokeOpacity('0.5')
+									]),
+								_List_Nil);
+					}
 				}
 			}();
 			return $elm$core$Maybe$Just(
@@ -7932,6 +7983,7 @@ var $author$project$Main$legendGroup = function (children) {
 };
 var $author$project$Main$legendMarker = F2(
 	function (kind, lbl) {
+		var pcGradient = 'linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))';
 		var common = _List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
@@ -7973,6 +8025,30 @@ var $author$project$Main$legendMarker = F2(
 								[
 									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
 									A2($elm$html$Html$Attributes$style, 'border', '1.8px dotted var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'square-pc':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '2px solid var(--nut)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
+								])),
+						_List_Nil);
+				case 'circle-pc':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
 									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
 								])),
 						_List_Nil);
@@ -8070,8 +8146,9 @@ var $author$project$Main$viewLegend = function (model) {
 	var tones = _Utils_eq(model.scale, $author$project$Main$Chromatic) ? _List_fromArray(
 		[
 			$author$project$Main$legendText('Tones:'),
-			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
-			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
+			A2($author$project$Main$legendMarker, 'square-pc', 'Root'),
+			A2($author$project$Main$legendMarker, 'circle-pc', 'other'),
+			$author$project$Main$legendText('hue = note')
 		]) : _List_fromArray(
 		[
 			$author$project$Main$legendText('Tones:'),

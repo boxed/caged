@@ -39,6 +39,23 @@
             --box-3: light-dark(#98cfe3, oklch(0.58 0.19 230));
             --box-4: light-dark(#f5adbb, oklch(0.58 0.22  10));
             --box-5: light-dark(#aed9a2, oklch(0.62 0.20 140));
+            /* Pitch-class colors for the All notes map. Hues follow the circle
+               of fifths (30 deg per fifth), so a semitone step is half the wheel
+               away and adjacent frets never look alike; the seven naturals land
+               in the warm half, the five accidentals in the cool half. Equal
+               lightness across all twelve so hue alone carries the identity. */
+            --pc-0:  light-dark(oklch(0.87 0.115  25), oklch(0.45 0.14  25)); /* C  */
+            --pc-1:  light-dark(oklch(0.87 0.115 235), oklch(0.45 0.14 235)); /* C# */
+            --pc-2:  light-dark(oklch(0.87 0.115  85), oklch(0.45 0.14  85)); /* D  */
+            --pc-3:  light-dark(oklch(0.87 0.115 295), oklch(0.45 0.14 295)); /* D# */
+            --pc-4:  light-dark(oklch(0.87 0.115 145), oklch(0.45 0.14 145)); /* E  */
+            --pc-5:  light-dark(oklch(0.87 0.115 355), oklch(0.45 0.14 355)); /* F  */
+            --pc-6:  light-dark(oklch(0.87 0.115 205), oklch(0.45 0.14 205)); /* F# */
+            --pc-7:  light-dark(oklch(0.87 0.115  55), oklch(0.45 0.14  55)); /* G  */
+            --pc-8:  light-dark(oklch(0.87 0.115 265), oklch(0.45 0.14 265)); /* G# */
+            --pc-9:  light-dark(oklch(0.87 0.115 115), oklch(0.45 0.14 115)); /* A  */
+            --pc-10: light-dark(oklch(0.87 0.115 325), oklch(0.45 0.14 325)); /* A# */
+            --pc-11: light-dark(oklch(0.87 0.115 175), oklch(0.45 0.14 175)); /* B  */
         }
         html, body {
             margin: 0;

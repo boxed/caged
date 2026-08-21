@@ -1119,6 +1119,49 @@ noteRole model n =
         Other
 
 
+{-| All-notes mode paints each marker with its pitch-class color, so the neck
+reads as twelve repeating hues instead of a field of identical circles. Hues
+follow the circle of fifths (see the `--pc-*` vars in index.html): a semitone
+step lands half the wheel away, so adjacent frets never look alike, and the
+naturals fall in the warm half with the accidentals in the cool half.
+-}
+pitchColor : Int -> String
+pitchColor n =
+    "var(--pc-" ++ String.fromInt (modBy 12 n) ++ ")"
+
+
+{-| Marker for the all-notes map: the pitch-class color carries the identity,
+so the shape only has to say root-or-not (square vs circle).
+-}
+chromaticMarker : NoteRole -> Float -> Float -> Int -> Svg.Svg Msg
+chromaticMarker role cx cy n =
+    case role of
+        Root ->
+            Svg.rect
+                [ SA.x (String.fromFloat (cx - 14))
+                , SA.y (String.fromFloat (cy - 14))
+                , SA.width "28"
+                , SA.height "28"
+                , SA.rx "3"
+                , SA.fill (pitchColor n)
+                , SA.stroke "var(--nut)"
+                , SA.strokeWidth "2.5"
+                ]
+                []
+
+        _ ->
+            Svg.circle
+                [ SA.cx (String.fromFloat cx)
+                , SA.cy (String.fromFloat cy)
+                , SA.r "14"
+                , SA.fill (pitchColor n)
+                , SA.stroke "var(--note-bd)"
+                , SA.strokeWidth "1.3"
+                , SA.strokeOpacity "0.6"
+                ]
+                []
+
+
 boxColor : Int -> String
 boxColor b =
     case b of
@@ -2026,6 +2069,10 @@ drawNoteAt model s f =
                 cy = stringY s
 
                 background =
+                    if model.scale == Chromatic then
+                        chromaticMarker role cx cy n
+
+                    else
                     case role of
                         Root ->
                             Svg.rect
@@ -2091,6 +2138,12 @@ drawNoteAt model s f =
                                 []
 
                 textColor =
+                    if model.scale == Chromatic then
+                        -- Pastel in light mode, deep in dark mode: the ordinary
+                        -- note text color reads on every pitch-class fill.
+                        "var(--note-text)"
+
+                    else
                     case role of
                         Root -> "var(--root-text)"
                         Third -> "var(--note-text)"
@@ -2242,8 +2295,9 @@ viewLegend model =
         tones =
             if model.scale == Chromatic then
                 [ legendText "Tones:"
-                , legendMarker "square-dark" "Root"
-                , legendMarker "circle-plain" "other"
+                , legendMarker "square-pc" "Root"
+                , legendMarker "circle-pc" "other"
+                , legendText "hue = note"
                 ]
 
             else
@@ -2323,6 +2377,10 @@ legendMarker kind lbl =
             , style "box-sizing" "border-box"
             ]
 
+        -- A few pitch-class hues in one chip, to say "colored by note".
+        pcGradient =
+            "linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))"
+
         marker =
             case kind of
                 "square-dark" ->
@@ -2349,6 +2407,26 @@ legendMarker kind lbl =
                         (common
                             ++ [ style "background" "var(--note-bg)"
                                , style "border" "1.8px dotted var(--chord-bd)"
+                               , style "border-radius" "50%"
+                               ]
+                        )
+                        []
+
+                "square-pc" ->
+                    span
+                        (common
+                            ++ [ style "background" pcGradient
+                               , style "border" "2px solid var(--nut)"
+                               , style "border-radius" "2px"
+                               ]
+                        )
+                        []
+
+                "circle-pc" ->
+                    span
+                        (common
+                            ++ [ style "background" pcGradient
+                               , style "border" "1px solid var(--note-bd)"
                                , style "border-radius" "50%"
                                ]
                         )
