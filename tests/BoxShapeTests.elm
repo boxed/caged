@@ -143,6 +143,7 @@ scaleName scale =
         Blues -> "Blues"
         HarmonicMinor -> "HarmonicMinor"
         MelodicMinor -> "MelodicMinor"
+        Chromatic -> "Chromatic"
         DiagonalPent -> "DiagonalPent"
         DiagonalMajorPent -> "DiagonalMajorPent"
         DiagonalBlues -> "DiagonalBlues"

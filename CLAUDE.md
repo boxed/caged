@@ -38,8 +38,23 @@ commit both files together.
 ## Scales and modes
 
 Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
-`HarmonicMinor`, `MelodicMinor`, and three diagonal climbing variants
-(`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`).
+`HarmonicMinor`, `MelodicMinor`, three diagonal climbing variants
+(`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`), and `Chromatic`.
+
+`Chromatic` (the **All notes** button, slug `all-notes`) is deliberately *not*
+a scale — it is a plain note map of the whole neck. Its intervals are all
+twelve pitch classes, so every fret carries a marker. Consequences threaded
+through the code:
+
+- `drawBoxRegions` returns `[]` for it — with all 12 degrees present a CAGED
+  box would swallow the neck, so no box polygons or overlap stripes are drawn.
+  It is therefore excluded from `boxScales` in the tests.
+- `noteRole` short-circuits: only the chosen root is marked (as an orientation
+  anchor). With no key there is no meaningful 3rd/5th/7th.
+- `rootSpelling` and `spelledName` short-circuit to `noteName` — all twelve
+  pitch classes are present, so there is no key signature to spell against and
+  the conventional sharp names are used on both the fretboard and root buttons.
+- The legend drops the box swatches and lists only Root / other.
 
 Adding a new mode no longer needs per-mode box tables — `deriveBox` generates
 the shapes from the intervals. It requires:
@@ -50,9 +65,11 @@ the shapes from the intervals. It requires:
 4. Add `majorFlavored` case (True iff box 1 anchors on the relative minor —
    matches the `majorAnchor` choice in step 3).
 5. Add `thirdInterval`/`seventhInterval` cases in `noteRole`.
-6. Add to `usesMajorBoxShapes` (True for 7-note modes → renders overlap stripes).
+6. Add `scaleDegrees` case (for enharmonic spelling) and a `scaleSlug` /
+   `scaleFromSlug` pair for the URL.
 7. Add button, title, and interval labels in the view.
-8. Run `elm-test` — `coverage` checks every scale note sits in a box and
+8. Add to `boxScales` in `tests/BoxShapeTests.elm` and to its `scaleName`.
+9. Run `elm-test` — `coverage` checks every scale note sits in a box and
    `edgeSanity` checks every box is well-formed in every tuning.
 
 ## Music theory model

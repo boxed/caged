@@ -5294,6 +5294,7 @@ var $author$project$Main$rootFromSlug = function (s) {
 };
 var $author$project$Main$Aeolian = {$: 'Aeolian'};
 var $author$project$Main$Blues = {$: 'Blues'};
+var $author$project$Main$Chromatic = {$: 'Chromatic'};
 var $author$project$Main$DiagonalBlues = {$: 'DiagonalBlues'};
 var $author$project$Main$DiagonalMajorPent = {$: 'DiagonalMajorPent'};
 var $author$project$Main$DiagonalPent = {$: 'DiagonalPent'};
@@ -5332,6 +5333,8 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$HarmonicMinor);
 		case 'melodic-minor':
 			return $elm$core$Maybe$Just($author$project$Main$MelodicMinor);
+		case 'all-notes':
+			return $elm$core$Maybe$Just($author$project$Main$Chromatic);
 		case 'diagonal-pent':
 			return $elm$core$Maybe$Just($author$project$Main$DiagonalPent);
 		case 'diagonal-major-pent':
@@ -5572,6 +5575,8 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'harmonic-minor';
 		case 'MelodicMinor':
 			return 'melodic-minor';
+		case 'Chromatic':
+			return 'all-notes';
 		case 'DiagonalPent':
 			return 'diagonal-pent';
 		case 'DiagonalMajorPent':
@@ -5919,6 +5924,9 @@ var $author$project$Main$scaleDegrees = function (st) {
 		case 'MelodicMinor':
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
+		case 'Chromatic':
+			return _List_fromArray(
+				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
 		case 'DiagonalPent':
 			return _List_fromArray(
 				[1, 3, 4, 5, 7]);
@@ -5968,6 +5976,8 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'MelodicMinor':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 9, 11]);
+		case 'Chromatic':
+			return A2($elm$core$List$range, 0, 11);
 		case 'DiagonalPent':
 			return _List_fromArray(
 				[0, 3, 5, 7, 10]);
@@ -6022,6 +6032,37 @@ var $author$project$Main$bestRootLetterIndex = F2(
 					$author$project$Main$rootLetterCandidates(
 						A2($elm$core$Basics$modBy, 12, root)))));
 	});
+var $author$project$Main$noteName = function (n) {
+	var _v0 = A2($elm$core$Basics$modBy, 12, n);
+	switch (_v0) {
+		case 0:
+			return 'C';
+		case 1:
+			return 'C\u266F';
+		case 2:
+			return 'D';
+		case 3:
+			return 'D\u266F';
+		case 4:
+			return 'E';
+		case 5:
+			return 'F';
+		case 6:
+			return 'F\u266F';
+		case 7:
+			return 'G';
+		case 8:
+			return 'G\u266F';
+		case 9:
+			return 'A';
+		case 10:
+			return 'A\u266F';
+		case 11:
+			return 'B';
+		default:
+			return '';
+	}
+};
 var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
 var $elm$core$String$repeatHelp = F3(
@@ -6069,7 +6110,7 @@ var $author$project$Main$spellDegree = F3(
 	});
 var $author$project$Main$rootSpelling = F2(
 	function (scale, root) {
-		return A3(
+		return _Utils_eq(scale, $author$project$Main$Chromatic) ? $author$project$Main$noteName(root) : A3(
 			$author$project$Main$spellDegree,
 			A2($author$project$Main$bestRootLetterIndex, root, scale),
 			1,
@@ -6130,37 +6171,6 @@ var $author$project$Main$TuneString = F2(
 	function (a, b) {
 		return {$: 'TuneString', a: a, b: b};
 	});
-var $author$project$Main$noteName = function (n) {
-	var _v0 = A2($elm$core$Basics$modBy, 12, n);
-	switch (_v0) {
-		case 0:
-			return 'C';
-		case 1:
-			return 'C\u266F';
-		case 2:
-			return 'D';
-		case 3:
-			return 'D\u266F';
-		case 4:
-			return 'E';
-		case 5:
-			return 'F';
-		case 6:
-			return 'F\u266F';
-		case 7:
-			return 'G';
-		case 8:
-			return 'G\u266F';
-		case 9:
-			return 'A';
-		case 10:
-			return 'A\u266F';
-		case 11:
-			return 'B';
-		default:
-			return '';
-	}
-};
 var $elm$core$List$drop = F2(
 	function (n, list) {
 		drop:
@@ -6314,6 +6324,17 @@ var $author$project$Main$viewControls = function (model) {
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalBlues, 'Blues')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
+				_List_fromArray(
+					[
+						$author$project$Main$label('No scale'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Chromatic, 'All notes')
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -6752,6 +6773,8 @@ var $author$project$Main$rootFret = function (model) {
 			return minorAnchor;
 		case 'MelodicMinor':
 			return minorAnchor;
+		case 'Chromatic':
+			return minorAnchor;
 		case 'DiagonalPent':
 			return A3($author$project$Main$diagonalAnchor, model.tuning, $author$project$Main$DiagonalPent, model.root);
 		case 'DiagonalMajorPent':
@@ -7181,7 +7204,7 @@ var $author$project$Main$isDiagonal = function (scale) {
 	return _Utils_eq(scale, $author$project$Main$DiagonalPent) || (_Utils_eq(scale, $author$project$Main$DiagonalMajorPent) || _Utils_eq(scale, $author$project$Main$DiagonalBlues));
 };
 var $author$project$Main$drawBoxRegions = function (model) {
-	return $author$project$Main$isDiagonal(model.scale) ? $author$project$Main$drawDiagonalRegions(model) : $author$project$Main$drawBoxRegionsBoxes(model);
+	return _Utils_eq(model.scale, $author$project$Main$Chromatic) ? _List_Nil : ($author$project$Main$isDiagonal(model.scale) ? $author$project$Main$drawDiagonalRegions(model) : $author$project$Main$drawBoxRegionsBoxes(model));
 };
 var $author$project$Main$fretLineX = function (f) {
 	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
@@ -7427,78 +7450,86 @@ var $author$project$Main$Seventh = {$: 'Seventh'};
 var $author$project$Main$Third = {$: 'Third'};
 var $author$project$Main$noteRole = F2(
 	function (model, n) {
-		var thirdInterval = function () {
-			var _v1 = model.scale;
-			switch (_v1.$) {
-				case 'MinorPent':
-					return 3;
-				case 'MajorPent':
-					return 4;
-				case 'Ionian':
-					return 4;
-				case 'Dorian':
-					return 3;
-				case 'Aeolian':
-					return 3;
-				case 'Mixolydian':
-					return 4;
-				case 'Phrygian':
-					return 3;
-				case 'Lydian':
-					return 4;
-				case 'Locrian':
-					return 3;
-				case 'Blues':
-					return 3;
-				case 'HarmonicMinor':
-					return 3;
-				case 'MelodicMinor':
-					return 3;
-				case 'DiagonalPent':
-					return 3;
-				case 'DiagonalMajorPent':
-					return 4;
-				default:
-					return 3;
-			}
-		}();
-		var seventhInterval = function () {
-			var _v0 = model.scale;
-			switch (_v0.$) {
-				case 'MinorPent':
-					return 10;
-				case 'MajorPent':
-					return -1;
-				case 'Ionian':
-					return 11;
-				case 'Dorian':
-					return 10;
-				case 'Aeolian':
-					return 10;
-				case 'Mixolydian':
-					return 10;
-				case 'Phrygian':
-					return 10;
-				case 'Lydian':
-					return 11;
-				case 'Locrian':
-					return 10;
-				case 'Blues':
-					return 10;
-				case 'HarmonicMinor':
-					return 11;
-				case 'MelodicMinor':
-					return 11;
-				case 'DiagonalPent':
-					return 10;
-				case 'DiagonalMajorPent':
-					return -1;
-				default:
-					return 10;
-			}
-		}();
-		var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
-		return (!interval) ? $author$project$Main$Root : (_Utils_eq(interval, thirdInterval) ? $author$project$Main$Third : ((interval === 7) ? $author$project$Main$Fifth : (_Utils_eq(interval, seventhInterval) ? $author$project$Main$Seventh : $author$project$Main$Other)));
+		if (_Utils_eq(model.scale, $author$project$Main$Chromatic)) {
+			return (!A2($elm$core$Basics$modBy, 12, n - model.root)) ? $author$project$Main$Root : $author$project$Main$Other;
+		} else {
+			var thirdInterval = function () {
+				var _v1 = model.scale;
+				switch (_v1.$) {
+					case 'MinorPent':
+						return 3;
+					case 'MajorPent':
+						return 4;
+					case 'Ionian':
+						return 4;
+					case 'Dorian':
+						return 3;
+					case 'Aeolian':
+						return 3;
+					case 'Mixolydian':
+						return 4;
+					case 'Phrygian':
+						return 3;
+					case 'Lydian':
+						return 4;
+					case 'Locrian':
+						return 3;
+					case 'Blues':
+						return 3;
+					case 'HarmonicMinor':
+						return 3;
+					case 'MelodicMinor':
+						return 3;
+					case 'Chromatic':
+						return -1;
+					case 'DiagonalPent':
+						return 3;
+					case 'DiagonalMajorPent':
+						return 4;
+					default:
+						return 3;
+				}
+			}();
+			var seventhInterval = function () {
+				var _v0 = model.scale;
+				switch (_v0.$) {
+					case 'MinorPent':
+						return 10;
+					case 'MajorPent':
+						return -1;
+					case 'Ionian':
+						return 11;
+					case 'Dorian':
+						return 10;
+					case 'Aeolian':
+						return 10;
+					case 'Mixolydian':
+						return 10;
+					case 'Phrygian':
+						return 10;
+					case 'Lydian':
+						return 11;
+					case 'Locrian':
+						return 10;
+					case 'Blues':
+						return 10;
+					case 'HarmonicMinor':
+						return 11;
+					case 'MelodicMinor':
+						return 11;
+					case 'Chromatic':
+						return -1;
+					case 'DiagonalPent':
+						return 10;
+					case 'DiagonalMajorPent':
+						return -1;
+					default:
+						return 10;
+				}
+			}();
+			var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
+			return (!interval) ? $author$project$Main$Root : (_Utils_eq(interval, thirdInterval) ? $author$project$Main$Third : ((interval === 7) ? $author$project$Main$Fifth : (_Utils_eq(interval, seventhInterval) ? $author$project$Main$Seventh : $author$project$Main$Other)));
+		}
 	});
 var $author$project$Main$diagonalBoxOf = F5(
 	function (tuning, scale, root, s, f) {
@@ -7571,25 +7602,29 @@ var $author$project$Main$spelledNotes = function (model) {
 };
 var $author$project$Main$spelledName = F2(
 	function (model, n) {
-		var pc = A2($elm$core$Basics$modBy, 12, n);
-		return A2(
-			$elm$core$Maybe$withDefault,
-			$author$project$Main$noteName(n),
-			A2(
-				$elm$core$Maybe$map,
-				$elm$core$Tuple$second,
-				$elm$core$List$head(
-					A2(
-						$elm$core$List$filter,
-						function (_v0) {
-							var p = _v0.a;
-							return _Utils_eq(p, pc);
-						},
-						A3(
-							$elm$core$List$map2,
-							$elm$core$Tuple$pair,
-							$author$project$Main$scaleNotes(model),
-							$author$project$Main$spelledNotes(model))))));
+		if (_Utils_eq(model.scale, $author$project$Main$Chromatic)) {
+			return $author$project$Main$noteName(n);
+		} else {
+			var pc = A2($elm$core$Basics$modBy, 12, n);
+			return A2(
+				$elm$core$Maybe$withDefault,
+				$author$project$Main$noteName(n),
+				A2(
+					$elm$core$Maybe$map,
+					$elm$core$Tuple$second,
+					$elm$core$List$head(
+						A2(
+							$elm$core$List$filter,
+							function (_v0) {
+								var p = _v0.a;
+								return _Utils_eq(p, pc);
+							},
+							A3(
+								$elm$core$List$map2,
+								$elm$core$Tuple$pair,
+								$author$project$Main$scaleNotes(model),
+								$author$project$Main$spelledNotes(model))))));
+		}
 	});
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
 var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
@@ -7876,6 +7911,13 @@ var $author$project$Main$viewFretboard = function (model) {
 					$author$project$Main$drawInlayDots
 				])));
 };
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $author$project$Main$legendGroup = function (children) {
 	return A2(
 		$elm$html$Html$div,
@@ -8025,7 +8067,12 @@ var $author$project$Main$legendText = function (s) {
 			]));
 };
 var $author$project$Main$viewLegend = function (model) {
-	var tones = _List_fromArray(
+	var tones = _Utils_eq(model.scale, $author$project$Main$Chromatic) ? _List_fromArray(
+		[
+			$author$project$Main$legendText('Tones:'),
+			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
+		]) : _List_fromArray(
 		[
 			$author$project$Main$legendText('Tones:'),
 			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
@@ -8034,7 +8081,7 @@ var $author$project$Main$viewLegend = function (model) {
 			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
 			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
 		]);
-	var boxes = $author$project$Main$isDiagonal(model.scale) ? A2(
+	var boxes = _Utils_eq(model.scale, $author$project$Main$Chromatic) ? _List_Nil : ($author$project$Main$isDiagonal(model.scale) ? A2(
 		$elm$core$List$cons,
 		$author$project$Main$legendText('Patterns:'),
 		A2(
@@ -8057,7 +8104,7 @@ var $author$project$Main$viewLegend = function (model) {
 					_Utils_Tuple2(3, '3'),
 					_Utils_Tuple2(4, '4'),
 					_Utils_Tuple2(5, '5')
-				])));
+				]))));
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -8070,12 +8117,36 @@ var $author$project$Main$viewLegend = function (model) {
 				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
 				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 			]),
-		_List_fromArray(
+		$elm$core$List$isEmpty(boxes) ? _List_fromArray(
+			[
+				$author$project$Main$legendGroup(tones)
+			]) : _List_fromArray(
 			[
 				$author$project$Main$legendGroup(boxes),
 				$author$project$Main$legendGroup(tones)
 			]));
 };
+var $elm$core$List$repeatHelp = F3(
+	function (result, n, value) {
+		repeatHelp:
+		while (true) {
+			if (n <= 0) {
+				return result;
+			} else {
+				var $temp$result = A2($elm$core$List$cons, value, result),
+					$temp$n = n - 1,
+					$temp$value = value;
+				result = $temp$result;
+				n = $temp$n;
+				value = $temp$value;
+				continue repeatHelp;
+			}
+		}
+	});
+var $elm$core$List$repeat = F2(
+	function (n, value) {
+		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
+	});
 var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = A2($author$project$Main$rootSpelling, model.scale, model.root) + (' ' + function () {
 		var _v1 = model.scale;
@@ -8104,6 +8175,8 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Harmonic Minor';
 			case 'MelodicMinor':
 				return 'Melodic Minor';
+			case 'Chromatic':
+				return '— All Notes';
 			case 'DiagonalPent':
 				return 'Diagonal Minor Pentatonic';
 			case 'DiagonalMajorPent':
@@ -8151,6 +8224,8 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'MelodicMinor':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '6', '7']);
+			case 'Chromatic':
+				return A2($elm$core$List$repeat, 12, '');
 			case 'DiagonalPent':
 				return _List_fromArray(
 					['R', '♭3', '4', '5', '♭7']);
@@ -8170,6 +8245,7 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			}),
 		$author$project$Main$spelledNotes(model),
 		intervalLabels);
+	var subtitle = _Utils_eq(model.scale, $author$project$Main$Chromatic) ? ('Every note on the neck · ' + ($author$project$Main$noteName(model.root) + ' marked as the root')) : ('Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs));
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -8199,8 +8275,7 @@ var $author$project$Main$viewScaleTitle = function (model) {
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text(
-						'Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs))
+						$elm$html$Html$text(subtitle)
 					]))
 			]));
 };

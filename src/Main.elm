@@ -72,6 +72,7 @@ type ScaleType
     | Blues
     | HarmonicMinor
     | MelodicMinor
+    | Chromatic
     | DiagonalPent
     | DiagonalMajorPent
     | DiagonalBlues
@@ -245,6 +246,7 @@ scaleSlug s =
         Blues -> "blues"
         HarmonicMinor -> "harmonic-minor"
         MelodicMinor -> "melodic-minor"
+        Chromatic -> "all-notes"
         DiagonalPent -> "diagonal-pent"
         DiagonalMajorPent -> "diagonal-major-pent"
         DiagonalBlues -> "diagonal-blues"
@@ -266,6 +268,7 @@ scaleFromSlug s =
         "blues" -> Just Blues
         "harmonic-minor" -> Just HarmonicMinor
         "melodic-minor" -> Just MelodicMinor
+        "all-notes" -> Just Chromatic
         "diagonal-pent" -> Just DiagonalPent
         "diagonal-major-pent" -> Just DiagonalMajorPent
         "diagonal-blues" -> Just DiagonalBlues
@@ -509,10 +512,16 @@ spell root scale =
         (scaleDegrees scale)
 
 
-{-| The root's own spelled name under the given scale (the root-button label). -}
+{-| The root's own spelled name under the given scale (the root-button label).
+The all-notes map has no key signature to spell against, so it uses the plain
+sharp names — matching what the fretboard shows there. -}
 rootSpelling : ScaleType -> Int -> String
 rootSpelling scale root =
-    spellDegree (bestRootLetterIndex root scale) 1 (modBy 12 root)
+    if scale == Chromatic then
+        noteName root
+
+    else
+        spellDegree (bestRootLetterIndex root scale) 1 (modBy 12 root)
 
 
 {-| Scale-degree number (1–7) of each interval, parallel to `scaleIntervals`.
@@ -533,6 +542,7 @@ scaleDegrees st =
         Blues -> [ 1, 3, 4, 5, 5, 7 ]
         HarmonicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Chromatic -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         DiagonalPent -> [ 1, 3, 4, 5, 7 ]
         DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
         DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
@@ -549,6 +559,12 @@ spelledNotes model =
 the plain sharp name for pitch classes outside the scale. -}
 spelledName : Model -> Int -> String
 spelledName model n =
+    if model.scale == Chromatic then
+        -- All twelve pitch classes are present, so there is no key to spell
+        -- against; the conventional sharp names keep the map readable.
+        noteName n
+
+    else
     let
         pc =
             modBy 12 n
@@ -662,6 +678,9 @@ scaleIntervals st =
         MelodicMinor ->
             [ 0, 2, 3, 5, 7, 9, 11 ]
 
+        Chromatic ->
+            List.range 0 11
+
         DiagonalPent ->
             [ 0, 3, 5, 7, 10 ]
 
@@ -736,6 +755,11 @@ rootFret model =
             minorAnchor
 
         MelodicMinor ->
+            minorAnchor
+
+        Chromatic ->
+            -- No boxes are drawn for the all-notes map, so the anchor is
+            -- unused; the root's own fret is the sane value.
             minorAnchor
 
         DiagonalPent ->
@@ -1026,6 +1050,17 @@ type NoteRole
 
 noteRole : Model -> Int -> NoteRole
 noteRole model n =
+    if model.scale == Chromatic then
+        -- The all-notes map has no key, so no interval is a "3rd" or "7th"
+        -- in any meaningful sense. Only the chosen root is marked, as an
+        -- orientation anchor.
+        if modBy 12 (n - model.root) == 0 then
+            Root
+
+        else
+            Other
+
+    else
     let
         interval =
             modBy 12 (n - model.root)
@@ -1044,6 +1079,7 @@ noteRole model n =
                 Blues -> 3
                 HarmonicMinor -> 3
                 MelodicMinor -> 3
+                Chromatic -> -1
                 DiagonalPent -> 3
                 DiagonalMajorPent -> 4
                 DiagonalBlues -> 3
@@ -1062,6 +1098,7 @@ noteRole model n =
                 Blues -> 10
                 HarmonicMinor -> 11
                 MelodicMinor -> 11
+                Chromatic -> -1
                 DiagonalPent -> 10
                 DiagonalMajorPent -> -1
                 DiagonalBlues -> 10
@@ -1241,6 +1278,7 @@ viewScaleTitle model =
                         Blues -> "Blues"
                         HarmonicMinor -> "Harmonic Minor"
                         MelodicMinor -> "Melodic Minor"
+                        Chromatic -> "— All Notes"
                         DiagonalPent -> "Diagonal Minor Pentatonic"
                         DiagonalMajorPent -> "Diagonal Major Pentatonic"
                         DiagonalBlues -> "Diagonal Blues"
@@ -1260,6 +1298,7 @@ viewScaleTitle model =
                 Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
                 HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
                 MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
+                Chromatic -> List.repeat 12 ""
                 DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
                 DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
@@ -1269,6 +1308,15 @@ viewScaleTitle model =
                 (\nm lbl -> nm ++ " (" ++ lbl ++ ")")
                 (spelledNotes model)
                 intervalLabels
+
+        subtitle =
+            if model.scale == Chromatic then
+                "Every note on the neck · "
+                    ++ noteName model.root
+                    ++ " marked as the root"
+
+            else
+                "Notes: " ++ String.join "  ·  " notePairs
     in
     div [ style "margin-bottom" "14px" ]
         [ div
@@ -1281,7 +1329,7 @@ viewScaleTitle model =
             , style "font-size" "14px"
             , style "margin-top" "2px"
             ]
-            [ text ("Notes: " ++ String.join "  ·  " notePairs) ]
+            [ text subtitle ]
         ]
 
 
@@ -1308,6 +1356,10 @@ viewControls model =
             , scaleButton model DiagonalPent "Minor pentatonic"
             , scaleButton model DiagonalMajorPent "Major pentatonic"
             , scaleButton model DiagonalBlues "Blues"
+            ]
+        , div [ style "margin-bottom" "8px" ]
+            [ label "No scale"
+            , scaleButton model Chromatic "All notes"
             ]
         , div [ style "margin-bottom" "8px" ]
             [ label "Root" , noteButtonRow model ]
@@ -1504,7 +1556,12 @@ viewFretboard model =
 
 drawBoxRegions : Model -> List (Svg.Svg Msg)
 drawBoxRegions model =
-    if isDiagonal model.scale then
+    if model.scale == Chromatic then
+        -- The all-notes map is not a scale: every fret is a scale tone, so a
+        -- CAGED box would cover the whole neck. Show the bare fretboard.
+        []
+
+    else if isDiagonal model.scale then
         drawDiagonalRegions model
 
     else
@@ -2171,7 +2228,10 @@ viewLegend : Model -> Html Msg
 viewLegend model =
     let
         boxes =
-            if isDiagonal model.scale then
+            if model.scale == Chromatic then
+                []
+
+            else if isDiagonal model.scale then
                 legendText "Patterns:"
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ) ]
 
@@ -2180,13 +2240,20 @@ viewLegend model =
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
 
         tones =
-            [ legendText "Tones:"
-            , legendMarker "square-dark" "Root"
-            , legendMarker "circle-dashed" "3rd"
-            , legendMarker "circle-dotted" "5th"
-            , legendMarker "circle-double" "7th"
-            , legendMarker "circle-plain" "other"
-            ]
+            if model.scale == Chromatic then
+                [ legendText "Tones:"
+                , legendMarker "square-dark" "Root"
+                , legendMarker "circle-plain" "other"
+                ]
+
+            else
+                [ legendText "Tones:"
+                , legendMarker "square-dark" "Root"
+                , legendMarker "circle-dashed" "3rd"
+                , legendMarker "circle-dotted" "5th"
+                , legendMarker "circle-double" "7th"
+                , legendMarker "circle-plain" "other"
+                ]
     in
     div
         [ style "margin-top" "16px"
@@ -2197,9 +2264,12 @@ viewLegend model =
         , style "flex-wrap" "wrap"
         , style "align-items" "center"
         ]
-        [ legendGroup boxes
-        , legendGroup tones
-        ]
+        (if List.isEmpty boxes then
+            [ legendGroup tones ]
+
+         else
+            [ legendGroup boxes, legendGroup tones ]
+        )
 
 
 {-| A label plus its swatches/markers, kept together so the label never
