@@ -2073,6 +2073,18 @@ buttonBaseStyle active =
 
 viewFretboard : Model -> Html Msg
 viewFretboard model =
+    let
+        -- Box tints are translucent, so the neck goes under them and shows
+        -- through. Triad pills are opaque and are meant to read as solid
+        -- shapes, so there the whole neck — inlay dots, fret lines and strings
+        -- alike — goes under the lassos.
+        neckAndRegions =
+            if isTriad model.scale then
+                drawFretMarkers ++ drawFretLines ++ drawStrings ++ drawBoxRegions model
+
+            else
+                drawFretMarkers ++ drawBoxRegions model ++ drawFretLines ++ drawStrings
+    in
     Svg.svg
         [ SA.viewBox ("0 0 " ++ String.fromFloat totalWidth ++ " " ++ String.fromFloat totalHeight)
         , SA.width (String.fromFloat totalWidth)
@@ -2080,23 +2092,7 @@ viewFretboard model =
         ]
         (List.concat
             [ [ stripePatternDefs ]
-
-            -- Box tints are translucent and blend over the inlay dots, but a
-            -- triad pill is opaque and would swallow them, so in triad mode the
-            -- dots come after the lassos instead of before.
-            , if isTriad model.scale then
-                []
-
-              else
-                drawFretMarkers
-            , drawBoxRegions model
-            , if isTriad model.scale then
-                drawFretMarkers
-
-              else
-                []
-            , drawFretLines
-            , drawStrings
+            , neckAndRegions
             , drawNotes model
             , drawFretNumbers
             , drawInlayDots

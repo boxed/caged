@@ -208,8 +208,10 @@ colors that no longer said which inversion they belonged to. Opaque means a
 pill hides what it covers, so two things follow: the pills are painted
 **largest first** (small ones stay on top, where they would otherwise be
 swallowed by the sets around them), with every fill down before any ring so no
-ring is painted over; and `viewFretboard` moves the inlay dots *after* the
-lassos in triad mode, since an opaque pill would swallow them.
+ring is painted over; and `viewFretboard` draws the whole neck — inlay dots,
+fret lines, nut and strings — *before* the lassos in triad mode, so a pill
+reads as one solid shape rather than something with the fretboard grid ruled
+across it.
 
 **Every string set gets its own width** (`triadSizeStep`, radii 5px apart), so
 where sets pile onto the same note their lassos nest instead of coinciding. The
@@ -227,8 +229,7 @@ strings whole.
 ### Draw order
 
 SVG draw order (later = on top):
-1. Fret markers (inlay dots on neck — drawn first so box tints blend over them;
-   in triad mode they move to just after the lassos, whose fills are opaque).
+1. Fret markers (inlay dots on neck — drawn first so box tints blend over them).
 2. Solid box polygons (5 boxes × octaves). For major-scale modes, later boxes
    paint over earlier in shared regions.
 3. Overlap stripe polygons (adjacent pairs + wrap). Drawn with opaque
@@ -236,6 +237,9 @@ SVG draw order (later = on top):
    without alpha contamination.
 4. Fret lines, nut, strings.
 5. Note markers (circles/squares by role).
+
+In triad mode 1 and 4 both move ahead of the regions — the whole neck is drawn
+first and the opaque pills sit on top of it (see **Triad lassos**).
 6. Fret numbers + inlay dots below fretboard.
 
 Polygon edges land at fret-center positions (beneath notes), not at fret

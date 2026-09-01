@@ -8538,6 +8538,17 @@ var $author$project$Main$rightMargin = 18;
 var $author$project$Main$totalWidth = (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets)) + $author$project$Main$rightMargin;
 var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
 var $author$project$Main$viewFretboard = function (model) {
+	var neckAndRegions = $author$project$Main$isTriad(model.scale) ? _Utils_ap(
+		$author$project$Main$drawFretMarkers,
+		_Utils_ap(
+			$author$project$Main$drawFretLines,
+			_Utils_ap(
+				$author$project$Main$drawStrings,
+				$author$project$Main$drawBoxRegions(model)))) : _Utils_ap(
+		$author$project$Main$drawFretMarkers,
+		_Utils_ap(
+			$author$project$Main$drawBoxRegions(model),
+			_Utils_ap($author$project$Main$drawFretLines, $author$project$Main$drawStrings)));
 	return A2(
 		$elm$svg$Svg$svg,
 		_List_fromArray(
@@ -8553,11 +8564,7 @@ var $author$project$Main$viewFretboard = function (model) {
 				[
 					_List_fromArray(
 					[$author$project$Main$stripePatternDefs]),
-					$author$project$Main$isTriad(model.scale) ? _List_Nil : $author$project$Main$drawFretMarkers,
-					$author$project$Main$drawBoxRegions(model),
-					$author$project$Main$isTriad(model.scale) ? $author$project$Main$drawFretMarkers : _List_Nil,
-					$author$project$Main$drawFretLines,
-					$author$project$Main$drawStrings,
+					neckAndRegions,
 					$author$project$Main$drawNotes(model),
 					$author$project$Main$drawFretNumbers,
 					$author$project$Main$drawInlayDots
