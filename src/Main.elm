@@ -1547,21 +1547,43 @@ inversionColor inv =
         _ -> "var(--inv-3)"
 
 
-{-| A lasso is a bead around each of its three notes joined by a ribbon: the
-bead clears the 28px note marker on every side, whatever angle the ribbon
-arrives at, and 34px across leaves a hair of daylight between the lassos of
-neighboring string sets (`stringSpacing` is 36). The ring is the outline of
-that shape, `triadLassoInset` thick. -}
-triadBeadRadius : Float
-triadBeadRadius =
-    17
+{-| A lasso is a bead around each of its three notes joined by a ribbon, and it
+comes in two sizes, alternating by string set: 1-2-3 and 3-4-5 are drawn wide,
+2-3-4 and 4-5-6 narrow. Neighboring sets share two strings and often the same
+note, so at one size their lassos land on top of each other and the picture
+turns to mush; at two sizes they nest, and you can follow either set through
+the tangle. The small size still clears the 28px note markers on every side,
+whatever angle the ribbon arrives at. -}
+triadIsWide : Triad -> Bool
+triadIsWide triad =
+    case triad.notes of
+        ( top, _ ) :: _ ->
+            modBy 2 top == 1
+
+        [] ->
+            True
 
 
-triadRibbonWidth : Float
-triadRibbonWidth =
-    24
+triadBeadRadius : Triad -> Float
+triadBeadRadius triad =
+    if triadIsWide triad then
+        25
+
+    else
+        18
 
 
+triadRibbonWidth : Triad -> Float
+triadRibbonWidth triad =
+    if triadIsWide triad then
+        33
+
+    else
+        23
+
+
+{-| How thick the ring around a lasso is. Anything the inset leaves inside the
+note markers is simply hidden behind them, since markers are drawn later. -}
 triadLassoInset : Float
 triadLassoInset =
     3
@@ -2211,7 +2233,7 @@ triadBody triad inset =
     Svg.path
         [ SA.d (triadPath triad)
         , SA.fill "none"
-        , SA.strokeWidth (String.fromFloat (triadRibbonWidth - 2 * inset))
+        , SA.strokeWidth (String.fromFloat (triadRibbonWidth triad - 2 * inset))
         , SA.strokeLinecap "round"
         , SA.strokeLinejoin "round"
         ]
@@ -2221,7 +2243,7 @@ triadBody triad inset =
                 Svg.circle
                     [ SA.cx (String.fromFloat (noteX f))
                     , SA.cy (String.fromFloat (stringY s))
-                    , SA.r (String.fromFloat (triadBeadRadius - inset))
+                    , SA.r (String.fromFloat (triadBeadRadius triad - inset))
                     , SA.strokeWidth "0"
                     ]
                     []
@@ -2265,7 +2287,7 @@ triadRing index triad =
 
         -- Clear of the widest part of the shape, so the mask never clips it.
         pad =
-            triadBeadRadius + 4
+            triadBeadRadius triad + 4
 
         span toCoord =
             let

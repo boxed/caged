@@ -7406,7 +7406,19 @@ var $author$project$Main$noteX = function (f) {
 };
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
-var $author$project$Main$triadBeadRadius = 17;
+var $author$project$Main$triadIsWide = function (triad) {
+	var _v0 = triad.notes;
+	if (_v0.b) {
+		var _v1 = _v0.a;
+		var top = _v1.a;
+		return A2($elm$core$Basics$modBy, 2, top) === 1;
+	} else {
+		return true;
+	}
+};
+var $author$project$Main$triadBeadRadius = function (triad) {
+	return $author$project$Main$triadIsWide(triad) ? 25 : 18;
+};
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
@@ -7435,7 +7447,9 @@ var $author$project$Main$triadPath = function (triad) {
 				},
 				triad.notes)));
 };
-var $author$project$Main$triadRibbonWidth = 24;
+var $author$project$Main$triadRibbonWidth = function (triad) {
+	return $author$project$Main$triadIsWide(triad) ? 33 : 23;
+};
 var $author$project$Main$triadBody = F2(
 	function (triad, inset) {
 		return A2(
@@ -7448,7 +7462,8 @@ var $author$project$Main$triadBody = F2(
 						$author$project$Main$triadPath(triad)),
 						$elm$svg$Svg$Attributes$fill('none'),
 						$elm$svg$Svg$Attributes$strokeWidth(
-						$elm$core$String$fromFloat($author$project$Main$triadRibbonWidth - (2 * inset))),
+						$elm$core$String$fromFloat(
+							$author$project$Main$triadRibbonWidth(triad) - (2 * inset))),
 						$elm$svg$Svg$Attributes$strokeLinecap('round'),
 						$elm$svg$Svg$Attributes$strokeLinejoin('round')
 					]),
@@ -7469,7 +7484,8 @@ var $author$project$Main$triadBody = F2(
 								$elm$core$String$fromFloat(
 									$author$project$Main$stringY(s))),
 								$elm$svg$Svg$Attributes$r(
-								$elm$core$String$fromFloat($author$project$Main$triadBeadRadius - inset)),
+								$elm$core$String$fromFloat(
+									$author$project$Main$triadBeadRadius(triad) - inset)),
 								$elm$svg$Svg$Attributes$strokeWidth('0')
 							]),
 						_List_Nil);
@@ -7482,7 +7498,7 @@ var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$triadRing = F2(
 	function (index, triad) {
-		var pad = $author$project$Main$triadBeadRadius + 4;
+		var pad = $author$project$Main$triadBeadRadius(triad) + 4;
 		var span = function (toCoord) {
 			var vs = A2($elm$core$List$map, toCoord, triad.notes);
 			var lo = A2(

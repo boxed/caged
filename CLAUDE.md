@@ -195,7 +195,12 @@ than offsetting a standard-tuning shape.
 
 A lasso is a bead around each of the three notes joined by a ribbon along their
 centers (`triadBody`), so the shape hugs the markers at any angle — a plain
-wide stroke let the square root markers poke out of diagonal runs. The outline
+wide stroke let the square root markers poke out of diagonal runs. It comes in
+**two sizes, alternating by string set** (`triadIsWide`): 1-2-3 and 3-4-5 wide,
+2-3-4 and 4-5-6 narrow. Neighboring sets share two strings and often a note, so
+at one size their lassos land on top of each other and the all-sets view turns
+to mush; at two sizes they nest and each set stays followable. The narrow size
+is the floor — it still has to clear the 28px note markers. The outline
 is that shape minus the same shape inset by `triadLassoInset`, which gives an
 even ring. It is drawn as a **masked rect**, not the obvious wide-stroke +
 background-stroke pair, because that pair would paint over what sits under the
