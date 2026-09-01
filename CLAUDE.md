@@ -193,25 +193,27 @@ than offsetting a standard-tuning shape.
 
 ### Triad lassos
 
-A lasso is a bead around each of the three notes joined by a ribbon along their
-centers (`triadBody`), so the shape hugs the markers at any angle — a plain
-wide stroke let the square root markers poke out of diagonal runs. **Every string set gets its own size** (`triadSizeStep`, 6px apart), so where
-sets pile onto the same note their lassos nest instead of coinciding. The sizes
-are interleaved, not handed out in string order: a set overlaps its neighbor on
-two strings but the set beyond that on only one, so 2-3-4 is smallest, then
-4-5-6, then 1-2-3, then 3-4-5 — two steps between every pair sharing two
-strings. The smallest size is the floor (it must clear the 28px note markers),
-the largest the ceiling (beyond it a bead swallows the neighboring strings).
+A lasso is a **pill** (`triadCapsule`): one round-capped, round-joined stroke
+threaded through the three note centers, so every note sits in a rounded end or
+elbow of an even-width shape. The outline is that pill minus the same pill
+inset by `triadLassoInset`, which leaves an even ring. It is drawn as a **masked
+rect**, not the obvious wide-stroke + background-stroke pair, because that pair
+would paint over what sits under the lasso: the inlay dots, and the rings of any
+lasso it crosses in the all-sets view. The wash inside is the same pill,
+stroked translucent.
 
-The wash is dropped in the **all-sets** view: four tints over the same notes is
-noise, so there the lassos are outline-only, like the reference chart. With one
-set selected the wash stays, reading the enclosed area at a glance. The outline
-is that shape minus the same shape inset by `triadLassoInset`, which gives an
-even ring. It is drawn as a **masked rect**, not the obvious wide-stroke +
-background-stroke pair, because that pair would paint over what sits under the
-lasso: the inlay dots, and the rings of any lasso it crosses in the
-all-string-sets view. The wash inside is a `Svg.g` with a group `opacity` so
-bead and ribbon do not double up where they overlap.
+**Every string set gets its own width** (`triadSizeStep`, radii 5px apart), so
+where sets pile onto the same note their lassos nest instead of coinciding. The
+sizes are interleaved, not handed out in string order: a set overlaps its
+neighbor on two strings but the set beyond that on only one, so 2-3-4 is
+smallest, then 4-5-6, then 1-2-3, then 3-4-5 — two steps between every pair
+sharing two strings, and at most three sets meet on any one string.
+
+The smallest size is the floor, and it is set by the **root markers**: a 28px
+square rounded 3 reaches 18.6px from the note center, not the 14px of the
+circles. Sizing to the circles is what let the roots poke out of an earlier
+pass. The largest is the ceiling — beyond it a pill swallows the neighboring
+strings whole.
 
 ### Draw order
 

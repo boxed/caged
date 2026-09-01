@@ -1558,9 +1558,11 @@ between every pair that shares two strings and leaves only the loosest pairs a
 single step apart. On any one string at most three sets meet, and they are
 always at least a step and a half apart there.
 
-The smallest size is the floor: it still has to clear the 28px note markers on
-every side, whatever angle the ribbon arrives at. The largest is the ceiling:
-much beyond this and a bead swallows the neighboring strings. -}
+The smallest size is the floor: the pill has to clear the root markers, whose
+corners sit 18.6px out from the note center (a 28px square, rounded 3) — not
+the 14px of the circles, which is what a first pass at this sized itself to and
+why the roots poked out of it. The largest is the ceiling: much beyond this and
+a pill swallows the neighboring strings whole. -}
 triadSizeStep : Triad -> Int
 triadSizeStep triad =
     case triad.notes of
@@ -1577,17 +1579,9 @@ triadSizeStep triad =
             1
 
 
-triadBeadRadius : Triad -> Float
-triadBeadRadius triad =
-    17 + 6 * toFloat (triadSizeStep triad)
-
-
-{-| The ribbon stays well under the bead at the larger sizes: it is the beads
-that have to be told apart, and a ribbon as fat as its beads turns the lasso
-into a sausage instead of a chain of notes. -}
-triadRibbonWidth : Triad -> Float
-triadRibbonWidth triad =
-    min 30 (triadBeadRadius triad + 4)
+triadLassoRadius : Triad -> Float
+triadLassoRadius triad =
+    20 + 5 * toFloat (triadSizeStep triad)
 
 
 {-| How thick the ring around a lasso is. Anything the inset leaves inside the
@@ -2228,43 +2222,26 @@ drawTriadLassos model =
         voicings =
             triadVoicingsFor model.tuning model.scale model.root model.stringSet
     in
-    -- With one string set the wash reads the enclosed area at a glance; with all
-    -- four it is four layers of tint over the same notes, so the lassos go
-    -- outline-only there and the rings do the work.
-    (if model.stringSet == AllStrings then
-        []
-
-     else
-        List.map triadWash voicings
-    )
+    List.map triadWash voicings
         ++ List.concat (List.indexedMap triadRing voicings)
 
 
-{-| The lasso shape, shrunk by `inset`: a ribbon along the three note centers
-plus a bead around each. Insetting both by the same amount and subtracting one
-from the other is what turns the shape into an even outline. The caller paints
-it by setting `fill` and `stroke` on a wrapping group. -}
-triadBody : Triad -> Float -> List (Svg.Svg Msg)
-triadBody triad inset =
+{-| The lasso shape, shrunk by `inset`: one round-capped, round-joined stroke
+along the three note centers, which is a pill of `triadLassoRadius` — each note
+sitting in a rounded end or elbow of it. Drawing the shape and the same shape
+inset, and subtracting one from the other, is what leaves an even outline.
+`attrs` paints it. -}
+triadCapsule : Triad -> Float -> List (Svg.Attribute Msg) -> Svg.Svg Msg
+triadCapsule triad inset attrs =
     Svg.path
-        [ SA.d (triadPath triad)
-        , SA.fill "none"
-        , SA.strokeWidth (String.fromFloat (triadRibbonWidth triad - 2 * inset))
-        , SA.strokeLinecap "round"
-        , SA.strokeLinejoin "round"
-        ]
+        (SA.d (triadPath triad)
+            :: SA.fill "none"
+            :: SA.strokeWidth (String.fromFloat (2 * (triadLassoRadius triad - inset)))
+            :: SA.strokeLinecap "round"
+            :: SA.strokeLinejoin "round"
+            :: attrs
+        )
         []
-        :: List.map
-            (\( s, f ) ->
-                Svg.circle
-                    [ SA.cx (String.fromFloat (noteX f))
-                    , SA.cy (String.fromFloat (stringY s))
-                    , SA.r (String.fromFloat (triadBeadRadius triad - inset))
-                    , SA.strokeWidth "0"
-                    ]
-                    []
-            )
-            triad.notes
 
 
 {-| The ribbon's centerline, through the three note centers. -}
@@ -2276,17 +2253,15 @@ triadPath triad =
         |> String.append "M "
 
 
-{-| The wash inside a lasso. The whole shape fades as one group, so the bead
-and ribbon do not double up where they overlap, and lassos that cross in the
-all-string-sets view tint each other rather than hide each other. -}
+{-| The wash inside a lasso — translucent, so lassos that cross tint each other
+rather than hide each other. -}
 triadWash : Triad -> Svg.Svg Msg
 triadWash triad =
-    Svg.g
-        [ SA.opacity "0.13"
-        , SA.fill (inversionColor triad.inversion)
-        , SA.stroke (inversionColor triad.inversion)
+    triadCapsule triad
+        0
+        [ SA.stroke (inversionColor triad.inversion)
+        , SA.strokeOpacity "0.13"
         ]
-        (triadBody triad 0)
 
 
 {-| The lasso outline: the shape minus the same shape inset, which leaves an
@@ -2303,7 +2278,7 @@ triadRing index triad =
 
         -- Clear of the widest part of the shape, so the mask never clips it.
         pad =
-            triadBeadRadius triad + 4
+            triadLassoRadius triad + 4
 
         span toCoord =
             let
@@ -2329,7 +2304,7 @@ triadRing index triad =
             ]
 
         layer color inset =
-            Svg.g [ SA.fill color, SA.stroke color ] (triadBody triad inset)
+            triadCapsule triad inset [ SA.stroke color ]
     in
     [ Svg.mask (SA.id maskId :: SA.maskUnits "userSpaceOnUse" :: box)
         [ layer "#ffffff" 0

@@ -7385,7 +7385,6 @@ var $author$project$Main$drawDiagonalRegions = function (model) {
 		},
 		$author$project$Main$diagonalShapesFor(model.scale));
 };
-var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
 var $author$project$Main$inversionColor = function (inv) {
@@ -7406,6 +7405,11 @@ var $author$project$Main$noteX = function (f) {
 };
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
+var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
+var $elm$svg$Svg$Attributes$strokeLinecap = _VirtualDom_attribute('stroke-linecap');
+var $elm$svg$Svg$Attributes$strokeLinejoin = _VirtualDom_attribute('stroke-linejoin');
+var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $author$project$Main$triadSizeStep = function (triad) {
 	var _v0 = triad.notes;
 	_v0$3:
@@ -7430,18 +7434,9 @@ var $author$project$Main$triadSizeStep = function (triad) {
 	}
 	return 1;
 };
-var $author$project$Main$triadBeadRadius = function (triad) {
-	return 17 + (6 * $author$project$Main$triadSizeStep(triad));
+var $author$project$Main$triadLassoRadius = function (triad) {
+	return 20 + (5 * $author$project$Main$triadSizeStep(triad));
 };
-var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
-var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
-var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
-var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
-var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
-var $elm$svg$Svg$Attributes$strokeLinecap = _VirtualDom_attribute('stroke-linecap');
-var $elm$svg$Svg$Attributes$strokeLinejoin = _VirtualDom_attribute('stroke-linejoin');
-var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $elm$core$String$append = _String_append;
 var $author$project$Main$triadPath = function (triad) {
 	return A2(
@@ -7461,53 +7456,30 @@ var $author$project$Main$triadPath = function (triad) {
 				},
 				triad.notes)));
 };
-var $author$project$Main$triadRibbonWidth = function (triad) {
-	return A2(
-		$elm$core$Basics$min,
-		30,
-		$author$project$Main$triadBeadRadius(triad) + 4);
-};
-var $author$project$Main$triadBody = F2(
-	function (triad, inset) {
+var $author$project$Main$triadCapsule = F3(
+	function (triad, inset, attrs) {
 		return A2(
-			$elm$core$List$cons,
+			$elm$svg$Svg$path,
 			A2(
-				$elm$svg$Svg$path,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$d(
-						$author$project$Main$triadPath(triad)),
-						$elm$svg$Svg$Attributes$fill('none'),
+				$elm$core$List$cons,
+				$elm$svg$Svg$Attributes$d(
+					$author$project$Main$triadPath(triad)),
+				A2(
+					$elm$core$List$cons,
+					$elm$svg$Svg$Attributes$fill('none'),
+					A2(
+						$elm$core$List$cons,
 						$elm$svg$Svg$Attributes$strokeWidth(
-						$elm$core$String$fromFloat(
-							$author$project$Main$triadRibbonWidth(triad) - (2 * inset))),
-						$elm$svg$Svg$Attributes$strokeLinecap('round'),
-						$elm$svg$Svg$Attributes$strokeLinejoin('round')
-					]),
-				_List_Nil),
-			A2(
-				$elm$core$List$map,
-				function (_v0) {
-					var s = _v0.a;
-					var f = _v0.b;
-					return A2(
-						$elm$svg$Svg$circle,
-						_List_fromArray(
-							[
-								$elm$svg$Svg$Attributes$cx(
-								$elm$core$String$fromFloat(
-									$author$project$Main$noteX(f))),
-								$elm$svg$Svg$Attributes$cy(
-								$elm$core$String$fromFloat(
-									$author$project$Main$stringY(s))),
-								$elm$svg$Svg$Attributes$r(
-								$elm$core$String$fromFloat(
-									$author$project$Main$triadBeadRadius(triad) - inset)),
-								$elm$svg$Svg$Attributes$strokeWidth('0')
-							]),
-						_List_Nil);
-				},
-				triad.notes));
+							$elm$core$String$fromFloat(
+								2 * ($author$project$Main$triadLassoRadius(triad) - inset))),
+						A2(
+							$elm$core$List$cons,
+							$elm$svg$Svg$Attributes$strokeLinecap('round'),
+							A2(
+								$elm$core$List$cons,
+								$elm$svg$Svg$Attributes$strokeLinejoin('round'),
+								attrs))))),
+			_List_Nil);
 	});
 var $author$project$Main$triadLassoInset = 3;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
@@ -7515,7 +7487,7 @@ var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$triadRing = F2(
 	function (index, triad) {
-		var pad = $author$project$Main$triadBeadRadius(triad) + 4;
+		var pad = $author$project$Main$triadLassoRadius(triad) + 4;
 		var span = function (toCoord) {
 			var vs = A2($elm$core$List$map, toCoord, triad.notes);
 			var lo = A2(
@@ -7532,14 +7504,14 @@ var $author$project$Main$triadRing = F2(
 		var maskId = 'triad-lasso-' + $elm$core$String$fromInt(index);
 		var layer = F2(
 			function (color, inset) {
-				return A2(
-					$elm$svg$Svg$g,
+				return A3(
+					$author$project$Main$triadCapsule,
+					triad,
+					inset,
 					_List_fromArray(
 						[
-							$elm$svg$Svg$Attributes$fill(color),
 							$elm$svg$Svg$Attributes$stroke(color)
-						]),
-					A2($author$project$Main$triadBody, triad, inset));
+						]));
 			});
 		var _v0 = span(
 			function (_v1) {
@@ -7746,24 +7718,23 @@ var $author$project$Main$triadVoicingsFor = F4(
 			A3($author$project$Main$triadsOnStringSet, tuning, scale, root),
 			$author$project$Main$stringSetTops(set));
 	});
-var $elm$svg$Svg$Attributes$opacity = _VirtualDom_attribute('opacity');
+var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
 var $author$project$Main$triadWash = function (triad) {
-	return A2(
-		$elm$svg$Svg$g,
+	return A3(
+		$author$project$Main$triadCapsule,
+		triad,
+		0,
 		_List_fromArray(
 			[
-				$elm$svg$Svg$Attributes$opacity('0.13'),
-				$elm$svg$Svg$Attributes$fill(
-				$author$project$Main$inversionColor(triad.inversion)),
 				$elm$svg$Svg$Attributes$stroke(
-				$author$project$Main$inversionColor(triad.inversion))
-			]),
-		A2($author$project$Main$triadBody, triad, 0));
+				$author$project$Main$inversionColor(triad.inversion)),
+				$elm$svg$Svg$Attributes$strokeOpacity('0.13')
+			]));
 };
 var $author$project$Main$drawTriadLassos = function (model) {
 	var voicings = A4($author$project$Main$triadVoicingsFor, model.tuning, model.scale, model.root, model.stringSet);
 	return _Utils_ap(
-		_Utils_eq(model.stringSet, $author$project$Main$AllStrings) ? _List_Nil : A2($elm$core$List$map, $author$project$Main$triadWash, voicings),
+		A2($elm$core$List$map, $author$project$Main$triadWash, voicings),
 		$elm$core$List$concat(
 			A2($elm$core$List$indexedMap, $author$project$Main$triadRing, voicings)));
 };
@@ -7830,6 +7801,10 @@ var $author$project$Main$drawFretLines = function () {
 			fretLine,
 			A2($elm$core$List$range, 1, $author$project$Main$numFrets)));
 }();
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $author$project$Main$drawFretMarkers = function () {
 	var singles = _List_fromArray(
 		[3, 5, 7, 9, 15, 17, 19, 21]);
@@ -7991,7 +7966,6 @@ var $author$project$Main$pitchColor = function (n) {
 		A2($elm$core$Basics$modBy, 12, n)) + ')');
 };
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
-var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
 var $author$project$Main$chromaticMarker = F4(
 	function (role, cx, cy, n) {
 		var ring = function (extra) {
@@ -8067,6 +8041,7 @@ var $author$project$Main$chromaticMarker = F4(
 		}
 	});
 var $elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
+var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
 var $author$project$Main$Fifth = {$: 'Fifth'};
 var $author$project$Main$Other = {$: 'Other'};
 var $author$project$Main$Root = {$: 'Root'};
