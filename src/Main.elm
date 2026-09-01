@@ -1547,39 +1547,47 @@ inversionColor inv =
         _ -> "var(--inv-3)"
 
 
-{-| A lasso is a bead around each of its three notes joined by a ribbon, and it
-comes in two sizes, alternating by string set: 1-2-3 and 3-4-5 are drawn wide,
-2-3-4 and 4-5-6 narrow. Neighboring sets share two strings and often the same
-note, so at one size their lassos land on top of each other and the picture
-turns to mush; at two sizes they nest, and you can follow either set through
-the tangle. The small size still clears the 28px note markers on every side,
-whatever angle the ribbon arrives at. -}
-triadIsWide : Triad -> Bool
-triadIsWide triad =
-    case triad.notes of
-        ( top, _ ) :: _ ->
-            modBy 2 top == 1
+{-| A lasso is a bead around each of its three notes joined by a ribbon, and
+every string set gets its own size, so wherever sets pile onto the same note
+their lassos nest instead of landing on top of each other.
 
-        [] ->
-            True
+The sizes are *not* handed out in string order. A set overlaps its neighbor on
+two strings but the set beyond that on only one, so the sizes are interleaved —
+2-3-4 smallest, 4-5-6 next, 1-2-3 next, 3-4-5 largest — which puts two steps
+between every pair that shares two strings and leaves only the loosest pairs a
+single step apart. On any one string at most three sets meet, and they are
+always at least a step and a half apart there.
+
+The smallest size is the floor: it still has to clear the 28px note markers on
+every side, whatever angle the ribbon arrives at. The largest is the ceiling:
+much beyond this and a bead swallows the neighboring strings. -}
+triadSizeStep : Triad -> Int
+triadSizeStep triad =
+    case triad.notes of
+        ( 1, _ ) :: _ ->
+            2
+
+        ( 2, _ ) :: _ ->
+            0
+
+        ( 3, _ ) :: _ ->
+            3
+
+        _ ->
+            1
 
 
 triadBeadRadius : Triad -> Float
 triadBeadRadius triad =
-    if triadIsWide triad then
-        25
-
-    else
-        18
+    17 + 6 * toFloat (triadSizeStep triad)
 
 
+{-| The ribbon stays well under the bead at the larger sizes: it is the beads
+that have to be told apart, and a ribbon as fat as its beads turns the lasso
+into a sausage instead of a chain of notes. -}
 triadRibbonWidth : Triad -> Float
 triadRibbonWidth triad =
-    if triadIsWide triad then
-        33
-
-    else
-        23
+    min 30 (triadBeadRadius triad + 4)
 
 
 {-| How thick the ring around a lasso is. Anything the inset leaves inside the
@@ -2220,7 +2228,15 @@ drawTriadLassos model =
         voicings =
             triadVoicingsFor model.tuning model.scale model.root model.stringSet
     in
-    List.map triadWash voicings
+    -- With one string set the wash reads the enclosed area at a glance; with all
+    -- four it is four layers of tint over the same notes, so the lassos go
+    -- outline-only there and the rings do the work.
+    (if model.stringSet == AllStrings then
+        []
+
+     else
+        List.map triadWash voicings
+    )
         ++ List.concat (List.indexedMap triadRing voicings)
 
 

@@ -7406,18 +7406,32 @@ var $author$project$Main$noteX = function (f) {
 };
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
-var $author$project$Main$triadIsWide = function (triad) {
+var $author$project$Main$triadSizeStep = function (triad) {
 	var _v0 = triad.notes;
-	if (_v0.b) {
-		var _v1 = _v0.a;
-		var top = _v1.a;
-		return A2($elm$core$Basics$modBy, 2, top) === 1;
-	} else {
-		return true;
+	_v0$3:
+	while (true) {
+		if (_v0.b) {
+			switch (_v0.a.a) {
+				case 1:
+					var _v1 = _v0.a;
+					return 2;
+				case 2:
+					var _v2 = _v0.a;
+					return 0;
+				case 3:
+					var _v3 = _v0.a;
+					return 3;
+				default:
+					break _v0$3;
+			}
+		} else {
+			break _v0$3;
+		}
 	}
+	return 1;
 };
 var $author$project$Main$triadBeadRadius = function (triad) {
-	return $author$project$Main$triadIsWide(triad) ? 25 : 18;
+	return 17 + (6 * $author$project$Main$triadSizeStep(triad));
 };
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
@@ -7448,7 +7462,10 @@ var $author$project$Main$triadPath = function (triad) {
 				triad.notes)));
 };
 var $author$project$Main$triadRibbonWidth = function (triad) {
-	return $author$project$Main$triadIsWide(triad) ? 33 : 23;
+	return A2(
+		$elm$core$Basics$min,
+		30,
+		$author$project$Main$triadBeadRadius(triad) + 4);
 };
 var $author$project$Main$triadBody = F2(
 	function (triad, inset) {
@@ -7746,7 +7763,7 @@ var $author$project$Main$triadWash = function (triad) {
 var $author$project$Main$drawTriadLassos = function (model) {
 	var voicings = A4($author$project$Main$triadVoicingsFor, model.tuning, model.scale, model.root, model.stringSet);
 	return _Utils_ap(
-		A2($elm$core$List$map, $author$project$Main$triadWash, voicings),
+		_Utils_eq(model.stringSet, $author$project$Main$AllStrings) ? _List_Nil : A2($elm$core$List$map, $author$project$Main$triadWash, voicings),
 		$elm$core$List$concat(
 			A2($elm$core$List$indexedMap, $author$project$Main$triadRing, voicings)));
 };

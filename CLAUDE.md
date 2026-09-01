@@ -195,12 +195,17 @@ than offsetting a standard-tuning shape.
 
 A lasso is a bead around each of the three notes joined by a ribbon along their
 centers (`triadBody`), so the shape hugs the markers at any angle — a plain
-wide stroke let the square root markers poke out of diagonal runs. It comes in
-**two sizes, alternating by string set** (`triadIsWide`): 1-2-3 and 3-4-5 wide,
-2-3-4 and 4-5-6 narrow. Neighboring sets share two strings and often a note, so
-at one size their lassos land on top of each other and the all-sets view turns
-to mush; at two sizes they nest and each set stays followable. The narrow size
-is the floor — it still has to clear the 28px note markers. The outline
+wide stroke let the square root markers poke out of diagonal runs. **Every string set gets its own size** (`triadSizeStep`, 6px apart), so where
+sets pile onto the same note their lassos nest instead of coinciding. The sizes
+are interleaved, not handed out in string order: a set overlaps its neighbor on
+two strings but the set beyond that on only one, so 2-3-4 is smallest, then
+4-5-6, then 1-2-3, then 3-4-5 — two steps between every pair sharing two
+strings. The smallest size is the floor (it must clear the 28px note markers),
+the largest the ceiling (beyond it a bead swallows the neighboring strings).
+
+The wash is dropped in the **all-sets** view: four tints over the same notes is
+noise, so there the lassos are outline-only, like the reference chart. With one
+set selected the wash stays, reading the enclosed area at a glance. The outline
 is that shape minus the same shape inset by `triadLassoInset`, which gives an
 even ring. It is drawn as a **masked rect**, not the obvious wide-stroke +
 background-stroke pair, because that pair would paint over what sits under the
