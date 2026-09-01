@@ -199,8 +199,17 @@ elbow of an even-width shape. The outline is that pill minus the same pill
 inset by `triadLassoInset`, which leaves an even ring. It is drawn as a **masked
 rect**, not the obvious wide-stroke + background-stroke pair, because that pair
 would paint over what sits under the lasso: the inlay dots, and the rings of any
-lasso it crosses in the all-sets view. The wash inside is the same pill,
-stroked translucent.
+lasso it crosses in the all-sets view.
+
+The interior is the same pill stroked in an **opaque** blend of its color with
+`--bg` (`inversionFill`, `triadFillPct`), the way the overlap stripes pre-blend
+theirs. Translucent fills stacked their tints wherever pills crossed, into
+colors that no longer said which inversion they belonged to. Opaque means a
+pill hides what it covers, so two things follow: the pills are painted
+**largest first** (small ones stay on top, where they would otherwise be
+swallowed by the sets around them), with every fill down before any ring so no
+ring is painted over; and `viewFretboard` moves the inlay dots *after* the
+lassos in triad mode, since an opaque pill would swallow them.
 
 **Every string set gets its own width** (`triadSizeStep`, radii 5px apart), so
 where sets pile onto the same note their lassos nest instead of coinciding. The
@@ -218,7 +227,8 @@ strings whole.
 ### Draw order
 
 SVG draw order (later = on top):
-1. Fret markers (inlay dots on neck — drawn first so box tints blend over them).
+1. Fret markers (inlay dots on neck — drawn first so box tints blend over them;
+   in triad mode they move to just after the lassos, whose fills are opaque).
 2. Solid box polygons (5 boxes × octaves). For major-scale modes, later boxes
    paint over earlier in shared regions.
 3. Overlap stripe polygons (adjacent pairs + wrap). Drawn with opaque

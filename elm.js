@@ -7385,8 +7385,6 @@ var $author$project$Main$drawDiagonalRegions = function (model) {
 		},
 		$author$project$Main$diagonalShapesFor(model.scale));
 };
-var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
-var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
 var $author$project$Main$inversionColor = function (inv) {
 	switch (inv) {
 		case 0:
@@ -7397,13 +7395,10 @@ var $author$project$Main$inversionColor = function (inv) {
 			return 'var(--inv-3)';
 	}
 };
-var $elm$svg$Svg$mask = $elm$svg$Svg$trustedNode('mask');
-var $elm$svg$Svg$Attributes$mask = _VirtualDom_attribute('mask');
-var $elm$svg$Svg$Attributes$maskUnits = _VirtualDom_attribute('maskUnits');
-var $author$project$Main$noteX = function (f) {
-	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
+var $author$project$Main$triadFillPct = '18%';
+var $author$project$Main$inversionFill = function (inv) {
+	return 'color-mix(in srgb, ' + ($author$project$Main$inversionColor(inv) + (' ' + ($author$project$Main$triadFillPct + ', var(--bg))')));
 };
-var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
 var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
@@ -7438,6 +7433,9 @@ var $author$project$Main$triadLassoRadius = function (triad) {
 	return 20 + (5 * $author$project$Main$triadSizeStep(triad));
 };
 var $elm$core$String$append = _String_append;
+var $author$project$Main$noteX = function (f) {
+	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
+};
 var $author$project$Main$triadPath = function (triad) {
 	return A2(
 		$elm$core$String$append,
@@ -7481,6 +7479,23 @@ var $author$project$Main$triadCapsule = F3(
 								attrs))))),
 			_List_Nil);
 	});
+var $author$project$Main$triadFill = function (triad) {
+	return A3(
+		$author$project$Main$triadCapsule,
+		triad,
+		0,
+		_List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$stroke(
+				$author$project$Main$inversionFill(triad.inversion))
+			]));
+};
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
+var $elm$svg$Svg$mask = $elm$svg$Svg$trustedNode('mask');
+var $elm$svg$Svg$Attributes$mask = _VirtualDom_attribute('mask');
+var $elm$svg$Svg$Attributes$maskUnits = _VirtualDom_attribute('maskUnits');
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $author$project$Main$triadLassoInset = 3;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
@@ -7718,23 +7733,15 @@ var $author$project$Main$triadVoicingsFor = F4(
 			A3($author$project$Main$triadsOnStringSet, tuning, scale, root),
 			$author$project$Main$stringSetTops(set));
 	});
-var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
-var $author$project$Main$triadWash = function (triad) {
-	return A3(
-		$author$project$Main$triadCapsule,
-		triad,
-		0,
-		_List_fromArray(
-			[
-				$elm$svg$Svg$Attributes$stroke(
-				$author$project$Main$inversionColor(triad.inversion)),
-				$elm$svg$Svg$Attributes$strokeOpacity('0.13')
-			]));
-};
 var $author$project$Main$drawTriadLassos = function (model) {
-	var voicings = A4($author$project$Main$triadVoicingsFor, model.tuning, model.scale, model.root, model.stringSet);
+	var voicings = A2(
+		$elm$core$List$sortBy,
+		function (triad) {
+			return -$author$project$Main$triadLassoRadius(triad);
+		},
+		A4($author$project$Main$triadVoicingsFor, model.tuning, model.scale, model.root, model.stringSet));
 	return _Utils_ap(
-		A2($elm$core$List$map, $author$project$Main$triadWash, voicings),
+		A2($elm$core$List$map, $author$project$Main$triadFill, voicings),
 		$elm$core$List$concat(
 			A2($elm$core$List$indexedMap, $author$project$Main$triadRing, voicings)));
 };
@@ -7966,6 +7973,7 @@ var $author$project$Main$pitchColor = function (n) {
 		A2($elm$core$Basics$modBy, 12, n)) + ')');
 };
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
+var $elm$svg$Svg$Attributes$strokeOpacity = _VirtualDom_attribute('stroke-opacity');
 var $author$project$Main$chromaticMarker = F4(
 	function (role, cx, cy, n) {
 		var ring = function (extra) {
@@ -8545,8 +8553,9 @@ var $author$project$Main$viewFretboard = function (model) {
 				[
 					_List_fromArray(
 					[$author$project$Main$stripePatternDefs]),
-					$author$project$Main$drawFretMarkers,
+					$author$project$Main$isTriad(model.scale) ? _List_Nil : $author$project$Main$drawFretMarkers,
 					$author$project$Main$drawBoxRegions(model),
+					$author$project$Main$isTriad(model.scale) ? $author$project$Main$drawFretMarkers : _List_Nil,
 					$author$project$Main$drawFretLines,
 					$author$project$Main$drawStrings,
 					$author$project$Main$drawNotes(model),

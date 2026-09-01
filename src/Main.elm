@@ -1547,6 +1547,23 @@ inversionColor inv =
         _ -> "var(--inv-3)"
 
 
+{-| A lasso's interior, pre-blended with the page instead of drawn translucent.
+Overlapping translucent pills stacked their tints into muddy colors that no
+longer said which inversion they belonged to; an opaque blend always reads as
+its own color. It costs the fretboard showing through, which is why the pills
+are painted largest-first and the inlay dots move on top of them in triad
+mode. `--bg` is `light-dark()`, so the same blend lands on the light or the
+dark page as appropriate. -}
+inversionFill : Int -> String
+inversionFill inv =
+    "color-mix(in srgb, " ++ inversionColor inv ++ " " ++ triadFillPct ++ ", var(--bg))"
+
+
+triadFillPct : String
+triadFillPct =
+    "18%"
+
+
 {-| A lasso is a bead around each of its three notes joined by a ribbon, and
 every string set gets its own size, so wherever sets pile onto the same note
 their lassos nest instead of landing on top of each other.
@@ -2063,8 +2080,21 @@ viewFretboard model =
         ]
         (List.concat
             [ [ stripePatternDefs ]
-            , drawFretMarkers
+
+            -- Box tints are translucent and blend over the inlay dots, but a
+            -- triad pill is opaque and would swallow them, so in triad mode the
+            -- dots come after the lassos instead of before.
+            , if isTriad model.scale then
+                []
+
+              else
+                drawFretMarkers
             , drawBoxRegions model
+            , if isTriad model.scale then
+                drawFretMarkers
+
+              else
+                []
             , drawFretLines
             , drawStrings
             , drawNotes model
@@ -2219,10 +2249,15 @@ bass. -}
 drawTriadLassos : Model -> List (Svg.Svg Msg)
 drawTriadLassos model =
     let
+        -- Largest pill first. The fills are opaque, so a pill hides whatever it
+        -- covers; painting big to small leaves the small ones on top, where
+        -- they would otherwise be swallowed by the sets around them. Every
+        -- fill goes down before any ring, so no ring is ever painted over.
         voicings =
             triadVoicingsFor model.tuning model.scale model.root model.stringSet
+                |> List.sortBy (\triad -> -(triadLassoRadius triad))
     in
-    List.map triadWash voicings
+    List.map triadFill voicings
         ++ List.concat (List.indexedMap triadRing voicings)
 
 
@@ -2253,15 +2288,10 @@ triadPath triad =
         |> String.append "M "
 
 
-{-| The wash inside a lasso — translucent, so lassos that cross tint each other
-rather than hide each other. -}
-triadWash : Triad -> Svg.Svg Msg
-triadWash triad =
-    triadCapsule triad
-        0
-        [ SA.stroke (inversionColor triad.inversion)
-        , SA.strokeOpacity "0.13"
-        ]
+{-| The lasso's interior. -}
+triadFill : Triad -> Svg.Svg Msg
+triadFill triad =
+    triadCapsule triad 0 [ SA.stroke (inversionFill triad.inversion) ]
 
 
 {-| The lasso outline: the shape minus the same shape inset, which leaves an
