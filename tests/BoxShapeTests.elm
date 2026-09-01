@@ -7,6 +7,7 @@ module BoxShapeTests exposing
     , overlapCoverage
     , spelling
     , stripeEdges
+    , triadShapes
     )
 
 {-| The CAGED box geometry is produced by one derivation, `Main.deriveBox`, from
@@ -23,7 +24,7 @@ a tuning's open strings and the scale intervals. These tests pin down that:
 
 import Dict
 import Expect
-import Main exposing (ScaleType(..), Tuning, deriveBox, diagonalAnchor, diagonalShapesFor, noteAt, openString, rootSpelling, scaleIntervals, spell, standardTuning, tunings)
+import Main exposing (ScaleType(..), StringSet(..), Tuning, deriveBox, diagonalAnchor, diagonalShapesFor, noteAt, openAbs, openString, rootSpelling, scaleIntervals, spell, standardTuning, triadVoicingsFor, tunings)
 import Test exposing (Test, describe, test)
 
 
@@ -145,6 +146,10 @@ scaleName scale =
         MelodicMinor -> "MelodicMinor"
         ChromaticMinor -> "ChromaticMinor"
         ChromaticMajor -> "ChromaticMajor"
+        TriadMajor -> "TriadMajor"
+        TriadMinor -> "TriadMinor"
+        TriadDim -> "TriadDim"
+        TriadAug -> "TriadAug"
         DiagonalPent -> "DiagonalPent"
         DiagonalMajorPent -> "DiagonalMajorPent"
         DiagonalBlues -> "DiagonalBlues"
@@ -684,4 +689,132 @@ diagonalCells =
         (List.concatMap (diagonalRootCells DiagonalPent ( [ 3, 5, 7 ], [ 10, 0 ] )) (List.range 0 11)
             ++ List.concatMap (diagonalRootCells DiagonalMajorPent ( [ 0, 2, 4 ], [ 7, 9 ] )) (List.range 0 11)
             ++ List.concatMap (diagonalRootCells DiagonalBlues ( [ 3, 5, 6, 7 ], [ 10, 0 ] )) (List.range 0 11)
+        )
+
+
+
+-- TRIADS: close-position voicings across three adjacent strings
+
+
+{-| The defining property of a close-position voicing: the three notes ascend,
+each less than an octave above the one below it. -}
+closePosition : Tuning -> { notes : List ( Int, Int ), inversion : Int } -> Bool
+closePosition tuning v =
+    let
+        pitches =
+            v.notes
+                |> List.reverse
+                |> List.map (\( s, f ) -> openAbs tuning s + f)
+    in
+    List.map2 (\lo hi -> hi > lo && hi < lo + 12) pitches (List.drop 1 pitches)
+        |> List.all identity
+
+
+triadQualities : List ScaleType
+triadQualities =
+    [ TriadMajor, TriadMinor, TriadDim, TriadAug ]
+
+
+{-| Every invariant a close-position voicing must satisfy, for one tuning and
+quality: it sits on the three strings of its set, inside the neck, carries all
+three chord tones (one each, never a doubled degree), and its `inversion` names
+the degree actually in the bass. -}
+triadInvariants : Tuning -> ScaleType -> Int -> Test
+triadInvariants tuning scale top =
+    let
+        voicings =
+            triadVoicingsFor tuning scale testRoot (StringTrio top)
+
+        tag =
+            scaleName scale ++ " / " ++ tuning.name ++ " / strings " ++ String.fromInt top
+
+        degreesOf v =
+            v.notes
+                |> List.map (\( s, f ) -> modBy 12 (noteAt tuning s f - testRoot))
+                |> List.sort
+
+        bassDegree v =
+            v.notes
+                |> List.reverse
+                |> List.head
+                |> Maybe.map (\( s, f ) -> modBy 12 (noteAt tuning s f - testRoot))
+                |> Maybe.withDefault -1
+
+        expectedInversion v =
+            List.head (List.filter (\( _, d ) -> d == bassDegree v) (List.indexedMap Tuple.pair (List.sort (scaleIntervals scale))))
+                |> Maybe.map Tuple.first
+                |> Maybe.withDefault -1
+    in
+    describe tag
+        [ test "every set produces voicings" <|
+            \_ ->
+                -- Only for real tunings: strings an exact octave apart (the
+                -- pathological ones) have no close-position triad at all,
+                -- since the next degree up always lands past the octave.
+                if List.member tuning tunings then
+                    Expect.greaterThan 0 (List.length voicings)
+
+                else
+                    Expect.pass
+        , test "each voicing sits on the set's three strings, inside the neck" <|
+            \_ ->
+                Expect.equalLists []
+                    (List.filter
+                        (\v ->
+                            List.map Tuple.first v.notes
+                                /= [ top, top + 1, top + 2 ]
+                                || List.any (\( _, f ) -> f < 0 || f > 22) v.notes
+                        )
+                        voicings
+                    )
+        , test "each voicing carries all three chord tones, one each" <|
+            \_ ->
+                Expect.equalLists []
+                    (List.filter (\v -> degreesOf v /= List.sort (scaleIntervals scale)) voicings)
+        , test "each voicing is in close position: every note within an octave above the one below" <|
+            \_ ->
+                Expect.equalLists []
+                    (List.filter (\v -> not (closePosition tuning v)) voicings)
+        , test "the inversion names the degree in the bass" <|
+            \_ ->
+                Expect.equalLists []
+                    (List.filter (\v -> v.inversion /= expectedInversion v) voicings)
+        ]
+
+
+{-| The C major triad on strings 2-3-4 in standard tuning: the textbook
+shapes — first inversion at the nut (x x 2 0 1 x), second inversion at 5
+(x x 5 5 5 x), root position at 8-10 (x x 10 9 8 x), then the octave repeat.
+Pins the derivation to what a triad chart actually shows. -}
+canonicalTriads : Test
+canonicalTriads =
+    let
+        actual =
+            triadVoicingsFor standardTuning TriadMajor 0 (StringTrio 2)
+                |> List.map (\v -> ( v.inversion, List.map Tuple.second v.notes ))
+    in
+    test "C major triad on strings 2-3-4 (standard tuning) is the canonical shape set" <|
+        \_ ->
+            Expect.equalLists
+                [ ( 1, [ 1, 0, 2 ] )
+                , ( 2, [ 5, 5, 5 ] )
+                , ( 0, [ 8, 9, 10 ] )
+                , ( 1, [ 13, 12, 14 ] )
+                , ( 2, [ 17, 17, 17 ] )
+                , ( 0, [ 20, 21, 22 ] )
+                ]
+                actual
+
+
+triadShapes : Test
+triadShapes =
+    describe "Triad voicings"
+        (canonicalTriads
+            :: List.concatMap
+                (\tuning ->
+                    List.concatMap
+                        (\scale -> List.map (triadInvariants tuning scale) [ 1, 2, 3, 4 ])
+                        triadQualities
+                )
+                coverageTunings
         )

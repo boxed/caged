@@ -30,6 +30,13 @@ color — matching the style of `fretboard-reference.jpeg`.
   accidentals cool), and the chord tones relative to your chosen root are
   ringed: root, ♭3/5/♭7 in the minor map, 3/5/7 in the major one. Useful for
   learning note names across the fretboard and for spotting arpeggio shapes.
+- **Triads** (major, minor, diminished, augmented) — a chord, not a scale, so
+  instead of boxes each close-position voicing is lassoed: three chord tones on
+  three adjacent strings, one per string, ringed in the color of whichever
+  chord tone is in the bass (root position / 1st / 2nd inversion). The
+  **Strings** row picks a three-string set (1-2-3, 2-3-4, 3-4-5, 4-5-6) or
+  shows all four at once, and the chord tones outside the lassos stay on the
+  neck for context.
 - **Fret markers** at 3, 5, 7, 9, 12 (double), 15, 17, 19, 21 and fret numbers
   labeled below the neck.
 

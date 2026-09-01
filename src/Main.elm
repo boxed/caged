@@ -1,5 +1,6 @@
 port module Main exposing
     ( ScaleType(..)
+    , StringSet(..)
     , Tuning
     , deriveBox
     , diagonalAnchor
@@ -7,12 +8,14 @@ port module Main exposing
     , diagonalShapesFor
     , main
     , noteAt
+    , openAbs
     , openString
     , rootSpelling
     , scaleDegrees
     , scaleIntervals
     , spell
     , standardTuning
+    , triadVoicingsFor
     , tunings
     )
 
@@ -34,6 +37,7 @@ type alias Model =
     { root : Int
     , scale : ScaleType
     , tuning : Tuning
+    , stringSet : StringSet
     , key : Nav.Key
     , wakeLockOn : Bool
     }
@@ -74,9 +78,21 @@ type ScaleType
     | MelodicMinor
     | ChromaticMinor
     | ChromaticMajor
+    | TriadMajor
+    | TriadMinor
+    | TriadDim
+    | TriadAug
     | DiagonalPent
     | DiagonalMajorPent
     | DiagonalBlues
+
+
+{-| Which three adjacent strings carry the triad lassos. `StringTrio t` names a
+set by its highest string `t` (1–4) — strings t, t+1 and t+2 — and `AllStrings`
+draws all four sets at once. Only the triad modes use it. -}
+type StringSet
+    = AllStrings
+    | StringTrio Int
 
 
 
@@ -85,6 +101,7 @@ type Msg
     = SetRoot Int
     | SetScale ScaleType
     | SetTuning Tuning
+    | SetStringSet StringSet
     | TuneString Int Int
     | UrlChanged Url
     | LinkClicked Browser.UrlRequest
@@ -95,10 +112,18 @@ type Msg
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
-        ( root, scale, tuning ) =
+        state =
             parseUrl url
     in
-    ( { root = root, scale = scale, tuning = tuning, key = key, wakeLockOn = False }, Cmd.none )
+    ( { root = state.root
+      , scale = state.scale
+      , tuning = state.tuning
+      , stringSet = state.stringSet
+      , key = key
+      , wakeLockOn = False
+      }
+    , Cmd.none
+    )
 
 
 
@@ -129,6 +154,13 @@ update msg model =
             in
             ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
 
+        SetStringSet set ->
+            let
+                newModel =
+                    { model | stringSet = set }
+            in
+            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+
         TuneString s delta ->
             let
                 newStrings =
@@ -149,10 +181,17 @@ update msg model =
 
         UrlChanged url ->
             let
-                ( root, scale, tuning ) =
+                state =
                     parseUrl url
             in
-            ( { model | root = root, scale = scale, tuning = tuning }, Cmd.none )
+            ( { model
+                | root = state.root
+                , scale = state.scale
+                , tuning = state.tuning
+                , stringSet = state.stringSet
+              }
+            , Cmd.none
+            )
 
         LinkClicked request ->
             case request of
@@ -189,12 +228,21 @@ modelUrl model =
     let
         base =
             "?root=" ++ rootSlug model.root ++ "&scale=" ++ scaleSlug model.scale
+
+        withTuning =
+            if model.tuning.slug == standardTuning.slug then
+                base
+
+            else
+                base ++ "&tuning=" ++ model.tuning.slug
     in
-    if model.tuning.slug == standardTuning.slug then
-        base
+    -- The string-set selector only exists in the triad modes, so its param is
+    -- only carried there; every other mode keeps the URL it always had.
+    if isTriad model.scale && model.stringSet /= AllStrings then
+        withTuning ++ "&strings=" ++ stringSetSlug model.stringSet
 
     else
-        base ++ "&tuning=" ++ model.tuning.slug
+        withTuning
 
 
 rootSlug : Int -> String
@@ -249,6 +297,10 @@ scaleSlug s =
         MelodicMinor -> "melodic-minor"
         ChromaticMinor -> "all-notes-minor"
         ChromaticMajor -> "all-notes-major"
+        TriadMajor -> "triad-major"
+        TriadMinor -> "triad-minor"
+        TriadDim -> "triad-dim"
+        TriadAug -> "triad-aug"
         DiagonalPent -> "diagonal-pent"
         DiagonalMajorPent -> "diagonal-major-pent"
         DiagonalBlues -> "diagonal-blues"
@@ -272,6 +324,10 @@ scaleFromSlug s =
         "melodic-minor" -> Just MelodicMinor
         "all-notes-minor" -> Just ChromaticMinor
         "all-notes-major" -> Just ChromaticMajor
+        "triad-major" -> Just TriadMajor
+        "triad-minor" -> Just TriadMinor
+        "triad-dim" -> Just TriadDim
+        "triad-aug" -> Just TriadAug
         -- The all-notes map used to be a single mode; keep old links working.
         "all-notes" -> Just ChromaticMinor
         "diagonal-pent" -> Just DiagonalPent
@@ -280,7 +336,38 @@ scaleFromSlug s =
         _ -> Nothing
 
 
-parseUrl : Url -> ( Int, ScaleType, Tuning )
+stringSetSlug : StringSet -> String
+stringSetSlug set =
+    case set of
+        AllStrings ->
+            "all"
+
+        StringTrio t ->
+            String.join "-" (List.map String.fromInt [ t, t + 1, t + 2 ])
+
+
+stringSetFromSlug : String -> Maybe StringSet
+stringSetFromSlug s =
+    case s of
+        "all" -> Just AllStrings
+        "1-2-3" -> Just (StringTrio 1)
+        "2-3-4" -> Just (StringTrio 2)
+        "3-4-5" -> Just (StringTrio 3)
+        "4-5-6" -> Just (StringTrio 4)
+        _ -> Nothing
+
+
+{-| Everything the URL carries: root, mode, tuning and (triads only) the
+string set the lassos are drawn on. -}
+type alias UrlState =
+    { root : Int
+    , scale : ScaleType
+    , tuning : Tuning
+    , stringSet : StringSet
+    }
+
+
+parseUrl : Url -> UrlState
 parseUrl url =
     let
         pairs =
@@ -314,8 +401,13 @@ parseUrl url =
             lookup "tuning"
                 |> Maybe.andThen tuningFromSlug
                 |> Maybe.withDefault standardTuning
+
+        stringSet =
+            lookup "strings"
+                |> Maybe.andThen stringSetFromSlug
+                |> Maybe.withDefault AllStrings
     in
-    ( root, scale, tuning )
+    { root = root, scale = scale, tuning = tuning, stringSet = stringSet }
 
 
 {-| Named presets resolve by their slug; anything else is parsed as a custom
@@ -549,6 +641,10 @@ scaleDegrees st =
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         ChromaticMajor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
+        TriadMajor -> [ 1, 3, 5 ]
+        TriadMinor -> [ 1, 3, 5 ]
+        TriadDim -> [ 1, 3, 5 ]
+        TriadAug -> [ 1, 3, 5 ]
         DiagonalPent -> [ 1, 3, 4, 5, 7 ]
         DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
         DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
@@ -616,6 +712,33 @@ openString tuning s =
 noteAt : Tuning -> Int -> Int -> Int
 noteAt tuning s f =
     modBy 12 (openString tuning s + f)
+
+
+{-| The open pitch of string `s` in absolute semitones, counted up from the
+lowest string. A tuning only stores pitch *classes*, so the span between two
+adjacent strings is read as the smallest ascending interval that fits, with a
+unison reading as an octave — true for every real tuning, and it keeps the six
+strings strictly ascending in any custom one. Triads need this: "the next chord
+tone above" is a question about pitch, not pitch class. -}
+openAbs : Tuning -> Int -> Int
+openAbs tuning s =
+    List.foldl (\str acc -> acc + ascendingStep tuning str)
+        (openString tuning 6)
+        (List.range s 5)
+
+
+{-| How far string `s` sounds above the string below it, in semitones (1–12). -}
+ascendingStep : Tuning -> Int -> Int
+ascendingStep tuning s =
+    let
+        d =
+            modBy 12 (openString tuning s - openString tuning (s + 1))
+    in
+    if d == 0 then
+        12
+
+    else
+        d
 
 
 {-| How far string `s` is detuned from standard, as the smallest signed
@@ -689,6 +812,18 @@ scaleIntervals st =
 
         ChromaticMajor ->
             List.range 0 11
+
+        TriadMajor ->
+            [ 0, 4, 7 ]
+
+        TriadMinor ->
+            [ 0, 3, 7 ]
+
+        TriadDim ->
+            [ 0, 3, 6 ]
+
+        TriadAug ->
+            [ 0, 4, 8 ]
 
         DiagonalPent ->
             [ 0, 3, 5, 7, 10 ]
@@ -774,6 +909,19 @@ rootFret model =
         ChromaticMajor ->
             majorAnchor
 
+        TriadMajor ->
+            -- Triads draw lassos, not boxes, so the anchor is never read.
+            majorAnchor
+
+        TriadMinor ->
+            minorAnchor
+
+        TriadDim ->
+            minorAnchor
+
+        TriadAug ->
+            majorAnchor
+
         DiagonalPent ->
             diagonalAnchor model.tuning DiagonalPent model.root
 
@@ -795,6 +943,13 @@ share every special case in the code; only `noteRole` tells them apart. -}
 isChromatic : ScaleType -> Bool
 isChromatic scale =
     scale == ChromaticMinor || scale == ChromaticMajor
+
+
+{-| The four triad modes: not scales either, but chords — three notes, drawn as
+lassos around each close-position voicing instead of CAGED boxes. -}
+isTriad : ScaleType -> Bool
+isTriad scale =
+    scale == TriadMajor || scale == TriadMinor || scale == TriadDim || scale == TriadAug
 
 
 {-| The five box anchors are the minor-pentatonic degrees on the lowest string,
@@ -959,6 +1114,105 @@ positionBox model s f =
         Nothing
 
 
+{-| One close-position triad: three chord tones on three adjacent strings, one
+per string, each the next chord tone above the one below it. `notes` runs from
+the highest string (lowest number) down to the lowest, as `( string, fret )`
+pairs; `inversion` is 0 (root position), 1 (first) or 2 (second), read off the
+degree of the bottom note. -}
+type alias Triad =
+    { notes : List ( Int, Int )
+    , inversion : Int
+    }
+
+
+{-| Every close-position triad voicing on the neck for the selected string
+set(s) — the triad equivalent of `deriveBox`, and the single source of truth
+for the lassos.
+
+A voicing is built from the bottom up: take a chord tone on the set's lowest
+string, then on each higher string take the *next* chord tone above the note
+below it. That is what "close position" means, so the three notes are always
+three different degrees (root, third, fifth in some rotation) and the shape
+comes out compact without any hand-written fret table. Reading pitch rather
+than pitch class (`openAbs`) is what makes it work in any tuning. -}
+triadVoicingsFor : Tuning -> ScaleType -> Int -> StringSet -> List Triad
+triadVoicingsFor tuning scale root set =
+    List.concatMap (triadsOnStringSet tuning scale root) (stringSetTops set)
+
+
+{-| The highest string of each three-string set in play. -}
+stringSetTops : StringSet -> List Int
+stringSetTops set =
+    case set of
+        AllStrings ->
+            [ 1, 2, 3, 4 ]
+
+        StringTrio t ->
+            [ t ]
+
+
+triadsOnStringSet : Tuning -> ScaleType -> Int -> Int -> List Triad
+triadsOnStringSet tuning scale root top =
+    let
+        -- Sorted, so the index of a degree *is* the inversion its bass note
+        -- gives: 0 root position, 1 first (third in the bass), 2 second.
+        degrees =
+            List.sort (scaleIntervals scale)
+
+        degreeAt k =
+            degrees
+                |> List.drop (modBy (List.length degrees) k)
+                |> List.head
+                |> Maybe.withDefault 0
+
+        degreeOf s f =
+            degrees
+                |> List.indexedMap Tuple.pair
+                |> List.filter (\( _, d ) -> modBy 12 (noteAt tuning s f - root) == d)
+                |> List.head
+                |> Maybe.map Tuple.first
+
+        pitch s f =
+            openAbs tuning s + f
+
+        -- Where degree `deg` sits on string `s` in the octave above pitch `p`:
+        -- the lowest such fret, or nothing when that note would fall off the
+        -- end of the neck. Insisting on the *next degree* (rather than the next
+        -- chord tone of any degree) is what keeps a voicing in close position:
+        -- near the nut the note it wants can be below fret 0, and then this
+        -- voicing simply does not exist there rather than doubling a degree.
+        degreeAbove s deg p =
+            List.range 0 numFrets
+                |> List.filter
+                    (\f ->
+                        modBy 12 (noteAt tuning s f - root)
+                            == deg
+                            && pitch s f
+                            > p
+                            && pitch s f
+                            < p
+                            + 12
+                    )
+                |> List.head
+
+        voicingFrom inv low =
+            degreeAbove (top + 1) (degreeAt (inv + 1)) (pitch (top + 2) low)
+                |> Maybe.andThen
+                    (\mid ->
+                        degreeAbove top (degreeAt (inv + 2)) (pitch (top + 1) mid)
+                            |> Maybe.map
+                                (\high ->
+                                    { notes = [ ( top, high ), ( top + 1, mid ), ( top + 2, low ) ]
+                                    , inversion = inv
+                                    }
+                                )
+                    )
+    in
+    List.range 0 numFrets
+        |> List.filterMap
+            (\low -> degreeOf (top + 2) low |> Maybe.andThen (\inv -> voicingFrom inv low))
+
+
 {-| Diagonal pentatonic: a 2-string climbing shape. The shapes are identical
 for the minor and major variants — only the anchor moves. Minor starts on the
 ♭3 (pattern 1's lower string carries ♭3, 4, 5; upper string ♭7, R); major is
@@ -1114,6 +1368,10 @@ noteRole model n =
                 MelodicMinor -> 3
                 ChromaticMinor -> -1
                 ChromaticMajor -> -1
+                TriadMajor -> 4
+                TriadMinor -> 3
+                TriadDim -> 3
+                TriadAug -> 4
                 DiagonalPent -> 3
                 DiagonalMajorPent -> 4
                 DiagonalBlues -> 3
@@ -1134,6 +1392,10 @@ noteRole model n =
                 MelodicMinor -> 11
                 ChromaticMinor -> -1
                 ChromaticMajor -> -1
+                TriadMajor -> -1
+                TriadMinor -> -1
+                TriadDim -> -1
+                TriadAug -> -1
                 DiagonalPent -> 10
                 DiagonalMajorPent -> -1
                 DiagonalBlues -> 10
@@ -1144,7 +1406,7 @@ noteRole model n =
     else if interval == thirdInterval then
         Third
 
-    else if interval == 7 then
+    else if interval == fifthInterval model.scale then
         Fifth
 
     else if interval == seventhInterval then
@@ -1152,6 +1414,22 @@ noteRole model n =
 
     else
         Other
+
+
+{-| The 5th's interval. Everything in the app treats 7 semitones as the 5th —
+the blues ♭5 and Locrian's ♭5 are marked as ordinary tones — and only the
+diminished and augmented triads, whose 5th *is* the altered note, differ. -}
+fifthInterval : ScaleType -> Int
+fifthInterval scale =
+    case scale of
+        TriadDim ->
+            6
+
+        TriadAug ->
+            8
+
+        _ ->
+            7
 
 
 {-| Which third and seventh the all-notes maps mark. `ChromaticMajor` uses the
@@ -1256,6 +1534,37 @@ boxColor b =
         4 -> "var(--box-4)"
         5 -> "var(--box-5)"
         _ -> "var(--surface-bd)"
+
+
+{-| One color per inversion, so a lasso says at a glance which chord tone is in
+the bass. The hues match boxes 1–3, but saturated: a 3px ring needs more punch
+than a 55%-opacity fill. -}
+inversionColor : Int -> String
+inversionColor inv =
+    case inv of
+        0 -> "var(--inv-1)"
+        1 -> "var(--inv-2)"
+        _ -> "var(--inv-3)"
+
+
+{-| A lasso is a bead around each of its three notes joined by a ribbon: the
+bead clears the 28px note marker on every side, whatever angle the ribbon
+arrives at, and 34px across leaves a hair of daylight between the lassos of
+neighboring string sets (`stringSpacing` is 36). The ring is the outline of
+that shape, `triadLassoInset` thick. -}
+triadBeadRadius : Float
+triadBeadRadius =
+    17
+
+
+triadRibbonWidth : Float
+triadRibbonWidth =
+    24
+
+
+triadLassoInset : Float
+triadLassoInset =
+    3
 
 
 {-| Solid box fill opacity. Overlap stripes pre-blend the box colors with the
@@ -1408,6 +1717,10 @@ viewScaleTitle model =
                         MelodicMinor -> "Melodic Minor"
                         ChromaticMinor -> "— All Notes (minor)"
                         ChromaticMajor -> "— All Notes (major)"
+                        TriadMajor -> "Major Triad"
+                        TriadMinor -> "Minor Triad"
+                        TriadDim -> "Diminished Triad"
+                        TriadAug -> "Augmented Triad"
                         DiagonalPent -> "Diagonal Minor Pentatonic"
                         DiagonalMajorPent -> "Diagonal Major Pentatonic"
                         DiagonalBlues -> "Diagonal Blues"
@@ -1429,6 +1742,10 @@ viewScaleTitle model =
                 MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
                 ChromaticMinor -> List.repeat 12 ""
                 ChromaticMajor -> List.repeat 12 ""
+                TriadMajor -> [ "R", "3", "5" ]
+                TriadMinor -> [ "R", "♭3", "5" ]
+                TriadDim -> [ "R", "♭3", "♭5" ]
+                TriadAug -> [ "R", "3", "♯5" ]
                 DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
                 DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
@@ -1450,6 +1767,12 @@ viewScaleTitle model =
                        )
                     ++ " marked from "
                     ++ noteName model.root
+
+            else if isTriad model.scale then
+                "Notes: "
+                    ++ String.join "  ·  " notePairs
+                    ++ "  ·  "
+                    ++ stringSetLabel model.stringSet
 
             else
                 "Notes: " ++ String.join "  ·  " notePairs
@@ -1493,6 +1816,24 @@ viewControls model =
             , scaleButton model DiagonalMajorPent "Major pentatonic"
             , scaleButton model DiagonalBlues "Blues"
             ]
+        , div [ style "margin-bottom" "8px" ]
+            [ label "Triads"
+            , scaleButton model TriadMajor "Major"
+            , scaleButton model TriadMinor "Minor"
+            , scaleButton model TriadDim "Diminished"
+            , scaleButton model TriadAug "Augmented"
+            ]
+        , if isTriad model.scale then
+            div [ style "margin-bottom" "8px" ]
+                (label "Strings"
+                    :: stringSetButton model AllStrings "All"
+                    :: List.map
+                        (\t -> stringSetButton model (StringTrio t) (stringSetSlug (StringTrio t)))
+                        [ 1, 2, 3, 4 ]
+                )
+
+          else
+            text ""
         , div [ style "margin-bottom" "8px" ]
             [ label "No scale"
             , scaleButton model ChromaticMinor "All notes (minor)"
@@ -1634,6 +1975,28 @@ scaleButton model st lbl =
         [ text lbl ]
 
 
+stringSetButton : Model -> StringSet -> String -> Html Msg
+stringSetButton model set lbl =
+    button
+        ([ onClick (SetStringSet set)
+         , style "min-width" "80px"
+         ]
+            ++ buttonBaseStyle (model.stringSet == set)
+        )
+        [ text lbl ]
+
+
+{-| How the selected string set reads in prose. -}
+stringSetLabel : StringSet -> String
+stringSetLabel set =
+    case set of
+        AllStrings ->
+            "all string sets"
+
+        StringTrio t ->
+            "strings " ++ stringSetSlug (StringTrio t)
+
+
 buttonBaseStyle : Bool -> List (Html.Attribute Msg)
 buttonBaseStyle active =
     [ style "padding" "6px 12px"
@@ -1697,6 +2060,11 @@ drawBoxRegions model =
         -- The all-notes map is not a scale: every fret is a scale tone, so a
         -- CAGED box would cover the whole neck. Show the bare fretboard.
         []
+
+    else if isTriad model.scale then
+        -- A triad is a chord, not a position: the grouping that matters is the
+        -- three-note voicing, so each one gets its own lasso.
+        drawTriadLassos model
 
     else if isDiagonal model.scale then
         drawDiagonalRegions model
@@ -1819,6 +2187,118 @@ drawDiagonalShape tuning scale root shape octave =
 
     else
         Nothing
+
+
+{-| Every triad voicing on the neck, drawn as a lasso through its three notes:
+a soft wash inside and a ring around it, colored by which chord tone is in the
+bass. -}
+drawTriadLassos : Model -> List (Svg.Svg Msg)
+drawTriadLassos model =
+    let
+        voicings =
+            triadVoicingsFor model.tuning model.scale model.root model.stringSet
+    in
+    List.map triadWash voicings
+        ++ List.concat (List.indexedMap triadRing voicings)
+
+
+{-| The lasso shape, shrunk by `inset`: a ribbon along the three note centers
+plus a bead around each. Insetting both by the same amount and subtracting one
+from the other is what turns the shape into an even outline. The caller paints
+it by setting `fill` and `stroke` on a wrapping group. -}
+triadBody : Triad -> Float -> List (Svg.Svg Msg)
+triadBody triad inset =
+    Svg.path
+        [ SA.d (triadPath triad)
+        , SA.fill "none"
+        , SA.strokeWidth (String.fromFloat (triadRibbonWidth - 2 * inset))
+        , SA.strokeLinecap "round"
+        , SA.strokeLinejoin "round"
+        ]
+        []
+        :: List.map
+            (\( s, f ) ->
+                Svg.circle
+                    [ SA.cx (String.fromFloat (noteX f))
+                    , SA.cy (String.fromFloat (stringY s))
+                    , SA.r (String.fromFloat (triadBeadRadius - inset))
+                    , SA.strokeWidth "0"
+                    ]
+                    []
+            )
+            triad.notes
+
+
+{-| The ribbon's centerline, through the three note centers. -}
+triadPath : Triad -> String
+triadPath triad =
+    triad.notes
+        |> List.map (\( s, f ) -> String.fromFloat (noteX f) ++ "," ++ String.fromFloat (stringY s))
+        |> String.join " L "
+        |> String.append "M "
+
+
+{-| The wash inside a lasso. The whole shape fades as one group, so the bead
+and ribbon do not double up where they overlap, and lassos that cross in the
+all-string-sets view tint each other rather than hide each other. -}
+triadWash : Triad -> Svg.Svg Msg
+triadWash triad =
+    Svg.g
+        [ SA.opacity "0.13"
+        , SA.fill (inversionColor triad.inversion)
+        , SA.stroke (inversionColor triad.inversion)
+        ]
+        (triadBody triad 0)
+
+
+{-| The lasso outline: the shape minus the same shape inset, which leaves an
+even ring around it. It is a masked rectangle rather than the obvious pair of
+strokes (wide in the color, narrower in the background color) because that pair
+would paint over whatever sits under the lasso — the inlay dots, and the rings
+of any lasso it crosses. The mask punches the middle out instead, so the ring
+is genuinely hollow and lassos can overlap freely. -}
+triadRing : Int -> Triad -> List (Svg.Svg Msg)
+triadRing index triad =
+    let
+        maskId =
+            "triad-lasso-" ++ String.fromInt index
+
+        -- Clear of the widest part of the shape, so the mask never clips it.
+        pad =
+            triadBeadRadius + 4
+
+        span toCoord =
+            let
+                vs =
+                    List.map toCoord triad.notes
+
+                lo =
+                    List.minimum vs |> Maybe.withDefault 0
+            in
+            ( lo - pad, (List.maximum vs |> Maybe.withDefault 0) - lo + 2 * pad )
+
+        ( x0, w ) =
+            span (\( _, f ) -> noteX f)
+
+        ( y0, h ) =
+            span (\( s, _ ) -> stringY s)
+
+        box =
+            [ SA.x (String.fromFloat x0)
+            , SA.y (String.fromFloat y0)
+            , SA.width (String.fromFloat w)
+            , SA.height (String.fromFloat h)
+            ]
+
+        layer color inset =
+            Svg.g [ SA.fill color, SA.stroke color ] (triadBody triad inset)
+    in
+    [ Svg.mask (SA.id maskId :: SA.maskUnits "userSpaceOnUse" :: box)
+        [ layer "#ffffff" 0
+        , layer "#000000" triadLassoInset
+        ]
+    , Svg.rect (SA.fill (inversionColor triad.inversion) :: SA.mask ("url(#" ++ maskId ++ ")") :: box) []
+    ]
 
 
 drawSolidBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -2378,6 +2858,10 @@ viewLegend model =
             if isChromatic model.scale then
                 []
 
+            else if isTriad model.scale then
+                legendText "Bass note:"
+                    :: List.map legendRing [ ( 0, "root" ), ( 1, "3rd (1st inv)" ), ( 2, "5th (2nd inv)" ) ]
+
             else if isDiagonal model.scale then
                 legendText "Patterns:"
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ) ]
@@ -2407,6 +2891,15 @@ viewLegend model =
                     )
                 , legendMarker "circle-pc" "other"
                 , legendText "hue = note"
+                ]
+
+            else if isTriad model.scale then
+                -- A triad has nothing but chord tones, so there is no 7th and
+                -- no "other" to explain.
+                [ legendText "Tones:"
+                , legendMarker "square-dark" "Root"
+                , legendMarker "circle-dashed" "3rd"
+                , legendMarker "circle-dotted" "5th"
                 ]
 
             else
@@ -2470,6 +2963,27 @@ legendSwatch ( b, lbl ) =
             , style "border" ("1px solid " ++ boxColor b)
             , style "border-radius" "3px"
             , style "opacity" "0.75"
+            ]
+            []
+        , text lbl
+        ]
+
+
+{-| A lasso in miniature: a hollow ring in the inversion's color. -}
+legendRing : ( Int, String ) -> Html Msg
+legendRing ( inv, lbl ) =
+    span
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "gap" "6px"
+        ]
+        [ span
+            [ style "display" "inline-block"
+            , style "width" "16px"
+            , style "height" "16px"
+            , style "box-sizing" "border-box"
+            , style "border" ("3px solid " ++ inversionColor inv)
+            , style "border-radius" "8px"
             ]
             []
         , text lbl

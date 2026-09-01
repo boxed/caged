@@ -5204,6 +5204,7 @@ var $elm$core$Task$perform = F2(
 var $elm$browser$Browser$application = _Browser_application;
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$AllStrings = {$: 'AllStrings'};
 var $author$project$Main$MinorPent = {$: 'MinorPent'};
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
@@ -5308,6 +5309,10 @@ var $author$project$Main$MajorPent = {$: 'MajorPent'};
 var $author$project$Main$MelodicMinor = {$: 'MelodicMinor'};
 var $author$project$Main$Mixolydian = {$: 'Mixolydian'};
 var $author$project$Main$Phrygian = {$: 'Phrygian'};
+var $author$project$Main$TriadAug = {$: 'TriadAug'};
+var $author$project$Main$TriadDim = {$: 'TriadDim'};
+var $author$project$Main$TriadMajor = {$: 'TriadMajor'};
+var $author$project$Main$TriadMinor = {$: 'TriadMinor'};
 var $author$project$Main$scaleFromSlug = function (s) {
 	switch (s) {
 		case 'minor-pent':
@@ -5338,6 +5343,14 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$ChromaticMinor);
 		case 'all-notes-major':
 			return $elm$core$Maybe$Just($author$project$Main$ChromaticMajor);
+		case 'triad-major':
+			return $elm$core$Maybe$Just($author$project$Main$TriadMajor);
+		case 'triad-minor':
+			return $elm$core$Maybe$Just($author$project$Main$TriadMinor);
+		case 'triad-dim':
+			return $elm$core$Maybe$Just($author$project$Main$TriadDim);
+		case 'triad-aug':
+			return $elm$core$Maybe$Just($author$project$Main$TriadAug);
 		case 'all-notes':
 			return $elm$core$Maybe$Just($author$project$Main$ChromaticMinor);
 		case 'diagonal-pent':
@@ -5359,6 +5372,29 @@ var $author$project$Main$standardTuning = {
 	slug: 'standard',
 	strings: _List_fromArray(
 		[4, 11, 7, 2, 9, 4])
+};
+var $author$project$Main$StringTrio = function (a) {
+	return {$: 'StringTrio', a: a};
+};
+var $author$project$Main$stringSetFromSlug = function (s) {
+	switch (s) {
+		case 'all':
+			return $elm$core$Maybe$Just($author$project$Main$AllStrings);
+		case '1-2-3':
+			return $elm$core$Maybe$Just(
+				$author$project$Main$StringTrio(1));
+		case '2-3-4':
+			return $elm$core$Maybe$Just(
+				$author$project$Main$StringTrio(2));
+		case '3-4-5':
+			return $elm$core$Maybe$Just(
+				$author$project$Main$StringTrio(3));
+		case '4-5-6':
+			return $elm$core$Maybe$Just(
+				$author$project$Main$StringTrio(4));
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
 };
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$rootSlug = function (n) {
@@ -5528,6 +5564,13 @@ var $author$project$Main$parseUrl = function (url) {
 			$elm$core$Maybe$andThen,
 			$author$project$Main$scaleFromSlug,
 			lookup('scale')));
+	var stringSet = A2(
+		$elm$core$Maybe$withDefault,
+		$author$project$Main$AllStrings,
+		A2(
+			$elm$core$Maybe$andThen,
+			$author$project$Main$stringSetFromSlug,
+			lookup('strings')));
 	var tuning = A2(
 		$elm$core$Maybe$withDefault,
 		$author$project$Main$standardTuning,
@@ -5535,16 +5578,13 @@ var $author$project$Main$parseUrl = function (url) {
 			$elm$core$Maybe$andThen,
 			$author$project$Main$tuningFromSlug,
 			lookup('tuning')));
-	return _Utils_Tuple3(root, scale, tuning);
+	return {root: root, scale: scale, stringSet: stringSet, tuning: tuning};
 };
 var $author$project$Main$init = F3(
 	function (_v0, url, key) {
-		var _v1 = $author$project$Main$parseUrl(url);
-		var root = _v1.a;
-		var scale = _v1.b;
-		var tuning = _v1.c;
+		var state = $author$project$Main$parseUrl(url);
 		return _Utils_Tuple2(
-			{key: key, root: root, scale: scale, tuning: tuning, wakeLockOn: false},
+			{key: key, root: state.root, scale: state.scale, stringSet: state.stringSet, tuning: state.tuning, wakeLockOn: false},
 			$elm$core$Platform$Cmd$none);
 	});
 var $author$project$Main$WakeLockChanged = function (a) {
@@ -5556,6 +5596,10 @@ var $author$project$Main$subscriptions = function (_v0) {
 	return $author$project$Main$wakeLockChanged($author$project$Main$WakeLockChanged);
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
+var $author$project$Main$isTriad = function (scale) {
+	return _Utils_eq(scale, $author$project$Main$TriadMajor) || (_Utils_eq(scale, $author$project$Main$TriadMinor) || (_Utils_eq(scale, $author$project$Main$TriadDim) || _Utils_eq(scale, $author$project$Main$TriadAug)));
+};
+var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Main$scaleSlug = function (s) {
 	switch (s.$) {
 		case 'MinorPent':
@@ -5584,6 +5628,14 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'all-notes-minor';
 		case 'ChromaticMajor':
 			return 'all-notes-major';
+		case 'TriadMajor':
+			return 'triad-major';
+		case 'TriadMinor':
+			return 'triad-minor';
+		case 'TriadDim':
+			return 'triad-dim';
+		case 'TriadAug':
+			return 'triad-aug';
 		case 'DiagonalPent':
 			return 'diagonal-pent';
 		case 'DiagonalMajorPent':
@@ -5594,9 +5646,25 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'dorian';
 	}
 };
+var $author$project$Main$stringSetSlug = function (set) {
+	if (set.$ === 'AllStrings') {
+		return 'all';
+	} else {
+		var t = set.a;
+		return A2(
+			$elm$core$String$join,
+			'-',
+			A2(
+				$elm$core$List$map,
+				$elm$core$String$fromInt,
+				_List_fromArray(
+					[t, t + 1, t + 2])));
+	}
+};
 var $author$project$Main$modelUrl = function (model) {
 	var base = '?root=' + ($author$project$Main$rootSlug(model.root) + ('&scale=' + $author$project$Main$scaleSlug(model.scale)));
-	return _Utils_eq(model.tuning.slug, $author$project$Main$standardTuning.slug) ? base : (base + ('&tuning=' + model.tuning.slug));
+	var withTuning = _Utils_eq(model.tuning.slug, $author$project$Main$standardTuning.slug) ? base : (base + ('&tuning=' + model.tuning.slug));
+	return ($author$project$Main$isTriad(model.scale) && (!_Utils_eq(model.stringSet, $author$project$Main$AllStrings))) ? (withTuning + ('&strings=' + $author$project$Main$stringSetSlug(model.stringSet))) : withTuning;
 };
 var $elm$core$Basics$not = _Basics_not;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
@@ -5694,6 +5762,17 @@ var $author$project$Main$update = F2(
 						$elm$browser$Browser$Navigation$replaceUrl,
 						model.key,
 						$author$project$Main$modelUrl(newModel)));
+			case 'SetStringSet':
+				var set = msg.a;
+				var newModel = _Utils_update(
+					model,
+					{stringSet: set});
+				return _Utils_Tuple2(
+					newModel,
+					A2(
+						$elm$browser$Browser$Navigation$replaceUrl,
+						model.key,
+						$author$project$Main$modelUrl(newModel)));
 			case 'TuneString':
 				var s = msg.a;
 				var delta = msg.b;
@@ -5717,14 +5796,11 @@ var $author$project$Main$update = F2(
 						$author$project$Main$modelUrl(newModel)));
 			case 'UrlChanged':
 				var url = msg.a;
-				var _v1 = $author$project$Main$parseUrl(url);
-				var root = _v1.a;
-				var scale = _v1.b;
-				var tuning = _v1.c;
+				var state = $author$project$Main$parseUrl(url);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{root: root, scale: scale, tuning: tuning}),
+						{root: state.root, scale: state.scale, stringSet: state.stringSet, tuning: state.tuning}),
 					$elm$core$Platform$Cmd$none);
 			case 'LinkClicked':
 				var request = msg.a;
@@ -5937,6 +6013,18 @@ var $author$project$Main$scaleDegrees = function (st) {
 		case 'ChromaticMajor':
 			return _List_fromArray(
 				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
+		case 'TriadMajor':
+			return _List_fromArray(
+				[1, 3, 5]);
+		case 'TriadMinor':
+			return _List_fromArray(
+				[1, 3, 5]);
+		case 'TriadDim':
+			return _List_fromArray(
+				[1, 3, 5]);
+		case 'TriadAug':
+			return _List_fromArray(
+				[1, 3, 5]);
 		case 'DiagonalPent':
 			return _List_fromArray(
 				[1, 3, 4, 5, 7]);
@@ -5990,6 +6078,18 @@ var $author$project$Main$scaleIntervals = function (st) {
 			return A2($elm$core$List$range, 0, 11);
 		case 'ChromaticMajor':
 			return A2($elm$core$List$range, 0, 11);
+		case 'TriadMajor':
+			return _List_fromArray(
+				[0, 4, 7]);
+		case 'TriadMinor':
+			return _List_fromArray(
+				[0, 3, 7]);
+		case 'TriadDim':
+			return _List_fromArray(
+				[0, 3, 6]);
+		case 'TriadAug':
+			return _List_fromArray(
+				[0, 4, 8]);
 		case 'DiagonalPent':
 			return _List_fromArray(
 				[0, 3, 5, 7, 10]);
@@ -6182,6 +6282,27 @@ var $author$project$Main$scaleButton = F3(
 					$elm$html$Html$text(lbl)
 				]));
 	});
+var $author$project$Main$SetStringSet = function (a) {
+	return {$: 'SetStringSet', a: a};
+};
+var $author$project$Main$stringSetButton = F3(
+	function (model, set, lbl) {
+		return A2(
+			$elm$html$Html$button,
+			_Utils_ap(
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick(
+						$author$project$Main$SetStringSet(set)),
+						A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+					]),
+				$author$project$Main$buttonBaseStyle(
+					_Utils_eq(model.stringSet, set))),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(lbl)
+				]));
+	});
 var $author$project$Main$TuneString = F2(
 	function (a, b) {
 		return {$: 'TuneString', a: a, b: b};
@@ -6340,6 +6461,44 @@ var $author$project$Main$viewControls = function (model) {
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalBlues, 'Blues')
 					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
+				_List_fromArray(
+					[
+						$author$project$Main$label('Triads'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMajor, 'Major'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMinor, 'Minor'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadDim, 'Diminished'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadAug, 'Augmented')
+					])),
+				$author$project$Main$isTriad(model.scale) ? A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
+				A2(
+					$elm$core$List$cons,
+					$author$project$Main$label('Strings'),
+					A2(
+						$elm$core$List$cons,
+						A3($author$project$Main$stringSetButton, model, $author$project$Main$AllStrings, 'All'),
+						A2(
+							$elm$core$List$map,
+							function (t) {
+								return A3(
+									$author$project$Main$stringSetButton,
+									model,
+									$author$project$Main$StringTrio(t),
+									$author$project$Main$stringSetSlug(
+										$author$project$Main$StringTrio(t)));
+							},
+							_List_fromArray(
+								[1, 2, 3, 4]))))) : $elm$html$Html$text(''),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -6793,6 +6952,14 @@ var $author$project$Main$rootFret = function (model) {
 			return minorAnchor;
 		case 'ChromaticMajor':
 			return majorAnchor;
+		case 'TriadMajor':
+			return majorAnchor;
+		case 'TriadMinor':
+			return minorAnchor;
+		case 'TriadDim':
+			return minorAnchor;
+		case 'TriadAug':
+			return majorAnchor;
 		case 'DiagonalPent':
 			return A3($author$project$Main$diagonalAnchor, model.tuning, $author$project$Main$DiagonalPent, model.root);
 		case 'DiagonalMajorPent':
@@ -7218,20 +7385,366 @@ var $author$project$Main$drawDiagonalRegions = function (model) {
 		},
 		$author$project$Main$diagonalShapesFor(model.scale));
 };
+var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
+var $author$project$Main$inversionColor = function (inv) {
+	switch (inv) {
+		case 0:
+			return 'var(--inv-1)';
+		case 1:
+			return 'var(--inv-2)';
+		default:
+			return 'var(--inv-3)';
+	}
+};
+var $elm$svg$Svg$mask = $elm$svg$Svg$trustedNode('mask');
+var $elm$svg$Svg$Attributes$mask = _VirtualDom_attribute('mask');
+var $elm$svg$Svg$Attributes$maskUnits = _VirtualDom_attribute('maskUnits');
+var $author$project$Main$noteX = function (f) {
+	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
+};
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $author$project$Main$triadBeadRadius = 17;
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
+var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
+var $elm$svg$Svg$Attributes$strokeLinecap = _VirtualDom_attribute('stroke-linecap');
+var $elm$svg$Svg$Attributes$strokeLinejoin = _VirtualDom_attribute('stroke-linejoin');
+var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
+var $elm$core$String$append = _String_append;
+var $author$project$Main$triadPath = function (triad) {
+	return A2(
+		$elm$core$String$append,
+		'M ',
+		A2(
+			$elm$core$String$join,
+			' L ',
+			A2(
+				$elm$core$List$map,
+				function (_v0) {
+					var s = _v0.a;
+					var f = _v0.b;
+					return $elm$core$String$fromFloat(
+						$author$project$Main$noteX(f)) + (',' + $elm$core$String$fromFloat(
+						$author$project$Main$stringY(s)));
+				},
+				triad.notes)));
+};
+var $author$project$Main$triadRibbonWidth = 24;
+var $author$project$Main$triadBody = F2(
+	function (triad, inset) {
+		return A2(
+			$elm$core$List$cons,
+			A2(
+				$elm$svg$Svg$path,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$d(
+						$author$project$Main$triadPath(triad)),
+						$elm$svg$Svg$Attributes$fill('none'),
+						$elm$svg$Svg$Attributes$strokeWidth(
+						$elm$core$String$fromFloat($author$project$Main$triadRibbonWidth - (2 * inset))),
+						$elm$svg$Svg$Attributes$strokeLinecap('round'),
+						$elm$svg$Svg$Attributes$strokeLinejoin('round')
+					]),
+				_List_Nil),
+			A2(
+				$elm$core$List$map,
+				function (_v0) {
+					var s = _v0.a;
+					var f = _v0.b;
+					return A2(
+						$elm$svg$Svg$circle,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$cx(
+								$elm$core$String$fromFloat(
+									$author$project$Main$noteX(f))),
+								$elm$svg$Svg$Attributes$cy(
+								$elm$core$String$fromFloat(
+									$author$project$Main$stringY(s))),
+								$elm$svg$Svg$Attributes$r(
+								$elm$core$String$fromFloat($author$project$Main$triadBeadRadius - inset)),
+								$elm$svg$Svg$Attributes$strokeWidth('0')
+							]),
+						_List_Nil);
+				},
+				triad.notes));
+	});
+var $author$project$Main$triadLassoInset = 3;
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
+var $author$project$Main$triadRing = F2(
+	function (index, triad) {
+		var pad = $author$project$Main$triadBeadRadius + 4;
+		var span = function (toCoord) {
+			var vs = A2($elm$core$List$map, toCoord, triad.notes);
+			var lo = A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$List$minimum(vs));
+			return _Utils_Tuple2(
+				lo - pad,
+				(A2(
+					$elm$core$Maybe$withDefault,
+					0,
+					$elm$core$List$maximum(vs)) - lo) + (2 * pad));
+		};
+		var maskId = 'triad-lasso-' + $elm$core$String$fromInt(index);
+		var layer = F2(
+			function (color, inset) {
+				return A2(
+					$elm$svg$Svg$g,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$fill(color),
+							$elm$svg$Svg$Attributes$stroke(color)
+						]),
+					A2($author$project$Main$triadBody, triad, inset));
+			});
+		var _v0 = span(
+			function (_v1) {
+				var f = _v1.b;
+				return $author$project$Main$noteX(f);
+			});
+		var x0 = _v0.a;
+		var w = _v0.b;
+		var _v2 = span(
+			function (_v3) {
+				var s = _v3.a;
+				return $author$project$Main$stringY(s);
+			});
+		var y0 = _v2.a;
+		var h = _v2.b;
+		var box = _List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$x(
+				$elm$core$String$fromFloat(x0)),
+				$elm$svg$Svg$Attributes$y(
+				$elm$core$String$fromFloat(y0)),
+				$elm$svg$Svg$Attributes$width(
+				$elm$core$String$fromFloat(w)),
+				$elm$svg$Svg$Attributes$height(
+				$elm$core$String$fromFloat(h))
+			]);
+		return _List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$mask,
+				A2(
+					$elm$core$List$cons,
+					$elm$svg$Svg$Attributes$id(maskId),
+					A2(
+						$elm$core$List$cons,
+						$elm$svg$Svg$Attributes$maskUnits('userSpaceOnUse'),
+						box)),
+				_List_fromArray(
+					[
+						A2(layer, '#ffffff', 0),
+						A2(layer, '#000000', $author$project$Main$triadLassoInset)
+					])),
+				A2(
+				$elm$svg$Svg$rect,
+				A2(
+					$elm$core$List$cons,
+					$elm$svg$Svg$Attributes$fill(
+						$author$project$Main$inversionColor(triad.inversion)),
+					A2(
+						$elm$core$List$cons,
+						$elm$svg$Svg$Attributes$mask('url(#' + (maskId + ')')),
+						box)),
+				_List_Nil)
+			]);
+	});
+var $author$project$Main$stringSetTops = function (set) {
+	if (set.$ === 'AllStrings') {
+		return _List_fromArray(
+			[1, 2, 3, 4]);
+	} else {
+		var t = set.a;
+		return _List_fromArray(
+			[t]);
+	}
+};
+var $author$project$Main$noteAt = F3(
+	function (tuning, s, f) {
+		return A2(
+			$elm$core$Basics$modBy,
+			12,
+			A2($author$project$Main$openString, tuning, s) + f);
+	});
+var $author$project$Main$ascendingStep = F2(
+	function (tuning, s) {
+		var d = A2(
+			$elm$core$Basics$modBy,
+			12,
+			A2($author$project$Main$openString, tuning, s) - A2($author$project$Main$openString, tuning, s + 1));
+		return (!d) ? 12 : d;
+	});
+var $author$project$Main$openAbs = F2(
+	function (tuning, s) {
+		return A3(
+			$elm$core$List$foldl,
+			F2(
+				function (str, acc) {
+					return acc + A2($author$project$Main$ascendingStep, tuning, str);
+				}),
+			A2($author$project$Main$openString, tuning, 6),
+			A2($elm$core$List$range, s, 5));
+	});
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $elm$core$List$sort = function (xs) {
+	return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
+};
+var $author$project$Main$triadsOnStringSet = F4(
+	function (tuning, scale, root, top) {
+		var pitch = F2(
+			function (s, f) {
+				return A2($author$project$Main$openAbs, tuning, s) + f;
+			});
+		var degrees = $elm$core$List$sort(
+			$author$project$Main$scaleIntervals(scale));
+		var degreeOf = F2(
+			function (s, f) {
+				return A2(
+					$elm$core$Maybe$map,
+					$elm$core$Tuple$first,
+					$elm$core$List$head(
+						A2(
+							$elm$core$List$filter,
+							function (_v0) {
+								var d = _v0.b;
+								return _Utils_eq(
+									A2(
+										$elm$core$Basics$modBy,
+										12,
+										A3($author$project$Main$noteAt, tuning, s, f) - root),
+									d);
+							},
+							A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, degrees))));
+			});
+		var degreeAt = function (k) {
+			return A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$List$head(
+					A2(
+						$elm$core$List$drop,
+						A2(
+							$elm$core$Basics$modBy,
+							$elm$core$List$length(degrees),
+							k),
+						degrees)));
+		};
+		var degreeAbove = F3(
+			function (s, deg, p) {
+				return $elm$core$List$head(
+					A2(
+						$elm$core$List$filter,
+						function (f) {
+							return _Utils_eq(
+								A2(
+									$elm$core$Basics$modBy,
+									12,
+									A3($author$project$Main$noteAt, tuning, s, f) - root),
+								deg) && ((_Utils_cmp(
+								A2(pitch, s, f),
+								p) > 0) && (_Utils_cmp(
+								A2(pitch, s, f),
+								p + 12) < 0));
+						},
+						A2($elm$core$List$range, 0, $author$project$Main$numFrets)));
+			});
+		var voicingFrom = F2(
+			function (inv, low) {
+				return A2(
+					$elm$core$Maybe$andThen,
+					function (mid) {
+						return A2(
+							$elm$core$Maybe$map,
+							function (high) {
+								return {
+									inversion: inv,
+									notes: _List_fromArray(
+										[
+											_Utils_Tuple2(top, high),
+											_Utils_Tuple2(top + 1, mid),
+											_Utils_Tuple2(top + 2, low)
+										])
+								};
+							},
+							A3(
+								degreeAbove,
+								top,
+								degreeAt(inv + 2),
+								A2(pitch, top + 1, mid)));
+					},
+					A3(
+						degreeAbove,
+						top + 1,
+						degreeAt(inv + 1),
+						A2(pitch, top + 2, low)));
+			});
+		return A2(
+			$elm$core$List$filterMap,
+			function (low) {
+				return A2(
+					$elm$core$Maybe$andThen,
+					function (inv) {
+						return A2(voicingFrom, inv, low);
+					},
+					A2(degreeOf, top + 2, low));
+			},
+			A2($elm$core$List$range, 0, $author$project$Main$numFrets));
+	});
+var $author$project$Main$triadVoicingsFor = F4(
+	function (tuning, scale, root, set) {
+		return A2(
+			$elm$core$List$concatMap,
+			A3($author$project$Main$triadsOnStringSet, tuning, scale, root),
+			$author$project$Main$stringSetTops(set));
+	});
+var $elm$svg$Svg$Attributes$opacity = _VirtualDom_attribute('opacity');
+var $author$project$Main$triadWash = function (triad) {
+	return A2(
+		$elm$svg$Svg$g,
+		_List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$opacity('0.13'),
+				$elm$svg$Svg$Attributes$fill(
+				$author$project$Main$inversionColor(triad.inversion)),
+				$elm$svg$Svg$Attributes$stroke(
+				$author$project$Main$inversionColor(triad.inversion))
+			]),
+		A2($author$project$Main$triadBody, triad, 0));
+};
+var $author$project$Main$drawTriadLassos = function (model) {
+	var voicings = A4($author$project$Main$triadVoicingsFor, model.tuning, model.scale, model.root, model.stringSet);
+	return _Utils_ap(
+		A2($elm$core$List$map, $author$project$Main$triadWash, voicings),
+		$elm$core$List$concat(
+			A2($elm$core$List$indexedMap, $author$project$Main$triadRing, voicings)));
+};
 var $author$project$Main$isDiagonal = function (scale) {
 	return _Utils_eq(scale, $author$project$Main$DiagonalPent) || (_Utils_eq(scale, $author$project$Main$DiagonalMajorPent) || _Utils_eq(scale, $author$project$Main$DiagonalBlues));
 };
 var $author$project$Main$drawBoxRegions = function (model) {
-	return $author$project$Main$isChromatic(model.scale) ? _List_Nil : ($author$project$Main$isDiagonal(model.scale) ? $author$project$Main$drawDiagonalRegions(model) : $author$project$Main$drawBoxRegionsBoxes(model));
+	return $author$project$Main$isChromatic(model.scale) ? _List_Nil : ($author$project$Main$isTriad(model.scale) ? $author$project$Main$drawTriadLassos(model) : ($author$project$Main$isDiagonal(model.scale) ? $author$project$Main$drawDiagonalRegions(model) : $author$project$Main$drawBoxRegionsBoxes(model)));
 };
 var $author$project$Main$fretLineX = function (f) {
 	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
 };
 var $author$project$Main$fretboardHeight = $author$project$Main$stringSpacing * 5;
 var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
-var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
-var $elm$svg$Svg$Attributes$strokeLinecap = _VirtualDom_attribute('stroke-linecap');
-var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
 var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
 var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
@@ -7284,13 +7797,6 @@ var $author$project$Main$drawFretLines = function () {
 			fretLine,
 			A2($elm$core$List$range, 1, $author$project$Main$numFrets)));
 }();
-var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
-var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
-var $author$project$Main$noteX = function (f) {
-	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
-};
-var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $author$project$Main$drawFretMarkers = function () {
 	var singles = _List_fromArray(
 		[3, 5, 7, 9, 15, 17, 19, 21]);
@@ -7333,15 +7839,10 @@ var $author$project$Main$drawFretMarkers = function () {
 }();
 var $elm$svg$Svg$Attributes$fontFamily = _VirtualDom_attribute('font-family');
 var $elm$svg$Svg$Attributes$fontSize = _VirtualDom_attribute('font-size');
-var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
-var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
 var $elm$svg$Svg$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$svg$Svg$Attributes$textAnchor = _VirtualDom_attribute('text-anchor');
 var $elm$svg$Svg$text_ = $elm$svg$Svg$trustedNode('text');
-var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
-var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
-var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$drawFretNumbers = function () {
 	var y = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 38;
 	var highlighted = _List_fromArray(
@@ -7533,14 +8034,6 @@ var $author$project$Main$chromaticMarker = F4(
 		}
 	});
 var $elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
-var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
-var $author$project$Main$noteAt = F3(
-	function (tuning, s, f) {
-		return A2(
-			$elm$core$Basics$modBy,
-			12,
-			A2($author$project$Main$openString, tuning, s) + f);
-	});
 var $author$project$Main$Fifth = {$: 'Fifth'};
 var $author$project$Main$Other = {$: 'Other'};
 var $author$project$Main$Root = {$: 'Root'};
@@ -7551,6 +8044,16 @@ var $author$project$Main$chromaticSeventh = function (scale) {
 };
 var $author$project$Main$chromaticThird = function (scale) {
 	return _Utils_eq(scale, $author$project$Main$ChromaticMajor) ? 4 : 3;
+};
+var $author$project$Main$fifthInterval = function (scale) {
+	switch (scale.$) {
+		case 'TriadDim':
+			return 6;
+		case 'TriadAug':
+			return 8;
+		default:
+			return 7;
+	}
 };
 var $author$project$Main$noteRole = F2(
 	function (model, n) {
@@ -7593,6 +8096,14 @@ var $author$project$Main$noteRole = F2(
 						return -1;
 					case 'ChromaticMajor':
 						return -1;
+					case 'TriadMajor':
+						return 4;
+					case 'TriadMinor':
+						return 3;
+					case 'TriadDim':
+						return 3;
+					case 'TriadAug':
+						return 4;
 					case 'DiagonalPent':
 						return 3;
 					case 'DiagonalMajorPent':
@@ -7632,6 +8143,14 @@ var $author$project$Main$noteRole = F2(
 						return -1;
 					case 'ChromaticMajor':
 						return -1;
+					case 'TriadMajor':
+						return -1;
+					case 'TriadMinor':
+						return -1;
+					case 'TriadDim':
+						return -1;
+					case 'TriadAug':
+						return -1;
 					case 'DiagonalPent':
 						return 10;
 					case 'DiagonalMajorPent':
@@ -7641,7 +8160,9 @@ var $author$project$Main$noteRole = F2(
 				}
 			}();
 			var interval = A2($elm$core$Basics$modBy, 12, n - model.root);
-			return (!interval) ? $author$project$Main$Root : (_Utils_eq(interval, thirdInterval) ? $author$project$Main$Third : ((interval === 7) ? $author$project$Main$Fifth : (_Utils_eq(interval, seventhInterval) ? $author$project$Main$Seventh : $author$project$Main$Other)));
+			return (!interval) ? $author$project$Main$Root : (_Utils_eq(interval, thirdInterval) ? $author$project$Main$Third : (_Utils_eq(
+				interval,
+				$author$project$Main$fifthInterval(model.scale)) ? $author$project$Main$Fifth : (_Utils_eq(interval, seventhInterval) ? $author$project$Main$Seventh : $author$project$Main$Other)));
 		}
 	});
 var $author$project$Main$diagonalBoxOf = F5(
@@ -7689,10 +8210,6 @@ var $author$project$Main$positionBox = F3(
 			$author$project$Main$isInScale,
 			model,
 			A3($author$project$Main$noteAt, model.tuning, s, f)) ? $elm$core$Maybe$Just(0) : $elm$core$Maybe$Nothing);
-	});
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
 	});
 var $author$project$Main$spell = F2(
 	function (root, scale) {
@@ -7927,7 +8444,6 @@ var $author$project$Main$drawStrings = function () {
 }();
 var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
 var $author$project$Main$boxBlendPct = '55%';
-var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
 var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
 var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTransform');
 var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
@@ -8199,6 +8715,37 @@ var $author$project$Main$legendMarker = F2(
 					$elm$html$Html$text(lbl)
 				]));
 	});
+var $author$project$Main$legendRing = function (_v0) {
+	var inv = _v0.a;
+	var lbl = _v0.b;
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '6px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+						A2($elm$html$Html$Attributes$style, 'width', '16px'),
+						A2($elm$html$Html$Attributes$style, 'height', '16px'),
+						A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'3px solid ' + $author$project$Main$inversionColor(inv)),
+						A2($elm$html$Html$Attributes$style, 'border-radius', '8px')
+					]),
+				_List_Nil),
+				$elm$html$Html$text(lbl)
+			]));
+};
 var $author$project$Main$legendSwatch = function (_v0) {
 	var b = _v0.a;
 	var lbl = _v0.b;
@@ -8263,6 +8810,12 @@ var $author$project$Main$viewLegend = function (model) {
 			_Utils_eq(model.scale, $author$project$Main$ChromaticMajor) ? '7th' : '♭7'),
 			A2($author$project$Main$legendMarker, 'circle-pc', 'other'),
 			$author$project$Main$legendText('hue = note')
+		]) : ($author$project$Main$isTriad(model.scale) ? _List_fromArray(
+		[
+			$author$project$Main$legendText('Tones:'),
+			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+			A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
+			A2($author$project$Main$legendMarker, 'circle-dotted', '5th')
 		]) : _List_fromArray(
 		[
 			$author$project$Main$legendText('Tones:'),
@@ -8271,8 +8824,19 @@ var $author$project$Main$viewLegend = function (model) {
 			A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
 			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
 			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
-		]);
-	var boxes = $author$project$Main$isChromatic(model.scale) ? _List_Nil : ($author$project$Main$isDiagonal(model.scale) ? A2(
+		]));
+	var boxes = $author$project$Main$isChromatic(model.scale) ? _List_Nil : ($author$project$Main$isTriad(model.scale) ? A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Bass note:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendRing,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 'root'),
+					_Utils_Tuple2(1, '3rd (1st inv)'),
+					_Utils_Tuple2(2, '5th (2nd inv)')
+				]))) : ($author$project$Main$isDiagonal(model.scale) ? A2(
 		$elm$core$List$cons,
 		$author$project$Main$legendText('Patterns:'),
 		A2(
@@ -8295,7 +8859,7 @@ var $author$project$Main$viewLegend = function (model) {
 					_Utils_Tuple2(3, '3'),
 					_Utils_Tuple2(4, '4'),
 					_Utils_Tuple2(5, '5')
-				]))));
+				])))));
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -8338,6 +8902,15 @@ var $elm$core$List$repeat = F2(
 	function (n, value) {
 		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
 	});
+var $author$project$Main$stringSetLabel = function (set) {
+	if (set.$ === 'AllStrings') {
+		return 'all string sets';
+	} else {
+		var t = set.a;
+		return 'strings ' + $author$project$Main$stringSetSlug(
+			$author$project$Main$StringTrio(t));
+	}
+};
 var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = A2($author$project$Main$rootSpelling, model.scale, model.root) + (' ' + function () {
 		var _v1 = model.scale;
@@ -8370,6 +8943,14 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return '— All Notes (minor)';
 			case 'ChromaticMajor':
 				return '— All Notes (major)';
+			case 'TriadMajor':
+				return 'Major Triad';
+			case 'TriadMinor':
+				return 'Minor Triad';
+			case 'TriadDim':
+				return 'Diminished Triad';
+			case 'TriadAug':
+				return 'Augmented Triad';
 			case 'DiagonalPent':
 				return 'Diagonal Minor Pentatonic';
 			case 'DiagonalMajorPent':
@@ -8421,6 +9002,18 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return A2($elm$core$List$repeat, 12, '');
 			case 'ChromaticMajor':
 				return A2($elm$core$List$repeat, 12, '');
+			case 'TriadMajor':
+				return _List_fromArray(
+					['R', '3', '5']);
+			case 'TriadMinor':
+				return _List_fromArray(
+					['R', '♭3', '5']);
+			case 'TriadDim':
+				return _List_fromArray(
+					['R', '♭3', '♭5']);
+			case 'TriadAug':
+				return _List_fromArray(
+					['R', '3', '♯5']);
 			case 'DiagonalPent':
 				return _List_fromArray(
 					['R', '♭3', '4', '5', '♭7']);
@@ -8440,7 +9033,7 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			}),
 		$author$project$Main$spelledNotes(model),
 		intervalLabels);
-	var subtitle = $author$project$Main$isChromatic(model.scale) ? ('Every note on the neck · hue = note · ' + ((_Utils_eq(model.scale, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' marked from ' + $author$project$Main$noteName(model.root)))) : ('Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs));
+	var subtitle = $author$project$Main$isChromatic(model.scale) ? ('Every note on the neck · hue = note · ' + ((_Utils_eq(model.scale, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' marked from ' + $author$project$Main$noteName(model.root)))) : ($author$project$Main$isTriad(model.scale) ? ('Notes: ' + (A2($elm$core$String$join, '  ·  ', notePairs) + ('  ·  ' + $author$project$Main$stringSetLabel(model.stringSet)))) : ('Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs)));
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(

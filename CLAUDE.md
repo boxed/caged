@@ -39,8 +39,9 @@ commit both files together.
 
 Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
 `HarmonicMinor`, `MelodicMinor`, three diagonal climbing variants
-(`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`), and the two all-notes
-maps `ChromaticMinor`/`ChromaticMajor`.
+(`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`), the two all-notes
+maps `ChromaticMinor`/`ChromaticMajor`, and the four triads
+`TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`.
 
 `ChromaticMinor` and `ChromaticMajor` (the **All notes (minor)** / **All notes
 (major)** buttons, slugs `all-notes-minor` / `all-notes-major`) are deliberately
@@ -78,13 +79,47 @@ the shapes from the intervals. It requires:
    minor-flavored — these already fold in the tuning's low-E open pitch).
 4. Add `majorFlavored` case (True iff box 1 anchors on the relative minor —
    matches the `majorAnchor` choice in step 3).
-5. Add `thirdInterval`/`seventhInterval` cases in `noteRole`.
+5. Add `thirdInterval`/`seventhInterval` cases in `noteRole` (and a
+   `fifthInterval` case if the 5th is not 7 semitones).
 6. Add `scaleDegrees` case (for enharmonic spelling) and a `scaleSlug` /
    `scaleFromSlug` pair for the URL.
 7. Add button, title, and interval labels in the view.
 8. Add to `boxScales` in `tests/BoxShapeTests.elm` and to its `scaleName`.
 9. Run `elm-test` — `coverage` checks every scale note sits in a box and
    `edgeSanity` checks every box is well-formed in every tuning.
+
+## Triads
+
+The four triad modes (**Triads** row, slugs `triad-major` / `triad-minor` /
+`triad-dim` / `triad-aug`) are chords, not scales: three intervals, and the
+grouping that matters is the *voicing*, not the position. So `drawBoxRegions`
+hands them to `drawTriadLassos` instead of the CAGED machinery, and they are
+excluded from `boxScales` in the tests. They are the only modes where the 5th
+is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
+`noteRole`.
+
+- **`triadVoicingsFor tuning scale root stringSet`** is the single source of
+  truth for the shapes — the triad's `deriveBox`. For each three-string set it
+  walks up the neck: take a chord tone on the lowest string, then on each
+  higher string take the *next degree* above the note below it, inside the
+  octave. Insisting on the next **degree** (not merely the next chord tone) is
+  what keeps a voicing in close position: near the nut the note it wants can
+  sit below fret 0, and then that voicing correctly does not exist there
+  instead of doubling a degree.
+- Voicings are read by **pitch**, not pitch class, via `openAbs` — a tuning
+  stores only pitch classes, so the span between adjacent strings is taken as
+  the smallest ascending interval that fits (a unison reads as an octave).
+  That keeps the six strings strictly ascending in any custom tuning. Strings
+  an exact octave apart (the pathological test tunings) have no close-position
+  triad at all, which is correct.
+- **Inversion is the index of the bass note's degree** in the sorted intervals
+  — 0 root position, 1 first, 2 second — and picks the lasso's color
+  (`inversionColor`, the `--inv-*` vars: the box 1–3 hues, saturated, since a
+  3px ring needs more punch than a 55%-opacity fill).
+- **`StringSet`** (`AllStrings` or `StringTrio t`, `t` = the set's highest
+  string) is model state, shown as the **Strings** row and carried in the URL
+  as `?strings=2-3-4` — only in triad modes, so every other mode keeps the URL
+  it had.
 
 ## Music theory model
 
@@ -156,6 +191,20 @@ than offsetting a standard-tuning shape.
 
 ## Rendering
 
+### Triad lassos
+
+A lasso is a bead around each of the three notes joined by a ribbon along their
+centers (`triadBody`), so the shape hugs the markers at any angle — a plain
+wide stroke let the square root markers poke out of diagonal runs. The outline
+is that shape minus the same shape inset by `triadLassoInset`, which gives an
+even ring. It is drawn as a **masked rect**, not the obvious wide-stroke +
+background-stroke pair, because that pair would paint over what sits under the
+lasso: the inlay dots, and the rings of any lasso it crosses in the
+all-string-sets view. The wash inside is a `Svg.g` with a group `opacity` so
+bead and ribbon do not double up where they overlap.
+
+### Draw order
+
 SVG draw order (later = on top):
 1. Fret markers (inlay dots on neck — drawn first so box tints blend over them).
 2. Solid box polygons (5 boxes × octaves). For major-scale modes, later boxes
@@ -181,8 +230,9 @@ for opaque rendering.
 
 ## URL state
 
-`Browser.application` syncs root + scale + tuning to query params:
-`?root=A&scale=dorian&tuning=drop-d`. Sharp notes use `Cs`, `Ds`, etc. to avoid
+`Browser.application` syncs root + scale + tuning (+ string set, triads only)
+to query params: `?root=A&scale=dorian&tuning=drop-d`, or
+`?root=C&scale=triad-major&strings=2-3-4`. Sharp notes use `Cs`, `Ds`, etc. to avoid
 URL-encoding `#`. The `tuning` param is omitted for Standard. `Nav.replaceUrl`
 (not push) on each change.
 
@@ -194,7 +244,7 @@ and `wakeLockChanged` (incoming). `index.html` wires these to
 
 ## Tests (`tests/BoxShapeTests.elm`)
 
-Test suites (~6800 tests total):
+Test suites (~7600 tests total):
 
 1. **`canonicalShapes`** — `deriveBox` in standard tuning reproduces the textbook
    pentatonic and Ionian/Aeolian CAGED shapes exactly. This is the spec: the
@@ -212,6 +262,13 @@ Test suites (~6800 tests total):
 6. **`stripeEdges`** — stripe overlap edges land on scale notes.
 7. **`diagonalCells`** — the diagonal climbing shapes carry the right scale
    degrees on each string.
+8. **`triadShapes`** — every triad voicing sits on its set's three strings and
+   inside the neck, carries all three chord tones with none doubled, is in
+   close position (each note under an octave above the one below), and its
+   `inversion` names the degree actually in the bass — for every tuning and all
+   four qualities. Plus `canonicalTriads`: C major on strings 2-3-4 in standard
+   tuning is the textbook set (x x 2 0 1 x, x x 5 5 5 x, x x 10 9 8 x, then the
+   octave repeat).
 
 ## Deployment
 
