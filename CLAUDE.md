@@ -254,6 +254,25 @@ so they read well after the 0.45/0.55 opacity blend. Stripe patterns
 pre-blend with `color-mix(in srgb, var(--box-N) 55%, var(--bg) 45%)`
 for opaque rendering.
 
+## Multiple roots
+
+The **Multiple roots** checkbox next to the Root row turns the root buttons
+from a radio group into a multi-select and draws one neck per selected root,
+each under its own title. `selectedRoots` is the single reader — the whole
+selection in multi mode, `[ root ]` otherwise — and `viewNeck` renders a neck
+by swapping that root into the model, so every downstream function is
+untouched. Three set buttons appear in multi mode: **All**, **All sharps**
+(the black keys) and **All naturals** (the white keys).
+
+The selection is never empty: `toggleRoot` refuses to remove the last root, so
+there is always a neck. Unchecking the box keeps `model.root` if it is still
+selected, else falls back to the lowest selected root.
+
+SVG ids are document-global, so with several necks on the page a `url(#…)`
+would resolve to whichever neck rendered first. Every id a neck mints — the
+`ovlp-*` stripe patterns and the `triad-lasso-*` masks — is prefixed with
+`neckId`, its root's pitch class.
+
 ## URL state
 
 `Browser.application` syncs root + scale + tuning (+ string set, triads only)
@@ -261,6 +280,11 @@ to query params: `?root=A&scale=dorian&tuning=drop-d`, or
 `?root=C&scale=triad-major&strings=2-3-4`. Sharp notes use `Cs`, `Ds`, etc. to avoid
 URL-encoding `#`. The `tuning` param is omitted for Standard. `Nav.replaceUrl`
 (not push) on each change.
+
+Multi-root mode adds `&roots=C-E-G`. The param *is* the mode flag — it is only
+written when multi-root is on and the selection is never empty, so a URL either
+carries a list of necks or the single `root`. `root` is still written alongside
+it, so unchecking the box has something to fall back to.
 
 ## Ports (Wake Lock)
 

@@ -5215,6 +5215,11 @@ var $elm$core$Maybe$andThen = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -5253,6 +5258,13 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5263,6 +5275,7 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $elm$core$Basics$not = _Basics_not;
 var $author$project$Main$rootFromSlug = function (s) {
 	switch (s) {
 		case 'C':
@@ -5366,6 +5379,10 @@ var $author$project$Main$scaleFromSlug = function (s) {
 var $elm$core$Tuple$second = function (_v0) {
 	var y = _v0.b;
 	return y;
+};
+var $elm$core$List$sortBy = _List_sortBy;
+var $elm$core$List$sort = function (xs) {
+	return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
 };
 var $author$project$Main$standardTuning = {
 	name: 'Standard',
@@ -5557,6 +5574,17 @@ var $author$project$Main$parseUrl = function (url) {
 			$elm$core$Maybe$andThen,
 			$author$project$Main$rootFromSlug,
 			lookup('root')));
+	var roots = $elm$core$List$sort(
+		A2(
+			$elm$core$Maybe$withDefault,
+			_List_Nil,
+			A2(
+				$elm$core$Maybe$map,
+				A2(
+					$elm$core$Basics$composeR,
+					$elm$core$String$split('-'),
+					$elm$core$List$filterMap($author$project$Main$rootFromSlug)),
+				lookup('roots'))));
 	var scale = A2(
 		$elm$core$Maybe$withDefault,
 		$author$project$Main$MinorPent,
@@ -5578,13 +5606,21 @@ var $author$project$Main$parseUrl = function (url) {
 			$elm$core$Maybe$andThen,
 			$author$project$Main$tuningFromSlug,
 			lookup('tuning')));
-	return {root: root, scale: scale, stringSet: stringSet, tuning: tuning};
+	return {
+		multiRoot: !$elm$core$List$isEmpty(roots),
+		root: root,
+		roots: $elm$core$List$isEmpty(roots) ? _List_fromArray(
+			[root]) : roots,
+		scale: scale,
+		stringSet: stringSet,
+		tuning: tuning
+	};
 };
 var $author$project$Main$init = F3(
 	function (_v0, url, key) {
 		var state = $author$project$Main$parseUrl(url);
 		return _Utils_Tuple2(
-			{key: key, root: state.root, scale: state.scale, stringSet: state.stringSet, tuning: state.tuning, wakeLockOn: false},
+			{key: key, multiRoot: state.multiRoot, root: state.root, roots: state.roots, scale: state.scale, stringSet: state.stringSet, tuning: state.tuning, wakeLockOn: false},
 			$elm$core$Platform$Cmd$none);
 	});
 var $author$project$Main$WakeLockChanged = function (a) {
@@ -5596,6 +5632,36 @@ var $author$project$Main$subscriptions = function (_v0) {
 	return $author$project$Main$wakeLockChanged($author$project$Main$WakeLockChanged);
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			$elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
+	});
 var $author$project$Main$isTriad = function (scale) {
 	return _Utils_eq(scale, $author$project$Main$TriadMajor) || (_Utils_eq(scale, $author$project$Main$TriadMinor) || (_Utils_eq(scale, $author$project$Main$TriadDim) || _Utils_eq(scale, $author$project$Main$TriadAug)));
 };
@@ -5646,6 +5712,12 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'dorian';
 	}
 };
+var $author$project$Main$selectedRoots = function (model) {
+	return (model.multiRoot && (!$elm$core$List$isEmpty(model.roots))) ? model.roots : _List_fromArray(
+		[
+			A2($elm$core$Basics$modBy, 12, model.root)
+		]);
+};
 var $author$project$Main$stringSetSlug = function (set) {
 	if (set.$ === 'AllStrings') {
 		return 'all';
@@ -5663,10 +5735,16 @@ var $author$project$Main$stringSetSlug = function (set) {
 };
 var $author$project$Main$modelUrl = function (model) {
 	var base = '?root=' + ($author$project$Main$rootSlug(model.root) + ('&scale=' + $author$project$Main$scaleSlug(model.scale)));
-	var withTuning = _Utils_eq(model.tuning.slug, $author$project$Main$standardTuning.slug) ? base : (base + ('&tuning=' + model.tuning.slug));
+	var withRoots = model.multiRoot ? (base + ('&roots=' + A2(
+		$elm$core$String$join,
+		'-',
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$rootSlug,
+			$author$project$Main$selectedRoots(model))))) : base;
+	var withTuning = _Utils_eq(model.tuning.slug, $author$project$Main$standardTuning.slug) ? withRoots : (withRoots + ('&tuning=' + model.tuning.slug));
 	return ($author$project$Main$isTriad(model.scale) && (!_Utils_eq(model.stringSet, $author$project$Main$AllStrings))) ? (withTuning + ('&strings=' + $author$project$Main$stringSetSlug(model.stringSet))) : withTuning;
 };
-var $elm$core$Basics$not = _Basics_not;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var $elm$json$Json$Encode$null = _Json_encodeNull;
 var $author$project$Main$releaseWakeLock = _Platform_outgoingPort(
@@ -5724,15 +5802,69 @@ var $elm$url$Url$toString = function (url) {
 					_Utils_ap(http, url.host)),
 				url.path)));
 };
+var $author$project$Main$toggleRoot = F2(
+	function (pc, roots) {
+		return A2($elm$core$List$member, pc, roots) ? (($elm$core$List$length(roots) <= 1) ? roots : A2(
+			$elm$core$List$filter,
+			function (n) {
+				return !_Utils_eq(n, pc);
+			},
+			roots)) : $elm$core$List$sort(
+			A2($elm$core$List$cons, pc, roots));
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'SetRoot':
 				var n = msg.a;
+				var pc = A2($elm$core$Basics$modBy, 12, n);
+				var newModel = model.multiRoot ? _Utils_update(
+					model,
+					{
+						roots: A2($author$project$Main$toggleRoot, pc, model.roots)
+					}) : _Utils_update(
+					model,
+					{root: pc});
+				return _Utils_Tuple2(
+					newModel,
+					A2(
+						$elm$browser$Browser$Navigation$replaceUrl,
+						model.key,
+						$author$project$Main$modelUrl(newModel)));
+			case 'SetRoots':
+				var rs = msg.a;
 				var newModel = _Utils_update(
 					model,
 					{
-						root: A2($elm$core$Basics$modBy, 12, n)
+						roots: $elm$core$List$sort(rs)
+					});
+				return _Utils_Tuple2(
+					newModel,
+					A2(
+						$elm$browser$Browser$Navigation$replaceUrl,
+						model.key,
+						$author$project$Main$modelUrl(newModel)));
+			case 'SetMultiRoot':
+				var on = msg.a;
+				var newModel = on ? _Utils_update(
+					model,
+					{
+						multiRoot: true,
+						roots: _List_fromArray(
+							[
+								A2($elm$core$Basics$modBy, 12, model.root)
+							])
+					}) : _Utils_update(
+					model,
+					{
+						multiRoot: false,
+						root: A2(
+							$elm$core$List$member,
+							A2($elm$core$Basics$modBy, 12, model.root),
+							model.roots) ? model.root : A2(
+							$elm$core$Maybe$withDefault,
+							model.root,
+							$elm$core$List$head(model.roots))
 					});
 				return _Utils_Tuple2(
 					newModel,
@@ -5800,7 +5932,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{root: state.root, scale: state.scale, stringSet: state.stringSet, tuning: state.tuning}),
+						{multiRoot: state.multiRoot, root: state.root, roots: state.roots, scale: state.scale, stringSet: state.stringSet, tuning: state.tuning}),
 					$elm$core$Platform$Cmd$none);
 			case 'LinkClicked':
 				var request = msg.a;
@@ -5922,6 +6054,76 @@ var $author$project$Main$label = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
+var $author$project$Main$SetMultiRoot = function (a) {
+	return {$: 'SetMultiRoot', a: a};
+};
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$html$Html$label = _VirtualDom_node('label');
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$html$Html$Events$targetChecked = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'checked']),
+	$elm$json$Json$Decode$bool);
+var $elm$html$Html$Events$onCheck = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'change',
+		A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetChecked));
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $author$project$Main$multiRootToggle = function (model) {
+	return A2(
+		$elm$html$Html$label,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '5px'),
+				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+				A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+				A2($elm$html$Html$Attributes$style, 'user-select', 'none')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$input,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$type_('checkbox'),
+						$elm$html$Html$Attributes$checked(model.multiRoot),
+						$elm$html$Html$Events$onCheck($author$project$Main$SetMultiRoot),
+						A2($elm$html$Html$Attributes$style, 'margin', '0'),
+						A2($elm$html$Html$Attributes$style, 'cursor', 'pointer')
+					]),
+				_List_Nil),
+				$elm$html$Html$text('Multiple roots')
+			]));
+};
+var $author$project$Main$naturalRoots = _List_fromArray(
+	[0, 2, 4, 5, 7, 9, 11]);
 var $author$project$Main$SetRoot = function (a) {
 	return {$: 'SetRoot', a: a};
 };
@@ -5968,7 +6170,6 @@ var $author$project$Main$rootLetterCandidates = function (pc) {
 		},
 		A2($elm$core$List$range, 0, 6));
 };
-var $elm$core$List$sortBy = _List_sortBy;
 var $author$project$Main$scaleDegrees = function (st) {
 	switch (st.$) {
 		case 'MinorPent':
@@ -6233,9 +6434,10 @@ var $author$project$Main$rootSpelling = F2(
 	});
 var $author$project$Main$rootButton = F2(
 	function (model, n) {
-		var active = _Utils_eq(
-			A2($elm$core$Basics$modBy, 12, model.root),
-			n);
+		var active = A2(
+			$elm$core$List$member,
+			n,
+			$author$project$Main$selectedRoots(model));
 		return A2(
 			$elm$html$Html$button,
 			_Utils_ap(
@@ -6261,6 +6463,29 @@ var $author$project$Main$noteButtonRow = function (model) {
 			$author$project$Main$rootButton(model),
 			A2($elm$core$List$range, 0, 11)));
 };
+var $author$project$Main$SetRoots = function (a) {
+	return {$: 'SetRoots', a: a};
+};
+var $author$project$Main$rootSetButton = F3(
+	function (model, lbl, roots) {
+		return A2(
+			$elm$html$Html$button,
+			_Utils_ap(
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick(
+						$author$project$Main$SetRoots(roots)),
+						A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+					]),
+				$author$project$Main$buttonBaseStyle(
+					_Utils_eq(
+						$author$project$Main$selectedRoots(model),
+						$elm$core$List$sort(roots)))),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(lbl)
+				]));
+	});
 var $author$project$Main$SetScale = function (a) {
 	return {$: 'SetScale', a: a};
 };
@@ -6282,6 +6507,8 @@ var $author$project$Main$scaleButton = F3(
 					$elm$html$Html$text(lbl)
 				]));
 	});
+var $author$project$Main$sharpRoots = _List_fromArray(
+	[1, 3, 6, 8, 10]);
 var $author$project$Main$SetStringSet = function (a) {
 	return {$: 'SetStringSet', a: a};
 };
@@ -6515,13 +6742,35 @@ var $author$project$Main$viewControls = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+						A2($elm$html$Html$Attributes$style, 'gap', '6px 12px')
 					]),
 				_List_fromArray(
 					[
 						$author$project$Main$label('Root'),
-						$author$project$Main$noteButtonRow(model)
+						$author$project$Main$noteButtonRow(model),
+						$author$project$Main$multiRootToggle(model)
 					])),
+				model.multiRoot ? A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
+				_List_fromArray(
+					[
+						$author$project$Main$label(''),
+						A3(
+						$author$project$Main$rootSetButton,
+						model,
+						'All',
+						A2($elm$core$List$range, 0, 11)),
+						A3($author$project$Main$rootSetButton, model, 'All sharps', $author$project$Main$sharpRoots),
+						A3($author$project$Main$rootSetButton, model, 'All naturals', $author$project$Main$naturalRoots)
+					])) : $elm$html$Html$text(''),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -6560,6 +6809,363 @@ var $author$project$Main$viewControls = function (model) {
 					])) : $elm$html$Html$text('')
 			]));
 };
+var $author$project$Main$isDiagonal = function (scale) {
+	return _Utils_eq(scale, $author$project$Main$DiagonalPent) || (_Utils_eq(scale, $author$project$Main$DiagonalMajorPent) || _Utils_eq(scale, $author$project$Main$DiagonalBlues));
+};
+var $author$project$Main$legendGroup = function (children) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '18px')
+			]),
+		children);
+};
+var $author$project$Main$legendMarker = F2(
+	function (kind, lbl) {
+		var pcGradient = 'linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))';
+		var common = _List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+				A2($elm$html$Html$Attributes$style, 'width', '16px'),
+				A2($elm$html$Html$Attributes$style, 'height', '16px'),
+				A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
+			]);
+		var marker = function () {
+			switch (kind) {
+				case 'square-dark':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--root-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
+								])),
+						_List_Nil);
+				case 'circle-dashed':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.8px dashed var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-dotted':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.8px dotted var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'square-pc':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '2px solid var(--nut)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
+								])),
+						_List_Nil);
+				case 'circle-pc':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-pc-dashed':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '2px dashed var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-pc-dotted':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '2px dotted var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
+								])),
+						_List_Nil);
+				case 'circle-pc-double':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
+									A2($elm$html$Html$Attributes$style, 'border', '1.6px dashed var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+									A2($elm$html$Html$Attributes$style, 'opacity', '0.6')
+								])),
+						_List_Nil);
+				case 'circle-double':
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1.5px dashed var(--chord-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+									A2($elm$html$Html$Attributes$style, 'opacity', '0.5')
+								])),
+						_List_Nil);
+				default:
+					return A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							common,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+									A2($elm$html$Html$Attributes$style, 'opacity', '0.5')
+								])),
+						_List_Nil);
+			}
+		}();
+		return A2(
+			$elm$html$Html$span,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'gap', '6px')
+				]),
+			_List_fromArray(
+				[
+					marker,
+					$elm$html$Html$text(lbl)
+				]));
+	});
+var $author$project$Main$inversionColor = function (inv) {
+	switch (inv) {
+		case 0:
+			return 'var(--inv-1)';
+		case 1:
+			return 'var(--inv-2)';
+		default:
+			return 'var(--inv-3)';
+	}
+};
+var $author$project$Main$legendRing = function (_v0) {
+	var inv = _v0.a;
+	var lbl = _v0.b;
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '6px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+						A2($elm$html$Html$Attributes$style, 'width', '16px'),
+						A2($elm$html$Html$Attributes$style, 'height', '16px'),
+						A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'3px solid ' + $author$project$Main$inversionColor(inv)),
+						A2($elm$html$Html$Attributes$style, 'border-radius', '8px')
+					]),
+				_List_Nil),
+				$elm$html$Html$text(lbl)
+			]));
+};
+var $author$project$Main$boxColor = function (b) {
+	switch (b) {
+		case 1:
+			return 'var(--box-1)';
+		case 2:
+			return 'var(--box-2)';
+		case 3:
+			return 'var(--box-3)';
+		case 4:
+			return 'var(--box-4)';
+		case 5:
+			return 'var(--box-5)';
+		default:
+			return 'var(--surface-bd)';
+	}
+};
+var $author$project$Main$legendSwatch = function (_v0) {
+	var b = _v0.a;
+	var lbl = _v0.b;
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '6px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+						A2($elm$html$Html$Attributes$style, 'width', '16px'),
+						A2($elm$html$Html$Attributes$style, 'height', '16px'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'background',
+						$author$project$Main$boxColor(b)),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'border',
+						'1px solid ' + $author$project$Main$boxColor(b)),
+						A2($elm$html$Html$Attributes$style, 'border-radius', '3px'),
+						A2($elm$html$Html$Attributes$style, 'opacity', '0.75')
+					]),
+				_List_Nil),
+				$elm$html$Html$text(lbl)
+			]));
+};
+var $author$project$Main$legendText = function (s) {
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-strong)')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(s)
+			]));
+};
+var $author$project$Main$viewLegend = function (model) {
+	var tones = $author$project$Main$isChromatic(model.scale) ? _List_fromArray(
+		[
+			$author$project$Main$legendText('Tones:'),
+			A2($author$project$Main$legendMarker, 'square-pc', 'Root'),
+			A2(
+			$author$project$Main$legendMarker,
+			'circle-pc-dashed',
+			_Utils_eq(model.scale, $author$project$Main$ChromaticMajor) ? '3rd' : '♭3'),
+			A2($author$project$Main$legendMarker, 'circle-pc-dotted', '5th'),
+			A2(
+			$author$project$Main$legendMarker,
+			'circle-pc-double',
+			_Utils_eq(model.scale, $author$project$Main$ChromaticMajor) ? '7th' : '♭7'),
+			A2($author$project$Main$legendMarker, 'circle-pc', 'other'),
+			$author$project$Main$legendText('hue = note')
+		]) : ($author$project$Main$isTriad(model.scale) ? _List_fromArray(
+		[
+			$author$project$Main$legendText('Tones:'),
+			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+			A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
+			A2($author$project$Main$legendMarker, 'circle-dotted', '5th')
+		]) : _List_fromArray(
+		[
+			$author$project$Main$legendText('Tones:'),
+			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
+			A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
+			A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
+			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
+			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
+		]));
+	var boxes = $author$project$Main$isChromatic(model.scale) ? _List_Nil : ($author$project$Main$isTriad(model.scale) ? A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Bass note:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendRing,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 'root'),
+					_Utils_Tuple2(1, '3rd (1st inv)'),
+					_Utils_Tuple2(2, '5th (2nd inv)')
+				]))) : ($author$project$Main$isDiagonal(model.scale) ? A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Patterns:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendSwatch,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(1, '1'),
+					_Utils_Tuple2(2, '2')
+				]))) : A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Boxes:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendSwatch,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(1, '1'),
+					_Utils_Tuple2(2, '2'),
+					_Utils_Tuple2(3, '3'),
+					_Utils_Tuple2(4, '4'),
+					_Utils_Tuple2(5, '5')
+				])))));
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'margin-top', '16px'),
+				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'gap', '18px'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
+			]),
+		$elm$core$List$isEmpty(boxes) ? _List_fromArray(
+			[
+				$author$project$Main$legendGroup(tones)
+			]) : _List_fromArray(
+			[
+				$author$project$Main$legendGroup(boxes),
+				$author$project$Main$legendGroup(tones)
+			]));
+};
 var $elm$core$List$append = F2(
 	function (xs, ys) {
 		if (!ys.b) {
@@ -6575,27 +7181,6 @@ var $elm$core$List$concatMap = F2(
 	function (f, list) {
 		return $elm$core$List$concat(
 			A2($elm$core$List$map, f, list));
-	});
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
 	});
 var $author$project$Main$majorFlavored = function (scale) {
 	switch (scale.$) {
@@ -6653,15 +7238,6 @@ var $elm$core$List$maximum = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm$core$List$member = F2(
-	function (x, xs) {
-		return A2(
-			$elm$core$List$any,
-			function (a) {
-				return _Utils_eq(a, x);
-			},
-			xs);
-	});
 var $elm$core$Basics$min = F2(
 	function (x, y) {
 		return (_Utils_cmp(x, y) < 0) ? x : y;
@@ -6769,6 +7345,10 @@ var $author$project$Main$deriveBox = F3(
 			A2($elm$core$List$range, 1, 6));
 	});
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $author$project$Main$neckId = function (model) {
+	return 'r' + ($elm$core$String$fromInt(
+		A2($elm$core$Basics$modBy, 12, model.root)) + '-');
+};
 var $author$project$Main$numFrets = 22;
 var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
@@ -7014,26 +7594,10 @@ var $author$project$Main$drawOverlapStripe = F3(
 						$elm$svg$Svg$Attributes$points(
 						$author$project$Main$polygonPoints(overlapPositions)),
 						$elm$svg$Svg$Attributes$fill(
-						'url(#ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + ($elm$core$String$fromInt(b2) + ')'))))
+						'url(#' + ($author$project$Main$neckId(model) + ('ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + ($elm$core$String$fromInt(b2) + ')'))))))
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
-var $author$project$Main$boxColor = function (b) {
-	switch (b) {
-		case 1:
-			return 'var(--box-1)';
-		case 2:
-			return 'var(--box-2)';
-		case 3:
-			return 'var(--box-3)';
-		case 4:
-			return 'var(--box-4)';
-		case 5:
-			return 'var(--box-5)';
-		default:
-			return 'var(--surface-bd)';
-	}
-};
 var $author$project$Main$boxFillOpacity = '0.55';
 var $elm$svg$Svg$Attributes$fillOpacity = _VirtualDom_attribute('fill-opacity');
 var $author$project$Main$drawSolidBox = F3(
@@ -7114,7 +7678,8 @@ var $author$project$Main$drawWrapOverlap = F2(
 					[
 						$elm$svg$Svg$Attributes$points(
 						$author$project$Main$polygonPoints(overlapPositions)),
-						$elm$svg$Svg$Attributes$fill('url(#ovlp-5-1)')
+						$elm$svg$Svg$Attributes$fill(
+						'url(#' + ($author$project$Main$neckId(model) + 'ovlp-5-1)'))
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
@@ -7385,16 +7950,6 @@ var $author$project$Main$drawDiagonalRegions = function (model) {
 		},
 		$author$project$Main$diagonalShapesFor(model.scale));
 };
-var $author$project$Main$inversionColor = function (inv) {
-	switch (inv) {
-		case 0:
-			return 'var(--inv-1)';
-		case 1:
-			return 'var(--inv-2)';
-		default:
-			return 'var(--inv-3)';
-	}
-};
 var $author$project$Main$triadFillPct = '18%';
 var $author$project$Main$inversionFill = function (inv) {
 	return 'color-mix(in srgb, ' + ($author$project$Main$inversionColor(inv) + (' ' + ($author$project$Main$triadFillPct + ', var(--bg))')));
@@ -7500,8 +8055,8 @@ var $author$project$Main$triadLassoInset = 3;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
-var $author$project$Main$triadRing = F2(
-	function (index, triad) {
+var $author$project$Main$triadRing = F3(
+	function (prefix, index, triad) {
 		var pad = $author$project$Main$triadLassoRadius(triad) + 4;
 		var span = function (toCoord) {
 			var vs = A2($elm$core$List$map, toCoord, triad.notes);
@@ -7516,7 +8071,7 @@ var $author$project$Main$triadRing = F2(
 					0,
 					$elm$core$List$maximum(vs)) - lo) + (2 * pad));
 		};
-		var maskId = 'triad-lasso-' + $elm$core$String$fromInt(index);
+		var maskId = prefix + ('triad-lasso-' + $elm$core$String$fromInt(index));
 		var layer = F2(
 			function (color, inset) {
 				return A3(
@@ -7622,9 +8177,6 @@ var $elm$core$Tuple$pair = F2(
 	function (a, b) {
 		return _Utils_Tuple2(a, b);
 	});
-var $elm$core$List$sort = function (xs) {
-	return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
-};
 var $author$project$Main$triadsOnStringSet = F4(
 	function (tuning, scale, root, top) {
 		var pitch = F2(
@@ -7743,10 +8295,11 @@ var $author$project$Main$drawTriadLassos = function (model) {
 	return _Utils_ap(
 		A2($elm$core$List$map, $author$project$Main$triadFill, voicings),
 		$elm$core$List$concat(
-			A2($elm$core$List$indexedMap, $author$project$Main$triadRing, voicings)));
-};
-var $author$project$Main$isDiagonal = function (scale) {
-	return _Utils_eq(scale, $author$project$Main$DiagonalPent) || (_Utils_eq(scale, $author$project$Main$DiagonalMajorPent) || _Utils_eq(scale, $author$project$Main$DiagonalBlues));
+			A2(
+				$elm$core$List$indexedMap,
+				$author$project$Main$triadRing(
+					$author$project$Main$neckId(model)),
+				voicings)));
 };
 var $author$project$Main$drawBoxRegions = function (model) {
 	return $author$project$Main$isChromatic(model.scale) ? _List_Nil : ($author$project$Main$isTriad(model.scale) ? $author$project$Main$drawTriadLassos(model) : ($author$project$Main$isDiagonal(model.scale) ? $author$project$Main$drawDiagonalRegions(model) : $author$project$Main$drawBoxRegionsBoxes(model)));
@@ -8463,74 +9016,78 @@ var $author$project$Main$boxBlendPct = '55%';
 var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
 var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTransform');
 var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
-var $author$project$Main$overlapStripePattern = function (_v0) {
-	var b1 = _v0.a;
-	var b2 = _v0.b;
-	var period = 14;
-	var half = period / 2;
-	var blended = function (b) {
-		return 'color-mix(in srgb, ' + ($author$project$Main$boxColor(b) + (' ' + ($author$project$Main$boxBlendPct + ', var(--bg))')));
-	};
+var $author$project$Main$overlapStripePattern = F2(
+	function (prefix, _v0) {
+		var b1 = _v0.a;
+		var b2 = _v0.b;
+		var period = 14;
+		var half = period / 2;
+		var blended = function (b) {
+			return 'color-mix(in srgb, ' + ($author$project$Main$boxColor(b) + (' ' + ($author$project$Main$boxBlendPct + ', var(--bg))')));
+		};
+		return A2(
+			$elm$svg$Svg$pattern,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$id(
+					prefix + ('ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + $elm$core$String$fromInt(b2))))),
+					$elm$svg$Svg$Attributes$patternUnits('userSpaceOnUse'),
+					$elm$svg$Svg$Attributes$width(
+					$elm$core$String$fromFloat(period)),
+					$elm$svg$Svg$Attributes$height(
+					$elm$core$String$fromFloat(period)),
+					$elm$svg$Svg$Attributes$patternTransform('rotate(45)')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$rect,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$x('0'),
+							$elm$svg$Svg$Attributes$y('0'),
+							$elm$svg$Svg$Attributes$width(
+							$elm$core$String$fromFloat(half)),
+							$elm$svg$Svg$Attributes$height(
+							$elm$core$String$fromFloat(period)),
+							$elm$svg$Svg$Attributes$fill(
+							blended(b1))
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$rect,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$x(
+							$elm$core$String$fromFloat(half)),
+							$elm$svg$Svg$Attributes$y('0'),
+							$elm$svg$Svg$Attributes$width(
+							$elm$core$String$fromFloat(half)),
+							$elm$svg$Svg$Attributes$height(
+							$elm$core$String$fromFloat(period)),
+							$elm$svg$Svg$Attributes$fill(
+							blended(b2))
+						]),
+					_List_Nil)
+				]));
+	});
+var $author$project$Main$stripePatternDefs = function (model) {
 	return A2(
-		$elm$svg$Svg$pattern,
-		_List_fromArray(
-			[
-				$elm$svg$Svg$Attributes$id(
-				'ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + $elm$core$String$fromInt(b2)))),
-				$elm$svg$Svg$Attributes$patternUnits('userSpaceOnUse'),
-				$elm$svg$Svg$Attributes$width(
-				$elm$core$String$fromFloat(period)),
-				$elm$svg$Svg$Attributes$height(
-				$elm$core$String$fromFloat(period)),
-				$elm$svg$Svg$Attributes$patternTransform('rotate(45)')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$svg$Svg$rect,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$x('0'),
-						$elm$svg$Svg$Attributes$y('0'),
-						$elm$svg$Svg$Attributes$width(
-						$elm$core$String$fromFloat(half)),
-						$elm$svg$Svg$Attributes$height(
-						$elm$core$String$fromFloat(period)),
-						$elm$svg$Svg$Attributes$fill(
-						blended(b1))
-					]),
-				_List_Nil),
-				A2(
-				$elm$svg$Svg$rect,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$x(
-						$elm$core$String$fromFloat(half)),
-						$elm$svg$Svg$Attributes$y('0'),
-						$elm$svg$Svg$Attributes$width(
-						$elm$core$String$fromFloat(half)),
-						$elm$svg$Svg$Attributes$height(
-						$elm$core$String$fromFloat(period)),
-						$elm$svg$Svg$Attributes$fill(
-						blended(b2))
-					]),
-				_List_Nil)
-			]));
+		$elm$svg$Svg$defs,
+		_List_Nil,
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$overlapStripePattern(
+				$author$project$Main$neckId(model)),
+			_List_fromArray(
+				[
+					_Utils_Tuple2(1, 2),
+					_Utils_Tuple2(2, 3),
+					_Utils_Tuple2(3, 4),
+					_Utils_Tuple2(4, 5),
+					_Utils_Tuple2(5, 1)
+				])));
 };
-var $author$project$Main$stripePatternDefs = A2(
-	$elm$svg$Svg$defs,
-	_List_Nil,
-	A2(
-		$elm$core$List$map,
-		$author$project$Main$overlapStripePattern,
-		_List_fromArray(
-			[
-				_Utils_Tuple2(1, 2),
-				_Utils_Tuple2(2, 3),
-				_Utils_Tuple2(3, 4),
-				_Utils_Tuple2(4, 5),
-				_Utils_Tuple2(5, 1)
-			])));
 var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $author$project$Main$totalHeight = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 80;
@@ -8563,347 +9120,14 @@ var $author$project$Main$viewFretboard = function (model) {
 			_List_fromArray(
 				[
 					_List_fromArray(
-					[$author$project$Main$stripePatternDefs]),
+					[
+						$author$project$Main$stripePatternDefs(model)
+					]),
 					neckAndRegions,
 					$author$project$Main$drawNotes(model),
 					$author$project$Main$drawFretNumbers,
 					$author$project$Main$drawInlayDots
 				])));
-};
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
-var $author$project$Main$legendGroup = function (children) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-				A2($elm$html$Html$Attributes$style, 'gap', '18px')
-			]),
-		children);
-};
-var $author$project$Main$legendMarker = F2(
-	function (kind, lbl) {
-		var pcGradient = 'linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))';
-		var common = _List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
-				A2($elm$html$Html$Attributes$style, 'width', '16px'),
-				A2($elm$html$Html$Attributes$style, 'height', '16px'),
-				A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
-			]);
-		var marker = function () {
-			switch (kind) {
-				case 'square-dark':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', 'var(--root-bg)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
-								])),
-						_List_Nil);
-				case 'circle-dashed':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
-									A2($elm$html$Html$Attributes$style, 'border', '1.8px dashed var(--chord-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
-								])),
-						_List_Nil);
-				case 'circle-dotted':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
-									A2($elm$html$Html$Attributes$style, 'border', '1.8px dotted var(--chord-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
-								])),
-						_List_Nil);
-				case 'square-pc':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
-									A2($elm$html$Html$Attributes$style, 'border', '2px solid var(--nut)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '2px')
-								])),
-						_List_Nil);
-				case 'circle-pc':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
-									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
-								])),
-						_List_Nil);
-				case 'circle-pc-dashed':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
-									A2($elm$html$Html$Attributes$style, 'border', '2px dashed var(--chord-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
-								])),
-						_List_Nil);
-				case 'circle-pc-dotted':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
-									A2($elm$html$Html$Attributes$style, 'border', '2px dotted var(--chord-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%')
-								])),
-						_List_Nil);
-				case 'circle-pc-double':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', pcGradient),
-									A2($elm$html$Html$Attributes$style, 'border', '1.6px dashed var(--chord-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-									A2($elm$html$Html$Attributes$style, 'opacity', '0.6')
-								])),
-						_List_Nil);
-				case 'circle-double':
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
-									A2($elm$html$Html$Attributes$style, 'border', '1.5px dashed var(--chord-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-									A2($elm$html$Html$Attributes$style, 'opacity', '0.5')
-								])),
-						_List_Nil);
-				default:
-					return A2(
-						$elm$html$Html$span,
-						_Utils_ap(
-							common,
-							_List_fromArray(
-								[
-									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
-									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
-									A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
-									A2($elm$html$Html$Attributes$style, 'opacity', '0.5')
-								])),
-						_List_Nil);
-			}
-		}();
-		return A2(
-			$elm$html$Html$span,
-			_List_fromArray(
-				[
-					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-					A2($elm$html$Html$Attributes$style, 'gap', '6px')
-				]),
-			_List_fromArray(
-				[
-					marker,
-					$elm$html$Html$text(lbl)
-				]));
-	});
-var $author$project$Main$legendRing = function (_v0) {
-	var inv = _v0.a;
-	var lbl = _v0.b;
-	return A2(
-		$elm$html$Html$span,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-				A2($elm$html$Html$Attributes$style, 'gap', '6px')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$span,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
-						A2($elm$html$Html$Attributes$style, 'width', '16px'),
-						A2($elm$html$Html$Attributes$style, 'height', '16px'),
-						A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box'),
-						A2(
-						$elm$html$Html$Attributes$style,
-						'border',
-						'3px solid ' + $author$project$Main$inversionColor(inv)),
-						A2($elm$html$Html$Attributes$style, 'border-radius', '8px')
-					]),
-				_List_Nil),
-				$elm$html$Html$text(lbl)
-			]));
-};
-var $author$project$Main$legendSwatch = function (_v0) {
-	var b = _v0.a;
-	var lbl = _v0.b;
-	return A2(
-		$elm$html$Html$span,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-				A2($elm$html$Html$Attributes$style, 'gap', '6px')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$span,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
-						A2($elm$html$Html$Attributes$style, 'width', '16px'),
-						A2($elm$html$Html$Attributes$style, 'height', '16px'),
-						A2(
-						$elm$html$Html$Attributes$style,
-						'background',
-						$author$project$Main$boxColor(b)),
-						A2(
-						$elm$html$Html$Attributes$style,
-						'border',
-						'1px solid ' + $author$project$Main$boxColor(b)),
-						A2($elm$html$Html$Attributes$style, 'border-radius', '3px'),
-						A2($elm$html$Html$Attributes$style, 'opacity', '0.75')
-					]),
-				_List_Nil),
-				$elm$html$Html$text(lbl)
-			]));
-};
-var $author$project$Main$legendText = function (s) {
-	return A2(
-		$elm$html$Html$span,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
-				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-strong)')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text(s)
-			]));
-};
-var $author$project$Main$viewLegend = function (model) {
-	var tones = $author$project$Main$isChromatic(model.scale) ? _List_fromArray(
-		[
-			$author$project$Main$legendText('Tones:'),
-			A2($author$project$Main$legendMarker, 'square-pc', 'Root'),
-			A2(
-			$author$project$Main$legendMarker,
-			'circle-pc-dashed',
-			_Utils_eq(model.scale, $author$project$Main$ChromaticMajor) ? '3rd' : '♭3'),
-			A2($author$project$Main$legendMarker, 'circle-pc-dotted', '5th'),
-			A2(
-			$author$project$Main$legendMarker,
-			'circle-pc-double',
-			_Utils_eq(model.scale, $author$project$Main$ChromaticMajor) ? '7th' : '♭7'),
-			A2($author$project$Main$legendMarker, 'circle-pc', 'other'),
-			$author$project$Main$legendText('hue = note')
-		]) : ($author$project$Main$isTriad(model.scale) ? _List_fromArray(
-		[
-			$author$project$Main$legendText('Tones:'),
-			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
-			A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
-			A2($author$project$Main$legendMarker, 'circle-dotted', '5th')
-		]) : _List_fromArray(
-		[
-			$author$project$Main$legendText('Tones:'),
-			A2($author$project$Main$legendMarker, 'square-dark', 'Root'),
-			A2($author$project$Main$legendMarker, 'circle-dashed', '3rd'),
-			A2($author$project$Main$legendMarker, 'circle-dotted', '5th'),
-			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
-			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
-		]));
-	var boxes = $author$project$Main$isChromatic(model.scale) ? _List_Nil : ($author$project$Main$isTriad(model.scale) ? A2(
-		$elm$core$List$cons,
-		$author$project$Main$legendText('Bass note:'),
-		A2(
-			$elm$core$List$map,
-			$author$project$Main$legendRing,
-			_List_fromArray(
-				[
-					_Utils_Tuple2(0, 'root'),
-					_Utils_Tuple2(1, '3rd (1st inv)'),
-					_Utils_Tuple2(2, '5th (2nd inv)')
-				]))) : ($author$project$Main$isDiagonal(model.scale) ? A2(
-		$elm$core$List$cons,
-		$author$project$Main$legendText('Patterns:'),
-		A2(
-			$elm$core$List$map,
-			$author$project$Main$legendSwatch,
-			_List_fromArray(
-				[
-					_Utils_Tuple2(1, '1'),
-					_Utils_Tuple2(2, '2')
-				]))) : A2(
-		$elm$core$List$cons,
-		$author$project$Main$legendText('Boxes:'),
-		A2(
-			$elm$core$List$map,
-			$author$project$Main$legendSwatch,
-			_List_fromArray(
-				[
-					_Utils_Tuple2(1, '1'),
-					_Utils_Tuple2(2, '2'),
-					_Utils_Tuple2(3, '3'),
-					_Utils_Tuple2(4, '4'),
-					_Utils_Tuple2(5, '5')
-				])))));
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'margin-top', '16px'),
-				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
-				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-				A2($elm$html$Html$Attributes$style, 'gap', '18px'),
-				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
-			]),
-		$elm$core$List$isEmpty(boxes) ? _List_fromArray(
-			[
-				$author$project$Main$legendGroup(tones)
-			]) : _List_fromArray(
-			[
-				$author$project$Main$legendGroup(boxes),
-				$author$project$Main$legendGroup(tones)
-			]));
 };
 var $elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
@@ -9091,6 +9315,23 @@ var $author$project$Main$viewScaleTitle = function (model) {
 					]))
 			]));
 };
+var $author$project$Main$viewNeck = F2(
+	function (model, root) {
+		var rootModel = _Utils_update(
+			model,
+			{root: root});
+		return model.multiRoot ? A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'margin-bottom', '18px')
+				]),
+			_List_fromArray(
+				[
+					$author$project$Main$viewScaleTitle(rootModel),
+					$author$project$Main$viewFretboard(rootModel)
+				])) : $author$project$Main$viewFretboard(rootModel);
+	});
 var $author$project$Main$ToggleWakeLock = {$: 'ToggleWakeLock'};
 var $author$project$Main$wakeLockButton = function (model) {
 	return A2(
@@ -9141,9 +9382,15 @@ var $author$project$Main$viewBody = function (model) {
 							])),
 						$author$project$Main$wakeLockButton(model)
 					])),
-				$author$project$Main$viewScaleTitle(model),
+				model.multiRoot ? $elm$html$Html$text('') : $author$project$Main$viewScaleTitle(model),
 				$author$project$Main$viewControls(model),
-				$author$project$Main$viewFretboard(model),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2(
+					$elm$core$List$map,
+					$author$project$Main$viewNeck(model),
+					$author$project$Main$selectedRoots(model))),
 				$author$project$Main$viewLegend(model)
 			]));
 };

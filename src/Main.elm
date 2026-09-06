@@ -22,8 +22,8 @@ port module Main exposing
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (Html, button, div, h1, p, span, text)
-import Html.Attributes exposing (style)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (checked, style, type_)
+import Html.Events exposing (onCheck, onClick)
 import Svg
 import Svg.Attributes as SA
 import Url exposing (Url)
@@ -35,6 +35,8 @@ import Url exposing (Url)
 
 type alias Model =
     { root : Int
+    , roots : List Int
+    , multiRoot : Bool
     , scale : ScaleType
     , tuning : Tuning
     , stringSet : StringSet
@@ -99,6 +101,8 @@ type StringSet
 
 type Msg
     = SetRoot Int
+    | SetRoots (List Int)
+    | SetMultiRoot Bool
     | SetScale ScaleType
     | SetTuning Tuning
     | SetStringSet StringSet
@@ -116,6 +120,8 @@ init _ url key =
             parseUrl url
     in
     ( { root = state.root
+      , roots = state.roots
+      , multiRoot = state.multiRoot
       , scale = state.scale
       , tuning = state.tuning
       , stringSet = state.stringSet
@@ -135,8 +141,49 @@ update msg model =
     case msg of
         SetRoot n ->
             let
+                pc =
+                    modBy 12 n
+
                 newModel =
-                    { model | root = modBy 12 n }
+                    if model.multiRoot then
+                        -- Toggle, but never down to nothing: with no root
+                        -- selected there is no neck left to draw.
+                        { model | roots = toggleRoot pc model.roots }
+
+                    else
+                        { model | root = pc }
+            in
+            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+
+        SetRoots rs ->
+            let
+                newModel =
+                    { model | roots = List.sort rs }
+            in
+            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+
+        SetMultiRoot on ->
+            let
+                newModel =
+                    if on then
+                        -- Seed the selection from the root already on screen,
+                        -- so ticking the box adds necks rather than replacing
+                        -- the one you were looking at.
+                        { model | multiRoot = True, roots = [ modBy 12 model.root ] }
+
+                    else
+                        -- Fall back to the neck the single view will show: the
+                        -- current root if it survived the selection, else the
+                        -- lowest one that is still selected.
+                        { model
+                            | multiRoot = False
+                            , root =
+                                if List.member (modBy 12 model.root) model.roots then
+                                    model.root
+
+                                else
+                                    List.head model.roots |> Maybe.withDefault model.root
+                        }
             in
             ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
 
@@ -186,6 +233,8 @@ update msg model =
             in
             ( { model
                 | root = state.root
+                , roots = state.roots
+                , multiRoot = state.multiRoot
                 , scale = state.scale
                 , tuning = state.tuning
                 , stringSet = state.stringSet
@@ -229,12 +278,22 @@ modelUrl model =
         base =
             "?root=" ++ rootSlug model.root ++ "&scale=" ++ scaleSlug model.scale
 
-        withTuning =
-            if model.tuning.slug == standardTuning.slug then
-                base
+        withRoots =
+            -- Multi-root mode is implied by the param: `roots` is only ever
+            -- written here, and the selection is never empty, so a URL either
+            -- carries a list of necks or the single `root` above.
+            if model.multiRoot then
+                base ++ "&roots=" ++ String.join "-" (List.map rootSlug (selectedRoots model))
 
             else
-                base ++ "&tuning=" ++ model.tuning.slug
+                base
+
+        withTuning =
+            if model.tuning.slug == standardTuning.slug then
+                withRoots
+
+            else
+                withRoots ++ "&tuning=" ++ model.tuning.slug
     in
     -- The string-set selector only exists in the triad modes, so its param is
     -- only carried there; every other mode keeps the URL it always had.
@@ -361,6 +420,8 @@ stringSetFromSlug s =
 string set the lassos are drawn on. -}
 type alias UrlState =
     { root : Int
+    , roots : List Int
+    , multiRoot : Bool
     , scale : ScaleType
     , tuning : Tuning
     , stringSet : StringSet
@@ -392,6 +453,12 @@ parseUrl url =
                 |> Maybe.andThen rootFromSlug
                 |> Maybe.withDefault 9
 
+        roots =
+            lookup "roots"
+                |> Maybe.map (String.split "-" >> List.filterMap rootFromSlug)
+                |> Maybe.withDefault []
+                |> List.sort
+
         scale =
             lookup "scale"
                 |> Maybe.andThen scaleFromSlug
@@ -407,7 +474,57 @@ parseUrl url =
                 |> Maybe.andThen stringSetFromSlug
                 |> Maybe.withDefault AllStrings
     in
-    { root = root, scale = scale, tuning = tuning, stringSet = stringSet }
+    { root = root
+    , roots =
+        if List.isEmpty roots then
+            [ root ]
+
+        else
+            roots
+    , multiRoot = not (List.isEmpty roots)
+    , scale = scale
+    , tuning = tuning
+    , stringSet = stringSet
+    }
+
+
+{-| The roots to draw a neck for: the whole selection in multi-root mode, and
+just the one root otherwise. Never empty. -}
+selectedRoots : Model -> List Int
+selectedRoots model =
+    if model.multiRoot && not (List.isEmpty model.roots) then
+        model.roots
+
+    else
+        [ modBy 12 model.root ]
+
+
+{-| Add or remove a root from the selection, keeping it sorted so the necks
+always read low to high. Removing the last one is refused — an empty selection
+would draw no necks at all. -}
+toggleRoot : Int -> List Int -> List Int
+toggleRoot pc roots =
+    if List.member pc roots then
+        if List.length roots <= 1 then
+            roots
+
+        else
+            List.filter (\n -> n /= pc) roots
+
+    else
+        List.sort (pc :: roots)
+
+
+{-| The black keys. -}
+sharpRoots : List Int
+sharpRoots =
+    [ 1, 3, 6, 8, 10 ]
+
+
+{-| The white keys — the notes that need no accidental. -}
+naturalRoots : List Int
+naturalRoots =
+    [ 0, 2, 4, 5, 7, 9, 11 ]
 
 
 {-| Named presets resolve by their slug; anything else is parsed as a custom
@@ -1712,11 +1829,33 @@ viewBody model =
             [ h1 [ style "margin" "0 0 6px" ] [ text "Guitar Fretboard Visualizer" ]
             , wakeLockButton model
             ]
-        , viewScaleTitle model
+        , if model.multiRoot then
+            -- Each neck carries its own title, so the single shared one above
+            -- the controls would have nothing left to name.
+            text ""
+
+          else
+            viewScaleTitle model
         , viewControls model
-        , viewFretboard model
+        , div [] (List.map (viewNeck model) (selectedRoots model))
         , viewLegend model
         ]
+
+
+{-| One fretboard for one root. Everything downstream reads the root off the
+model, so a neck is just the model with that root swapped in. -}
+viewNeck : Model -> Int -> Html Msg
+viewNeck model root =
+    let
+        rootModel =
+            { model | root = root }
+    in
+    if model.multiRoot then
+        div [ style "margin-bottom" "18px" ]
+            [ viewScaleTitle rootModel, viewFretboard rootModel ]
+
+    else
+        viewFretboard rootModel
 
 
 wakeLockButton : Model -> Html Msg
@@ -1880,8 +2019,24 @@ viewControls model =
             , scaleButton model ChromaticMinor "All notes (minor)"
             , scaleButton model ChromaticMajor "All notes (major)"
             ]
-        , div [ style "margin-bottom" "8px" ]
-            [ label "Root" , noteButtonRow model ]
+        , div
+            [ style "margin-bottom" "8px"
+            , style "display" "flex"
+            , style "align-items" "center"
+            , style "flex-wrap" "wrap"
+            , style "gap" "6px 12px"
+            ]
+            [ label "Root", noteButtonRow model, multiRootToggle model ]
+        , if model.multiRoot then
+            div [ style "margin-bottom" "8px" ]
+                [ label ""
+                , rootSetButton model "All" (List.range 0 11)
+                , rootSetButton model "All sharps" sharpRoots
+                , rootSetButton model "All naturals" naturalRoots
+                ]
+
+          else
+            text ""
         , div [ style "margin-bottom" "8px" ]
             (label "Tuning"
                 :: List.map (tuningButton model) tunings
@@ -1994,7 +2149,7 @@ rootButton : Model -> Int -> Html Msg
 rootButton model n =
     let
         active =
-            modBy 12 model.root == n
+            List.member n (selectedRoots model)
     in
     button
         ([ onClick (SetRoot n)
@@ -2003,6 +2158,43 @@ rootButton model n =
             ++ buttonBaseStyle active
         )
         [ text (rootSpelling model.scale n) ]
+
+
+{-| Turns the root buttons from a radio group into a multi-select, drawing one
+neck per selected root. -}
+multiRootToggle : Model -> Html Msg
+multiRootToggle model =
+    Html.label
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "gap" "5px"
+        , style "font-size" "13px"
+        , style "color" "var(--text-2)"
+        , style "cursor" "pointer"
+        , style "user-select" "none"
+        ]
+        [ Html.input
+            [ type_ "checkbox"
+            , checked model.multiRoot
+            , onCheck SetMultiRoot
+            , style "margin" "0"
+            , style "cursor" "pointer"
+            ]
+            []
+        , text "Multiple roots"
+        ]
+
+
+{-| Selects a whole family of roots at once. -}
+rootSetButton : Model -> String -> List Int -> Html Msg
+rootSetButton model lbl roots =
+    button
+        ([ onClick (SetRoots roots)
+         , style "min-width" "80px"
+         ]
+            ++ buttonBaseStyle (selectedRoots model == List.sort roots)
+        )
+        [ text lbl ]
 
 
 scaleButton : Model -> ScaleType -> String -> Html Msg
@@ -2071,6 +2263,15 @@ buttonBaseStyle active =
     ]
 
 
+{-| SVG ids live in one document-wide namespace, so with several necks on the
+page a `url(#…)` reference would resolve to whichever neck rendered first —
+every neck after the first would wear the first one's triad masks. Each neck
+prefixes the ids it mints with its root. -}
+neckId : Model -> String
+neckId model =
+    "r" ++ String.fromInt (modBy 12 model.root) ++ "-"
+
+
 viewFretboard : Model -> Html Msg
 viewFretboard model =
     let
@@ -2091,7 +2292,7 @@ viewFretboard model =
         , SA.style "max-width: 100%; height: auto;"
         ]
         (List.concat
-            [ [ stripePatternDefs ]
+            [ [ stripePatternDefs model ]
             , neckAndRegions
             , drawNotes model
             , drawFretNumbers
@@ -2254,7 +2455,7 @@ drawTriadLassos model =
                 |> List.sortBy (\triad -> -(triadLassoRadius triad))
     in
     List.map triadFill voicings
-        ++ List.concat (List.indexedMap triadRing voicings)
+        ++ List.concat (List.indexedMap (triadRing (neckId model)) voicings)
 
 
 {-| The lasso shape, shrunk by `inset`: one round-capped, round-joined stroke
@@ -2296,11 +2497,11 @@ strokes (wide in the color, narrower in the background color) because that pair
 would paint over whatever sits under the lasso — the inlay dots, and the rings
 of any lasso it crosses. The mask punches the middle out instead, so the ring
 is genuinely hollow and lassos can overlap freely. -}
-triadRing : Int -> Triad -> List (Svg.Svg Msg)
-triadRing index triad =
+triadRing : String -> Int -> Triad -> List (Svg.Svg Msg)
+triadRing prefix index triad =
     let
         maskId =
-            "triad-lasso-" ++ String.fromInt index
+            prefix ++ "triad-lasso-" ++ String.fromInt index
 
         -- Clear of the widest part of the shape, so the mask never clips it.
         pad =
@@ -2406,7 +2607,7 @@ drawOverlapStripe model ( b1, b2 ) octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
-                , SA.fill ("url(#ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
+                , SA.fill ("url(#" ++ neckId model ++ "ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
                 ]
                 []
             )
@@ -2415,10 +2616,10 @@ drawOverlapStripe model ( b1, b2 ) octave =
         Nothing
 
 
-stripePatternDefs : Svg.Svg Msg
-stripePatternDefs =
+stripePatternDefs : Model -> Svg.Svg Msg
+stripePatternDefs model =
     Svg.defs []
-        (List.map overlapStripePattern
+        (List.map (overlapStripePattern (neckId model))
             [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ), ( 5, 1 ) ]
         )
 
@@ -2460,7 +2661,7 @@ drawWrapOverlap model octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
-                , SA.fill "url(#ovlp-5-1)"
+                , SA.fill ("url(#" ++ neckId model ++ "ovlp-5-1)")
                 ]
                 []
             )
@@ -2469,8 +2670,8 @@ drawWrapOverlap model octave =
         Nothing
 
 
-overlapStripePattern : ( Int, Int ) -> Svg.Svg Msg
-overlapStripePattern ( b1, b2 ) =
+overlapStripePattern : String -> ( Int, Int ) -> Svg.Svg Msg
+overlapStripePattern prefix ( b1, b2 ) =
     let
         period = 14
         half = period / 2
@@ -2482,7 +2683,7 @@ overlapStripePattern ( b1, b2 ) =
             "color-mix(in srgb, " ++ boxColor b ++ " " ++ boxBlendPct ++ ", var(--bg))"
     in
     Svg.pattern
-        [ SA.id ("ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2)
+        [ SA.id (prefix ++ "ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2)
         , SA.patternUnits "userSpaceOnUse"
         , SA.width (String.fromFloat period)
         , SA.height (String.fromFloat period)
