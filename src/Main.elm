@@ -66,26 +66,28 @@ port wakeLockChanged : (Bool -> msg) -> Sub msg
 
 
 type ScaleType
-    = MinorPent
-    | MajorPent
+    = MajorPent
+    | MinorPent
     | Ionian
-    | Dorian
     | Aeolian
+    | Dorian
     | Mixolydian
     | Phrygian
     | Lydian
     | Locrian
     | Blues
+    | HarmonicMajor
     | HarmonicMinor
+    | MelodicMajor
     | MelodicMinor
-    | ChromaticMinor
     | ChromaticMajor
+    | ChromaticMinor
     | TriadMajor
     | TriadMinor
     | TriadDim
     | TriadAug
-    | DiagonalPent
     | DiagonalMajorPent
+    | DiagonalPent
     | DiagonalBlues
 
 
@@ -343,34 +345,36 @@ rootFromSlug s =
 scaleSlug : ScaleType -> String
 scaleSlug s =
     case s of
-        MinorPent -> "minor-pent"
         MajorPent -> "major-pent"
+        MinorPent -> "minor-pent"
         Ionian -> "ionian"
         Aeolian -> "aeolian"
+        Dorian -> "dorian"
         Mixolydian -> "mixolydian"
         Phrygian -> "phrygian"
         Lydian -> "lydian"
         Locrian -> "locrian"
         Blues -> "blues"
+        HarmonicMajor -> "harmonic-major"
         HarmonicMinor -> "harmonic-minor"
+        MelodicMajor -> "melodic-major"
         MelodicMinor -> "melodic-minor"
-        ChromaticMinor -> "all-notes-minor"
         ChromaticMajor -> "all-notes-major"
+        ChromaticMinor -> "all-notes-minor"
         TriadMajor -> "triad-major"
         TriadMinor -> "triad-minor"
         TriadDim -> "triad-dim"
         TriadAug -> "triad-aug"
-        DiagonalPent -> "diagonal-pent"
         DiagonalMajorPent -> "diagonal-major-pent"
+        DiagonalPent -> "diagonal-pent"
         DiagonalBlues -> "diagonal-blues"
-        Dorian -> "dorian"
 
 
 scaleFromSlug : String -> Maybe ScaleType
 scaleFromSlug s =
     case s of
-        "minor-pent" -> Just MinorPent
         "major-pent" -> Just MajorPent
+        "minor-pent" -> Just MinorPent
         "ionian" -> Just Ionian
         "aeolian" -> Just Aeolian
         "dorian" -> Just Dorian
@@ -379,18 +383,20 @@ scaleFromSlug s =
         "lydian" -> Just Lydian
         "locrian" -> Just Locrian
         "blues" -> Just Blues
+        "harmonic-major" -> Just HarmonicMajor
         "harmonic-minor" -> Just HarmonicMinor
+        "melodic-major" -> Just MelodicMajor
         "melodic-minor" -> Just MelodicMinor
-        "all-notes-minor" -> Just ChromaticMinor
         "all-notes-major" -> Just ChromaticMajor
+        "all-notes-minor" -> Just ChromaticMinor
         "triad-major" -> Just TriadMajor
         "triad-minor" -> Just TriadMinor
         "triad-dim" -> Just TriadDim
         "triad-aug" -> Just TriadAug
         -- The all-notes map used to be a single mode; keep old links working.
         "all-notes" -> Just ChromaticMinor
-        "diagonal-pent" -> Just DiagonalPent
         "diagonal-major-pent" -> Just DiagonalMajorPent
+        "diagonal-pent" -> Just DiagonalPent
         "diagonal-blues" -> Just DiagonalBlues
         _ -> Nothing
 
@@ -744,26 +750,28 @@ Pentatonics skip the missing degrees; the blues blue-note shares the 5th letter
 scaleDegrees : ScaleType -> List Int
 scaleDegrees st =
     case st of
-        MinorPent -> [ 1, 3, 4, 5, 7 ]
         MajorPent -> [ 1, 2, 3, 5, 6 ]
+        MinorPent -> [ 1, 3, 4, 5, 7 ]
         Ionian -> [ 1, 2, 3, 4, 5, 6, 7 ]
-        Dorian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Aeolian -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Dorian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Mixolydian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Phrygian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Lydian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Locrian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Blues -> [ 1, 3, 4, 5, 5, 7 ]
+        HarmonicMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         HarmonicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        MelodicMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
-        ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         ChromaticMajor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
+        ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         TriadMajor -> [ 1, 3, 5 ]
         TriadMinor -> [ 1, 3, 5 ]
         TriadDim -> [ 1, 3, 5 ]
         TriadAug -> [ 1, 3, 5 ]
-        DiagonalPent -> [ 1, 3, 4, 5, 7 ]
         DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
+        DiagonalPent -> [ 1, 3, 4, 5, 7 ]
         DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
 
 
@@ -889,20 +897,20 @@ boxShift tuning s =
 scaleIntervals : ScaleType -> List Int
 scaleIntervals st =
     case st of
-        MinorPent ->
-            [ 0, 3, 5, 7, 10 ]
-
         MajorPent ->
             [ 0, 2, 4, 7, 9 ]
+
+        MinorPent ->
+            [ 0, 3, 5, 7, 10 ]
 
         Ionian ->
             [ 0, 2, 4, 5, 7, 9, 11 ]
 
-        Dorian ->
-            [ 0, 2, 3, 5, 7, 9, 10 ]
-
         Aeolian ->
             [ 0, 2, 3, 5, 7, 8, 10 ]
+
+        Dorian ->
+            [ 0, 2, 3, 5, 7, 9, 10 ]
 
         Mixolydian ->
             [ 0, 2, 4, 5, 7, 9, 10 ]
@@ -919,16 +927,25 @@ scaleIntervals st =
         Blues ->
             [ 0, 3, 5, 6, 7, 10 ]
 
+        -- Major with a ♭6, the mirror of harmonic minor's raised 7th.
+        HarmonicMajor ->
+            [ 0, 2, 4, 5, 7, 8, 11 ]
+
         HarmonicMinor ->
             [ 0, 2, 3, 5, 7, 8, 11 ]
+
+        -- Major with ♭6 and ♭7 (Mixolydian ♭6), the mirror of melodic minor's
+        -- raised 6th and 7th.
+        MelodicMajor ->
+            [ 0, 2, 4, 5, 7, 8, 10 ]
 
         MelodicMinor ->
             [ 0, 2, 3, 5, 7, 9, 11 ]
 
-        ChromaticMinor ->
+        ChromaticMajor ->
             List.range 0 11
 
-        ChromaticMajor ->
+        ChromaticMinor ->
             List.range 0 11
 
         TriadMajor ->
@@ -943,11 +960,11 @@ scaleIntervals st =
         TriadAug ->
             [ 0, 4, 8 ]
 
-        DiagonalPent ->
-            [ 0, 3, 5, 7, 10 ]
-
         DiagonalMajorPent ->
             [ 0, 2, 4, 7, 9 ]
+
+        DiagonalPent ->
+            [ 0, 3, 5, 7, 10 ]
 
         DiagonalBlues ->
             [ 0, 3, 5, 6, 7, 10 ]
@@ -983,20 +1000,20 @@ rootFret model =
             modBy 12 (model.root - 3 - lowE)
     in
     case model.scale of
-        MinorPent ->
-            minorAnchor
-
         MajorPent ->
             majorAnchor
+
+        MinorPent ->
+            minorAnchor
 
         Ionian ->
             majorAnchor
 
-        Dorian ->
-            majorAnchor
-
         Aeolian ->
             minorAnchor
+
+        Dorian ->
+            majorAnchor
 
         Mixolydian ->
             majorAnchor
@@ -1013,19 +1030,25 @@ rootFret model =
         Blues ->
             minorAnchor
 
+        HarmonicMajor ->
+            majorAnchor
+
         HarmonicMinor ->
             minorAnchor
+
+        MelodicMajor ->
+            majorAnchor
 
         MelodicMinor ->
             minorAnchor
 
-        ChromaticMinor ->
+        ChromaticMajor ->
             -- No boxes are drawn for the all-notes maps, so the anchor is
             -- unused; the matching flavor's anchor is the sane value.
-            minorAnchor
-
-        ChromaticMajor ->
             majorAnchor
+
+        ChromaticMinor ->
+            minorAnchor
 
         TriadMajor ->
             -- Triads draw lassos, not boxes, so the anchor is never read.
@@ -1040,11 +1063,11 @@ rootFret model =
         TriadAug ->
             majorAnchor
 
-        DiagonalPent ->
-            diagonalAnchor model.tuning DiagonalPent model.root
-
         DiagonalMajorPent ->
             diagonalAnchor model.tuning DiagonalMajorPent model.root
+
+        DiagonalPent ->
+            diagonalAnchor model.tuning DiagonalPent model.root
 
         DiagonalBlues ->
             diagonalAnchor model.tuning DiagonalBlues model.root
@@ -1098,6 +1121,8 @@ majorFlavored scale =
         Phrygian -> True
         Lydian -> True
         Locrian -> True
+        HarmonicMajor -> True
+        MelodicMajor -> True
         _ -> False
 
 
@@ -1472,50 +1497,54 @@ noteRole model n =
 
         thirdInterval =
             case model.scale of
-                MinorPent -> 3
                 MajorPent -> 4
+                MinorPent -> 3
                 Ionian -> 4
-                Dorian -> 3
                 Aeolian -> 3
+                Dorian -> 3
                 Mixolydian -> 4
                 Phrygian -> 3
                 Lydian -> 4
                 Locrian -> 3
                 Blues -> 3
+                HarmonicMajor -> 4
                 HarmonicMinor -> 3
+                MelodicMajor -> 4
                 MelodicMinor -> 3
-                ChromaticMinor -> -1
                 ChromaticMajor -> -1
+                ChromaticMinor -> -1
                 TriadMajor -> 4
                 TriadMinor -> 3
                 TriadDim -> 3
                 TriadAug -> 4
-                DiagonalPent -> 3
                 DiagonalMajorPent -> 4
+                DiagonalPent -> 3
                 DiagonalBlues -> 3
 
         seventhInterval =
             case model.scale of
-                MinorPent -> 10
                 MajorPent -> -1
+                MinorPent -> 10
                 Ionian -> 11
-                Dorian -> 10
                 Aeolian -> 10
+                Dorian -> 10
                 Mixolydian -> 10
                 Phrygian -> 10
                 Lydian -> 11
                 Locrian -> 10
                 Blues -> 10
+                HarmonicMajor -> 11
                 HarmonicMinor -> 11
+                MelodicMajor -> 10
                 MelodicMinor -> 11
-                ChromaticMinor -> -1
                 ChromaticMajor -> -1
+                ChromaticMinor -> -1
                 TriadMajor -> -1
                 TriadMinor -> -1
                 TriadDim -> -1
                 TriadAug -> -1
-                DiagonalPent -> 10
                 DiagonalMajorPent -> -1
+                DiagonalPent -> 10
                 DiagonalBlues -> 10
     in
     if interval == 0 then
@@ -1884,51 +1913,55 @@ viewScaleTitle model =
             rootSpelling model.scale model.root
                 ++ " "
                 ++ (case model.scale of
-                        MinorPent -> "Minor Pentatonic"
                         MajorPent -> "Major Pentatonic"
-                        Ionian -> "Ionian (Major)"
+                        MinorPent -> "Minor Pentatonic"
+                        Ionian -> "Major (Ionian)"
+                        Aeolian -> "Minor (Aeolian)"
                         Dorian -> "Dorian"
-                        Aeolian -> "Aeolian (Natural Minor)"
                         Mixolydian -> "Mixolydian"
                         Phrygian -> "Phrygian"
                         Lydian -> "Lydian"
                         Locrian -> "Locrian"
                         Blues -> "Blues"
+                        HarmonicMajor -> "Harmonic Major"
                         HarmonicMinor -> "Harmonic Minor"
+                        MelodicMajor -> "Melodic Major"
                         MelodicMinor -> "Melodic Minor"
-                        ChromaticMinor -> "— All Notes (minor)"
                         ChromaticMajor -> "— All Notes (major)"
+                        ChromaticMinor -> "— All Notes (minor)"
                         TriadMajor -> "Major Triad"
                         TriadMinor -> "Minor Triad"
                         TriadDim -> "Diminished Triad"
                         TriadAug -> "Augmented Triad"
-                        DiagonalPent -> "Diagonal Minor Pentatonic"
                         DiagonalMajorPent -> "Diagonal Major Pentatonic"
+                        DiagonalPent -> "Diagonal Minor Pentatonic"
                         DiagonalBlues -> "Diagonal Blues"
                    )
 
         intervalLabels =
             case model.scale of
-                MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 MajorPent -> [ "R", "2", "3", "5", "6" ]
+                MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
-                Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
                 Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
+                Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
                 Mixolydian -> [ "R", "2", "3", "4", "5", "6", "♭7" ]
                 Phrygian -> [ "R", "♭2", "♭3", "4", "5", "♭6", "♭7" ]
                 Lydian -> [ "R", "2", "3", "♯4", "5", "6", "7" ]
                 Locrian -> [ "R", "♭2", "♭3", "4", "♭5", "♭6", "♭7" ]
                 Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
+                HarmonicMajor -> [ "R", "2", "3", "4", "5", "♭6", "7" ]
                 HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
+                MelodicMajor -> [ "R", "2", "3", "4", "5", "♭6", "♭7" ]
                 MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
-                ChromaticMinor -> List.repeat 12 ""
                 ChromaticMajor -> List.repeat 12 ""
+                ChromaticMinor -> List.repeat 12 ""
                 TriadMajor -> [ "R", "3", "5" ]
                 TriadMinor -> [ "R", "♭3", "5" ]
                 TriadDim -> [ "R", "♭3", "♭5" ]
                 TriadAug -> [ "R", "3", "♯5" ]
-                DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
+                DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
 
         notePairs =
@@ -1978,23 +2011,25 @@ viewControls model =
     div [ style "margin-bottom" "18px" ]
         [ div [ style "margin-bottom" "8px" ]
             [ label "Scale"
-            , scaleButton model MinorPent "Minor pentatonic"
             , scaleButton model MajorPent "Major pentatonic"
-            , scaleButton model Ionian "Ionian"
-            , scaleButton model Aeolian "Aeolian"
+            , scaleButton model MinorPent "Minor pentatonic"
+            , scaleButton model Ionian "Major (Ionian)"
+            , scaleButton model Aeolian "Minor (Aeolian)"
             , scaleButton model Dorian "Dorian"
             , scaleButton model Mixolydian "Mixolydian"
             , scaleButton model Phrygian "Phrygian"
             , scaleButton model Lydian "Lydian"
             , scaleButton model Locrian "Locrian"
             , scaleButton model Blues "Blues"
+            , scaleButton model HarmonicMajor "Harmonic major"
             , scaleButton model HarmonicMinor "Harmonic minor"
+            , scaleButton model MelodicMajor "Melodic major"
             , scaleButton model MelodicMinor "Melodic minor"
             ]
         , div [ style "margin-bottom" "8px" ]
             [ label "Diag. Scale"
-            , scaleButton model DiagonalPent "Minor pentatonic"
             , scaleButton model DiagonalMajorPent "Major pentatonic"
+            , scaleButton model DiagonalPent "Minor pentatonic"
             , scaleButton model DiagonalBlues "Blues"
             ]
         , div [ style "margin-bottom" "8px" ]
@@ -2017,8 +2052,8 @@ viewControls model =
             text ""
         , div [ style "margin-bottom" "8px" ]
             [ label "No scale"
-            , scaleButton model ChromaticMinor "All notes (minor)"
             , scaleButton model ChromaticMajor "All notes (major)"
+            , scaleButton model ChromaticMinor "All notes (minor)"
             ]
         , div
             [ style "margin-bottom" "8px"

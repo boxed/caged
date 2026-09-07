@@ -5314,11 +5314,13 @@ var $author$project$Main$DiagonalBlues = {$: 'DiagonalBlues'};
 var $author$project$Main$DiagonalMajorPent = {$: 'DiagonalMajorPent'};
 var $author$project$Main$DiagonalPent = {$: 'DiagonalPent'};
 var $author$project$Main$Dorian = {$: 'Dorian'};
+var $author$project$Main$HarmonicMajor = {$: 'HarmonicMajor'};
 var $author$project$Main$HarmonicMinor = {$: 'HarmonicMinor'};
 var $author$project$Main$Ionian = {$: 'Ionian'};
 var $author$project$Main$Locrian = {$: 'Locrian'};
 var $author$project$Main$Lydian = {$: 'Lydian'};
 var $author$project$Main$MajorPent = {$: 'MajorPent'};
+var $author$project$Main$MelodicMajor = {$: 'MelodicMajor'};
 var $author$project$Main$MelodicMinor = {$: 'MelodicMinor'};
 var $author$project$Main$Mixolydian = {$: 'Mixolydian'};
 var $author$project$Main$Phrygian = {$: 'Phrygian'};
@@ -5328,10 +5330,10 @@ var $author$project$Main$TriadMajor = {$: 'TriadMajor'};
 var $author$project$Main$TriadMinor = {$: 'TriadMinor'};
 var $author$project$Main$scaleFromSlug = function (s) {
 	switch (s) {
-		case 'minor-pent':
-			return $elm$core$Maybe$Just($author$project$Main$MinorPent);
 		case 'major-pent':
 			return $elm$core$Maybe$Just($author$project$Main$MajorPent);
+		case 'minor-pent':
+			return $elm$core$Maybe$Just($author$project$Main$MinorPent);
 		case 'ionian':
 			return $elm$core$Maybe$Just($author$project$Main$Ionian);
 		case 'aeolian':
@@ -5348,14 +5350,18 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$Locrian);
 		case 'blues':
 			return $elm$core$Maybe$Just($author$project$Main$Blues);
+		case 'harmonic-major':
+			return $elm$core$Maybe$Just($author$project$Main$HarmonicMajor);
 		case 'harmonic-minor':
 			return $elm$core$Maybe$Just($author$project$Main$HarmonicMinor);
+		case 'melodic-major':
+			return $elm$core$Maybe$Just($author$project$Main$MelodicMajor);
 		case 'melodic-minor':
 			return $elm$core$Maybe$Just($author$project$Main$MelodicMinor);
-		case 'all-notes-minor':
-			return $elm$core$Maybe$Just($author$project$Main$ChromaticMinor);
 		case 'all-notes-major':
 			return $elm$core$Maybe$Just($author$project$Main$ChromaticMajor);
+		case 'all-notes-minor':
+			return $elm$core$Maybe$Just($author$project$Main$ChromaticMinor);
 		case 'triad-major':
 			return $elm$core$Maybe$Just($author$project$Main$TriadMajor);
 		case 'triad-minor':
@@ -5366,10 +5372,10 @@ var $author$project$Main$scaleFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$TriadAug);
 		case 'all-notes':
 			return $elm$core$Maybe$Just($author$project$Main$ChromaticMinor);
-		case 'diagonal-pent':
-			return $elm$core$Maybe$Just($author$project$Main$DiagonalPent);
 		case 'diagonal-major-pent':
 			return $elm$core$Maybe$Just($author$project$Main$DiagonalMajorPent);
+		case 'diagonal-pent':
+			return $elm$core$Maybe$Just($author$project$Main$DiagonalPent);
 		case 'diagonal-blues':
 			return $elm$core$Maybe$Just($author$project$Main$DiagonalBlues);
 		default:
@@ -5674,14 +5680,16 @@ var $author$project$Main$isTriad = function (scale) {
 var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Main$scaleSlug = function (s) {
 	switch (s.$) {
-		case 'MinorPent':
-			return 'minor-pent';
 		case 'MajorPent':
 			return 'major-pent';
+		case 'MinorPent':
+			return 'minor-pent';
 		case 'Ionian':
 			return 'ionian';
 		case 'Aeolian':
 			return 'aeolian';
+		case 'Dorian':
+			return 'dorian';
 		case 'Mixolydian':
 			return 'mixolydian';
 		case 'Phrygian':
@@ -5692,14 +5700,18 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'locrian';
 		case 'Blues':
 			return 'blues';
+		case 'HarmonicMajor':
+			return 'harmonic-major';
 		case 'HarmonicMinor':
 			return 'harmonic-minor';
+		case 'MelodicMajor':
+			return 'melodic-major';
 		case 'MelodicMinor':
 			return 'melodic-minor';
-		case 'ChromaticMinor':
-			return 'all-notes-minor';
 		case 'ChromaticMajor':
 			return 'all-notes-major';
+		case 'ChromaticMinor':
+			return 'all-notes-minor';
 		case 'TriadMajor':
 			return 'triad-major';
 		case 'TriadMinor':
@@ -5708,14 +5720,12 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'triad-dim';
 		case 'TriadAug':
 			return 'triad-aug';
-		case 'DiagonalPent':
-			return 'diagonal-pent';
 		case 'DiagonalMajorPent':
 			return 'diagonal-major-pent';
-		case 'DiagonalBlues':
-			return 'diagonal-blues';
+		case 'DiagonalPent':
+			return 'diagonal-pent';
 		default:
-			return 'dorian';
+			return 'diagonal-blues';
 	}
 };
 var $author$project$Main$selectedRoots = function (model) {
@@ -6178,19 +6188,19 @@ var $author$project$Main$rootLetterCandidates = function (pc) {
 };
 var $author$project$Main$scaleDegrees = function (st) {
 	switch (st.$) {
-		case 'MinorPent':
-			return _List_fromArray(
-				[1, 3, 4, 5, 7]);
 		case 'MajorPent':
 			return _List_fromArray(
 				[1, 2, 3, 5, 6]);
+		case 'MinorPent':
+			return _List_fromArray(
+				[1, 3, 4, 5, 7]);
 		case 'Ionian':
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
-		case 'Dorian':
+		case 'Aeolian':
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
-		case 'Aeolian':
+		case 'Dorian':
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
 		case 'Mixolydian':
@@ -6208,16 +6218,22 @@ var $author$project$Main$scaleDegrees = function (st) {
 		case 'Blues':
 			return _List_fromArray(
 				[1, 3, 4, 5, 5, 7]);
+		case 'HarmonicMajor':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
 		case 'HarmonicMinor':
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 'MelodicMajor':
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
 		case 'MelodicMinor':
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
-		case 'ChromaticMinor':
+		case 'ChromaticMajor':
 			return _List_fromArray(
 				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
-		case 'ChromaticMajor':
+		case 'ChromaticMinor':
 			return _List_fromArray(
 				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
 		case 'TriadMajor':
@@ -6232,12 +6248,12 @@ var $author$project$Main$scaleDegrees = function (st) {
 		case 'TriadAug':
 			return _List_fromArray(
 				[1, 3, 5]);
-		case 'DiagonalPent':
-			return _List_fromArray(
-				[1, 3, 4, 5, 7]);
 		case 'DiagonalMajorPent':
 			return _List_fromArray(
 				[1, 2, 3, 5, 6]);
+		case 'DiagonalPent':
+			return _List_fromArray(
+				[1, 3, 4, 5, 7]);
 		default:
 			return _List_fromArray(
 				[1, 3, 4, 5, 5, 7]);
@@ -6245,21 +6261,21 @@ var $author$project$Main$scaleDegrees = function (st) {
 };
 var $author$project$Main$scaleIntervals = function (st) {
 	switch (st.$) {
-		case 'MinorPent':
-			return _List_fromArray(
-				[0, 3, 5, 7, 10]);
 		case 'MajorPent':
 			return _List_fromArray(
 				[0, 2, 4, 7, 9]);
+		case 'MinorPent':
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
 		case 'Ionian':
 			return _List_fromArray(
 				[0, 2, 4, 5, 7, 9, 11]);
-		case 'Dorian':
-			return _List_fromArray(
-				[0, 2, 3, 5, 7, 9, 10]);
 		case 'Aeolian':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 8, 10]);
+		case 'Dorian':
+			return _List_fromArray(
+				[0, 2, 3, 5, 7, 9, 10]);
 		case 'Mixolydian':
 			return _List_fromArray(
 				[0, 2, 4, 5, 7, 9, 10]);
@@ -6275,15 +6291,21 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'Blues':
 			return _List_fromArray(
 				[0, 3, 5, 6, 7, 10]);
+		case 'HarmonicMajor':
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 8, 11]);
 		case 'HarmonicMinor':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 8, 11]);
+		case 'MelodicMajor':
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 8, 10]);
 		case 'MelodicMinor':
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 9, 11]);
-		case 'ChromaticMinor':
-			return A2($elm$core$List$range, 0, 11);
 		case 'ChromaticMajor':
+			return A2($elm$core$List$range, 0, 11);
+		case 'ChromaticMinor':
 			return A2($elm$core$List$range, 0, 11);
 		case 'TriadMajor':
 			return _List_fromArray(
@@ -6297,12 +6319,12 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 'TriadAug':
 			return _List_fromArray(
 				[0, 4, 8]);
-		case 'DiagonalPent':
-			return _List_fromArray(
-				[0, 3, 5, 7, 10]);
 		case 'DiagonalMajorPent':
 			return _List_fromArray(
 				[0, 2, 4, 7, 9]);
+		case 'DiagonalPent':
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
 		default:
 			return _List_fromArray(
 				[0, 3, 5, 6, 7, 10]);
@@ -6668,17 +6690,19 @@ var $author$project$Main$viewControls = function (model) {
 				_List_fromArray(
 					[
 						$author$project$Main$label('Scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major pentatonic'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Ionian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Aeolian'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor pentatonic'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Major (Ionian)'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Minor (Aeolian)'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Mixolydian, 'Mixolydian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Phrygian, 'Phrygian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Lydian, 'Lydian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Locrian, 'Locrian'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$Blues, 'Blues'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMajor, 'Harmonic major'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMinor, 'Harmonic minor'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMajor, 'Melodic major'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMinor, 'Melodic minor')
 					])),
 				A2(
@@ -6690,8 +6714,8 @@ var $author$project$Main$viewControls = function (model) {
 				_List_fromArray(
 					[
 						$author$project$Main$label('Diag. Scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor pentatonic'),
 						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalBlues, 'Blues')
 					])),
 				A2(
@@ -6741,8 +6765,8 @@ var $author$project$Main$viewControls = function (model) {
 				_List_fromArray(
 					[
 						$author$project$Main$label('No scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMinor, 'All notes (minor)'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMajor, 'All notes (major)')
+						A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMajor, 'All notes (major)'),
+						A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMinor, 'All notes (minor)')
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -7204,6 +7228,10 @@ var $author$project$Main$majorFlavored = function (scale) {
 			return true;
 		case 'Locrian':
 			return true;
+		case 'HarmonicMajor':
+			return true;
+		case 'MelodicMajor':
+			return true;
 		default:
 			return false;
 	}
@@ -7510,16 +7538,16 @@ var $author$project$Main$rootFret = function (model) {
 	var minorAnchor = A2($elm$core$Basics$modBy, 12, model.root - lowE);
 	var _v0 = model.scale;
 	switch (_v0.$) {
-		case 'MinorPent':
-			return minorAnchor;
 		case 'MajorPent':
 			return majorAnchor;
+		case 'MinorPent':
+			return minorAnchor;
 		case 'Ionian':
-			return majorAnchor;
-		case 'Dorian':
 			return majorAnchor;
 		case 'Aeolian':
 			return minorAnchor;
+		case 'Dorian':
+			return majorAnchor;
 		case 'Mixolydian':
 			return majorAnchor;
 		case 'Phrygian':
@@ -7530,14 +7558,18 @@ var $author$project$Main$rootFret = function (model) {
 			return majorAnchor;
 		case 'Blues':
 			return minorAnchor;
+		case 'HarmonicMajor':
+			return majorAnchor;
 		case 'HarmonicMinor':
 			return minorAnchor;
+		case 'MelodicMajor':
+			return majorAnchor;
 		case 'MelodicMinor':
-			return minorAnchor;
-		case 'ChromaticMinor':
 			return minorAnchor;
 		case 'ChromaticMajor':
 			return majorAnchor;
+		case 'ChromaticMinor':
+			return minorAnchor;
 		case 'TriadMajor':
 			return majorAnchor;
 		case 'TriadMinor':
@@ -7546,10 +7578,10 @@ var $author$project$Main$rootFret = function (model) {
 			return minorAnchor;
 		case 'TriadAug':
 			return majorAnchor;
-		case 'DiagonalPent':
-			return A3($author$project$Main$diagonalAnchor, model.tuning, $author$project$Main$DiagonalPent, model.root);
 		case 'DiagonalMajorPent':
 			return A3($author$project$Main$diagonalAnchor, model.tuning, $author$project$Main$DiagonalMajorPent, model.root);
+		case 'DiagonalPent':
+			return A3($author$project$Main$diagonalAnchor, model.tuning, $author$project$Main$DiagonalPent, model.root);
 		default:
 			return A3($author$project$Main$diagonalAnchor, model.tuning, $author$project$Main$DiagonalBlues, model.root);
 	}
@@ -8643,15 +8675,15 @@ var $author$project$Main$noteRole = F2(
 			var thirdInterval = function () {
 				var _v1 = model.scale;
 				switch (_v1.$) {
-					case 'MinorPent':
-						return 3;
 					case 'MajorPent':
 						return 4;
+					case 'MinorPent':
+						return 3;
 					case 'Ionian':
 						return 4;
-					case 'Dorian':
-						return 3;
 					case 'Aeolian':
+						return 3;
+					case 'Dorian':
 						return 3;
 					case 'Mixolydian':
 						return 4;
@@ -8663,13 +8695,17 @@ var $author$project$Main$noteRole = F2(
 						return 3;
 					case 'Blues':
 						return 3;
+					case 'HarmonicMajor':
+						return 4;
 					case 'HarmonicMinor':
 						return 3;
+					case 'MelodicMajor':
+						return 4;
 					case 'MelodicMinor':
 						return 3;
-					case 'ChromaticMinor':
-						return -1;
 					case 'ChromaticMajor':
+						return -1;
+					case 'ChromaticMinor':
 						return -1;
 					case 'TriadMajor':
 						return 4;
@@ -8679,10 +8715,10 @@ var $author$project$Main$noteRole = F2(
 						return 3;
 					case 'TriadAug':
 						return 4;
-					case 'DiagonalPent':
-						return 3;
 					case 'DiagonalMajorPent':
 						return 4;
+					case 'DiagonalPent':
+						return 3;
 					default:
 						return 3;
 				}
@@ -8690,15 +8726,15 @@ var $author$project$Main$noteRole = F2(
 			var seventhInterval = function () {
 				var _v0 = model.scale;
 				switch (_v0.$) {
-					case 'MinorPent':
-						return 10;
 					case 'MajorPent':
 						return -1;
+					case 'MinorPent':
+						return 10;
 					case 'Ionian':
 						return 11;
-					case 'Dorian':
-						return 10;
 					case 'Aeolian':
+						return 10;
+					case 'Dorian':
 						return 10;
 					case 'Mixolydian':
 						return 10;
@@ -8710,13 +8746,17 @@ var $author$project$Main$noteRole = F2(
 						return 10;
 					case 'Blues':
 						return 10;
+					case 'HarmonicMajor':
+						return 11;
 					case 'HarmonicMinor':
 						return 11;
+					case 'MelodicMajor':
+						return 10;
 					case 'MelodicMinor':
 						return 11;
-					case 'ChromaticMinor':
-						return -1;
 					case 'ChromaticMajor':
+						return -1;
+					case 'ChromaticMinor':
 						return -1;
 					case 'TriadMajor':
 						return -1;
@@ -8726,10 +8766,10 @@ var $author$project$Main$noteRole = F2(
 						return -1;
 					case 'TriadAug':
 						return -1;
-					case 'DiagonalPent':
-						return 10;
 					case 'DiagonalMajorPent':
 						return -1;
+					case 'DiagonalPent':
+						return 10;
 					default:
 						return 10;
 				}
@@ -9169,16 +9209,16 @@ var $author$project$Main$viewScaleTitle = function (model) {
 	var scaleName = A2($author$project$Main$rootSpelling, model.scale, model.root) + (' ' + function () {
 		var _v1 = model.scale;
 		switch (_v1.$) {
-			case 'MinorPent':
-				return 'Minor Pentatonic';
 			case 'MajorPent':
 				return 'Major Pentatonic';
+			case 'MinorPent':
+				return 'Minor Pentatonic';
 			case 'Ionian':
-				return 'Ionian (Major)';
+				return 'Major (Ionian)';
+			case 'Aeolian':
+				return 'Minor (Aeolian)';
 			case 'Dorian':
 				return 'Dorian';
-			case 'Aeolian':
-				return 'Aeolian (Natural Minor)';
 			case 'Mixolydian':
 				return 'Mixolydian';
 			case 'Phrygian':
@@ -9189,14 +9229,18 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Locrian';
 			case 'Blues':
 				return 'Blues';
+			case 'HarmonicMajor':
+				return 'Harmonic Major';
 			case 'HarmonicMinor':
 				return 'Harmonic Minor';
+			case 'MelodicMajor':
+				return 'Melodic Major';
 			case 'MelodicMinor':
 				return 'Melodic Minor';
-			case 'ChromaticMinor':
-				return '— All Notes (minor)';
 			case 'ChromaticMajor':
 				return '— All Notes (major)';
+			case 'ChromaticMinor':
+				return '— All Notes (minor)';
 			case 'TriadMajor':
 				return 'Major Triad';
 			case 'TriadMinor':
@@ -9205,10 +9249,10 @@ var $author$project$Main$viewScaleTitle = function (model) {
 				return 'Diminished Triad';
 			case 'TriadAug':
 				return 'Augmented Triad';
-			case 'DiagonalPent':
-				return 'Diagonal Minor Pentatonic';
 			case 'DiagonalMajorPent':
 				return 'Diagonal Major Pentatonic';
+			case 'DiagonalPent':
+				return 'Diagonal Minor Pentatonic';
 			default:
 				return 'Diagonal Blues';
 		}
@@ -9216,21 +9260,21 @@ var $author$project$Main$viewScaleTitle = function (model) {
 	var intervalLabels = function () {
 		var _v0 = model.scale;
 		switch (_v0.$) {
-			case 'MinorPent':
-				return _List_fromArray(
-					['R', '♭3', '4', '5', '♭7']);
 			case 'MajorPent':
 				return _List_fromArray(
 					['R', '2', '3', '5', '6']);
+			case 'MinorPent':
+				return _List_fromArray(
+					['R', '♭3', '4', '5', '♭7']);
 			case 'Ionian':
 				return _List_fromArray(
 					['R', '2', '3', '4', '5', '6', '7']);
-			case 'Dorian':
-				return _List_fromArray(
-					['R', '2', '♭3', '4', '5', '6', '♭7']);
 			case 'Aeolian':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '♭6', '♭7']);
+			case 'Dorian':
+				return _List_fromArray(
+					['R', '2', '♭3', '4', '5', '6', '♭7']);
 			case 'Mixolydian':
 				return _List_fromArray(
 					['R', '2', '3', '4', '5', '6', '♭7']);
@@ -9246,15 +9290,21 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'Blues':
 				return _List_fromArray(
 					['R', '♭3', '4', '♭5', '5', '♭7']);
+			case 'HarmonicMajor':
+				return _List_fromArray(
+					['R', '2', '3', '4', '5', '♭6', '7']);
 			case 'HarmonicMinor':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '♭6', '7']);
+			case 'MelodicMajor':
+				return _List_fromArray(
+					['R', '2', '3', '4', '5', '♭6', '♭7']);
 			case 'MelodicMinor':
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '6', '7']);
-			case 'ChromaticMinor':
-				return A2($elm$core$List$repeat, 12, '');
 			case 'ChromaticMajor':
+				return A2($elm$core$List$repeat, 12, '');
+			case 'ChromaticMinor':
 				return A2($elm$core$List$repeat, 12, '');
 			case 'TriadMajor':
 				return _List_fromArray(
@@ -9268,12 +9318,12 @@ var $author$project$Main$viewScaleTitle = function (model) {
 			case 'TriadAug':
 				return _List_fromArray(
 					['R', '3', '♯5']);
-			case 'DiagonalPent':
-				return _List_fromArray(
-					['R', '♭3', '4', '5', '♭7']);
 			case 'DiagonalMajorPent':
 				return _List_fromArray(
 					['R', '2', '3', '5', '6']);
+			case 'DiagonalPent':
+				return _List_fromArray(
+					['R', '♭3', '4', '5', '♭7']);
 			default:
 				return _List_fromArray(
 					['R', '♭3', '4', '♭5', '5', '♭7']);

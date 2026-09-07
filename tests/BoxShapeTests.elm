@@ -52,7 +52,7 @@ fretboardFrets =
 climbing shapes). -}
 boxScales : List ScaleType
 boxScales =
-    [ MinorPent, MajorPent, Ionian, Dorian, Aeolian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMinor, MelodicMinor ]
+    [ MajorPent, MinorPent, Ionian, Aeolian, Dorian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMajor, HarmonicMinor, MelodicMajor, MelodicMinor ]
 
 
 {-| Preset tunings plus a few pathological ones (all strings the same pitch),
@@ -108,6 +108,12 @@ fRootFor tuning scale root =
         Locrian ->
             majorAnchor
 
+        HarmonicMajor ->
+            majorAnchor
+
+        MelodicMajor ->
+            majorAnchor
+
         DiagonalPent ->
             modBy 12 (root + 3 - lowE)
 
@@ -142,7 +148,9 @@ scaleName scale =
         Lydian -> "Lydian"
         Locrian -> "Locrian"
         Blues -> "Blues"
+        HarmonicMajor -> "HarmonicMajor"
         HarmonicMinor -> "HarmonicMinor"
+        MelodicMajor -> "MelodicMajor"
         MelodicMinor -> "MelodicMinor"
         ChromaticMinor -> "ChromaticMinor"
         ChromaticMajor -> "ChromaticMajor"

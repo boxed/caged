@@ -38,7 +38,9 @@ commit both files together.
 ## Scales and modes
 
 Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
-`HarmonicMinor`, `MelodicMinor`, three diagonal climbing variants
+`HarmonicMajor`/`HarmonicMinor` (major with ♭6 / minor with a raised 7th),
+`MelodicMajor`/`MelodicMinor` (major with ♭6 ♭7 / minor with a raised 6th and
+7th), three diagonal climbing variants
 (`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`), the two all-notes
 maps `ChromaticMinor`/`ChromaticMajor`, and the four triads
 `TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`.
@@ -131,10 +133,17 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 - **rootFret** anchors boxes on the low-E string, following its open pitch:
   - Minor-flavored (MinorPent, Aeolian, Blues, Harmonic/Melodic minor):
     `(R − openLowE) mod 12` — root on low E (= `R − 4` in standard tuning).
-  - Major-flavored (MajorPent, Ionian, Dorian, Mixolydian, …):
-    `(R − 3 − openLowE) mod 12` — relative minor on low E (= `R − 7` standard).
+  - Major-flavored (MajorPent, Ionian, Dorian, Mixolydian, Harmonic/Melodic
+    major, …): `(R − 3 − openLowE) mod 12` — relative minor on low E
+    (= `R − 7` standard).
 - **Note roles** (`noteRole`): Root / Third / Fifth / Other. Scale-wide, not
   per-box. 3rd = interval 3 (minor) or 4 (major). 5th = interval 7 always.
+- **Naming and order**: Ionian and Aeolian are labeled **Major (Ionian)** and
+  **Minor (Aeolian)** — the common name first, the mode name in parentheses.
+  Every major/minor pair is listed major-first, in the buttons, in the
+  `ScaleType` constructors and in every `case` over them (major/minor
+  pentatonic, Ionian/Aeolian, harmonic, melodic, the all-notes maps, the
+  diagonals).
 
 ## Tunings
 
