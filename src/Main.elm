@@ -813,6 +813,7 @@ tunings =
     , { name = "Eb Standard", slug = "eb-standard", strings = [ 3, 10, 6, 1, 8, 3 ] }
     , { name = "D Standard", slug = "d-standard", strings = [ 2, 9, 5, 0, 7, 2 ] }
     , { name = "Drop C", slug = "drop-c", strings = [ 2, 9, 5, 0, 7, 0 ] }
+    , { name = "C# Standard (Iommi)", slug = "cs-standard", strings = [ 1, 8, 4, 11, 6, 1 ] }
     , { name = "DADGAD", slug = "dadgad", strings = [ 2, 9, 7, 2, 9, 2 ] }
     , { name = "Open G", slug = "open-g", strings = [ 2, 11, 7, 2, 7, 2 ] }
     , { name = "Open D", slug = "open-d", strings = [ 2, 9, 6, 2, 9, 2 ] }

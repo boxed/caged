@@ -139,11 +139,12 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 ## Tunings
 
 The selector offers preset tunings (Standard, Drop D, Eb/D Standard, Drop C,
-DADGAD, Open G/D/E) **plus arbitrary custom tunings** via per-string ▲/▼
-steppers (shown only after pressing **Custom**). A custom tuning round-trips
-through the URL as six dash-joined note slugs (`?tuning=D-A-G-D-A-D`); presets
-use their slug. A note-encoded slug always stays "Custom" so `Nav.replaceUrl`
-re-firing `UrlChanged` can't collapse it back to a preset.
+C# Standard (Iommi), DADGAD, Open G/D/E) **plus arbitrary custom tunings**
+via per-string ▲/▼ steppers (shown only after pressing **Custom**). A custom
+tuning round-trips through the URL as six dash-joined note slugs
+(`?tuning=D-A-G-D-A-D`); presets use their slug. A note-encoded slug always
+stays "Custom" so `Nav.replaceUrl` re-firing `UrlChanged` can't collapse it
+back to a preset.
 
 ## Box shapes — one derivation (`deriveBox`)
 

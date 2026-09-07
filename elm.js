@@ -5483,6 +5483,12 @@ var $author$project$Main$tunings = _List_fromArray(
 			[2, 9, 5, 0, 7, 0])
 	},
 		{
+		name: 'C# Standard (Iommi)',
+		slug: 'cs-standard',
+		strings: _List_fromArray(
+			[1, 8, 4, 11, 6, 1])
+	},
+		{
 		name: 'DADGAD',
 		slug: 'dadgad',
 		strings: _List_fromArray(
