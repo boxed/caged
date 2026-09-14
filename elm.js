@@ -5219,6 +5219,15 @@ var $elm$core$Basics$clamp = F3(
 	function (low, high, number) {
 		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
 	});
+var $author$project$Main$numFrets = 22;
+var $author$project$Main$clampFocus = function (_v0) {
+	var lo = _v0.a;
+	var hi = _v0.b;
+	var h = A3($elm$core$Basics$clamp, 0, $author$project$Main$numFrets, hi);
+	return _Utils_Tuple2(
+		A3($elm$core$Basics$clamp, 0, h, lo),
+		h);
+};
 var $author$project$Main$clampIndex = F2(
 	function (xs, i) {
 		return A3(
@@ -5261,6 +5270,21 @@ var $elm$core$List$filterMap = F2(
 			_List_Nil,
 			xs);
 	});
+var $author$project$Main$focusFromSlug = function (str) {
+	var _v0 = A2(
+		$elm$core$List$map,
+		$elm$core$String$toInt,
+		A2($elm$core$String$split, '-', str));
+	if ((((_v0.b && (_v0.a.$ === 'Just')) && _v0.b.b) && (_v0.b.a.$ === 'Just')) && (!_v0.b.b.b)) {
+		var lo = _v0.a.a;
+		var _v1 = _v0.b;
+		var hi = _v1.a.a;
+		return $elm$core$Maybe$Just(
+			_Utils_Tuple2(lo, hi));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
 var $elm$core$List$head = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -5732,6 +5756,13 @@ var $author$project$Main$parseUrl = function (url) {
 					$elm$core$Maybe$andThen,
 					$elm$core$String$toInt,
 					lookup('active')))),
+		focus: A2(
+			$elm$core$Maybe$map,
+			$author$project$Main$clampFocus,
+			A2(
+				$elm$core$Maybe$andThen,
+				$author$project$Main$focusFromSlug,
+				lookup('focus'))),
 		necks: necks,
 		tuning: A2(
 			$elm$core$Maybe$withDefault,
@@ -5746,7 +5777,7 @@ var $author$project$Main$init = F3(
 	function (_v0, url, key) {
 		var state = $author$project$Main$parseUrl(url);
 		return _Utils_Tuple2(
-			{active: state.active, drag: $elm$core$Maybe$Nothing, key: key, necks: state.necks, tuning: state.tuning, wakeLockOn: false},
+			{active: state.active, drag: $elm$core$Maybe$Nothing, focus: state.focus, key: key, necks: state.necks, tuning: state.tuning, wakeLockOn: false},
 			$elm$core$Platform$Cmd$none);
 	});
 var $author$project$Main$DragEnd = {$: 'DragEnd'};
@@ -6459,19 +6490,28 @@ var $author$project$Main$neckSlug = function (neck) {
 };
 var $author$project$Main$modelUrl = function (model) {
 	var base = function () {
-		var _v0 = model.necks;
-		if (_v0.b && (!_v0.b.b)) {
-			var neck = _v0.a;
+		var _v2 = model.necks;
+		if (_v2.b && (!_v2.b.b)) {
+			var neck = _v2.a;
 			return '?root=' + ($author$project$Main$rootSlug(neck.root) + ('&scale=' + ($author$project$Main$scaleSlug(neck.scale) + ($author$project$Main$hasStringSet(neck) ? ('&strings=' + $author$project$Main$stringSetSlug(neck.stringSet)) : ''))));
 		} else {
-			var necks = _v0;
+			var necks = _v2;
 			return '?necks=' + (A2(
 				$elm$core$String$join,
 				',',
 				A2($elm$core$List$map, $author$project$Main$neckSlug, necks)) + ((!model.active) ? '' : ('&active=' + $elm$core$String$fromInt(model.active))));
 		}
 	}();
-	return _Utils_eq(model.tuning.slug, $author$project$Main$standardTuning.slug) ? base : (base + ('&tuning=' + model.tuning.slug));
+	var withTuning = _Utils_eq(model.tuning.slug, $author$project$Main$standardTuning.slug) ? base : (base + ('&tuning=' + model.tuning.slug));
+	var _v0 = model.focus;
+	if (_v0.$ === 'Nothing') {
+		return withTuning;
+	} else {
+		var _v1 = _v0.a;
+		var lo = _v1.a;
+		var hi = _v1.b;
+		return withTuning + ('&focus=' + ($elm$core$String$fromInt(lo) + ('-' + $elm$core$String$fromInt(hi))));
+	}
 };
 var $elm$browser$Browser$Navigation$replaceUrl = _Browser_replaceUrl;
 var $author$project$Main$sync = function (model) {
@@ -6598,6 +6638,14 @@ var $author$project$Main$update = F2(
 						{
 							tuning: $author$project$Main$customFrom(newStrings)
 						}));
+			case 'SetFocus':
+				var f = msg.a;
+				return $author$project$Main$sync(
+					_Utils_update(
+						model,
+						{
+							focus: A2($elm$core$Maybe$map, $author$project$Main$clampFocus, f)
+						}));
 			case 'Activate':
 				var i = msg.a;
 				return $author$project$Main$sync(
@@ -6694,7 +6742,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{active: state.active, necks: state.necks, tuning: state.tuning}),
+						{active: state.active, focus: state.focus, necks: state.necks, tuning: state.tuning}),
 					$elm$core$Platform$Cmd$none);
 			case 'LinkClicked':
 				var request = msg.a;
@@ -6732,6 +6780,7 @@ var $author$project$Main$update = F2(
 var $author$project$Main$boardAt = F3(
 	function (model, i, neck) {
 		return {
+			focus: model.focus,
 			id: 'n' + ($elm$core$String$fromInt(i) + '-'),
 			root: neck.root,
 			scale: neck.scale,
@@ -7214,6 +7263,136 @@ var $author$project$Main$noteButtonRow = function (model) {
 			$author$project$Main$rootButton(model),
 			A2($elm$core$List$range, 0, 11)));
 };
+var $author$project$Main$SetFocus = function (a) {
+	return {$: 'SetFocus', a: a};
+};
+var $author$project$Main$defaultFocus = _Utils_Tuple2(4, 8);
+var $author$project$Main$stepperButton = F2(
+	function (msg, glyph) {
+		return A2(
+			$elm$html$Html$button,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(msg),
+					A2($elm$html$Html$Attributes$style, 'padding', '0 6px'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
+					A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
+					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+					A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+					A2($elm$html$Html$Attributes$style, 'line-height', '1.4'),
+					A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
+					A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-bg)'),
+					A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-text)')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(glyph)
+				]));
+	});
+var $author$project$Main$fretStepper = F2(
+	function (value, toMsg) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'margin', '0 3px')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$author$project$Main$stepperButton,
+					toMsg(1),
+					'▲'),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
+							A2($elm$html$Html$Attributes$style, 'min-width', '26px'),
+							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+							A2($elm$html$Html$Attributes$style, 'color', 'var(--text)')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(value))
+						])),
+					A2(
+					$author$project$Main$stepperButton,
+					toMsg(-1),
+					'▼')
+				]));
+	});
+var $author$project$Main$positionRow = function (model) {
+	var _v0 = A2($elm$core$Maybe$withDefault, $author$project$Main$defaultFocus, model.focus);
+	var lo = _v0.a;
+	var hi = _v0.b;
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'gap', '6px 12px')
+			]),
+		_List_fromArray(
+			[
+				$author$project$Main$label('Position'),
+				A2(
+				$elm$html$Html$button,
+				_Utils_ap(
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onClick(
+							$author$project$Main$SetFocus($elm$core$Maybe$Nothing)),
+							A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+						]),
+					$author$project$Main$buttonBaseStyle(
+						_Utils_eq(model.focus, $elm$core$Maybe$Nothing))),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Off')
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'gap', '2px'),
+						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Frets'),
+						A2(
+						$author$project$Main$fretStepper,
+						lo,
+						function (d) {
+							return $author$project$Main$SetFocus(
+								$elm$core$Maybe$Just(
+									_Utils_Tuple2(lo + d, hi)));
+						}),
+						$elm$html$Html$text('–'),
+						A2(
+						$author$project$Main$fretStepper,
+						hi,
+						function (d) {
+							return $author$project$Main$SetFocus(
+								$elm$core$Maybe$Just(
+									_Utils_Tuple2(lo, hi + d)));
+						})
+					]))
+			]));
+};
 var $author$project$Main$SetScale = function (a) {
 	return {$: 'SetScale', a: a};
 };
@@ -7272,28 +7451,6 @@ var $author$project$Main$openString = F2(
 			$elm$core$List$head(
 				A2($elm$core$List$drop, s - 1, tuning.strings)));
 	});
-var $author$project$Main$stepperButton = F2(
-	function (msg, glyph) {
-		return A2(
-			$elm$html$Html$button,
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick(msg),
-					A2($elm$html$Html$Attributes$style, 'padding', '0 6px'),
-					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
-					A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
-					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
-					A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
-					A2($elm$html$Html$Attributes$style, 'line-height', '1.4'),
-					A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
-					A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-bg)'),
-					A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-text)')
-				]),
-			_List_fromArray(
-				[
-					$elm$html$Html$text(glyph)
-				]));
-	});
 var $author$project$Main$stringStepper = F2(
 	function (model, uiIndex) {
 		var s = 7 - uiIndex;
@@ -7322,7 +7479,7 @@ var $author$project$Main$stringStepper = F2(
 							A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
 							A2($elm$html$Html$Attributes$style, 'min-width', '26px'),
 							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
-							A2($elm$html$Html$Attributes$style, 'color', 'var(--text-1)')
+							A2($elm$html$Html$Attributes$style, 'color', 'var(--text)')
 						]),
 					_List_fromArray(
 						[
@@ -7465,6 +7622,7 @@ var $author$project$Main$viewControls = function (model) {
 						$author$project$Main$label('Root'),
 						$author$project$Main$noteButtonRow(model)
 					])),
+				$author$project$Main$positionRow(model),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -7513,6 +7671,34 @@ var $elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
+var $author$project$Main$legendChip = F2(
+	function (color, lbl) {
+		return A2(
+			$elm$html$Html$span,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'gap', '6px')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+							A2($elm$html$Html$Attributes$style, 'width', '16px'),
+							A2($elm$html$Html$Attributes$style, 'height', '16px'),
+							A2($elm$html$Html$Attributes$style, 'background', color),
+							A2($elm$html$Html$Attributes$style, 'border', '1px solid ' + color),
+							A2($elm$html$Html$Attributes$style, 'border-radius', '3px'),
+							A2($elm$html$Html$Attributes$style, 'opacity', '0.75')
+						]),
+					_List_Nil),
+					$elm$html$Html$text(lbl)
+				]));
+	});
 var $author$project$Main$legendGroup = function (children) {
 	return A2(
 		$elm$html$Html$div,
@@ -7675,16 +7861,21 @@ var $author$project$Main$legendMarker = F2(
 					$elm$html$Html$text(lbl)
 				]));
 	});
-var $author$project$Main$inversionColor = function (inv) {
-	switch (inv) {
-		case 0:
-			return 'var(--inv-1)';
-		case 1:
-			return 'var(--inv-2)';
-		default:
-			return 'var(--inv-3)';
-	}
-};
+var $author$project$Main$inversionColor = F2(
+	function (muted, inv) {
+		if (muted) {
+			return 'var(--inv-off)';
+		} else {
+			switch (inv) {
+				case 0:
+					return 'var(--inv-1)';
+				case 1:
+					return 'var(--inv-2)';
+				default:
+					return 'var(--inv-3)';
+			}
+		}
+	});
 var $author$project$Main$legendRing = function (_v0) {
 	var inv = _v0.a;
 	var lbl = _v0.b;
@@ -7709,7 +7900,7 @@ var $author$project$Main$legendRing = function (_v0) {
 						A2(
 						$elm$html$Html$Attributes$style,
 						'border',
-						'3px solid ' + $author$project$Main$inversionColor(inv)),
+						'3px solid ' + A2($author$project$Main$inversionColor, false, inv)),
 						A2($elm$html$Html$Attributes$style, 'border-radius', '8px')
 					]),
 				_List_Nil),
@@ -7736,36 +7927,9 @@ var $author$project$Main$legendSwatch = function (_v0) {
 	var b = _v0.a;
 	var lbl = _v0.b;
 	return A2(
-		$elm$html$Html$span,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-				A2($elm$html$Html$Attributes$style, 'gap', '6px')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$span,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
-						A2($elm$html$Html$Attributes$style, 'width', '16px'),
-						A2($elm$html$Html$Attributes$style, 'height', '16px'),
-						A2(
-						$elm$html$Html$Attributes$style,
-						'background',
-						$author$project$Main$boxColor(b)),
-						A2(
-						$elm$html$Html$Attributes$style,
-						'border',
-						'1px solid ' + $author$project$Main$boxColor(b)),
-						A2($elm$html$Html$Attributes$style, 'border-radius', '3px'),
-						A2($elm$html$Html$Attributes$style, 'opacity', '0.75')
-					]),
-				_List_Nil),
-				$elm$html$Html$text(lbl)
-			]));
+		$author$project$Main$legendChip,
+		$author$project$Main$boxColor(b),
+		lbl);
 };
 var $author$project$Main$legendText = function (s) {
 	return A2(
@@ -7811,6 +7975,25 @@ var $author$project$Main$viewLegend = function (board) {
 			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
 			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
 		]));
+	var position = function () {
+		var _v0 = board.focus;
+		if (_v0.$ === 'Nothing') {
+			return _List_Nil;
+		} else {
+			var _v1 = _v0.a;
+			var lo = _v1.a;
+			var hi = _v1.b;
+			return _List_fromArray(
+				[
+					_List_fromArray(
+					[
+						$author$project$Main$legendText(
+						'Frets ' + ($elm$core$String$fromInt(lo) + ('–' + ($elm$core$String$fromInt(hi) + ':')))),
+						A2($author$project$Main$legendChip, 'var(--box-off)', 'out of position')
+					])
+				]);
+		}
+	}();
 	var boxes = $author$project$Main$isChromatic(board.scale) ? _List_Nil : ($author$project$Main$isTriad(board.scale) ? A2(
 		$elm$core$List$cons,
 		$author$project$Main$legendText('Bass note:'),
@@ -7858,14 +8041,13 @@ var $author$project$Main$viewLegend = function (board) {
 				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
 				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 			]),
-		$elm$core$List$isEmpty(boxes) ? _List_fromArray(
-			[
-				$author$project$Main$legendGroup(tones)
-			]) : _List_fromArray(
-			[
-				$author$project$Main$legendGroup(boxes),
-				$author$project$Main$legendGroup(tones)
-			]));
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendGroup,
+			_Utils_ap(
+				$elm$core$List$isEmpty(boxes) ? _List_Nil : _List_fromArray(
+					[boxes]),
+				A2($elm$core$List$cons, tones, position))));
 };
 var $author$project$Main$Activate = function (a) {
 	return {$: 'Activate', a: a};
@@ -8075,27 +8257,6 @@ var $author$project$Main$removeNeckButton = function (i) {
 				$elm$html$Html$text('×')
 			]));
 };
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
 var $author$project$Main$majorFlavored = function (scale) {
 	switch (scale.$) {
 		case 'MajorPent':
@@ -8140,6 +8301,27 @@ var $elm$core$List$maximum = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
 var $elm$core$List$member = F2(
 	function (x, xs) {
 		return A2(
@@ -8255,7 +8437,106 @@ var $author$project$Main$deriveBox = F3(
 			forString,
 			A2($elm$core$List$range, 1, 6));
 	});
-var $author$project$Main$numFrets = 22;
+var $author$project$Main$diagonalAnchor = F3(
+	function (tuning, scale, root) {
+		var lowE = A2($author$project$Main$openString, tuning, 6);
+		if (scale.$ === 'DiagonalMajorPent') {
+			return A2($elm$core$Basics$modBy, 12, root - lowE);
+		} else {
+			return A2($elm$core$Basics$modBy, 12, (root + 3) - lowE);
+		}
+	});
+var $author$project$Main$rootFret = function (board) {
+	var lowE = A2($author$project$Main$openString, board.tuning, 6);
+	var majorAnchor = A2($elm$core$Basics$modBy, 12, (board.root - 3) - lowE);
+	var minorAnchor = A2($elm$core$Basics$modBy, 12, board.root - lowE);
+	var _v0 = board.scale;
+	switch (_v0.$) {
+		case 'MajorPent':
+			return majorAnchor;
+		case 'MinorPent':
+			return minorAnchor;
+		case 'Ionian':
+			return majorAnchor;
+		case 'Aeolian':
+			return minorAnchor;
+		case 'Dorian':
+			return majorAnchor;
+		case 'Mixolydian':
+			return majorAnchor;
+		case 'Phrygian':
+			return majorAnchor;
+		case 'Lydian':
+			return majorAnchor;
+		case 'Locrian':
+			return majorAnchor;
+		case 'Blues':
+			return minorAnchor;
+		case 'HarmonicMajor':
+			return majorAnchor;
+		case 'HarmonicMinor':
+			return minorAnchor;
+		case 'MelodicMajor':
+			return majorAnchor;
+		case 'MelodicMinor':
+			return minorAnchor;
+		case 'ChromaticMajor':
+			return majorAnchor;
+		case 'ChromaticMinor':
+			return minorAnchor;
+		case 'TriadMajor':
+			return majorAnchor;
+		case 'TriadMinor':
+			return minorAnchor;
+		case 'TriadDim':
+			return minorAnchor;
+		case 'TriadAug':
+			return majorAnchor;
+		case 'DiagonalMajorPent':
+			return A3($author$project$Main$diagonalAnchor, board.tuning, $author$project$Main$DiagonalMajorPent, board.root);
+		case 'DiagonalPent':
+			return A3($author$project$Main$diagonalAnchor, board.tuning, $author$project$Main$DiagonalPent, board.root);
+		default:
+			return A3($author$project$Main$diagonalAnchor, board.tuning, $author$project$Main$DiagonalBlues, board.root);
+	}
+};
+var $author$project$Main$boxSpan = F3(
+	function (board, b, octave) {
+		var shift = $author$project$Main$rootFret(board) + (12 * octave);
+		var cells = A3($author$project$Main$deriveBox, board.tuning, board.scale, b);
+		return _Utils_Tuple2(
+			shift + A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$List$minimum(
+					A2(
+						$elm$core$List$map,
+						function (_v0) {
+							var lo = _v0.b;
+							return lo;
+						},
+						cells))),
+			shift + A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$List$maximum(
+					A2(
+						$elm$core$List$map,
+						function (_v1) {
+							var hi = _v1.c;
+							return hi;
+						},
+						cells))));
+	});
+var $author$project$Main$isMuted = F2(
+	function (lit, key) {
+		if (lit.$ === 'Nothing') {
+			return false;
+		} else {
+			var keys = lit.a;
+			return !A2($elm$core$List$member, key, keys);
+		}
+	});
 var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
 var $elm$svg$Svg$polygon = $elm$svg$Svg$trustedNode('polygon');
 var $author$project$Main$fretWidth = 58;
@@ -8394,71 +8675,23 @@ var $author$project$Main$polygonPoints = function (positions) {
 			},
 			verts));
 };
-var $author$project$Main$diagonalAnchor = F3(
-	function (tuning, scale, root) {
-		var lowE = A2($author$project$Main$openString, tuning, 6);
-		if (scale.$ === 'DiagonalMajorPent') {
-			return A2($elm$core$Basics$modBy, 12, root - lowE);
-		} else {
-			return A2($elm$core$Basics$modBy, 12, (root + 3) - lowE);
-		}
+var $author$project$Main$stripeId = F2(
+	function (_v0, _v1) {
+		var b1 = _v0.a;
+		var b2 = _v0.b;
+		var m1 = _v1.a;
+		var m2 = _v1.b;
+		var mark = function (m) {
+			return m ? 'm' : '';
+		};
+		return 'ovlp-' + ($elm$core$String$fromInt(b1) + (mark(m1) + ('-' + ($elm$core$String$fromInt(b2) + mark(m2)))));
 	});
-var $author$project$Main$rootFret = function (board) {
-	var lowE = A2($author$project$Main$openString, board.tuning, 6);
-	var majorAnchor = A2($elm$core$Basics$modBy, 12, (board.root - 3) - lowE);
-	var minorAnchor = A2($elm$core$Basics$modBy, 12, board.root - lowE);
-	var _v0 = board.scale;
-	switch (_v0.$) {
-		case 'MajorPent':
-			return majorAnchor;
-		case 'MinorPent':
-			return minorAnchor;
-		case 'Ionian':
-			return majorAnchor;
-		case 'Aeolian':
-			return minorAnchor;
-		case 'Dorian':
-			return majorAnchor;
-		case 'Mixolydian':
-			return majorAnchor;
-		case 'Phrygian':
-			return majorAnchor;
-		case 'Lydian':
-			return majorAnchor;
-		case 'Locrian':
-			return majorAnchor;
-		case 'Blues':
-			return minorAnchor;
-		case 'HarmonicMajor':
-			return majorAnchor;
-		case 'HarmonicMinor':
-			return minorAnchor;
-		case 'MelodicMajor':
-			return majorAnchor;
-		case 'MelodicMinor':
-			return minorAnchor;
-		case 'ChromaticMajor':
-			return majorAnchor;
-		case 'ChromaticMinor':
-			return minorAnchor;
-		case 'TriadMajor':
-			return majorAnchor;
-		case 'TriadMinor':
-			return minorAnchor;
-		case 'TriadDim':
-			return minorAnchor;
-		case 'TriadAug':
-			return majorAnchor;
-		case 'DiagonalMajorPent':
-			return A3($author$project$Main$diagonalAnchor, board.tuning, $author$project$Main$DiagonalMajorPent, board.root);
-		case 'DiagonalPent':
-			return A3($author$project$Main$diagonalAnchor, board.tuning, $author$project$Main$DiagonalPent, board.root);
-		default:
-			return A3($author$project$Main$diagonalAnchor, board.tuning, $author$project$Main$DiagonalBlues, board.root);
-	}
-};
-var $author$project$Main$drawOverlapStripe = F3(
-	function (board, _v0, octave) {
+var $author$project$Main$stripeRef = F3(
+	function (prefix, pair, muting) {
+		return 'url(#' + (prefix + (A2($author$project$Main$stripeId, pair, muting) + ')'));
+	});
+var $author$project$Main$drawOverlapStripe = F4(
+	function (board, lit, _v0, octave) {
 		var b1 = _v0.a;
 		var b2 = _v0.b;
 		var fRoot = $author$project$Main$rootFret(board);
@@ -8503,14 +8736,30 @@ var $author$project$Main$drawOverlapStripe = F3(
 						$elm$svg$Svg$Attributes$points(
 						$author$project$Main$polygonPoints(overlapPositions)),
 						$elm$svg$Svg$Attributes$fill(
-						'url(#' + (board.id + ('ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + ($elm$core$String$fromInt(b2) + ')'))))))
+						A3(
+							$author$project$Main$stripeRef,
+							board.id,
+							_Utils_Tuple2(b1, b2),
+							_Utils_Tuple2(
+								A2(
+									$author$project$Main$isMuted,
+									lit,
+									_Utils_Tuple2(b1, octave)),
+								A2(
+									$author$project$Main$isMuted,
+									lit,
+									_Utils_Tuple2(b2, octave)))))
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
+var $author$project$Main$boxFill = F2(
+	function (muted, b) {
+		return muted ? 'var(--box-off)' : $author$project$Main$boxColor(b);
+	});
 var $author$project$Main$boxFillOpacity = '0.55';
 var $elm$svg$Svg$Attributes$fillOpacity = _VirtualDom_attribute('fill-opacity');
-var $author$project$Main$drawSolidBox = F3(
-	function (board, b, octave) {
+var $author$project$Main$drawSolidBox = F4(
+	function (board, lit, b, octave) {
 		var fRoot = $author$project$Main$rootFret(board);
 		var shift = fRoot + (12 * octave);
 		var positions = A2(
@@ -8538,13 +8787,19 @@ var $author$project$Main$drawSolidBox = F3(
 						$elm$svg$Svg$Attributes$points(
 						$author$project$Main$polygonPoints(positions)),
 						$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$boxColor(b)),
+						A2(
+							$author$project$Main$boxFill,
+							A2(
+								$author$project$Main$isMuted,
+								lit,
+								_Utils_Tuple2(b, octave)),
+							b)),
 						$elm$svg$Svg$Attributes$fillOpacity($author$project$Main$boxFillOpacity)
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
-var $author$project$Main$drawWrapOverlap = F2(
-	function (board, octave) {
+var $author$project$Main$drawWrapOverlap = F3(
+	function (board, lit, octave) {
 		var fRoot = $author$project$Main$rootFret(board);
 		var shift1 = fRoot + (12 * (octave + 1));
 		var shift5 = fRoot + (12 * octave);
@@ -8587,19 +8842,94 @@ var $author$project$Main$drawWrapOverlap = F2(
 					[
 						$elm$svg$Svg$Attributes$points(
 						$author$project$Main$polygonPoints(overlapPositions)),
-						$elm$svg$Svg$Attributes$fill('url(#' + (board.id + 'ovlp-5-1)'))
+						$elm$svg$Svg$Attributes$fill(
+						A3(
+							$author$project$Main$stripeRef,
+							board.id,
+							_Utils_Tuple2(5, 1),
+							_Utils_Tuple2(
+								A2(
+									$author$project$Main$isMuted,
+									lit,
+									_Utils_Tuple2(5, octave)),
+								A2(
+									$author$project$Main$isMuted,
+									lit,
+									_Utils_Tuple2(1, octave + 1)))))
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
+	});
+var $author$project$Main$focusOverlap = F2(
+	function (_v0, _v1) {
+		var flo = _v0.a;
+		var fhi = _v0.b;
+		var lo = _v1.a;
+		var hi = _v1.b;
+		return A2(
+			$elm$core$Basics$max,
+			0,
+			(A2($elm$core$Basics$min, hi, fhi) - A2($elm$core$Basics$max, lo, flo)) + 1);
+	});
+var $author$project$Main$focusedShapes = F2(
+	function (focus, spans) {
+		if (focus.$ === 'Nothing') {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var win = focus.a;
+			var scored = A2(
+				$elm$core$List$map,
+				function (_v2) {
+					var key = _v2.a;
+					var span = _v2.b;
+					return _Utils_Tuple2(
+						key,
+						A2($author$project$Main$focusOverlap, win, span));
+				},
+				spans);
+			var best = A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$List$maximum(
+					A2($elm$core$List$map, $elm$core$Tuple$second, scored)));
+			return $elm$core$Maybe$Just(
+				(best <= 0) ? _List_Nil : A2(
+					$elm$core$List$map,
+					$elm$core$Tuple$first,
+					A2(
+						$elm$core$List$filter,
+						function (_v1) {
+							var n = _v1.b;
+							return _Utils_eq(n, best);
+						},
+						scored)));
+		}
 	});
 var $author$project$Main$drawBoxRegionsBoxes = function (board) {
 	var octaves = _List_fromArray(
 		[-1, 0, 1]);
+	var lit = A2(
+		$author$project$Main$focusedShapes,
+		board.focus,
+		A2(
+			$elm$core$List$concatMap,
+			function (b) {
+				return A2(
+					$elm$core$List$map,
+					function (o) {
+						return _Utils_Tuple2(
+							_Utils_Tuple2(b, o),
+							A3($author$project$Main$boxSpan, board, b, o));
+					},
+					octaves);
+			},
+			_List_fromArray(
+				[1, 2, 3, 4, 5])));
 	var overlaps = A2(
 		$elm$core$List$concatMap,
 		function (pair) {
 			return A2(
 				$elm$core$List$filterMap,
-				A2($author$project$Main$drawOverlapStripe, board, pair),
+				A3($author$project$Main$drawOverlapStripe, board, lit, pair),
 				octaves);
 		},
 		_List_fromArray(
@@ -8614,14 +8944,14 @@ var $author$project$Main$drawBoxRegionsBoxes = function (board) {
 		function (b) {
 			return A2(
 				$elm$core$List$filterMap,
-				A2($author$project$Main$drawSolidBox, board, b),
+				A3($author$project$Main$drawSolidBox, board, lit, b),
 				octaves);
 		},
 		_List_fromArray(
 			[1, 2, 3, 4, 5]));
 	var wrapOverlaps = A2(
 		$elm$core$List$filterMap,
-		$author$project$Main$drawWrapOverlap(board),
+		A2($author$project$Main$drawWrapOverlap, board, lit),
 		octaves);
 	return _Utils_ap(
 		solids,
@@ -8758,8 +9088,34 @@ var $author$project$Main$boxShift = F2(
 	function (tuning, s) {
 		return A2($author$project$Main$stringDelta, tuning, s) - A2($author$project$Main$stringDelta, tuning, 6);
 	});
-var $author$project$Main$drawDiagonalShape = F5(
+var $author$project$Main$diagonalSpan = F5(
 	function (tuning, scale, root, shape, octave) {
+		var shift = A3($author$project$Main$diagonalAnchor, tuning, scale, root) + (12 * octave);
+		var ends = F2(
+			function (rels, boxIndex) {
+				var s2 = shift + A2($author$project$Main$boxShift, tuning, boxIndex);
+				return _Utils_Tuple2(
+					s2 + A2(
+						$elm$core$Maybe$withDefault,
+						0,
+						$elm$core$List$minimum(rels)),
+					s2 + A2(
+						$elm$core$Maybe$withDefault,
+						0,
+						$elm$core$List$maximum(rels)));
+			});
+		var _v0 = A2(ends, shape.upperRels, shape.upper);
+		var loU = _v0.a;
+		var hiU = _v0.b;
+		var _v1 = A2(ends, shape.lowerRels, shape.lower);
+		var loL = _v1.a;
+		var hiL = _v1.b;
+		return _Utils_Tuple2(
+			A2($elm$core$Basics$min, loL, loU),
+			A2($elm$core$Basics$max, hiL, hiU));
+	});
+var $author$project$Main$drawDiagonalShape = F6(
+	function (tuning, scale, root, muted, shape, octave) {
 		var yMid = ($author$project$Main$stringY(shape.lower) + $author$project$Main$stringY(shape.upper)) / 2;
 		var shift = A3($author$project$Main$diagonalAnchor, tuning, scale, root) + (12 * octave);
 		var shiftL = shift + A2($author$project$Main$boxShift, tuning, shape.lower);
@@ -8840,28 +9196,83 @@ var $author$project$Main$drawDiagonalShape = F5(
 					[
 						$elm$svg$Svg$Attributes$points(pointsStr),
 						$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$boxColor(shape.color)),
+						A2($author$project$Main$boxFill, muted, shape.color)),
 						$elm$svg$Svg$Attributes$fillOpacity('0.45')
 					]),
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
 var $author$project$Main$drawDiagonalRegions = function (board) {
+	var shapes = $author$project$Main$diagonalShapesFor(board.scale);
 	var octaves = _List_fromArray(
 		[-2, -1, 0, 1, 2]);
-	return A2(
+	var instances = A2(
 		$elm$core$List$concatMap,
-		function (shape) {
+		function (_v2) {
+			var i = _v2.a;
+			var shape = _v2.b;
 			return A2(
-				$elm$core$List$filterMap,
-				A4($author$project$Main$drawDiagonalShape, board.tuning, board.scale, board.root, shape),
+				$elm$core$List$map,
+				function (o) {
+					return _Utils_Tuple3(
+						_Utils_Tuple2(i, o),
+						shape,
+						o);
+				},
 				octaves);
 		},
-		$author$project$Main$diagonalShapesFor(board.scale));
+		A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, shapes));
+	var lit = A2(
+		$author$project$Main$focusedShapes,
+		board.focus,
+		A2(
+			$elm$core$List$map,
+			function (_v1) {
+				var key = _v1.a;
+				var shape = _v1.b;
+				var o = _v1.c;
+				return _Utils_Tuple2(
+					key,
+					A5($author$project$Main$diagonalSpan, board.tuning, board.scale, board.root, shape, o));
+			},
+			instances));
+	return A2(
+		$elm$core$List$filterMap,
+		function (_v0) {
+			var key = _v0.a;
+			var shape = _v0.b;
+			var o = _v0.c;
+			return A6(
+				$author$project$Main$drawDiagonalShape,
+				board.tuning,
+				board.scale,
+				board.root,
+				A2($author$project$Main$isMuted, lit, key),
+				shape,
+				o);
+		},
+		instances);
 };
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			$elm$core$List$any,
+			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
+			list);
+	});
 var $author$project$Main$triadFillPct = '18%';
-var $author$project$Main$inversionFill = function (inv) {
-	return 'color-mix(in srgb, ' + ($author$project$Main$inversionColor(inv) + (' ' + ($author$project$Main$triadFillPct + ', var(--bg))')));
-};
+var $author$project$Main$inversionFill = F2(
+	function (muted, inv) {
+		return 'color-mix(in srgb, ' + (A2($author$project$Main$inversionColor, muted, inv) + (' ' + ($author$project$Main$triadFillPct + ', var(--bg))')));
+	});
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
 var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
@@ -8942,17 +9353,18 @@ var $author$project$Main$triadCapsule = F3(
 								attrs))))),
 			_List_Nil);
 	});
-var $author$project$Main$triadFill = function (triad) {
-	return A3(
-		$author$project$Main$triadCapsule,
-		triad,
-		0,
-		_List_fromArray(
-			[
-				$elm$svg$Svg$Attributes$stroke(
-				$author$project$Main$inversionFill(triad.inversion))
-			]));
-};
+var $author$project$Main$triadFill = F2(
+	function (muted, triad) {
+		return A3(
+			$author$project$Main$triadCapsule,
+			triad,
+			0,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$stroke(
+					A2($author$project$Main$inversionFill, muted, triad.inversion))
+				]));
+	});
 var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
 var $elm$svg$Svg$mask = $elm$svg$Svg$trustedNode('mask');
 var $elm$svg$Svg$Attributes$mask = _VirtualDom_attribute('mask');
@@ -8961,8 +9373,8 @@ var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $author$project$Main$triadLassoInset = 3;
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
-var $author$project$Main$triadRing = F3(
-	function (prefix, index, triad) {
+var $author$project$Main$triadRing = F4(
+	function (prefix, muted, index, triad) {
 		var pad = $author$project$Main$triadLassoRadius(triad) + 4;
 		var span = function (toCoord) {
 			var vs = A2($elm$core$List$map, toCoord, triad.notes);
@@ -9035,7 +9447,7 @@ var $author$project$Main$triadRing = F3(
 				A2(
 					$elm$core$List$cons,
 					$elm$svg$Svg$Attributes$fill(
-						$author$project$Main$inversionColor(triad.inversion)),
+						A2($author$project$Main$inversionColor, muted, triad.inversion)),
 					A2(
 						$elm$core$List$cons,
 						$elm$svg$Svg$Attributes$mask('url(#' + (maskId + ')')),
@@ -9078,10 +9490,6 @@ var $author$project$Main$openAbs = F2(
 				}),
 			A2($author$project$Main$openString, tuning, 6),
 			A2($elm$core$List$range, s, 5));
-	});
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
 	});
 var $elm$core$List$sort = function (xs) {
 	return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
@@ -9201,12 +9609,45 @@ var $author$project$Main$drawTriadLassos = function (board) {
 			return -$author$project$Main$triadLassoRadius(triad);
 		},
 		A4($author$project$Main$triadVoicingsFor, board.tuning, board.scale, board.root, board.stringSet));
+	var muted = function (triad) {
+		var _v0 = board.focus;
+		if (_v0.$ === 'Nothing') {
+			return false;
+		} else {
+			var _v1 = _v0.a;
+			var lo = _v1.a;
+			var hi = _v1.b;
+			return !A2(
+				$elm$core$List$all,
+				function (_v2) {
+					var f = _v2.b;
+					return (_Utils_cmp(f, lo) > -1) && (_Utils_cmp(f, hi) < 1);
+				},
+				triad.notes);
+		}
+	};
 	return _Utils_ap(
-		A2($elm$core$List$map, $author$project$Main$triadFill, voicings),
+		A2(
+			$elm$core$List$map,
+			function (triad) {
+				return A2(
+					$author$project$Main$triadFill,
+					muted(triad),
+					triad);
+			},
+			voicings),
 		$elm$core$List$concat(
 			A2(
 				$elm$core$List$indexedMap,
-				$author$project$Main$triadRing(board.id),
+				F2(
+					function (i, triad) {
+						return A4(
+							$author$project$Main$triadRing,
+							board.id,
+							muted(triad),
+							i,
+							triad);
+					}),
 				voicings)));
 };
 var $author$project$Main$drawBoxRegions = function (board) {
@@ -9928,21 +10369,29 @@ var $author$project$Main$boxBlendPct = '55%';
 var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
 var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTransform');
 var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
-var $author$project$Main$overlapStripePattern = F2(
-	function (prefix, _v0) {
+var $author$project$Main$overlapStripePattern = F3(
+	function (prefix, _v0, _v1) {
 		var b1 = _v0.a;
 		var b2 = _v0.b;
+		var m1 = _v1.a;
+		var m2 = _v1.b;
 		var period = 14;
 		var half = period / 2;
-		var blended = function (b) {
-			return 'color-mix(in srgb, ' + ($author$project$Main$boxColor(b) + (' ' + ($author$project$Main$boxBlendPct + ', var(--bg))')));
-		};
+		var blended = F2(
+			function (muted, b) {
+				return 'color-mix(in srgb, ' + (A2($author$project$Main$boxFill, muted, b) + (' ' + ($author$project$Main$boxBlendPct + ', var(--bg))')));
+			});
 		return A2(
 			$elm$svg$Svg$pattern,
 			_List_fromArray(
 				[
 					$elm$svg$Svg$Attributes$id(
-					prefix + ('ovlp-' + ($elm$core$String$fromInt(b1) + ('-' + $elm$core$String$fromInt(b2))))),
+					_Utils_ap(
+						prefix,
+						A2(
+							$author$project$Main$stripeId,
+							_Utils_Tuple2(b1, b2),
+							_Utils_Tuple2(m1, m2)))),
 					$elm$svg$Svg$Attributes$patternUnits('userSpaceOnUse'),
 					$elm$svg$Svg$Attributes$width(
 					$elm$core$String$fromFloat(period)),
@@ -9963,7 +10412,7 @@ var $author$project$Main$overlapStripePattern = F2(
 							$elm$svg$Svg$Attributes$height(
 							$elm$core$String$fromFloat(period)),
 							$elm$svg$Svg$Attributes$fill(
-							blended(b1))
+							A2(blended, m1, b1))
 						]),
 					_List_Nil),
 					A2(
@@ -9978,18 +10427,30 @@ var $author$project$Main$overlapStripePattern = F2(
 							$elm$svg$Svg$Attributes$height(
 							$elm$core$String$fromFloat(period)),
 							$elm$svg$Svg$Attributes$fill(
-							blended(b2))
+							A2(blended, m2, b2))
 						]),
 					_List_Nil)
 				]));
 	});
+var $author$project$Main$stripeMutings = _List_fromArray(
+	[
+		_Utils_Tuple2(false, false),
+		_Utils_Tuple2(true, false),
+		_Utils_Tuple2(false, true),
+		_Utils_Tuple2(true, true)
+	]);
 var $author$project$Main$stripePatternDefs = function (board) {
 	return A2(
 		$elm$svg$Svg$defs,
 		_List_Nil,
 		A2(
-			$elm$core$List$map,
-			$author$project$Main$overlapStripePattern(board.id),
+			$elm$core$List$concatMap,
+			function (pair) {
+				return A2(
+					$elm$core$List$map,
+					A2($author$project$Main$overlapStripePattern, board.id, pair),
+					$author$project$Main$stripeMutings);
+			},
 			_List_fromArray(
 				[
 					_Utils_Tuple2(1, 2),
@@ -10038,6 +10499,59 @@ var $author$project$Main$viewFretboard = function (board) {
 					$author$project$Main$drawInlayDots
 				])));
 };
+var $author$project$Main$aside = function (s) {
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(s)
+			]));
+};
+var $author$project$Main$noteChip = F2(
+	function (note, degree) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'line-height', '1.1'),
+					A2($elm$html$Html$Attributes$style, 'min-width', '18px')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(note)
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+							A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+							A2($elm$html$Html$Attributes$style, 'opacity', '0.75')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(degree)
+						]))
+				]));
+	});
 var $elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
 		repeatHelp:
@@ -10192,20 +10706,30 @@ var $author$project$Main$viewScaleTitle = function (board) {
 					['R', '♭3', '4', '♭5', '5', '♭7']);
 		}
 	}();
-	var notePairs = A3(
-		$elm$core$List$map2,
-		F2(
-			function (nm, lbl) {
-				return nm + (' (' + (lbl + ')'));
-			}),
-		$author$project$Main$spelledNotes(board),
-		intervalLabels);
-	var subtitle = $author$project$Main$isChromatic(board.scale) ? ('Every note on the neck · hue = note · ' + ((_Utils_eq(board.scale, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' marked from ' + $author$project$Main$noteName(board.root)))) : ($author$project$Main$isTriad(board.scale) ? ('Notes: ' + (A2($elm$core$String$join, '  ·  ', notePairs) + ('  ·  ' + $author$project$Main$stringSetLabel(board.stringSet)))) : ('Notes: ' + A2($elm$core$String$join, '  ·  ', notePairs)));
+	var detail = $author$project$Main$isChromatic(board.scale) ? _List_fromArray(
+		[
+			$author$project$Main$aside(
+			'Every note on the neck · hue = note · ' + ((_Utils_eq(board.scale, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' from ' + $author$project$Main$noteName(board.root))))
+		]) : _Utils_ap(
+		A3(
+			$elm$core$List$map2,
+			$author$project$Main$noteChip,
+			$author$project$Main$spelledNotes(board),
+			intervalLabels),
+		$author$project$Main$isTriad(board.scale) ? _List_fromArray(
+			[
+				$author$project$Main$aside(
+				$author$project$Main$stringSetLabel(board.stringSet))
+			]) : _List_Nil);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				A2($elm$html$Html$Attributes$style, 'margin-bottom', '14px')
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'baseline'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'gap', '0 14px'),
+				A2($elm$html$Html$Attributes$style, 'margin-bottom', '6px')
 			]),
 		_List_fromArray(
 			[
@@ -10224,14 +10748,12 @@ var $author$project$Main$viewScaleTitle = function (board) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
-						A2($elm$html$Html$Attributes$style, 'margin-top', '2px')
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'baseline'),
+						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+						A2($elm$html$Html$Attributes$style, 'gap', '0 11px')
 					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text(subtitle)
-					]))
+				detail)
 			]));
 };
 var $author$project$Main$viewNeck = F4(

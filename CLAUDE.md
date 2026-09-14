@@ -236,6 +236,16 @@ circles. Sizing to the circles is what let the roots poke out of an earlier
 pass. The largest is the ceiling — beyond it a pill swallows the neighboring
 strings whole.
 
+### Neck heading
+
+`viewScaleTitle` puts the scale name and its notes on one line, the notes muted
+(`--text-2`) beside the name, and each note's scale degree stacked underneath
+it rather than trailing in brackets (`noteChip`). That is one line of vertical
+space instead of two, which matters once the page is a stack of necks, and it
+lines the degrees up into their own row you can read across. The modes with no
+degree list — the all-notes maps, and the triads' string-set label — put a
+muted `aside` in the same place instead.
+
 ### Draw order
 
 SVG draw order (later = on top):
@@ -255,6 +265,41 @@ first and the opaque pills sit on top of it (see **Triad lassos**).
 Polygon edges land at fret-center positions (beneath notes), not at fret
 lines. Pinch overlaps (single shared fret) collapse to zero width and are
 visually invisible — accepted trade-off for consistent edge alignment.
+
+## Position focus
+
+The **Position** row sets a fret window — `Frets 4 – 8` — and everything that
+does not fall in it is drawn gray. It is `focus : Maybe Focus` on the model,
+a pair of inclusive fret numbers, and like the tuning it belongs to the hand
+rather than to one neck: one window applies to every neck at once. That is the
+whole point. Practicing a C–Am–G–F progression between frets 4 and 8 lights up
+box 1, box 1, box 3 and box 4, one per neck, and fades everything else.
+
+- **`focusedShapes`** is the single rule: of all the drawn instances of a
+  shape, the ones with the most frets inside the window stay in color. It
+  returns a `Maybe` because "no window set" and "window that lit nothing" have
+  to render differently — `Nothing` mutes nothing at all. Ties all stay lit; a
+  window as wide as one position picks out exactly one shape, and a wider one
+  legitimately holds two.
+- It is keyed by whatever identifies an instance, so the same function serves
+  the CAGED boxes (keyed by box number and octave, spans from `boxSpan`) and
+  the diagonal climbing shapes (keyed by shape index and octave, spans from
+  `diagonalSpan`). `isMuted` turns the result into a per-shape bool.
+- **Triads use containment instead**, not "overlaps most": a voicing is in
+  position when you can reach all three notes without moving your hand. A lasso
+  poking out of the window is one you cannot play there, whichever way it leans.
+- Muted shapes swap their color for `--box-off` (`boxFill`) or `--inv-off`
+  (`inversionColor`/`inversionFill`), both chroma 0 at roughly the lightness of
+  the color they replace, so a muted box still reads as a box.
+- **Overlap stripes mute per side.** The band where an in-position box meets an
+  out-of-position one is half color, half gray, because that is what it is.
+  So a stripe pattern is minted for each of the four muting combinations
+  (`stripeMutings`) and the id says which (`stripeId`, e.g. `ovlp-1-2m`) — four
+  patterns per pair instead of one.
+- Nudging either stepper switches the window on, so there is nothing to arm
+  first; **Off** turns it back off. `clampFocus` keeps the window on the neck
+  and the right way round, clamping the low end against the high end rather
+  than swapping past it, so a stepper pushed too far just stops.
 
 ## Dark mode
 
@@ -337,6 +382,9 @@ address bar is always a link to exactly what is on screen.
   that have one. `&active=N` rides along when the active neck is not the first.
 - `&tuning=` is appended in both forms, omitted for Standard. Sharp notes use
   `Cs`, `Ds`, etc. to avoid URL-encoding `#`.
+- `&focus=4-8` carries the Position window, omitted when it is off. It is
+  clamped on the way in, so a hand-edited or stale window cannot land off the
+  neck or inside out.
 - The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots
   all sharing the one `scale`) so links from that version keep working. It is
   never written any more; the next change rewrites the URL in the new form.

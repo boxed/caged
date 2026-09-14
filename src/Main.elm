@@ -40,9 +40,19 @@ type alias Model =
     , active : Int
     , drag : Maybe Drag
     , tuning : Tuning
+    , focus : Maybe Focus
     , key : Nav.Key
     , wakeLockOn : Bool
     }
+
+
+{-| The stretch of neck you are practicing in, as an inclusive pair of frets.
+Setting one fades every shape that does not fall in it to gray, on every neck
+at once — so a C–Am–G–F progression played between frets 4 and 8 shows
+you box 1, box 1, box 3 and box 4 in color and nothing else. Like the tuning it
+belongs to the hand, not to one neck, so it lives on the model. -}
+type alias Focus =
+    ( Int, Int )
 
 
 {-| One fretboard's worth of choices. The page draws a list of these, so a
@@ -65,6 +75,7 @@ type alias Board =
     , scale : ScaleType
     , stringSet : StringSet
     , tuning : Tuning
+    , focus : Maybe Focus
     , id : String
     }
 
@@ -144,6 +155,7 @@ type Msg
     | SetTuning Tuning
     | SetStringSet StringSet
     | TuneString Int Int
+    | SetFocus (Maybe Focus)
     | Activate Int
     | AddNeck
     | RemoveNeck Int
@@ -166,6 +178,7 @@ init _ url key =
       , active = state.active
       , drag = Nothing
       , tuning = state.tuning
+      , focus = state.focus
       , key = key
       , wakeLockOn = False
       }
@@ -206,6 +219,9 @@ update msg model =
                         model.tuning.strings
             in
             sync { model | tuning = customFrom newStrings }
+
+        SetFocus f ->
+            sync { model | focus = Maybe.map clampFocus f }
 
         Activate i ->
             sync { model | active = clampIndex model.necks i }
@@ -295,6 +311,7 @@ update msg model =
                 | necks = state.necks
                 , active = state.active
                 , tuning = state.tuning
+                , focus = state.focus
               }
             , Cmd.none
             )
@@ -365,12 +382,20 @@ modelUrl model =
                             else
                                 "&active=" ++ String.fromInt model.active
                            )
-    in
-    if model.tuning.slug == standardTuning.slug then
-        base
 
-    else
-        base ++ "&tuning=" ++ model.tuning.slug
+        withTuning =
+            if model.tuning.slug == standardTuning.slug then
+                base
+
+            else
+                base ++ "&tuning=" ++ model.tuning.slug
+    in
+    case model.focus of
+        Nothing ->
+            withTuning
+
+        Just ( lo, hi ) ->
+            withTuning ++ "&focus=" ++ String.fromInt lo ++ "-" ++ String.fromInt hi
 
 
 {-| One neck as `root.scale`, with the string set appended in the triad modes
@@ -536,6 +561,7 @@ type alias UrlState =
     { necks : List Neck
     , active : Int
     , tuning : Tuning
+    , focus : Maybe Focus
     }
 
 
@@ -610,7 +636,21 @@ parseUrl url =
         lookup "tuning"
             |> Maybe.andThen tuningFromSlug
             |> Maybe.withDefault standardTuning
+    , focus =
+        lookup "focus"
+            |> Maybe.andThen focusFromSlug
+            |> Maybe.map clampFocus
     }
+
+
+focusFromSlug : String -> Maybe Focus
+focusFromSlug str =
+    case List.map String.toInt (String.split "-" str) of
+        [ Just lo, Just hi ] ->
+            Just ( lo, hi )
+
+        _ ->
+            Nothing
 
 
 {-| The neck the controls edit. The index is clamped rather than trusted so a
@@ -673,8 +713,79 @@ boardAt model i neck =
     , scale = neck.scale
     , stringSet = neck.stringSet
     , tuning = model.tuning
+    , focus = model.focus
     , id = "n" ++ String.fromInt i ++ "-"
     }
+
+
+{-| The window a fresh focus opens on: five frets from the 4th, which is box 1
+of A minor pentatonic in standard tuning and the position most people practice
+in first. -}
+defaultFocus : Focus
+defaultFocus =
+    ( 4, 8 )
+
+
+{-| Keeps a window on the neck and the right way round. The low end is clamped
+against the high end rather than swapped past it, so a stepper pushed too far
+simply stops instead of dragging the other end along behind it. -}
+clampFocus : Focus -> Focus
+clampFocus ( lo, hi ) =
+    let
+        h =
+            clamp 0 numFrets hi
+    in
+    ( clamp 0 h lo, h )
+
+
+{-| How many frets a shape spanning `lo`–`hi` has inside the focus window. -}
+focusOverlap : Focus -> ( Int, Int ) -> Int
+focusOverlap ( flo, fhi ) ( lo, hi ) =
+    max 0 (min hi fhi - max lo flo + 1)
+
+
+{-| Picks the shapes the focus window lights up: the ones with the most frets
+inside it. Everything else is drawn gray.
+
+`Nothing` means no window is set and nothing is muted, which is why this is a
+`Maybe` rather than an empty list — "no focus" and "focus that lit nothing"
+have to render differently.
+
+Ties all stay lit. A window only as wide as one position picks out exactly one
+shape, which is the point; a wider one legitimately holds two, and graying one
+of them arbitrarily would be a lie. -}
+focusedShapes : Maybe Focus -> List ( a, ( Int, Int ) ) -> Maybe (List a)
+focusedShapes focus spans =
+    case focus of
+        Nothing ->
+            Nothing
+
+        Just win ->
+            let
+                scored =
+                    List.map (\( key, span ) -> ( key, focusOverlap win span )) spans
+
+                best =
+                    scored |> List.map Tuple.second |> List.maximum |> Maybe.withDefault 0
+            in
+            Just
+                (if best <= 0 then
+                    []
+
+                 else
+                    scored |> List.filter (\( _, n ) -> n == best) |> List.map Tuple.first
+                )
+
+
+{-| Whether one shape should be drawn gray, given what the focus lit. -}
+isMuted : Maybe (List a) -> a -> Bool
+isMuted lit key =
+    case lit of
+        Nothing ->
+            False
+
+        Just keys ->
+            not (List.member key keys)
 
 
 clampIndex : List a -> Int -> Int
@@ -1838,6 +1949,17 @@ chromaticMarker role cx cy n =
                 ]
 
 
+{-| A box's fill, gray when the Position window is set and this box is not the
+one that falls in it. -}
+boxFill : Bool -> Int -> String
+boxFill muted b =
+    if muted then
+        "var(--box-off)"
+
+    else
+        boxColor b
+
+
 boxColor : Int -> String
 boxColor b =
     case b of
@@ -1852,12 +1974,16 @@ boxColor b =
 {-| One color per inversion, so a lasso says at a glance which chord tone is in
 the bass. The hues match boxes 1–3, but saturated: a 3px ring needs more punch
 than a 55%-opacity fill. -}
-inversionColor : Int -> String
-inversionColor inv =
-    case inv of
-        0 -> "var(--inv-1)"
-        1 -> "var(--inv-2)"
-        _ -> "var(--inv-3)"
+inversionColor : Bool -> Int -> String
+inversionColor muted inv =
+    if muted then
+        "var(--inv-off)"
+
+    else
+        case inv of
+            0 -> "var(--inv-1)"
+            1 -> "var(--inv-2)"
+            _ -> "var(--inv-3)"
 
 
 {-| A lasso's interior, pre-blended with the page instead of drawn translucent.
@@ -1867,9 +1993,9 @@ its own color. It costs the fretboard showing through, which is why the pills
 are painted largest-first and the inlay dots move on top of them in triad
 mode. `--bg` is `light-dark()`, so the same blend lands on the light or the
 dark page as appropriate. -}
-inversionFill : Int -> String
-inversionFill inv =
-    "color-mix(in srgb, " ++ inversionColor inv ++ " " ++ triadFillPct ++ ", var(--bg))"
+inversionFill : Bool -> Int -> String
+inversionFill muted inv =
+    "color-mix(in srgb, " ++ inversionColor muted inv ++ " " ++ triadFillPct ++ ", var(--bg))"
 
 
 triadFillPct : String
@@ -2335,46 +2461,92 @@ viewScaleTitle board =
                 DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
 
-        notePairs =
-            List.map2
-                (\nm lbl -> nm ++ " (" ++ lbl ++ ")")
-                (spelledNotes board)
-                intervalLabels
-
-        subtitle =
+        -- The notes ride alongside the heading rather than under it, each with
+        -- its scale degree stacked beneath instead of trailing in brackets:
+        -- one line of vertical space instead of two, and the degrees line up
+        -- into their own row you can read across.
+        detail =
             if isChromatic board.scale then
-                "Every note on the neck · hue = note · "
-                    ++ (if board.scale == ChromaticMajor then
-                            "3 · 5 · 7"
+                [ aside
+                    ("Every note on the neck · hue = note · "
+                        ++ (if board.scale == ChromaticMajor then
+                                "3 · 5 · 7"
 
-                        else
-                            "♭3 · 5 · ♭7"
-                       )
-                    ++ " marked from "
-                    ++ noteName board.root
-
-            else if isTriad board.scale then
-                "Notes: "
-                    ++ String.join "  ·  " notePairs
-                    ++ "  ·  "
-                    ++ stringSetLabel board.stringSet
+                            else
+                                "♭3 · 5 · ♭7"
+                           )
+                        ++ " from "
+                        ++ noteName board.root
+                    )
+                ]
 
             else
-                "Notes: " ++ String.join "  ·  " notePairs
+                List.map2 noteChip (spelledNotes board) intervalLabels
+                    ++ (if isTriad board.scale then
+                            [ aside (stringSetLabel board.stringSet) ]
+
+                        else
+                            []
+                       )
     in
-    div [ style "margin-bottom" "14px" ]
+    div
+        [ style "display" "flex"
+        , style "align-items" "baseline"
+        , style "flex-wrap" "wrap"
+        , style "gap" "0 14px"
+        , style "margin-bottom" "6px"
+        ]
         [ div
             [ style "font-size" "20px"
             , style "font-weight" "600"
             ]
             [ text scaleName ]
         , div
-            [ style "color" "var(--text-2)"
-            , style "font-size" "14px"
-            , style "margin-top" "2px"
+            [ style "display" "flex"
+            , style "align-items" "baseline"
+            , style "flex-wrap" "wrap"
+            , style "gap" "0 11px"
             ]
-            [ text subtitle ]
+            detail
         ]
+
+
+{-| One note of the scale with its degree stacked under it, in place of the
+bracketed pair this used to print on a line of its own. A common minimum width
+keeps the degrees lined up into their own row. -}
+noteChip : String -> String -> Html Msg
+noteChip note degree =
+    div
+        [ style "display" "inline-flex"
+        , style "flex-direction" "column"
+        , style "align-items" "center"
+        , style "line-height" "1.1"
+        , style "min-width" "18px"
+        ]
+        [ span
+            [ style "font-size" "14px"
+            , style "font-weight" "600"
+            , style "color" "var(--text-2)"
+            ]
+            [ text note ]
+        , span
+            [ style "font-size" "11px"
+            , style "color" "var(--text-2)"
+            , style "opacity" "0.75"
+            ]
+            [ text degree ]
+        ]
+
+
+{-| A muted note beside the heading, for the modes that have something to say
+there instead of a list of scale degrees. -}
+aside : String -> Html Msg
+aside s =
+    span
+        [ style "font-size" "13px"
+        , style "color" "var(--text-2)"
+        ]
+        [ text s ]
 
 
 viewControls : Model -> Html Msg
@@ -2434,6 +2606,7 @@ viewControls model =
             , style "gap" "6px 12px"
             ]
             [ label "Root", noteButtonRow model ]
+        , positionRow model
         , div [ style "margin-bottom" "8px" ]
             (label "Tuning"
                 :: List.map (tuningButton model) tunings
@@ -2447,6 +2620,71 @@ viewControls model =
 
           else
             text ""
+        ]
+
+
+{-| The Position window: the stretch of neck you are practicing in. Everything
+outside it fades to gray on every neck at once, so a whole chord progression
+shows you only the shapes that fall under your hand. -}
+positionRow : Model -> Html Msg
+positionRow model =
+    let
+        ( lo, hi ) =
+            Maybe.withDefault defaultFocus model.focus
+    in
+    div
+        [ style "margin-bottom" "8px"
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "flex-wrap" "wrap"
+        , style "gap" "6px 12px"
+        ]
+        [ label "Position"
+        , button
+            ([ onClick (SetFocus Nothing)
+             , style "min-width" "80px"
+             ]
+                ++ buttonBaseStyle (model.focus == Nothing)
+            )
+            [ text "Off" ]
+        , span
+            [ style "display" "inline-flex"
+            , style "align-items" "center"
+            , style "gap" "2px"
+            , style "font-size" "13px"
+            , style "color" "var(--text-2)"
+            ]
+            [ text "Frets"
+
+            -- Nudging either end switches the window on, so there is nothing
+            -- to arm first: you reach for the frets you want and the neck
+            -- fades around them.
+            , fretStepper lo (\d -> SetFocus (Just ( lo + d, hi )))
+            , text "–"
+            , fretStepper hi (\d -> SetFocus (Just ( lo, hi + d )))
+            ]
+        ]
+
+
+fretStepper : Int -> (Int -> Msg) -> Html Msg
+fretStepper value toMsg =
+    div
+        [ style "display" "inline-flex"
+        , style "flex-direction" "column"
+        , style "align-items" "center"
+        , style "margin" "0 3px"
+        ]
+        [ stepperButton (toMsg 1) "▲"
+        , span
+            [ style "font-size" "13px"
+            , style "font-weight" "600"
+            , style "padding" "2px 0"
+            , style "min-width" "26px"
+            , style "text-align" "center"
+            , style "color" "var(--text)"
+            ]
+            [ text (String.fromInt value) ]
+        , stepperButton (toMsg -1) "▼"
         ]
 
 
@@ -2499,7 +2737,7 @@ stringStepper model uiIndex =
             , style "padding" "2px 0"
             , style "min-width" "26px"
             , style "text-align" "center"
-            , style "color" "var(--text-1)"
+            , style "color" "var(--text)"
             ]
             [ text (noteName note) ]
         , stepperButton (TuneString s -1) "▼"
@@ -2681,9 +2919,19 @@ drawBoxRegionsBoxes board =
         octaves =
             [ -1, 0, 1 ]
 
+        -- Which box instances the Position window lights, keyed by box number
+        -- and octave, since the same box repeats up the neck and only the one
+        -- under your hand is in position.
+        lit =
+            focusedShapes board.focus
+                (List.concatMap
+                    (\b -> List.map (\o -> ( ( b, o ), boxSpan board b o )) octaves)
+                    [ 1, 2, 3, 4, 5 ]
+                )
+
         solids =
             List.concatMap
-                (\b -> List.filterMap (drawSolidBox board b) octaves)
+                (\b -> List.filterMap (drawSolidBox board lit b) octaves)
                 [ 1, 2, 3, 4, 5 ]
 
         -- Adjacent boxes share notes wherever the position windows overlap; the
@@ -2693,11 +2941,11 @@ drawBoxRegionsBoxes board =
         -- overlaps collapse to invisible zero-width pinches.
         overlaps =
             List.concatMap
-                (\pair -> List.filterMap (drawOverlapStripe board pair) octaves)
+                (\pair -> List.filterMap (drawOverlapStripe board lit pair) octaves)
                 [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
 
         wrapOverlaps =
-            List.filterMap (drawWrapOverlap board) octaves
+            List.filterMap (drawWrapOverlap board lit) octaves
     in
     solids ++ overlaps ++ wrapOverlaps
 
@@ -2707,10 +2955,57 @@ drawDiagonalRegions board =
     let
         octaves =
             [ -2, -1, 0, 1, 2 ]
+
+        shapes =
+            diagonalShapesFor board.scale
+
+        instances =
+            List.concatMap
+                (\( i, shape ) -> List.map (\o -> ( ( i, o ), shape, o )) octaves)
+                (List.indexedMap Tuple.pair shapes)
+
+        lit =
+            focusedShapes board.focus
+                (List.map
+                    (\( key, shape, o ) ->
+                        ( key, diagonalSpan board.tuning board.scale board.root shape o )
+                    )
+                    instances
+                )
     in
-    List.concatMap
-        (\shape -> List.filterMap (drawDiagonalShape board.tuning board.scale board.root shape) octaves)
-        (diagonalShapesFor board.scale)
+    List.filterMap
+        (\( key, shape, o ) ->
+            drawDiagonalShape board.tuning board.scale board.root (isMuted lit key) shape o
+        )
+        instances
+
+
+{-| A climbing shape's reach, lowest fret on its lower string to highest on its
+upper — what the Position window is compared against. These shapes are meant
+to be slid rather than played in one place, so the window only says which one
+you are nearest, and the rest fade. -}
+diagonalSpan : Tuning -> ScaleType -> Int -> DiagShape -> Int -> ( Int, Int )
+diagonalSpan tuning scale root shape octave =
+    let
+        shift =
+            diagonalAnchor tuning scale root + 12 * octave
+
+        ends rels boxIndex =
+            let
+                s2 =
+                    shift + boxShift tuning boxIndex
+            in
+            ( s2 + (List.minimum rels |> Maybe.withDefault 0)
+            , s2 + (List.maximum rels |> Maybe.withDefault 0)
+            )
+
+        ( loL, hiL ) =
+            ends shape.lowerRels shape.lower
+
+        ( loU, hiU ) =
+            ends shape.upperRels shape.upper
+    in
+    ( min loL loU, max hiL hiU )
 
 
 {-| One diagonal shape: a stepped polygon spanning two adjacent strings.
@@ -2718,8 +3013,8 @@ Both edges are staircases that step at the midline between the strings; an
 edge where both strings share a fret (pattern 1's right, pattern 2's left)
 collapses to a vertical line. The shape repeats every 12 frets (one octave)
 to fill the neck. -}
-drawDiagonalShape : Tuning -> ScaleType -> Int -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
-drawDiagonalShape tuning scale root shape octave =
+drawDiagonalShape : Tuning -> ScaleType -> Int -> Bool -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
+drawDiagonalShape tuning scale root muted shape octave =
     let
         shift =
             diagonalAnchor tuning scale root + 12 * octave
@@ -2781,7 +3076,7 @@ drawDiagonalShape tuning scale root shape octave =
         Just
             (Svg.polygon
                 [ SA.points pointsStr
-                , SA.fill (boxColor shape.color)
+                , SA.fill (boxFill muted shape.color)
                 , SA.fillOpacity "0.45"
                 ]
                 []
@@ -2804,9 +3099,25 @@ drawTriadLassos board =
         voicings =
             triadVoicingsFor board.tuning board.scale board.root board.stringSet
                 |> List.sortBy (\triad -> -(triadLassoRadius triad))
+
+        -- A voicing is in position when you can reach all three notes without
+        -- moving your hand, so here the test is containment, not the boxes'
+        -- "overlaps most". A lasso poking out of the window is one you cannot
+        -- play there, whichever way it leans.
+        muted triad =
+            case board.focus of
+                Nothing ->
+                    False
+
+                Just ( lo, hi ) ->
+                    not (List.all (\( _, f ) -> f >= lo && f <= hi) triad.notes)
     in
-    List.map triadFill voicings
-        ++ List.concat (List.indexedMap (triadRing (board.id)) voicings)
+    List.map (\triad -> triadFill (muted triad) triad) voicings
+        ++ List.concat
+            (List.indexedMap
+                (\i triad -> triadRing board.id (muted triad) i triad)
+                voicings
+            )
 
 
 {-| The lasso shape, shrunk by `inset`: one round-capped, round-joined stroke
@@ -2837,9 +3148,9 @@ triadPath triad =
 
 
 {-| The lasso's interior. -}
-triadFill : Triad -> Svg.Svg Msg
-triadFill triad =
-    triadCapsule triad 0 [ SA.stroke (inversionFill triad.inversion) ]
+triadFill : Bool -> Triad -> Svg.Svg Msg
+triadFill muted triad =
+    triadCapsule triad 0 [ SA.stroke (inversionFill muted triad.inversion) ]
 
 
 {-| The lasso outline: the shape minus the same shape inset, which leaves an
@@ -2848,8 +3159,8 @@ strokes (wide in the color, narrower in the background color) because that pair
 would paint over whatever sits under the lasso — the inlay dots, and the rings
 of any lasso it crosses. The mask punches the middle out instead, so the ring
 is genuinely hollow and lassos can overlap freely. -}
-triadRing : String -> Int -> Triad -> List (Svg.Svg Msg)
-triadRing prefix index triad =
+triadRing : String -> Bool -> Int -> Triad -> List (Svg.Svg Msg)
+triadRing prefix muted index triad =
     let
         maskId =
             prefix ++ "triad-lasso-" ++ String.fromInt index
@@ -2888,12 +3199,28 @@ triadRing prefix index triad =
         [ layer "#ffffff" 0
         , layer "#000000" triadLassoInset
         ]
-    , Svg.rect (SA.fill (inversionColor triad.inversion) :: SA.mask ("url(#" ++ maskId ++ ")") :: box) []
+    , Svg.rect (SA.fill (inversionColor muted triad.inversion) :: SA.mask ("url(#" ++ maskId ++ ")") :: box) []
     ]
 
 
-drawSolidBox : Board -> Int -> Int -> Maybe (Svg.Svg Msg)
-drawSolidBox board b octave =
+{-| The stretch of neck one drawn box instance covers, lowest fret on any
+string to highest — what the Position window is compared against. -}
+boxSpan : Board -> Int -> Int -> ( Int, Int )
+boxSpan board b octave =
+    let
+        shift =
+            rootFret board + 12 * octave
+
+        cells =
+            deriveBox board.tuning board.scale b
+    in
+    ( shift + (List.map (\( _, lo, _ ) -> lo) cells |> List.minimum |> Maybe.withDefault 0)
+    , shift + (List.map (\( _, _, hi ) -> hi) cells |> List.maximum |> Maybe.withDefault 0)
+    )
+
+
+drawSolidBox : Board -> Maybe (List ( Int, Int )) -> Int -> Int -> Maybe (Svg.Svg Msg)
+drawSolidBox board lit b octave =
     let
         fRoot =
             rootFret board
@@ -2917,7 +3244,7 @@ drawSolidBox board b octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints positions)
-                , SA.fill (boxColor b)
+                , SA.fill (boxFill (isMuted lit ( b, octave )) b)
                 , SA.fillOpacity boxFillOpacity
                 ]
                 []
@@ -2927,8 +3254,8 @@ drawSolidBox board b octave =
         Nothing
 
 
-drawOverlapStripe : Board -> ( Int, Int ) -> Int -> Maybe (Svg.Svg Msg)
-drawOverlapStripe board ( b1, b2 ) octave =
+drawOverlapStripe : Board -> Maybe (List ( Int, Int )) -> ( Int, Int ) -> Int -> Maybe (Svg.Svg Msg)
+drawOverlapStripe board lit ( b1, b2 ) octave =
     let
         fRoot =
             rootFret board
@@ -2958,7 +3285,11 @@ drawOverlapStripe board ( b1, b2 ) octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
-                , SA.fill ("url(#" ++ board.id ++ "ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
+                , SA.fill
+                    (stripeRef board.id
+                        ( b1, b2 )
+                        ( isMuted lit ( b1, octave ), isMuted lit ( b2, octave ) )
+                    )
                 ]
                 []
             )
@@ -2967,16 +3298,44 @@ drawOverlapStripe board ( b1, b2 ) octave =
         Nothing
 
 
+{-| A stripe has a color per side, so with the Position window set each side
+mutes on its own — the band where an in-position box meets an out-of-position
+one is half color, half gray, which is exactly what it is. That means four
+patterns per pair rather than one, and the id has to say which. -}
+stripeMutings : List ( Bool, Bool )
+stripeMutings =
+    [ ( False, False ), ( True, False ), ( False, True ), ( True, True ) ]
+
+
+stripeId : ( Int, Int ) -> ( Bool, Bool ) -> String
+stripeId ( b1, b2 ) ( m1, m2 ) =
+    let
+        mark m =
+            if m then
+                "m"
+
+            else
+                ""
+    in
+    "ovlp-" ++ String.fromInt b1 ++ mark m1 ++ "-" ++ String.fromInt b2 ++ mark m2
+
+
+stripeRef : String -> ( Int, Int ) -> ( Bool, Bool ) -> String
+stripeRef prefix pair muting =
+    "url(#" ++ prefix ++ stripeId pair muting ++ ")"
+
+
 stripePatternDefs : Board -> Svg.Svg Msg
 stripePatternDefs board =
     Svg.defs []
-        (List.map (overlapStripePattern (board.id))
+        (List.concatMap
+            (\pair -> List.map (overlapStripePattern board.id pair) stripeMutings)
             [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ), ( 5, 1 ) ]
         )
 
 
-drawWrapOverlap : Board -> Int -> Maybe (Svg.Svg Msg)
-drawWrapOverlap board octave =
+drawWrapOverlap : Board -> Maybe (List ( Int, Int )) -> Int -> Maybe (Svg.Svg Msg)
+drawWrapOverlap board lit octave =
     let
         fRoot =
             rootFret board
@@ -3012,7 +3371,11 @@ drawWrapOverlap board octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
-                , SA.fill ("url(#" ++ board.id ++ "ovlp-5-1)")
+                , SA.fill
+                    (stripeRef board.id
+                        ( 5, 1 )
+                        ( isMuted lit ( 5, octave ), isMuted lit ( 1, octave + 1 ) )
+                    )
                 ]
                 []
             )
@@ -3021,8 +3384,8 @@ drawWrapOverlap board octave =
         Nothing
 
 
-overlapStripePattern : String -> ( Int, Int ) -> Svg.Svg Msg
-overlapStripePattern prefix ( b1, b2 ) =
+overlapStripePattern : String -> ( Int, Int ) -> ( Bool, Bool ) -> Svg.Svg Msg
+overlapStripePattern prefix ( b1, b2 ) ( m1, m2 ) =
     let
         period = 14
         half = period / 2
@@ -3030,11 +3393,11 @@ overlapStripePattern prefix ( b1, b2 ) =
         -- Pre-blend the box color with the page background at the same ratio
         -- as solid boxes (`boxFillOpacity`), so opaque stripes visually match
         -- adjacent solid box regions.
-        blended b =
-            "color-mix(in srgb, " ++ boxColor b ++ " " ++ boxBlendPct ++ ", var(--bg))"
+        blended muted b =
+            "color-mix(in srgb, " ++ boxFill muted b ++ " " ++ boxBlendPct ++ ", var(--bg))"
     in
     Svg.pattern
-        [ SA.id (prefix ++ "ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2)
+        [ SA.id (prefix ++ stripeId ( b1, b2 ) ( m1, m2 ))
         , SA.patternUnits "userSpaceOnUse"
         , SA.width (String.fromFloat period)
         , SA.height (String.fromFloat period)
@@ -3045,7 +3408,7 @@ overlapStripePattern prefix ( b1, b2 ) =
             , SA.y "0"
             , SA.width (String.fromFloat half)
             , SA.height (String.fromFloat period)
-            , SA.fill (blended b1)
+            , SA.fill (blended m1 b1)
             ]
             []
         , Svg.rect
@@ -3053,7 +3416,7 @@ overlapStripePattern prefix ( b1, b2 ) =
             , SA.y "0"
             , SA.width (String.fromFloat half)
             , SA.height (String.fromFloat period)
-            , SA.fill (blended b2)
+            , SA.fill (blended m2 b2)
             ]
             []
         ]
@@ -3461,6 +3824,18 @@ viewLegend board =
                 legendText "Boxes:"
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
 
+        position =
+            case board.focus of
+                Nothing ->
+                    []
+
+                Just ( lo, hi ) ->
+                    [ [ legendText
+                            ("Frets " ++ String.fromInt lo ++ "–" ++ String.fromInt hi ++ ":")
+                      , legendChip "var(--box-off)" "out of position"
+                      ]
+                    ]
+
         tones =
             if isChromatic board.scale then
                 [ legendText "Tones:"
@@ -3511,11 +3886,15 @@ viewLegend board =
         , style "flex-wrap" "wrap"
         , style "align-items" "center"
         ]
-        (if List.isEmpty boxes then
-            [ legendGroup tones ]
+        (List.map legendGroup
+            ((if List.isEmpty boxes then
+                []
 
-         else
-            [ legendGroup boxes, legendGroup tones ]
+              else
+                [ boxes ]
+             )
+                ++ (tones :: position)
+            )
         )
 
 
@@ -3541,6 +3920,11 @@ legendText s =
 
 legendSwatch : ( Int, String ) -> Html Msg
 legendSwatch ( b, lbl ) =
+    legendChip (boxColor b) lbl
+
+
+legendChip : String -> String -> Html Msg
+legendChip color lbl =
     span
         [ style "display" "inline-flex"
         , style "align-items" "center"
@@ -3550,8 +3934,8 @@ legendSwatch ( b, lbl ) =
             [ style "display" "inline-block"
             , style "width" "16px"
             , style "height" "16px"
-            , style "background" (boxColor b)
-            , style "border" ("1px solid " ++ boxColor b)
+            , style "background" color
+            , style "border" ("1px solid " ++ color)
             , style "border-radius" "3px"
             , style "opacity" "0.75"
             ]
@@ -3573,7 +3957,7 @@ legendRing ( inv, lbl ) =
             , style "width" "16px"
             , style "height" "16px"
             , style "box-sizing" "border-box"
-            , style "border" ("3px solid " ++ inversionColor inv)
+            , style "border" ("3px solid " ++ inversionColor False inv)
             , style "border-radius" "8px"
             ]
             []

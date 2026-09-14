@@ -43,6 +43,12 @@ color — matching the style of `fretboard-reference.jpeg`.
   compare them on one page. Each neck has a grip handle on its left to drag it
   into whatever order you want, and an **×** to drop it. Works with a finger as
   well as a mouse.
+- **Position focus.** Set a fret window in the **Position** row and everything
+  outside it fades to gray, on every neck at once. Practicing a C–Am–G–F
+  progression between frets 4 and 8? Set `Frets 4 – 8` and each neck shows you
+  the one shape that lives there — box 1, box 1, box 3, box 4 — with the rest
+  of the neck out of the way. In the triad modes it keeps the voicings you can
+  reach without moving your hand.
 - **Fret markers** at 3, 5, 7, 9, 12 (double), 15, 17, 19, 21 and fret numbers
   labeled below the neck.
 
