@@ -246,6 +246,12 @@ lines the degrees up into their own row you can read across. The modes with no
 degree list — the all-notes maps, and the triads' string-set label — put a
 muted `aside` in the same place instead.
 
+The two blocks are **built to the same height**: 22px at line-height 1.2 for
+the name, 13px over 10px at 1.15 for a note above its degree, both 26.4px. So
+the row centers rather than baselines them, which lines their tops and bottoms
+up and makes the pair read as one band instead of a title with something
+hanging off it. Change one size and the other has to move with it.
+
 ### Draw order
 
 SVG draw order (later = on top):
@@ -266,10 +272,10 @@ Polygon edges land at fret-center positions (beneath notes), not at fret
 lines. Pinch overlaps (single shared fret) collapse to zero width and are
 visually invisible — accepted trade-off for consistent edge alignment.
 
-## Position focus
+## Highlight shapes
 
-The **Position** row sets a fret window — `Frets 4 – 8` — and everything that
-does not fall in it is drawn gray. It is `focus : Maybe Focus` on the model,
+The **Highlight shapes** row sets a fret window — `Frets 4 – 8` — and everything
+that does not fall in it is drawn gray. It is `focus : Maybe Focus` on the model,
 a pair of inclusive fret numbers, and like the tuning it belongs to the hand
 rather than to one neck: one window applies to every neck at once. That is the
 whole point. Practicing a C–Am–G–F progression between frets 4 and 8 lights up
@@ -297,7 +303,8 @@ box 1, box 1, box 3 and box 4, one per neck, and fades everything else.
   (`stripeMutings`) and the id says which (`stripeId`, e.g. `ovlp-1-2m`) — four
   patterns per pair instead of one.
 - Nudging either stepper switches the window on, so there is nothing to arm
-  first; **Off** turns it back off. `clampFocus` keeps the window on the neck
+  first; **Off** turns it back off. The legend grows a gray chip reading
+  "outside frets 4–8" while a window is set. `clampFocus` keeps the window on the neck
   and the right way round, clamping the low end against the high end rather
   than swapping past it, so a stepper pushed too far just stops.
 
@@ -382,7 +389,7 @@ address bar is always a link to exactly what is on screen.
   that have one. `&active=N` rides along when the active neck is not the first.
 - `&tuning=` is appended in both forms, omitted for Standard. Sharp notes use
   `Cs`, `Ds`, etc. to avoid URL-encoding `#`.
-- `&focus=4-8` carries the Position window, omitted when it is off. It is
+- `&focus=4-8` carries the highlight window, omitted when it is off. It is
   clamped on the way in, so a hand-edited or stale window cannot land off the
   neck or inside out.
 - The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots

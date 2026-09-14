@@ -6894,14 +6894,82 @@ var $author$project$Main$customButton = function (model) {
 				$elm$html$Html$text('Custom')
 			]));
 };
+var $author$project$Main$SetFocus = function (a) {
+	return {$: 'SetFocus', a: a};
+};
+var $author$project$Main$defaultFocus = _Utils_Tuple2(4, 8);
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
 var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$stepperButton = F2(
+	function (msg, glyph) {
+		return A2(
+			$elm$html$Html$button,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(msg),
+					A2($elm$html$Html$Attributes$style, 'padding', '0 6px'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
+					A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
+					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+					A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+					A2($elm$html$Html$Attributes$style, 'line-height', '1.4'),
+					A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
+					A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-bg)'),
+					A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-text)')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(glyph)
+				]));
+	});
+var $author$project$Main$fretStepper = F2(
+	function (value, toMsg) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'margin', '0 3px')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$author$project$Main$stepperButton,
+					toMsg(1),
+					'▲'),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
+							A2($elm$html$Html$Attributes$style, 'min-width', '26px'),
+							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+							A2($elm$html$Html$Attributes$style, 'color', 'var(--text)')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(value))
+						])),
+					A2(
+					$author$project$Main$stepperButton,
+					toMsg(-1),
+					'▼')
+				]));
+	});
 var $author$project$Main$label = function (s) {
 	return A2(
 		$elm$html$Html$span,
 		_List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
-				A2($elm$html$Html$Attributes$style, 'width', '60px'),
+				A2($elm$html$Html$Attributes$style, 'width', '80px'),
 				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
 				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
 				A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
@@ -6911,6 +6979,71 @@ var $author$project$Main$label = function (s) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text(s)
+			]));
+};
+var $author$project$Main$highlightRow = function (model) {
+	var _v0 = A2($elm$core$Maybe$withDefault, $author$project$Main$defaultFocus, model.focus);
+	var lo = _v0.a;
+	var hi = _v0.b;
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'gap', '6px 12px')
+			]),
+		_List_fromArray(
+			[
+				$author$project$Main$label('Highlight shapes'),
+				A2(
+				$elm$html$Html$button,
+				_Utils_ap(
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onClick(
+							$author$project$Main$SetFocus($elm$core$Maybe$Nothing)),
+							A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+						]),
+					$author$project$Main$buttonBaseStyle(
+						_Utils_eq(model.focus, $elm$core$Maybe$Nothing))),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Off')
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'gap', '2px'),
+						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Frets'),
+						A2(
+						$author$project$Main$fretStepper,
+						lo,
+						function (d) {
+							return $author$project$Main$SetFocus(
+								$elm$core$Maybe$Just(
+									_Utils_Tuple2(lo + d, hi)));
+						}),
+						$elm$html$Html$text('–'),
+						A2(
+						$author$project$Main$fretStepper,
+						hi,
+						function (d) {
+							return $author$project$Main$SetFocus(
+								$elm$core$Maybe$Just(
+									_Utils_Tuple2(lo, hi + d)));
+						})
+					]))
 			]));
 };
 var $author$project$Main$SetRoot = function (a) {
@@ -6944,9 +7077,6 @@ var $author$project$Main$accidentalFor = F2(
 			pc - $author$project$Main$letterPitchForIndex(li));
 		return (raw <= 6) ? raw : (raw - 12);
 	});
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $elm$core$Basics$abs = function (n) {
 	return (n < 0) ? (-n) : n;
 };
@@ -7263,136 +7393,6 @@ var $author$project$Main$noteButtonRow = function (model) {
 			$author$project$Main$rootButton(model),
 			A2($elm$core$List$range, 0, 11)));
 };
-var $author$project$Main$SetFocus = function (a) {
-	return {$: 'SetFocus', a: a};
-};
-var $author$project$Main$defaultFocus = _Utils_Tuple2(4, 8);
-var $author$project$Main$stepperButton = F2(
-	function (msg, glyph) {
-		return A2(
-			$elm$html$Html$button,
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick(msg),
-					A2($elm$html$Html$Attributes$style, 'padding', '0 6px'),
-					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
-					A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
-					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
-					A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
-					A2($elm$html$Html$Attributes$style, 'line-height', '1.4'),
-					A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
-					A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-bg)'),
-					A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-text)')
-				]),
-			_List_fromArray(
-				[
-					$elm$html$Html$text(glyph)
-				]));
-	});
-var $author$project$Main$fretStepper = F2(
-	function (value, toMsg) {
-		return A2(
-			$elm$html$Html$div,
-			_List_fromArray(
-				[
-					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-					A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
-					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-					A2($elm$html$Html$Attributes$style, 'margin', '0 3px')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$author$project$Main$stepperButton,
-					toMsg(1),
-					'▲'),
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
-							A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
-							A2($elm$html$Html$Attributes$style, 'min-width', '26px'),
-							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
-							A2($elm$html$Html$Attributes$style, 'color', 'var(--text)')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(value))
-						])),
-					A2(
-					$author$project$Main$stepperButton,
-					toMsg(-1),
-					'▼')
-				]));
-	});
-var $author$project$Main$positionRow = function (model) {
-	var _v0 = A2($elm$core$Maybe$withDefault, $author$project$Main$defaultFocus, model.focus);
-	var lo = _v0.a;
-	var hi = _v0.b;
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
-				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-				A2($elm$html$Html$Attributes$style, 'gap', '6px 12px')
-			]),
-		_List_fromArray(
-			[
-				$author$project$Main$label('Position'),
-				A2(
-				$elm$html$Html$button,
-				_Utils_ap(
-					_List_fromArray(
-						[
-							$elm$html$Html$Events$onClick(
-							$author$project$Main$SetFocus($elm$core$Maybe$Nothing)),
-							A2($elm$html$Html$Attributes$style, 'min-width', '80px')
-						]),
-					$author$project$Main$buttonBaseStyle(
-						_Utils_eq(model.focus, $elm$core$Maybe$Nothing))),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Off')
-					])),
-				A2(
-				$elm$html$Html$span,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-						A2($elm$html$Html$Attributes$style, 'gap', '2px'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Frets'),
-						A2(
-						$author$project$Main$fretStepper,
-						lo,
-						function (d) {
-							return $author$project$Main$SetFocus(
-								$elm$core$Maybe$Just(
-									_Utils_Tuple2(lo + d, hi)));
-						}),
-						$elm$html$Html$text('–'),
-						A2(
-						$author$project$Main$fretStepper,
-						hi,
-						function (d) {
-							return $author$project$Main$SetFocus(
-								$elm$core$Maybe$Just(
-									_Utils_Tuple2(lo, hi + d)));
-						})
-					]))
-			]));
-};
 var $author$project$Main$SetScale = function (a) {
 	return {$: 'SetScale', a: a};
 };
@@ -7622,7 +7622,7 @@ var $author$project$Main$viewControls = function (model) {
 						$author$project$Main$label('Root'),
 						$author$project$Main$noteButtonRow(model)
 					])),
-				$author$project$Main$positionRow(model),
+				$author$project$Main$highlightRow(model),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -7975,7 +7975,7 @@ var $author$project$Main$viewLegend = function (board) {
 			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
 			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
 		]));
-	var position = function () {
+	var highlight = function () {
 		var _v0 = board.focus;
 		if (_v0.$ === 'Nothing') {
 			return _List_Nil;
@@ -7987,9 +7987,10 @@ var $author$project$Main$viewLegend = function (board) {
 				[
 					_List_fromArray(
 					[
-						$author$project$Main$legendText(
-						'Frets ' + ($elm$core$String$fromInt(lo) + ('–' + ($elm$core$String$fromInt(hi) + ':')))),
-						A2($author$project$Main$legendChip, 'var(--box-off)', 'out of position')
+						A2(
+						$author$project$Main$legendChip,
+						'var(--box-off)',
+						'outside frets ' + ($elm$core$String$fromInt(lo) + ('–' + $elm$core$String$fromInt(hi))))
 					])
 				]);
 		}
@@ -8047,7 +8048,7 @@ var $author$project$Main$viewLegend = function (board) {
 			_Utils_ap(
 				$elm$core$List$isEmpty(boxes) ? _List_Nil : _List_fromArray(
 					[boxes]),
-				A2($elm$core$List$cons, tones, position))));
+				A2($elm$core$List$cons, tones, highlight))));
 };
 var $author$project$Main$Activate = function (a) {
 	return {$: 'Activate', a: a};
@@ -10521,8 +10522,8 @@ var $author$project$Main$noteChip = F2(
 					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
 					A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
 					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-					A2($elm$html$Html$Attributes$style, 'line-height', '1.1'),
-					A2($elm$html$Html$Attributes$style, 'min-width', '18px')
+					A2($elm$html$Html$Attributes$style, 'line-height', '1.15'),
+					A2($elm$html$Html$Attributes$style, 'min-width', '16px')
 				]),
 			_List_fromArray(
 				[
@@ -10530,7 +10531,7 @@ var $author$project$Main$noteChip = F2(
 					$elm$html$Html$span,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
+							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
 							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
 							A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
 						]),
@@ -10542,7 +10543,7 @@ var $author$project$Main$noteChip = F2(
 					$elm$html$Html$span,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+							A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
 							A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
 							A2($elm$html$Html$Attributes$style, 'opacity', '0.75')
 						]),
@@ -10726,9 +10727,9 @@ var $author$project$Main$viewScaleTitle = function (board) {
 		_List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'baseline'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
 				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-				A2($elm$html$Html$Attributes$style, 'gap', '0 14px'),
+				A2($elm$html$Html$Attributes$style, 'gap', '2px 20px'),
 				A2($elm$html$Html$Attributes$style, 'margin-bottom', '6px')
 			]),
 		_List_fromArray(
@@ -10737,8 +10738,9 @@ var $author$project$Main$viewScaleTitle = function (board) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'font-size', '20px'),
-						A2($elm$html$Html$Attributes$style, 'font-weight', '600')
+						A2($elm$html$Html$Attributes$style, 'font-size', '22px'),
+						A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+						A2($elm$html$Html$Attributes$style, 'line-height', '1.2')
 					]),
 				_List_fromArray(
 					[
@@ -10749,9 +10751,9 @@ var $author$project$Main$viewScaleTitle = function (board) {
 				_List_fromArray(
 					[
 						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'baseline'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
 						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-						A2($elm$html$Html$Attributes$style, 'gap', '0 11px')
+						A2($elm$html$Html$Attributes$style, 'gap', '0 10px')
 					]),
 				detail)
 			]));

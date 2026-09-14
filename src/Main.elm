@@ -46,9 +46,9 @@ type alias Model =
     }
 
 
-{-| The stretch of neck you are practicing in, as an inclusive pair of frets.
-Setting one fades every shape that does not fall in it to gray, on every neck
-at once — so a C–Am–G–F progression played between frets 4 and 8 shows
+{-| The stretch of neck you are practicing in, as an inclusive pair of frets —
+the **Highlight shapes** row. Setting one fades every shape that does not fall
+in it to gray, on every neck at once — so a C–Am–G–F progression played between frets 4 and 8 shows
 you box 1, box 1, box 3 and box 4 in color and nothing else. Like the tuning it
 belongs to the hand, not to one neck, so it lives on the model. -}
 type alias Focus =
@@ -1949,7 +1949,7 @@ chromaticMarker role cx cy n =
                 ]
 
 
-{-| A box's fill, gray when the Position window is set and this box is not the
+{-| A box's fill, gray when the highlight window is set and this box is not the
 one that falls in it. -}
 boxFill : Bool -> Int -> String
 boxFill muted b =
@@ -2490,22 +2490,27 @@ viewScaleTitle board =
                        )
     in
     div
+        -- Centered, not baselined: the two blocks are built to the same height
+        -- (22 × 1.2 for the name, 13 + 10 at 1.15 for a note over its degree),
+        -- so centering lines their tops and bottoms up and the pair reads as
+        -- one band rather than as a title with something hanging off it.
         [ style "display" "flex"
-        , style "align-items" "baseline"
+        , style "align-items" "center"
         , style "flex-wrap" "wrap"
-        , style "gap" "0 14px"
+        , style "gap" "2px 20px"
         , style "margin-bottom" "6px"
         ]
         [ div
-            [ style "font-size" "20px"
+            [ style "font-size" "22px"
             , style "font-weight" "600"
+            , style "line-height" "1.2"
             ]
             [ text scaleName ]
         , div
             [ style "display" "flex"
-            , style "align-items" "baseline"
+            , style "align-items" "center"
             , style "flex-wrap" "wrap"
-            , style "gap" "0 11px"
+            , style "gap" "0 10px"
             ]
             detail
         ]
@@ -2520,17 +2525,17 @@ noteChip note degree =
         [ style "display" "inline-flex"
         , style "flex-direction" "column"
         , style "align-items" "center"
-        , style "line-height" "1.1"
-        , style "min-width" "18px"
+        , style "line-height" "1.15"
+        , style "min-width" "16px"
         ]
         [ span
-            [ style "font-size" "14px"
+            [ style "font-size" "13px"
             , style "font-weight" "600"
             , style "color" "var(--text-2)"
             ]
             [ text note ]
         , span
-            [ style "font-size" "11px"
+            [ style "font-size" "10px"
             , style "color" "var(--text-2)"
             , style "opacity" "0.75"
             ]
@@ -2606,7 +2611,7 @@ viewControls model =
             , style "gap" "6px 12px"
             ]
             [ label "Root", noteButtonRow model ]
-        , positionRow model
+        , highlightRow model
         , div [ style "margin-bottom" "8px" ]
             (label "Tuning"
                 :: List.map (tuningButton model) tunings
@@ -2623,11 +2628,11 @@ viewControls model =
         ]
 
 
-{-| The Position window: the stretch of neck you are practicing in. Everything
-outside it fades to gray on every neck at once, so a whole chord progression
-shows you only the shapes that fall under your hand. -}
-positionRow : Model -> Html Msg
-positionRow model =
+{-| The **Highlight shapes** row: the stretch of neck you are practicing in.
+Everything outside it fades to gray on every neck at once, so a whole chord
+progression shows you only the shapes that fall under your hand. -}
+highlightRow : Model -> Html Msg
+highlightRow model =
     let
         ( lo, hi ) =
             Maybe.withDefault defaultFocus model.focus
@@ -2639,7 +2644,7 @@ positionRow model =
         , style "flex-wrap" "wrap"
         , style "gap" "6px 12px"
         ]
-        [ label "Position"
+        [ label "Highlight shapes"
         , button
             ([ onClick (SetFocus Nothing)
              , style "min-width" "80px"
@@ -2761,11 +2766,14 @@ stepperButton msg glyph =
         [ text glyph ]
 
 
+{-| The name in the left-hand column of a control row. The column is wide
+enough for the longest label to sit on one line, so every row's buttons start
+at the same x. -}
 label : String -> Html Msg
 label s =
     span
         [ style "display" "inline-block"
-        , style "width" "60px"
+        , style "width" "80px"
         , style "font-size" "13px"
         , style "color" "var(--text-2)"
         , style "font-weight" "600"
@@ -2919,7 +2927,7 @@ drawBoxRegionsBoxes board =
         octaves =
             [ -1, 0, 1 ]
 
-        -- Which box instances the Position window lights, keyed by box number
+        -- Which box instances the highlight window lights, keyed by box number
         -- and octave, since the same box repeats up the neck and only the one
         -- under your hand is in position.
         lit =
@@ -2981,7 +2989,7 @@ drawDiagonalRegions board =
 
 
 {-| A climbing shape's reach, lowest fret on its lower string to highest on its
-upper — what the Position window is compared against. These shapes are meant
+upper — what the highlight window is compared against. These shapes are meant
 to be slid rather than played in one place, so the window only says which one
 you are nearest, and the rest fade. -}
 diagonalSpan : Tuning -> ScaleType -> Int -> DiagShape -> Int -> ( Int, Int )
@@ -3204,7 +3212,7 @@ triadRing prefix muted index triad =
 
 
 {-| The stretch of neck one drawn box instance covers, lowest fret on any
-string to highest — what the Position window is compared against. -}
+string to highest — what the highlight window is compared against. -}
 boxSpan : Board -> Int -> Int -> ( Int, Int )
 boxSpan board b octave =
     let
@@ -3298,7 +3306,7 @@ drawOverlapStripe board lit ( b1, b2 ) octave =
         Nothing
 
 
-{-| A stripe has a color per side, so with the Position window set each side
+{-| A stripe has a color per side, so with the highlight window set each side
 mutes on its own — the band where an in-position box meets an out-of-position
 one is half color, half gray, which is exactly what it is. That means four
 patterns per pair rather than one, and the id has to say which. -}
@@ -3824,15 +3832,14 @@ viewLegend board =
                 legendText "Boxes:"
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
 
-        position =
+        highlight =
             case board.focus of
                 Nothing ->
                     []
 
                 Just ( lo, hi ) ->
-                    [ [ legendText
-                            ("Frets " ++ String.fromInt lo ++ "–" ++ String.fromInt hi ++ ":")
-                      , legendChip "var(--box-off)" "out of position"
+                    [ [ legendChip "var(--box-off)"
+                            ("outside frets " ++ String.fromInt lo ++ "–" ++ String.fromInt hi)
                       ]
                     ]
 
@@ -3893,7 +3900,7 @@ viewLegend board =
               else
                 [ boxes ]
              )
-                ++ (tones :: position)
+                ++ (tones :: highlight)
             )
         )
 

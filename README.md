@@ -43,7 +43,7 @@ color — matching the style of `fretboard-reference.jpeg`.
   compare them on one page. Each neck has a grip handle on its left to drag it
   into whatever order you want, and an **×** to drop it. Works with a finger as
   well as a mouse.
-- **Position focus.** Set a fret window in the **Position** row and everything
+- **Highlight shapes.** Set a fret window in the **Highlight shapes** row and everything
   outside it fades to gray, on every neck at once. Practicing a C–Am–G–F
   progression between frets 4 and 8? Set `Frets 4 – 8` and each neck shows you
   the one shape that lives there — box 1, box 1, box 3, box 4 — with the rest
