@@ -264,37 +264,82 @@ so they read well after the 0.45/0.55 opacity blend. Stripe patterns
 pre-blend with `color-mix(in srgb, var(--box-N) 55%, var(--bg) 45%)`
 for opaque rendering.
 
-## Multiple roots
+## The neck list
 
-The **Multiple roots** checkbox next to the Root row turns the root buttons
-from a radio group into a multi-select and draws one neck per selected root,
-each under its own title. `selectedRoots` is the single reader — the whole
-selection in multi mode, `[ root ]` otherwise — and `viewNeck` renders a neck
-by swapping that root into the model, so every downstream function is
-untouched. Three set buttons appear in multi mode: **All**, **All sharps**
-(the black keys) and **All naturals** (the white keys).
+The page draws a **list of necks**, not one fretboard. A `Neck` is a root, a
+scale and (triads only) a string set; `Model` holds `necks : List Neck` plus
+`active`, the index the control panel edits. Tuning is *not* per neck — it is a
+property of the instrument, so it stays on the model and every neck shares it.
 
-The selection is never empty: `toggleRoot` refuses to remove the last root, so
-there is always a neck. Unchecking the box keeps `model.root` if it is still
-selected, else falls back to the lowest selected root.
+This replaced an earlier "Multiple roots" checkbox that turned the root buttons
+into a multi-select. That could only ever draw one scale at a time, so you
+could not put A minor pentatonic above C major; per-neck scales are the whole
+point of the list.
 
-SVG ids are document-global, so with several necks on the page a `url(#…)`
-would resolve to whichever neck rendered first. Every id a neck mints — the
-`ovlp-*` stripe patterns and the `triad-lasso-*` masks — is prefixed with
-`neckId`, its root's pitch class.
+- **`Board`** is what the drawing code takes: a neck plus the tuning plus an
+  `id`. Every render function reads its root/scale/stringSet/tuning off a
+  `Board`, never off the model, which is what lets one page draw many necks.
+  `boardAt` pairs neck `i` with the tuning; `activeBoard` is the one the
+  controls are pointed at, and it feeds the legend and (single-neck only) the
+  title above the controls.
+- **`board.id`** namespaces the SVG ids a neck mints — the `ovlp-*` stripe
+  patterns and the `triad-lasso-*` masks. Ids are document-global, so without
+  a prefix a `url(#…)` would resolve to whichever neck rendered first and every
+  later neck would wear the first one's patterns. The prefix is the neck's
+  **index** (`n0-`), not its root, because two necks may now share a root (the
+  same key in two different modes).
+- Every control edits the active neck through `mapActive`. **Add neck**
+  duplicates the active neck and selects the copy, so you reshape it with the
+  ordinary root and scale buttons. **×** removes one; `RemoveNeck` refuses the
+  last one, so the list is never empty and the buttons always have something
+  to edit.
+- With a single neck the list furniture disappears entirely — no handle, no ×,
+  no active accent, title above the controls — so the page looks exactly as it
+  did before there was a list.
+
+### Reordering
+
+Each neck has a grip handle on its left. Dragging uses **pointer events**, not
+HTML5 drag and drop, which does not fire for touch at all — and this is a chart
+you reorder on the tablet propped up in front of you.
+
+- `DragStart` reads `clientY` **and the row height**, decoded straight off the
+  DOM as `currentTarget.parentElement.offsetHeight`, because Elm cannot measure
+  the page and a drag has to know how far one slot is. The row carries its gap
+  as `padding-bottom` rather than a margin so `offsetHeight` is the full pitch.
+- `DragMove` recomputes the target slot from the distance dragged **since the
+  grab**, never since the last move, so previewing the reorder cannot feed back
+  into the arithmetic and make the neck chase the finger.
+- The list renders in the previewed order (`orderedNecks`) while a drag is
+  live, so the neck travels with the pointer; `DragEnd` commits it and `active`
+  follows the neck that moved. `displayIndexOf`/`committedIndexOf` map between
+  the screen slot and the slot in `model.necks`, so a click on a previewed row
+  still names the right neck.
+- Touch pointers are implicitly captured by the handle, so its own
+  `pointermove` is enough there. A mouse is not captured and walks straight off
+  the handle, so `subscriptions` watches the document's `mousemove`/`mouseup`
+  while a drag is live. Both paths feed the same messages; on a mouse they
+  double up harmlessly, since `DragMove` is idempotent. The handle needs
+  `touch-action: none` or the browser claims the gesture for scrolling and no
+  `pointermove` ever arrives.
 
 ## URL state
 
-`Browser.application` syncs root + scale + tuning (+ string set, triads only)
-to query params: `?root=A&scale=dorian&tuning=drop-d`, or
-`?root=C&scale=triad-major&strings=2-3-4`. Sharp notes use `Cs`, `Ds`, etc. to avoid
-URL-encoding `#`. The `tuning` param is omitted for Standard. `Nav.replaceUrl`
-(not push) on each change.
+`Browser.application` syncs the whole neck list and the tuning to query params.
+`Nav.replaceUrl` (not push) on each change, from a single `sync` helper, so the
+address bar is always a link to exactly what is on screen.
 
-Multi-root mode adds `&roots=C-E-G`. The param *is* the mode flag — it is only
-written when multi-root is on and the selection is never empty, so a URL either
-carries a list of necks or the single `root`. `root` is still written alongside
-it, so unchecking the box has something to fall back to.
+- **One neck** writes the URL it always wrote — `?root=A&scale=dorian`,
+  `?root=C&scale=triad-major&strings=2-3-4` — so every link ever shared of a
+  single fretboard still reads the way it did.
+- **Several** write `?necks=A.minor-pent,C.ionian,E.triad-major.2-3-4`: one
+  neck per comma, `root.scale` with the string set appended in the triad modes
+  that have one. `&active=N` rides along when the active neck is not the first.
+- `&tuning=` is appended in both forms, omitted for Standard. Sharp notes use
+  `Cs`, `Ds`, etc. to avoid URL-encoding `#`.
+- The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots
+  all sharing the one `scale`) so links from that version keep working. It is
+  never written any more; the next change rewrites the URL in the new form.
 
 ## Ports (Wake Lock)
 

@@ -20,10 +20,12 @@ port module Main exposing
     )
 
 import Browser
+import Browser.Events
 import Browser.Navigation as Nav
 import Html exposing (Html, button, div, h1, p, span, text)
-import Html.Attributes exposing (checked, style, type_)
-import Html.Events exposing (onCheck, onClick)
+import Html.Attributes exposing (style)
+import Html.Events exposing (onClick)
+import Json.Decode as Decode
 import Svg
 import Svg.Attributes as SA
 import Url exposing (Url)
@@ -34,14 +36,49 @@ import Url exposing (Url)
 
 
 type alias Model =
-    { root : Int
-    , roots : List Int
-    , multiRoot : Bool
-    , scale : ScaleType
+    { necks : List Neck
+    , active : Int
+    , drag : Maybe Drag
     , tuning : Tuning
-    , stringSet : StringSet
     , key : Nav.Key
     , wakeLockOn : Bool
+    }
+
+
+{-| One fretboard's worth of choices. The page draws a list of these, so a
+minor pentatonic neck can sit above a major triad neck; the tuning is not in
+here because it is a property of the instrument, shared by every neck. -}
+type alias Neck =
+    { root : Int
+    , scale : ScaleType
+    , stringSet : StringSet
+    }
+
+
+{-| A neck plus the tuning it is played in, which is everything the drawing
+code needs. `id` namespaces the SVG ids this neck mints: ids live in one
+document-wide namespace, so without a prefix a `url(#…)` reference would
+resolve to whichever neck rendered first and every later neck would wear the
+first one's stripe patterns and triad masks. -}
+type alias Board =
+    { root : Int
+    , scale : ScaleType
+    , stringSet : StringSet
+    , tuning : Tuning
+    , id : String
+    }
+
+
+{-| A reorder in progress. `from` is where the grabbed neck started and `to`
+where it would land, recomputed on every pointer move from the distance
+dragged and `rowHeight`, the height of one neck row — read off the DOM when
+the drag starts, since Elm cannot measure the page itself. The list is
+rendered in the previewed order, so the neck follows the finger. -}
+type alias Drag =
+    { from : Int
+    , to : Int
+    , startY : Float
+    , rowHeight : Float
     }
 
 
@@ -103,12 +140,16 @@ type StringSet
 
 type Msg
     = SetRoot Int
-    | SetRoots (List Int)
-    | SetMultiRoot Bool
     | SetScale ScaleType
     | SetTuning Tuning
     | SetStringSet StringSet
     | TuneString Int Int
+    | Activate Int
+    | AddNeck
+    | RemoveNeck Int
+    | DragStart Int Float Float
+    | DragMove Float
+    | DragEnd
     | UrlChanged Url
     | LinkClicked Browser.UrlRequest
     | ToggleWakeLock
@@ -121,12 +162,10 @@ init _ url key =
         state =
             parseUrl url
     in
-    ( { root = state.root
-      , roots = state.roots
-      , multiRoot = state.multiRoot
-      , scale = state.scale
+    ( { necks = state.necks
+      , active = state.active
+      , drag = Nothing
       , tuning = state.tuning
-      , stringSet = state.stringSet
       , key = key
       , wakeLockOn = False
       }
@@ -142,73 +181,16 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetRoot n ->
-            let
-                pc =
-                    modBy 12 n
+            sync { model | necks = mapActive (\neck -> { neck | root = modBy 12 n }) model }
 
-                newModel =
-                    if model.multiRoot then
-                        -- Toggle, but never down to nothing: with no root
-                        -- selected there is no neck left to draw.
-                        { model | roots = toggleRoot pc model.roots }
-
-                    else
-                        { model | root = pc }
-            in
-            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
-
-        SetRoots rs ->
-            let
-                newModel =
-                    { model | roots = List.sort rs }
-            in
-            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
-
-        SetMultiRoot on ->
-            let
-                newModel =
-                    if on then
-                        -- Seed the selection from the root already on screen,
-                        -- so ticking the box adds necks rather than replacing
-                        -- the one you were looking at.
-                        { model | multiRoot = True, roots = [ modBy 12 model.root ] }
-
-                    else
-                        -- Fall back to the neck the single view will show: the
-                        -- current root if it survived the selection, else the
-                        -- lowest one that is still selected.
-                        { model
-                            | multiRoot = False
-                            , root =
-                                if List.member (modBy 12 model.root) model.roots then
-                                    model.root
-
-                                else
-                                    List.head model.roots |> Maybe.withDefault model.root
-                        }
-            in
-            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
-
-        SetScale s ->
-            let
-                newModel =
-                    { model | scale = s }
-            in
-            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
-
-        SetTuning t ->
-            let
-                newModel =
-                    { model | tuning = t }
-            in
-            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+        SetScale sc ->
+            sync { model | necks = mapActive (\neck -> { neck | scale = sc }) model }
 
         SetStringSet set ->
-            let
-                newModel =
-                    { model | stringSet = set }
-            in
-            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+            sync { model | necks = mapActive (\neck -> { neck | stringSet = set }) model }
+
+        SetTuning t ->
+            sync { model | tuning = t }
 
         TuneString s delta ->
             let
@@ -222,11 +204,87 @@ update msg model =
                                 n
                         )
                         model.tuning.strings
-
-                newModel =
-                    { model | tuning = customFrom newStrings }
             in
-            ( newModel, Nav.replaceUrl model.key (modelUrl newModel) )
+            sync { model | tuning = customFrom newStrings }
+
+        Activate i ->
+            sync { model | active = clampIndex model.necks i }
+
+        AddNeck ->
+            -- The copy lands right under the neck it came from and takes over
+            -- as active, so the scale and root buttons retune the new one
+            -- rather than the one you were looking at.
+            let
+                i =
+                    clampIndex model.necks model.active
+            in
+            sync
+                { model
+                    | necks = insertAt (i + 1) (activeNeck model) model.necks
+                    , active = i + 1
+                }
+
+        RemoveNeck i ->
+            -- Refused down to nothing: an empty list would draw no necks at
+            -- all and leave the buttons with nothing to edit.
+            if List.length model.necks <= 1 then
+                ( model, Cmd.none )
+
+            else
+                let
+                    remaining =
+                        List.take i model.necks ++ List.drop (i + 1) model.necks
+                in
+                sync
+                    { model
+                        | necks = remaining
+                        , active =
+                            clampIndex remaining
+                                (if model.active > i then
+                                    model.active - 1
+
+                                 else
+                                    model.active
+                                )
+                    }
+
+        DragStart i y rowHeight ->
+            ( { model
+                | active = clampIndex model.necks i
+                , drag = Just { from = i, to = i, startY = y, rowHeight = rowHeight }
+              }
+            , Cmd.none
+            )
+
+        DragMove y ->
+            case model.drag of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just drag ->
+                    -- Measured from where the grab started, not from the last
+                    -- move, so previewing the reorder cannot feed back into
+                    -- the arithmetic and make the neck chase the finger.
+                    let
+                        slots =
+                            round ((y - drag.startY) / max 1 drag.rowHeight)
+                    in
+                    ( { model | drag = Just { drag | to = clampIndex model.necks (drag.from + slots) } }
+                    , Cmd.none
+                    )
+
+        DragEnd ->
+            case model.drag of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just drag ->
+                    sync
+                        { model
+                            | necks = moveItem drag.from drag.to model.necks
+                            , active = drag.to
+                            , drag = Nothing
+                        }
 
         UrlChanged url ->
             let
@@ -234,12 +292,9 @@ update msg model =
                     parseUrl url
             in
             ( { model
-                | root = state.root
-                , roots = state.roots
-                , multiRoot = state.multiRoot
-                , scale = state.scale
+                | necks = state.necks
+                , active = state.active
                 , tuning = state.tuning
-                , stringSet = state.stringSet
               }
             , Cmd.none
             )
@@ -271,6 +326,14 @@ update msg model =
 
 
 
+{-| Every state change reaches the URL, so the address bar is always a link to
+exactly what is on screen. -}
+sync : Model -> ( Model, Cmd Msg )
+sync model =
+    ( model, Nav.replaceUrl model.key (modelUrl model) )
+
+
+
 -- URL SERIALIZATION
 
 
@@ -278,32 +341,77 @@ modelUrl : Model -> String
 modelUrl model =
     let
         base =
-            "?root=" ++ rootSlug model.root ++ "&scale=" ++ scaleSlug model.scale
+            case model.necks of
+                -- One neck writes the URL it always wrote, so every link ever
+                -- shared of a single fretboard still reads the way it did.
+                [ neck ] ->
+                    "?root="
+                        ++ rootSlug neck.root
+                        ++ "&scale="
+                        ++ scaleSlug neck.scale
+                        ++ (if hasStringSet neck then
+                                "&strings=" ++ stringSetSlug neck.stringSet
 
-        withRoots =
-            -- Multi-root mode is implied by the param: `roots` is only ever
-            -- written here, and the selection is never empty, so a URL either
-            -- carries a list of necks or the single `root` above.
-            if model.multiRoot then
-                base ++ "&roots=" ++ String.join "-" (List.map rootSlug (selectedRoots model))
+                            else
+                                ""
+                           )
 
-            else
-                base
+                necks ->
+                    "?necks="
+                        ++ String.join "," (List.map neckSlug necks)
+                        ++ (if model.active == 0 then
+                                ""
 
-        withTuning =
-            if model.tuning.slug == standardTuning.slug then
-                withRoots
-
-            else
-                withRoots ++ "&tuning=" ++ model.tuning.slug
+                            else
+                                "&active=" ++ String.fromInt model.active
+                           )
     in
-    -- The string-set selector only exists in the triad modes, so its param is
-    -- only carried there; every other mode keeps the URL it always had.
-    if isTriad model.scale && model.stringSet /= AllStrings then
-        withTuning ++ "&strings=" ++ stringSetSlug model.stringSet
+    if model.tuning.slug == standardTuning.slug then
+        base
 
     else
-        withTuning
+        base ++ "&tuning=" ++ model.tuning.slug
+
+
+{-| One neck as `root.scale`, with the string set appended in the triad modes
+that have one: `A.minor-pent`, `C.triad-major.2-3-4`. -}
+neckSlug : Neck -> String
+neckSlug neck =
+    rootSlug neck.root ++ "." ++ scaleSlug neck.scale ++ triadStrings neck
+
+
+{-| The string-set selector only exists in the triad modes, so it is only
+written there; every other mode keeps the URL it always had. -}
+hasStringSet : Neck -> Bool
+hasStringSet neck =
+    isTriad neck.scale && neck.stringSet /= AllStrings
+
+
+triadStrings : Neck -> String
+triadStrings neck =
+    if hasStringSet neck then
+        "." ++ stringSetSlug neck.stringSet
+
+    else
+        ""
+
+
+neckFromSlug : String -> Maybe Neck
+neckFromSlug str =
+    case String.split "." str of
+        [ r, sc ] ->
+            Maybe.map2 (\root scale -> { root = root, scale = scale, stringSet = AllStrings })
+                (rootFromSlug r)
+                (scaleFromSlug sc)
+
+        [ r, sc, set ] ->
+            Maybe.map3 (\root scale stringSet -> { root = root, scale = scale, stringSet = stringSet })
+                (rootFromSlug r)
+                (scaleFromSlug sc)
+                (stringSetFromSlug set)
+
+        _ ->
+            Nothing
 
 
 rootSlug : Int -> String
@@ -422,15 +530,12 @@ stringSetFromSlug s =
         _ -> Nothing
 
 
-{-| Everything the URL carries: root, mode, tuning and (triads only) the
-string set the lassos are drawn on. -}
+{-| Everything the URL carries: the list of necks, which of them the controls
+edit, and the tuning they are all played in. -}
 type alias UrlState =
-    { root : Int
-    , roots : List Int
-    , multiRoot : Bool
-    , scale : ScaleType
+    { necks : List Neck
+    , active : Int
     , tuning : Tuning
-    , stringSet : StringSet
     }
 
 
@@ -454,83 +559,144 @@ parseUrl url =
                 |> List.head
                 |> Maybe.map Tuple.second
 
-        root =
-            lookup "root"
-                |> Maybe.andThen rootFromSlug
-                |> Maybe.withDefault 9
-
-        roots =
-            lookup "roots"
-                |> Maybe.map (String.split "-" >> List.filterMap rootFromSlug)
-                |> Maybe.withDefault []
-                |> List.sort
-
         scale =
             lookup "scale"
                 |> Maybe.andThen scaleFromSlug
                 |> Maybe.withDefault MinorPent
 
-        tuning =
-            lookup "tuning"
-                |> Maybe.andThen tuningFromSlug
-                |> Maybe.withDefault standardTuning
-
         stringSet =
             lookup "strings"
                 |> Maybe.andThen stringSetFromSlug
                 |> Maybe.withDefault AllStrings
-    in
-    { root = root
-    , roots =
-        if List.isEmpty roots then
-            [ root ]
 
-        else
-            roots
-    , multiRoot = not (List.isEmpty roots)
-    , scale = scale
-    , tuning = tuning
-    , stringSet = stringSet
+        single =
+            { root =
+                lookup "root"
+                    |> Maybe.andThen rootFromSlug
+                    |> Maybe.withDefault 9
+            , scale = scale
+            , stringSet = stringSet
+            }
+
+        -- `roots` is the old multi-root param: a list of roots all sharing one
+        -- scale. It is still read so links from that version keep working; it
+        -- is never written any more.
+        legacyRoots =
+            lookup "roots"
+                |> Maybe.map (String.split "-" >> List.filterMap rootFromSlug)
+                |> Maybe.withDefault []
+                |> List.map (\r -> { root = r, scale = scale, stringSet = stringSet })
+
+        necks =
+            case lookup "necks" |> Maybe.map (String.split "," >> List.filterMap neckFromSlug) of
+                Just (first :: rest) ->
+                    first :: rest
+
+                _ ->
+                    case legacyRoots of
+                        first :: rest ->
+                            first :: rest
+
+                        [] ->
+                            [ single ]
+    in
+    { necks = necks
+    , active =
+        lookup "active"
+            |> Maybe.andThen String.toInt
+            |> Maybe.withDefault 0
+            |> clampIndex necks
+    , tuning =
+        lookup "tuning"
+            |> Maybe.andThen tuningFromSlug
+            |> Maybe.withDefault standardTuning
     }
 
 
-{-| The roots to draw a neck for: the whole selection in multi-root mode, and
-just the one root otherwise. Never empty. -}
-selectedRoots : Model -> List Int
-selectedRoots model =
-    if model.multiRoot && not (List.isEmpty model.roots) then
-        model.roots
-
-    else
-        [ modBy 12 model.root ]
+{-| The neck the controls edit. The index is clamped rather than trusted so a
+stale `?active=` in a shared link cannot point past the end of the list. -}
+activeNeck : Model -> Neck
+activeNeck model =
+    List.drop (clampIndex model.necks model.active) model.necks
+        |> List.head
+        |> Maybe.withDefault defaultNeck
 
 
-{-| Add or remove a root from the selection, keeping it sorted so the necks
-always read low to high. Removing the last one is refused — an empty selection
-would draw no necks at all. -}
-toggleRoot : Int -> List Int -> List Int
-toggleRoot pc roots =
-    if List.member pc roots then
-        if List.length roots <= 1 then
-            roots
-
-        else
-            List.filter (\n -> n /= pc) roots
-
-    else
-        List.sort (pc :: roots)
+defaultNeck : Neck
+defaultNeck =
+    { root = 9, scale = MinorPent, stringSet = AllStrings }
 
 
-{-| The black keys. -}
-sharpRoots : List Int
-sharpRoots =
-    [ 1, 3, 6, 8, 10 ]
+{-| Applies an edit to the active neck and leaves the rest alone — every
+control in the panel changes exactly one neck. -}
+mapActive : (Neck -> Neck) -> Model -> List Neck
+mapActive f model =
+    let
+        i =
+            clampIndex model.necks model.active
+    in
+    List.indexedMap
+        (\j neck ->
+            if j == i then
+                f neck
+
+            else
+                neck
+        )
+        model.necks
 
 
-{-| The white keys — the notes that need no accidental. -}
-naturalRoots : List Int
-naturalRoots =
-    [ 0, 2, 4, 5, 7, 9, 11 ]
+{-| The necks in the order they are drawn: the previewed order mid-drag, so
+the neck being dragged travels with the pointer, and the committed order
+otherwise. -}
+orderedNecks : Model -> List Neck
+orderedNecks model =
+    case model.drag of
+        Just drag ->
+            moveItem drag.from drag.to model.necks
+
+        Nothing ->
+            model.necks
+
+
+{-| Pairs a neck with the tuning and the SVG id prefix it draws under. The
+prefix is the neck's position, not its root, because two necks may now share a
+root (the same key in two different modes). -}
+activeBoard : Model -> Board
+activeBoard model =
+    boardAt model (clampIndex model.necks model.active) (activeNeck model)
+
+
+boardAt : Model -> Int -> Neck -> Board
+boardAt model i neck =
+    { root = neck.root
+    , scale = neck.scale
+    , stringSet = neck.stringSet
+    , tuning = model.tuning
+    , id = "n" ++ String.fromInt i ++ "-"
+    }
+
+
+clampIndex : List a -> Int -> Int
+clampIndex xs i =
+    clamp 0 (List.length xs - 1) i
+
+
+insertAt : Int -> a -> List a -> List a
+insertAt i x xs =
+    List.take i xs ++ (x :: List.drop i xs)
+
+
+{-| Pulls the item at `from` out of the list and drops it back in at `to`,
+which is what a completed drag does to the neck order. -}
+moveItem : Int -> Int -> List a -> List a
+moveItem from to xs =
+    case List.drop from xs |> List.head of
+        Nothing ->
+            xs
+
+        Just x ->
+            insertAt to x (List.take from xs ++ List.drop (from + 1) xs)
 
 
 {-| Named presets resolve by their slug; anything else is parsed as a custom
@@ -777,16 +943,16 @@ scaleDegrees st =
 
 {-| Enharmonically spelled names for the scale's notes, parallel to
 `scaleIntervals model.scale`. -}
-spelledNotes : Model -> List String
-spelledNotes model =
-    spell model.root model.scale
+spelledNotes : Board -> List String
+spelledNotes board =
+    spell board.root board.scale
 
 
 {-| Spelled name for a given pitch class within the current scale. Falls back to
 the plain sharp name for pitch classes outside the scale. -}
-spelledName : Model -> Int -> String
-spelledName model n =
-    if isChromatic model.scale then
+spelledName : Board -> Int -> String
+spelledName board n =
+    if isChromatic board.scale then
         -- All twelve pitch classes are present, so there is no key to spell
         -- against; the conventional sharp names keep the map readable.
         noteName n
@@ -796,7 +962,7 @@ spelledName model n =
         pc =
             modBy 12 n
     in
-    List.map2 Tuple.pair (scaleNotes model) (spelledNotes model)
+    List.map2 Tuple.pair (scaleNotes board) (spelledNotes board)
         |> List.filter (\( p, _ ) -> p == pc)
         |> List.head
         |> Maybe.map Tuple.second
@@ -970,36 +1136,36 @@ scaleIntervals st =
             [ 0, 3, 5, 6, 7, 10 ]
 
 
-scaleNotes : Model -> List Int
-scaleNotes model =
-    List.map (\i -> modBy 12 (model.root + i)) (scaleIntervals model.scale)
+scaleNotes : Board -> List Int
+scaleNotes board =
+    List.map (\i -> modBy 12 (board.root + i)) (scaleIntervals board.scale)
 
 
-isInScale : Model -> Int -> Bool
-isInScale model n =
-    List.member (modBy 12 n) (scaleNotes model)
+isInScale : Board -> Int -> Bool
+isInScale board n =
+    List.member (modBy 12 n) (scaleNotes board)
 
 
 {-| The "shape anchor" fret on the low-E string.
 Minor pent of R → R's fret on low E.
 Major pent of R → relative minor (R - 3)'s fret on low E.
 -}
-rootFret : Model -> Int
-rootFret model =
+rootFret : Board -> Int
+rootFret board =
     let
         -- The anchor is the root's (or relative minor's) fret on the low-E
         -- string, so it follows the low E's open pitch in any tuning. In
         -- standard tuning (low E = 4) these reduce to the familiar −4 / −7.
         lowE =
-            openString model.tuning 6
+            openString board.tuning 6
 
         minorAnchor =
-            modBy 12 (model.root - lowE)
+            modBy 12 (board.root - lowE)
 
         majorAnchor =
-            modBy 12 (model.root - 3 - lowE)
+            modBy 12 (board.root - 3 - lowE)
     in
-    case model.scale of
+    case board.scale of
         MajorPent ->
             majorAnchor
 
@@ -1064,13 +1230,13 @@ rootFret model =
             majorAnchor
 
         DiagonalMajorPent ->
-            diagonalAnchor model.tuning DiagonalMajorPent model.root
+            diagonalAnchor board.tuning DiagonalMajorPent board.root
 
         DiagonalPent ->
-            diagonalAnchor model.tuning DiagonalPent model.root
+            diagonalAnchor board.tuning DiagonalPent board.root
 
         DiagonalBlues ->
-            diagonalAnchor model.tuning DiagonalBlues model.root
+            diagonalAnchor board.tuning DiagonalBlues board.root
 
 
 isDiagonal : ScaleType -> Bool
@@ -1243,12 +1409,12 @@ deriveBox tuning scale b =
     List.filterMap forString (List.range 1 6)
 
 
-positionBox : Model -> Int -> Int -> Maybe Int
-positionBox model s f =
-    if isDiagonal model.scale then
-        diagonalBoxOf model.tuning model.scale model.root s f
+positionBox : Board -> Int -> Int -> Maybe Int
+positionBox board s f =
+    if isDiagonal board.scale then
+        diagonalBoxOf board.tuning board.scale board.root s f
 
-    else if isInScale model (noteAt model.tuning s f) then
+    else if isInScale board (noteAt board.tuning s f) then
         -- The five boxes tile the neck, so every scale note belongs to a box;
         -- the marker is colored by role, not by box.
         Just 0
@@ -1465,26 +1631,26 @@ type NoteRole
     | Other
 
 
-noteRole : Model -> Int -> NoteRole
-noteRole model n =
-    if isChromatic model.scale then
+noteRole : Board -> Int -> NoteRole
+noteRole board n =
+    if isChromatic board.scale then
         -- The all-notes maps have no scale to pick *which* third or seventh is
         -- the diatonic one, so the mode itself says: minor marks ♭3/♭7, major
         -- marks 3/7. The 5th (7 semitones) is the same either way.
         let
             interval =
-                modBy 12 (n - model.root)
+                modBy 12 (n - board.root)
         in
         if interval == 0 then
             Root
 
-        else if interval == chromaticThird model.scale then
+        else if interval == chromaticThird board.scale then
             Third
 
         else if interval == 7 then
             Fifth
 
-        else if interval == chromaticSeventh model.scale then
+        else if interval == chromaticSeventh board.scale then
             Seventh
 
         else
@@ -1493,10 +1659,10 @@ noteRole model n =
     else
     let
         interval =
-            modBy 12 (n - model.root)
+            modBy 12 (n - board.root)
 
         thirdInterval =
-            case model.scale of
+            case board.scale of
                 MajorPent -> 4
                 MinorPent -> 3
                 Ionian -> 4
@@ -1522,7 +1688,7 @@ noteRole model n =
                 DiagonalBlues -> 3
 
         seventhInterval =
-            case model.scale of
+            case board.scale of
                 MajorPent -> -1
                 MinorPent -> 10
                 Ionian -> 11
@@ -1553,7 +1719,7 @@ noteRole model n =
     else if interval == thirdInterval then
         Third
 
-    else if interval == fifthInterval model.scale then
+    else if interval == fifthInterval board.scale then
         Fifth
 
     else if interval == seventhInterval then
@@ -1848,6 +2014,13 @@ view model =
 
 viewBody : Model -> Html Msg
 viewBody model =
+    let
+        necks =
+            orderedNecks model
+
+        many =
+            List.length necks > 1
+    in
     div [ style "margin" "1rem 0.5rem" ]
         [ div
             [ style "display" "flex"
@@ -1859,33 +2032,231 @@ viewBody model =
             [ h1 [ style "margin" "0 0 6px" ] [ text "Guitar Fretboard Visualizer" ]
             , wakeLockButton model
             ]
-        , if model.multiRoot then
+        , if many then
             -- Each neck carries its own title, so the single shared one above
             -- the controls would have nothing left to name.
             text ""
 
           else
-            viewScaleTitle model
+            viewScaleTitle (activeBoard model)
         , viewControls model
-        , div [] (List.map (viewNeck model) (selectedRoots model))
-        , viewLegend model
+        , div
+            -- A drag is a press and a sweep, which is also how you select
+            -- text; without this the sweep paints the page blue.
+            [ style "user-select"
+                (case model.drag of
+                    Just _ ->
+                        "none"
+
+                    Nothing ->
+                        "auto"
+                )
+            ]
+            (List.indexedMap (viewNeck model many) necks)
+        , addNeckButton
+        , viewLegend (activeBoard model)
         ]
 
 
-{-| One fretboard for one root. Everything downstream reads the root off the
-model, so a neck is just the model with that root swapped in. -}
-viewNeck : Model -> Int -> Html Msg
-viewNeck model root =
+{-| One fretboard, in its slot. With a single neck this is bare — no handle,
+no title, no remove button — so the page looks exactly as it did before
+there was a list to reorder. -}
+viewNeck : Model -> Bool -> Int -> Neck -> Html Msg
+viewNeck model many i neck =
     let
-        rootModel =
-            { model | root = root }
+        -- `i` is the slot on screen, which is not where the neck lives in the
+        -- model while a drag previews a new order. Messages and the SVG id
+        -- prefix name the neck by its place in the model, so they stay put as
+        -- the preview shuffles.
+        slot =
+            committedIndexOf model i
+
+        board =
+            boardAt model slot neck
+
+        isActive =
+            i == displayIndexOf model model.active
+
+        beingDragged =
+            case model.drag of
+                Just drag ->
+                    drag.to == i
+
+                Nothing ->
+                    False
     in
-    if model.multiRoot then
-        div [ style "margin-bottom" "18px" ]
-            [ viewScaleTitle rootModel, viewFretboard rootModel ]
+    if not many then
+        viewFretboard board
 
     else
-        viewFretboard rootModel
+        div
+            [ onClick (Activate slot)
+            , style "display" "flex"
+            , style "align-items" "flex-start"
+            , style "gap" "8px"
+            , style "padding" "6px 6px 18px"
+            , style "border-left"
+                (if isActive then
+                    "3px solid var(--btn-on-bg)"
+
+                 else
+                    "3px solid transparent"
+                )
+            , style "background"
+                (if beingDragged then
+                    "var(--btn-bg)"
+
+                 else
+                    "transparent"
+                )
+            , style "border-radius" "6px"
+            ]
+            [ dragHandle slot
+            , div [ style "min-width" "0", style "flex" "1" ]
+                [ div
+                    [ style "display" "flex"
+                    , style "align-items" "flex-start"
+                    , style "gap" "8px"
+                    ]
+                    [ div [ style "flex" "1", style "min-width" "0" ] [ viewScaleTitle board ]
+                    , removeNeckButton slot
+                    ]
+                , viewFretboard board
+                ]
+            ]
+
+
+{-| Where a neck sits on screen, which is its committed slot unless a drag is
+previewing a different order. -}
+displayIndexOf : Model -> Int -> Int
+displayIndexOf model i =
+    case model.drag of
+        Nothing ->
+            i
+
+        Just drag ->
+            indexAfterMove drag.from drag.to i
+
+
+{-| The inverse: which neck in the committed list is showing in screen slot
+`i`, so a click on a previewed row still names the right neck. -}
+committedIndexOf : Model -> Int -> Int
+committedIndexOf model i =
+    List.range 0 (List.length model.necks - 1)
+        |> List.filter (\j -> displayIndexOf model j == i)
+        |> List.head
+        |> Maybe.withDefault i
+
+
+{-| Where the item at `i` ends up once the item at `from` is pulled out and
+dropped back in at `to`. -}
+indexAfterMove : Int -> Int -> Int -> Int
+indexAfterMove from to i =
+    if i == from then
+        to
+
+    else if from < to && i > from && i <= to then
+        i - 1
+
+    else if to < from && i >= to && i < from then
+        i + 1
+
+    else
+        i
+
+
+{-| The grip. Dragging is done with pointer events rather than HTML5 drag and
+drop, which does not fire for touch at all — and a fretboard chart is
+something you reorder on the tablet propped up in front of you. -}
+dragHandle : Int -> Html Msg
+dragHandle i =
+    div
+        [ Html.Events.on "pointerdown" (dragStartDecoder i)
+        , Html.Events.on "pointermove" (Decode.map DragMove clientY)
+        , Html.Events.on "pointerup" (Decode.succeed DragEnd)
+        , Html.Events.on "pointercancel" (Decode.succeed DragEnd)
+        , Html.Attributes.title "Drag to reorder"
+        , style "flex" "0 0 auto"
+        , style "padding" "8px 4px"
+        , style "cursor" "grab"
+        , style "color" "var(--text-2)"
+        , style "line-height" "0"
+
+        -- Without this the browser claims the gesture for scrolling and no
+        -- pointermove ever arrives on touch.
+        , style "touch-action" "none"
+        , style "user-select" "none"
+        ]
+        [ Svg.svg
+            [ SA.viewBox "0 0 10 16"
+            , SA.width "10"
+            , SA.height "16"
+            , SA.fill "currentColor"
+            ]
+            (List.concatMap
+                (\y -> List.map (\x -> gripDot x y) [ 2, 8 ])
+                [ 2, 6, 10, 14 ]
+            )
+        ]
+
+
+gripDot : Int -> Int -> Svg.Svg Msg
+gripDot x y =
+    Svg.circle
+        [ SA.cx (String.fromInt x)
+        , SA.cy (String.fromInt y)
+        , SA.r "1.5"
+        ]
+        []
+
+
+{-| The grab reads the row height off the DOM, since a drag has to know how
+far one slot is and Elm cannot measure the page. The handle sits inside the
+row, so the row is its parent. -}
+dragStartDecoder : Int -> Decode.Decoder Msg
+dragStartDecoder i =
+    Decode.map2 (DragStart i)
+        clientY
+        (Decode.oneOf
+            [ Decode.at [ "currentTarget", "parentElement", "offsetHeight" ] Decode.float
+            , Decode.succeed 220
+            ]
+        )
+
+
+clientY : Decode.Decoder Float
+clientY =
+    Decode.field "clientY" Decode.float
+
+
+removeNeckButton : Int -> Html Msg
+removeNeckButton i =
+    button
+        [ Html.Events.stopPropagationOn "click" (Decode.succeed ( RemoveNeck i, True ))
+        , Html.Attributes.title "Remove this neck"
+        , style "flex" "0 0 auto"
+        , style "padding" "2px 8px"
+        , style "border" "1px solid var(--btn-bd)"
+        , style "border-radius" "6px"
+        , style "cursor" "pointer"
+        , style "font-size" "15px"
+        , style "line-height" "1.3"
+        , style "font-family" "inherit"
+        , style "background" "var(--btn-bg)"
+        , style "color" "var(--btn-text)"
+        ]
+        [ text "×" ]
+
+
+{-| Copies the active neck, so you reshape the copy with the ordinary root and
+scale buttons rather than building a neck from nothing. -}
+addNeckButton : Html Msg
+addNeckButton =
+    div [ style "margin" "4px 0 0 3px" ]
+        [ button
+            ([ onClick AddNeck ] ++ buttonBaseStyle False)
+            [ text "+ Add neck" ]
+        ]
 
 
 wakeLockButton : Model -> Html Msg
@@ -1906,13 +2277,13 @@ wakeLockButton model =
         ]
 
 
-viewScaleTitle : Model -> Html Msg
-viewScaleTitle model =
+viewScaleTitle : Board -> Html Msg
+viewScaleTitle board =
     let
         scaleName =
-            rootSpelling model.scale model.root
+            rootSpelling board.scale board.root
                 ++ " "
-                ++ (case model.scale of
+                ++ (case board.scale of
                         MajorPent -> "Major Pentatonic"
                         MinorPent -> "Minor Pentatonic"
                         Ionian -> "Major (Ionian)"
@@ -1939,7 +2310,7 @@ viewScaleTitle model =
                    )
 
         intervalLabels =
-            case model.scale of
+            case board.scale of
                 MajorPent -> [ "R", "2", "3", "5", "6" ]
                 MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
                 Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
@@ -1967,26 +2338,26 @@ viewScaleTitle model =
         notePairs =
             List.map2
                 (\nm lbl -> nm ++ " (" ++ lbl ++ ")")
-                (spelledNotes model)
+                (spelledNotes board)
                 intervalLabels
 
         subtitle =
-            if isChromatic model.scale then
+            if isChromatic board.scale then
                 "Every note on the neck · hue = note · "
-                    ++ (if model.scale == ChromaticMajor then
+                    ++ (if board.scale == ChromaticMajor then
                             "3 · 5 · 7"
 
                         else
                             "♭3 · 5 · ♭7"
                        )
                     ++ " marked from "
-                    ++ noteName model.root
+                    ++ noteName board.root
 
-            else if isTriad model.scale then
+            else if isTriad board.scale then
                 "Notes: "
                     ++ String.join "  ·  " notePairs
                     ++ "  ·  "
-                    ++ stringSetLabel model.stringSet
+                    ++ stringSetLabel board.stringSet
 
             else
                 "Notes: " ++ String.join "  ·  " notePairs
@@ -2039,7 +2410,7 @@ viewControls model =
             , scaleButton model TriadDim "Diminished"
             , scaleButton model TriadAug "Augmented"
             ]
-        , if isTriad model.scale then
+        , if isTriad (activeNeck model).scale then
             div [ style "margin-bottom" "8px" ]
                 (label "Strings"
                     :: stringSetButton model AllStrings "All"
@@ -2062,17 +2433,7 @@ viewControls model =
             , style "flex-wrap" "wrap"
             , style "gap" "6px 12px"
             ]
-            [ label "Root", noteButtonRow model, multiRootToggle model ]
-        , if model.multiRoot then
-            div [ style "margin-bottom" "8px" ]
-                [ label ""
-                , rootSetButton model "All" (List.range 0 11)
-                , rootSetButton model "All sharps" sharpRoots
-                , rootSetButton model "All naturals" naturalRoots
-                ]
-
-          else
-            text ""
+            [ label "Root", noteButtonRow model ]
         , div [ style "margin-bottom" "8px" ]
             (label "Tuning"
                 :: List.map (tuningButton model) tunings
@@ -2184,53 +2545,16 @@ noteButtonRow model =
 rootButton : Model -> Int -> Html Msg
 rootButton model n =
     let
-        active =
-            List.member n (selectedRoots model)
+        neck =
+            activeNeck model
     in
     button
         ([ onClick (SetRoot n)
          , style "min-width" "44px"
          ]
-            ++ buttonBaseStyle active
+            ++ buttonBaseStyle (neck.root == n)
         )
-        [ text (rootSpelling model.scale n) ]
-
-
-{-| Turns the root buttons from a radio group into a multi-select, drawing one
-neck per selected root. -}
-multiRootToggle : Model -> Html Msg
-multiRootToggle model =
-    Html.label
-        [ style "display" "inline-flex"
-        , style "align-items" "center"
-        , style "gap" "5px"
-        , style "font-size" "13px"
-        , style "color" "var(--text-2)"
-        , style "cursor" "pointer"
-        , style "user-select" "none"
-        ]
-        [ Html.input
-            [ type_ "checkbox"
-            , checked model.multiRoot
-            , onCheck SetMultiRoot
-            , style "margin" "0"
-            , style "cursor" "pointer"
-            ]
-            []
-        , text "Multiple roots"
-        ]
-
-
-{-| Selects a whole family of roots at once. -}
-rootSetButton : Model -> String -> List Int -> Html Msg
-rootSetButton model lbl roots =
-    button
-        ([ onClick (SetRoots roots)
-         , style "min-width" "80px"
-         ]
-            ++ buttonBaseStyle (selectedRoots model == List.sort roots)
-        )
-        [ text lbl ]
+        [ text (rootSpelling neck.scale n) ]
 
 
 scaleButton : Model -> ScaleType -> String -> Html Msg
@@ -2239,7 +2563,7 @@ scaleButton model st lbl =
         ([ onClick (SetScale st)
          , style "min-width" "80px"
          ]
-            ++ buttonBaseStyle (model.scale == st)
+            ++ buttonBaseStyle ((activeNeck model).scale == st)
         )
         [ text lbl ]
 
@@ -2250,7 +2574,7 @@ stringSetButton model set lbl =
         ([ onClick (SetStringSet set)
          , style "min-width" "80px"
          ]
-            ++ buttonBaseStyle (model.stringSet == set)
+            ++ buttonBaseStyle ((activeNeck model).stringSet == set)
         )
         [ text lbl ]
 
@@ -2299,28 +2623,19 @@ buttonBaseStyle active =
     ]
 
 
-{-| SVG ids live in one document-wide namespace, so with several necks on the
-page a `url(#…)` reference would resolve to whichever neck rendered first —
-every neck after the first would wear the first one's triad masks. Each neck
-prefixes the ids it mints with its root. -}
-neckId : Model -> String
-neckId model =
-    "r" ++ String.fromInt (modBy 12 model.root) ++ "-"
-
-
-viewFretboard : Model -> Html Msg
-viewFretboard model =
+viewFretboard : Board -> Html Msg
+viewFretboard board =
     let
         -- Box tints are translucent, so the neck goes under them and shows
         -- through. Triad pills are opaque and are meant to read as solid
         -- shapes, so there the whole neck — inlay dots, fret lines and strings
         -- alike — goes under the lassos.
         neckAndRegions =
-            if isTriad model.scale then
-                drawFretMarkers ++ drawFretLines ++ drawStrings ++ drawBoxRegions model
+            if isTriad board.scale then
+                drawFretMarkers ++ drawFretLines ++ drawStrings ++ drawBoxRegions board
 
             else
-                drawFretMarkers ++ drawBoxRegions model ++ drawFretLines ++ drawStrings
+                drawFretMarkers ++ drawBoxRegions board ++ drawFretLines ++ drawStrings
     in
     Svg.svg
         [ SA.viewBox ("0 0 " ++ String.fromFloat totalWidth ++ " " ++ String.fromFloat totalHeight)
@@ -2328,9 +2643,9 @@ viewFretboard model =
         , SA.style "max-width: 100%; height: auto;"
         ]
         (List.concat
-            [ [ stripePatternDefs model ]
+            [ [ stripePatternDefs board ]
             , neckAndRegions
-            , drawNotes model
+            , drawNotes board
             , drawFretNumbers
             , drawInlayDots
             ]
@@ -2341,34 +2656,34 @@ viewFretboard model =
 -- BOX POLYGONS
 
 
-drawBoxRegions : Model -> List (Svg.Svg Msg)
-drawBoxRegions model =
-    if isChromatic model.scale then
+drawBoxRegions : Board -> List (Svg.Svg Msg)
+drawBoxRegions board =
+    if isChromatic board.scale then
         -- The all-notes map is not a scale: every fret is a scale tone, so a
         -- CAGED box would cover the whole neck. Show the bare fretboard.
         []
 
-    else if isTriad model.scale then
+    else if isTriad board.scale then
         -- A triad is a chord, not a position: the grouping that matters is the
         -- three-note voicing, so each one gets its own lasso.
-        drawTriadLassos model
+        drawTriadLassos board
 
-    else if isDiagonal model.scale then
-        drawDiagonalRegions model
+    else if isDiagonal board.scale then
+        drawDiagonalRegions board
 
     else
-        drawBoxRegionsBoxes model
+        drawBoxRegionsBoxes board
 
 
-drawBoxRegionsBoxes : Model -> List (Svg.Svg Msg)
-drawBoxRegionsBoxes model =
+drawBoxRegionsBoxes : Board -> List (Svg.Svg Msg)
+drawBoxRegionsBoxes board =
     let
         octaves =
             [ -1, 0, 1 ]
 
         solids =
             List.concatMap
-                (\b -> List.filterMap (drawSolidBox model b) octaves)
+                (\b -> List.filterMap (drawSolidBox board b) octaves)
                 [ 1, 2, 3, 4, 5 ]
 
         -- Adjacent boxes share notes wherever the position windows overlap; the
@@ -2378,24 +2693,24 @@ drawBoxRegionsBoxes model =
         -- overlaps collapse to invisible zero-width pinches.
         overlaps =
             List.concatMap
-                (\pair -> List.filterMap (drawOverlapStripe model pair) octaves)
+                (\pair -> List.filterMap (drawOverlapStripe board pair) octaves)
                 [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
 
         wrapOverlaps =
-            List.filterMap (drawWrapOverlap model) octaves
+            List.filterMap (drawWrapOverlap board) octaves
     in
     solids ++ overlaps ++ wrapOverlaps
 
 
-drawDiagonalRegions : Model -> List (Svg.Svg Msg)
-drawDiagonalRegions model =
+drawDiagonalRegions : Board -> List (Svg.Svg Msg)
+drawDiagonalRegions board =
     let
         octaves =
             [ -2, -1, 0, 1, 2 ]
     in
     List.concatMap
-        (\shape -> List.filterMap (drawDiagonalShape model.tuning model.scale model.root shape) octaves)
-        (diagonalShapesFor model.scale)
+        (\shape -> List.filterMap (drawDiagonalShape board.tuning board.scale board.root shape) octaves)
+        (diagonalShapesFor board.scale)
 
 
 {-| One diagonal shape: a stepped polygon spanning two adjacent strings.
@@ -2479,19 +2794,19 @@ drawDiagonalShape tuning scale root shape octave =
 {-| Every triad voicing on the neck, drawn as a lasso through its three notes:
 a soft wash inside and a ring around it, colored by which chord tone is in the
 bass. -}
-drawTriadLassos : Model -> List (Svg.Svg Msg)
-drawTriadLassos model =
+drawTriadLassos : Board -> List (Svg.Svg Msg)
+drawTriadLassos board =
     let
         -- Largest pill first. The fills are opaque, so a pill hides whatever it
         -- covers; painting big to small leaves the small ones on top, where
         -- they would otherwise be swallowed by the sets around them. Every
         -- fill goes down before any ring, so no ring is ever painted over.
         voicings =
-            triadVoicingsFor model.tuning model.scale model.root model.stringSet
+            triadVoicingsFor board.tuning board.scale board.root board.stringSet
                 |> List.sortBy (\triad -> -(triadLassoRadius triad))
     in
     List.map triadFill voicings
-        ++ List.concat (List.indexedMap (triadRing (neckId model)) voicings)
+        ++ List.concat (List.indexedMap (triadRing (board.id)) voicings)
 
 
 {-| The lasso shape, shrunk by `inset`: one round-capped, round-joined stroke
@@ -2577,11 +2892,11 @@ triadRing prefix index triad =
     ]
 
 
-drawSolidBox : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
-drawSolidBox model b octave =
+drawSolidBox : Board -> Int -> Int -> Maybe (Svg.Svg Msg)
+drawSolidBox board b octave =
     let
         fRoot =
-            rootFret model
+            rootFret board
 
         shift =
             fRoot + 12 * octave
@@ -2589,7 +2904,7 @@ drawSolidBox model b octave =
         positions =
             List.map
                 (\( s, lo, hi ) -> ( s, lo + shift, hi + shift ))
-                (deriveBox model.tuning model.scale b)
+                (deriveBox board.tuning board.scale b)
 
         inRange =
             List.any
@@ -2612,11 +2927,11 @@ drawSolidBox model b octave =
         Nothing
 
 
-drawOverlapStripe : Model -> ( Int, Int ) -> Int -> Maybe (Svg.Svg Msg)
-drawOverlapStripe model ( b1, b2 ) octave =
+drawOverlapStripe : Board -> ( Int, Int ) -> Int -> Maybe (Svg.Svg Msg)
+drawOverlapStripe board ( b1, b2 ) octave =
     let
         fRoot =
-            rootFret model
+            rootFret board
 
         shift =
             fRoot + 12 * octave
@@ -2626,8 +2941,8 @@ drawOverlapStripe model ( b1, b2 ) octave =
                 (\( s, lo1, hi1 ) ( _, lo2, hi2 ) ->
                     ( s, max lo1 lo2 + shift, min hi1 hi2 + shift )
                 )
-                (deriveBox model.tuning model.scale b1)
-                (deriveBox model.tuning model.scale b2)
+                (deriveBox board.tuning board.scale b1)
+                (deriveBox board.tuning board.scale b2)
 
         hasRealOverlap =
             List.any (\( _, lo, hi ) -> hi >= lo) overlapPositions
@@ -2643,7 +2958,7 @@ drawOverlapStripe model ( b1, b2 ) octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
-                , SA.fill ("url(#" ++ neckId model ++ "ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
+                , SA.fill ("url(#" ++ board.id ++ "ovlp-" ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ ")")
                 ]
                 []
             )
@@ -2652,19 +2967,19 @@ drawOverlapStripe model ( b1, b2 ) octave =
         Nothing
 
 
-stripePatternDefs : Model -> Svg.Svg Msg
-stripePatternDefs model =
+stripePatternDefs : Board -> Svg.Svg Msg
+stripePatternDefs board =
     Svg.defs []
-        (List.map (overlapStripePattern (neckId model))
+        (List.map (overlapStripePattern (board.id))
             [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ), ( 5, 1 ) ]
         )
 
 
-drawWrapOverlap : Model -> Int -> Maybe (Svg.Svg Msg)
-drawWrapOverlap model octave =
+drawWrapOverlap : Board -> Int -> Maybe (Svg.Svg Msg)
+drawWrapOverlap board octave =
     let
         fRoot =
-            rootFret model
+            rootFret board
 
         shift5 =
             fRoot + 12 * octave
@@ -2680,8 +2995,8 @@ drawWrapOverlap model octave =
                     , min (hi5 + shift5) (hi1 + shift1)
                     )
                 )
-                (deriveBox model.tuning model.scale 5)
-                (deriveBox model.tuning model.scale 1)
+                (deriveBox board.tuning board.scale 5)
+                (deriveBox board.tuning board.scale 1)
 
         hasRealOverlap =
             List.any (\( _, lo, hi ) -> hi >= lo) overlapPositions
@@ -2697,7 +3012,7 @@ drawWrapOverlap model octave =
         Just
             (Svg.polygon
                 [ SA.points (polygonPoints overlapPositions)
-                , SA.fill ("url(#" ++ neckId model ++ "ovlp-5-1)")
+                , SA.fill ("url(#" ++ board.id ++ "ovlp-5-1)")
                 ]
                 []
             )
@@ -2899,27 +3214,27 @@ drawFretMarkers =
 -- NOTES
 
 
-drawNotes : Model -> List (Svg.Svg Msg)
-drawNotes model =
+drawNotes : Board -> List (Svg.Svg Msg)
+drawNotes board =
     let
         forString s =
-            List.filterMap (drawNoteAt model s) (List.range 0 numFrets)
+            List.filterMap (drawNoteAt board s) (List.range 0 numFrets)
     in
     List.concatMap forString (List.range 1 6)
 
 
-drawNoteAt : Model -> Int -> Int -> Maybe (Svg.Svg Msg)
-drawNoteAt model s f =
-    case positionBox model s f of
+drawNoteAt : Board -> Int -> Int -> Maybe (Svg.Svg Msg)
+drawNoteAt board s f =
+    case positionBox board s f of
         Just _ ->
             let
-                n = noteAt model.tuning s f
-                role = noteRole model n
+                n = noteAt board.tuning s f
+                role = noteRole board n
                 cx = noteX f
                 cy = stringY s
 
                 background =
-                    if isChromatic model.scale then
+                    if isChromatic board.scale then
                         chromaticMarker role cx cy n
 
                     else
@@ -2988,7 +3303,7 @@ drawNoteAt model s f =
                                 []
 
                 textColor =
-                    if isChromatic model.scale then
+                    if isChromatic board.scale then
                         -- Pastel in light mode, deep in dark mode: the ordinary
                         -- note text color reads on every pitch-class fill.
                         "var(--note-text)"
@@ -3011,7 +3326,7 @@ drawNoteAt model s f =
                         , SA.fontFamily "-apple-system, Helvetica, Arial, sans-serif"
                         , SA.fill textColor
                         ]
-                        [ Svg.text (spelledName model n) ]
+                        [ Svg.text (spelledName board n) ]
             in
             Just (Svg.g [] [ background, labelNode ])
 
@@ -3127,18 +3442,18 @@ drawInlayDots =
 -- LEGEND
 
 
-viewLegend : Model -> Html Msg
-viewLegend model =
+viewLegend : Board -> Html Msg
+viewLegend board =
     let
         boxes =
-            if isChromatic model.scale then
+            if isChromatic board.scale then
                 []
 
-            else if isTriad model.scale then
+            else if isTriad board.scale then
                 legendText "Bass note:"
                     :: List.map legendRing [ ( 0, "root" ), ( 1, "3rd (1st inv)" ), ( 2, "5th (2nd inv)" ) ]
 
-            else if isDiagonal model.scale then
+            else if isDiagonal board.scale then
                 legendText "Patterns:"
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ) ]
 
@@ -3147,11 +3462,11 @@ viewLegend model =
                     :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
 
         tones =
-            if isChromatic model.scale then
+            if isChromatic board.scale then
                 [ legendText "Tones:"
                 , legendMarker "square-pc" "Root"
                 , legendMarker "circle-pc-dashed"
-                    (if model.scale == ChromaticMajor then
+                    (if board.scale == ChromaticMajor then
                         "3rd"
 
                      else
@@ -3159,7 +3474,7 @@ viewLegend model =
                     )
                 , legendMarker "circle-pc-dotted" "5th"
                 , legendMarker "circle-pc-double"
-                    (if model.scale == ChromaticMajor then
+                    (if board.scale == ChromaticMajor then
                         "7th"
 
                      else
@@ -3169,7 +3484,7 @@ viewLegend model =
                 , legendText "hue = note"
                 ]
 
-            else if isTriad model.scale then
+            else if isTriad board.scale then
                 -- A triad has nothing but chord tones, so there is no 7th and
                 -- no "other" to explain.
                 [ legendText "Tones:"
@@ -3397,8 +3712,23 @@ legendMarker kind lbl =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    wakeLockChanged WakeLockChanged
+subscriptions model =
+    Sub.batch
+        [ wakeLockChanged WakeLockChanged
+
+        -- Touch pointers are captured by the handle, so its own pointermove is
+        -- enough there. A mouse is not captured and walks straight off the
+        -- handle, so while a drag is live the document is watched too.
+        , case model.drag of
+            Just _ ->
+                Sub.batch
+                    [ Browser.Events.onMouseMove (Decode.map DragMove clientY)
+                    , Browser.Events.onMouseUp (Decode.succeed DragEnd)
+                    ]
+
+            Nothing ->
+                Sub.none
+        ]
 
 
 main : Program () Model Msg

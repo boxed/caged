@@ -37,6 +37,12 @@ color — matching the style of `fretboard-reference.jpeg`.
   **Strings** row picks a three-string set (1-2-3, 2-3-4, 3-4-5, 4-5-6) or
   shows all four at once, and the chord tones outside the lassos stay on the
   neck for context.
+- **Stack as many necks as you like.** **+ Add neck** copies the neck you are
+  looking at; from there the root, scale and tuning buttons reshape whichever
+  neck is selected, so you can put A minor pentatonic above a C major triad and
+  compare them on one page. Each neck has a grip handle on its left to drag it
+  into whatever order you want, and an **×** to drop it. Works with a finger as
+  well as a mouse.
 - **Fret markers** at 3, 5, 7, 9, 12 (double), 15, 17, 19, 21 and fret numbers
   labeled below the neck.
 
