@@ -5521,6 +5521,7 @@ var $author$project$Main$standardTuning = {
 	strings: _List_fromArray(
 		[4, 11, 7, 2, 9, 4])
 };
+var $author$project$Main$customName = 'Custom';
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$rootSlug = function (n) {
 	var _v0 = A2($elm$core$Basics$modBy, 12, n);
@@ -5555,7 +5556,7 @@ var $author$project$Main$rootSlug = function (n) {
 };
 var $author$project$Main$customFrom = function (strings) {
 	return {
-		name: 'Custom',
+		name: $author$project$Main$customName,
 		slug: A2(
 			$elm$core$String$join,
 			'-',
@@ -5777,7 +5778,7 @@ var $author$project$Main$init = F3(
 	function (_v0, url, key) {
 		var state = $author$project$Main$parseUrl(url);
 		return _Utils_Tuple2(
-			{active: state.active, drag: $elm$core$Maybe$Nothing, focus: state.focus, key: key, necks: state.necks, tuning: state.tuning, wakeLockOn: false},
+			{active: state.active, drag: $elm$core$Maybe$Nothing, focus: state.focus, key: key, necks: state.necks, tuning: state.tuning, tuningOpen: false, wakeLockOn: false},
 			$elm$core$Platform$Cmd$none);
 	});
 var $author$project$Main$DragEnd = {$: 'DragEnd'};
@@ -6367,6 +6368,9 @@ var $author$project$Main$insertAt = F3(
 				x,
 				A2($elm$core$List$drop, i, xs)));
 	});
+var $author$project$Main$isCustom = function (t) {
+	return _Utils_eq(t.name, $author$project$Main$customName);
+};
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $author$project$Main$mapActive = F2(
 	function (f, model) {
@@ -6621,7 +6625,16 @@ var $author$project$Main$update = F2(
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
-						{tuning: t}));
+						{
+							tuning: t,
+							tuningOpen: $author$project$Main$isCustom(t)
+						}));
+			case 'ToggleTuningList':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{tuningOpen: !model.tuningOpen}),
+					$elm$core$Platform$Cmd$none);
 			case 'TuneString':
 				var s = msg.a;
 				var delta = msg.b;
@@ -6888,81 +6901,14 @@ var $author$project$Main$customButton = function (model) {
 						$author$project$Main$customFrom(model.tuning.strings))),
 					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.tuning.name === 'Custom')),
+			$author$project$Main$buttonBaseStyle(
+				$author$project$Main$isCustom(model.tuning))),
 		_List_fromArray(
 			[
 				$elm$html$Html$text('Custom')
 			]));
 };
-var $author$project$Main$SetFocus = function (a) {
-	return {$: 'SetFocus', a: a};
-};
-var $author$project$Main$defaultFocus = _Utils_Tuple2(4, 8);
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $elm$html$Html$span = _VirtualDom_node('span');
-var $author$project$Main$stepperButton = F2(
-	function (msg, glyph) {
-		return A2(
-			$elm$html$Html$button,
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick(msg),
-					A2($elm$html$Html$Attributes$style, 'padding', '0 6px'),
-					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
-					A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
-					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
-					A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
-					A2($elm$html$Html$Attributes$style, 'line-height', '1.4'),
-					A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
-					A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-bg)'),
-					A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-text)')
-				]),
-			_List_fromArray(
-				[
-					$elm$html$Html$text(glyph)
-				]));
-	});
-var $author$project$Main$fretStepper = F2(
-	function (value, toMsg) {
-		return A2(
-			$elm$html$Html$div,
-			_List_fromArray(
-				[
-					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-					A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
-					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-					A2($elm$html$Html$Attributes$style, 'margin', '0 3px')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$author$project$Main$stepperButton,
-					toMsg(1),
-					'▲'),
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
-							A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
-							A2($elm$html$Html$Attributes$style, 'min-width', '26px'),
-							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
-							A2($elm$html$Html$Attributes$style, 'color', 'var(--text)')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(value))
-						])),
-					A2(
-					$author$project$Main$stepperButton,
-					toMsg(-1),
-					'▼')
-				]));
-	});
 var $author$project$Main$label = function (s) {
 	return A2(
 		$elm$html$Html$span,
@@ -6979,71 +6925,6 @@ var $author$project$Main$label = function (s) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text(s)
-			]));
-};
-var $author$project$Main$highlightRow = function (model) {
-	var _v0 = A2($elm$core$Maybe$withDefault, $author$project$Main$defaultFocus, model.focus);
-	var lo = _v0.a;
-	var hi = _v0.b;
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
-				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-				A2($elm$html$Html$Attributes$style, 'gap', '6px 12px')
-			]),
-		_List_fromArray(
-			[
-				$author$project$Main$label('Highlight shapes'),
-				A2(
-				$elm$html$Html$button,
-				_Utils_ap(
-					_List_fromArray(
-						[
-							$elm$html$Html$Events$onClick(
-							$author$project$Main$SetFocus($elm$core$Maybe$Nothing)),
-							A2($elm$html$Html$Attributes$style, 'min-width', '80px')
-						]),
-					$author$project$Main$buttonBaseStyle(
-						_Utils_eq(model.focus, $elm$core$Maybe$Nothing))),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Off')
-					])),
-				A2(
-				$elm$html$Html$span,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-						A2($elm$html$Html$Attributes$style, 'gap', '2px'),
-						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Frets'),
-						A2(
-						$author$project$Main$fretStepper,
-						lo,
-						function (d) {
-							return $author$project$Main$SetFocus(
-								$elm$core$Maybe$Just(
-									_Utils_Tuple2(lo + d, hi)));
-						}),
-						$elm$html$Html$text('–'),
-						A2(
-						$author$project$Main$fretStepper,
-						hi,
-						function (d) {
-							return $author$project$Main$SetFocus(
-								$elm$core$Maybe$Just(
-									_Utils_Tuple2(lo, hi + d)));
-						})
-					]))
 			]));
 };
 var $author$project$Main$SetRoot = function (a) {
@@ -7077,6 +6958,9 @@ var $author$project$Main$accidentalFor = F2(
 			pc - $author$project$Main$letterPitchForIndex(li));
 		return (raw <= 6) ? raw : (raw - 12);
 	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
 var $elm$core$Basics$abs = function (n) {
 	return (n < 0) ? (-n) : n;
 };
@@ -7416,6 +7300,183 @@ var $author$project$Main$scaleButton = F3(
 					$elm$html$Html$text(lbl)
 				]));
 	});
+var $author$project$Main$SetFocus = function (a) {
+	return {$: 'SetFocus', a: a};
+};
+var $author$project$Main$stepperButton = F2(
+	function (msg, glyph) {
+		return A2(
+			$elm$html$Html$button,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(msg),
+					A2($elm$html$Html$Attributes$style, 'padding', '0 6px'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
+					A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
+					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+					A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+					A2($elm$html$Html$Attributes$style, 'line-height', '1.4'),
+					A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
+					A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-bg)'),
+					A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-text)')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(glyph)
+				]));
+	});
+var $author$project$Main$fretStepper = F2(
+	function (value, toMsg) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'margin', '0 3px')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$author$project$Main$stepperButton,
+					toMsg(1),
+					'▲'),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
+							A2($elm$html$Html$Attributes$style, 'min-width', '26px'),
+							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+							A2($elm$html$Html$Attributes$style, 'color', 'var(--text)')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(value))
+						])),
+					A2(
+					$author$project$Main$stepperButton,
+					toMsg(-1),
+					'▼')
+				]));
+	});
+var $author$project$Main$highlightFrets = function (model) {
+	var _v0 = model.focus;
+	if (_v0.$ === 'Nothing') {
+		return _List_Nil;
+	} else {
+		var _v1 = _v0.a;
+		var lo = _v1.a;
+		var hi = _v1.b;
+		return _List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'gap', '2px'),
+						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Frets'),
+						A2(
+						$author$project$Main$fretStepper,
+						lo,
+						function (d) {
+							return $author$project$Main$SetFocus(
+								$elm$core$Maybe$Just(
+									_Utils_Tuple2(lo + d, hi)));
+						}),
+						$elm$html$Html$text('–'),
+						A2(
+						$author$project$Main$fretStepper,
+						hi,
+						function (d) {
+							return $author$project$Main$SetFocus(
+								$elm$core$Maybe$Just(
+									_Utils_Tuple2(lo, hi + d)));
+						})
+					]))
+			]);
+	}
+};
+var $author$project$Main$defaultFocus = _Utils_Tuple2(4, 8);
+var $author$project$Main$highlightToggle = function (model) {
+	var on = !_Utils_eq(model.focus, $elm$core$Maybe$Nothing);
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$SetFocus(
+						on ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just($author$project$Main$defaultFocus))),
+					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+				]),
+			$author$project$Main$buttonBaseStyle(on)),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Highlight shapes')
+			]));
+};
+var $author$project$Main$ToggleTuningList = {$: 'ToggleTuningList'};
+var $author$project$Main$tuningLabel = function (t) {
+	return $author$project$Main$isCustom(t) ? ('Custom tuning: ' + A2(
+		$elm$core$String$join,
+		' ',
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$noteName,
+			$elm$core$List$reverse(t.strings)))) : (t.name + ' tuning');
+};
+var $author$project$Main$tuningToggle = function (model) {
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick($author$project$Main$ToggleTuningList),
+					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+				]),
+			$author$project$Main$buttonBaseStyle(model.tuningOpen)),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				_Utils_ap(
+					$author$project$Main$tuningLabel(model.tuning),
+					model.tuningOpen ? ' ▴' : ' ▾'))
+			]));
+};
+var $author$project$Main$setupRow = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'gap', '6px 12px')
+			]),
+		A2(
+			$elm$core$List$cons,
+			$author$project$Main$label(''),
+			A2(
+				$elm$core$List$cons,
+				$author$project$Main$tuningToggle(model),
+				A2(
+					$elm$core$List$cons,
+					$author$project$Main$highlightToggle(model),
+					$author$project$Main$highlightFrets(model)))));
+};
 var $author$project$Main$SetStringSet = function (a) {
 	return {$: 'SetStringSet', a: a};
 };
@@ -7622,8 +7683,8 @@ var $author$project$Main$viewControls = function (model) {
 						$author$project$Main$label('Root'),
 						$author$project$Main$noteButtonRow(model)
 					])),
-				$author$project$Main$highlightRow(model),
-				A2(
+				$author$project$Main$setupRow(model),
+				model.tuningOpen ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -7631,7 +7692,7 @@ var $author$project$Main$viewControls = function (model) {
 					]),
 				A2(
 					$elm$core$List$cons,
-					$author$project$Main$label('Tuning'),
+					$author$project$Main$label(''),
 					_Utils_ap(
 						A2(
 							$elm$core$List$map,
@@ -7640,8 +7701,8 @@ var $author$project$Main$viewControls = function (model) {
 						_List_fromArray(
 							[
 								$author$project$Main$customButton(model)
-							])))),
-				(model.tuning.name === 'Custom') ? A2(
+							])))) : $elm$html$Html$text(''),
+				(model.tuningOpen && $author$project$Main$isCustom(model.tuning)) ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -7650,7 +7711,7 @@ var $author$project$Main$viewControls = function (model) {
 					]),
 				_List_fromArray(
 					[
-						$author$project$Main$label('Strings'),
+						$author$project$Main$label(''),
 						A2(
 						$elm$html$Html$span,
 						_List_Nil,

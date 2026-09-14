@@ -272,10 +272,37 @@ Polygon edges land at fret-center positions (beneath notes), not at fret
 lines. Pinch overlaps (single shared fret) collapse to zero width and are
 visually invisible — accepted trade-off for consistent edge alignment.
 
+## Toolbar
+
+The control panel is ordered by **how often you reach for a thing**. The scale
+groups and the root are a list you pick from every time you set a neck up, so
+they stay open. Tuning and the highlight window you set once and then play, so
+each folds down to a single button that says where it stands and gets out of
+the way. That is most of the panel's height back, and on a phone it is the
+difference between the neck being on screen and not.
+
+- **Tuning** is a disclosure: the button reads `Standard tuning ▾`, opens the
+  list of presets when pressed, and closes again as soon as you pick one.
+  **Custom** is the exception — `SetTuning` leaves the list open for it, because
+  the per-string steppers it reveals are the thing you opened the list for. A
+  custom tuning has no name worth reading, so the button spells out its six
+  notes instead (`tuningLabel`), written low string to high the way a tuning is
+  normally written down.
+- **Highlight shapes** is a plain on/off toggle: pressing it switches the
+  window on at `defaultFocus` and reveals the fret steppers; pressing it again
+  puts them away. The caret on the tuning button is what separates the two —
+  one opens a list, the other is on or off.
+- `tuningOpen` is on the model but deliberately **not** in the URL: it is the
+  state of a drawer, not of the diagram, and a shared link should not reopen
+  someone else's drawer.
+- Every row is indented by the same 80px `label` column, the empty ones
+  included, so the buttons all start at one x whether or not their row is
+  named.
+
 ## Highlight shapes
 
-The **Highlight shapes** row sets a fret window — `Frets 4 – 8` — and everything
-that does not fall in it is drawn gray. It is `focus : Maybe Focus` on the model,
+The **Highlight shapes** button sets a fret window — `Frets 4 – 8` — and
+everything that does not fall in it is drawn gray. It is `focus : Maybe Focus` on the model,
 a pair of inclusive fret numbers, and like the tuning it belongs to the hand
 rather than to one neck: one window applies to every neck at once. That is the
 whole point. Practicing a C–Am–G–F progression between frets 4 and 8 lights up
@@ -302,9 +329,9 @@ box 1, box 1, box 3 and box 4, one per neck, and fades everything else.
   So a stripe pattern is minted for each of the four muting combinations
   (`stripeMutings`) and the id says which (`stripeId`, e.g. `ovlp-1-2m`) — four
   patterns per pair instead of one.
-- Nudging either stepper switches the window on, so there is nothing to arm
-  first; **Off** turns it back off. The legend grows a gray chip reading
-  "outside frets 4–8" while a window is set. `clampFocus` keeps the window on the neck
+- The **Highlight shapes** button switches the window on and off; the fret
+  steppers only exist while it is on. The legend grows a gray chip reading
+  "outside frets 4–8" to say what the gray means. `clampFocus` keeps the window on the neck
   and the right way round, clamping the low end against the high end rather
   than swapping past it, so a stepper pushed too far just stops.
 

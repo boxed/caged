@@ -40,6 +40,7 @@ type alias Model =
     , active : Int
     , drag : Maybe Drag
     , tuning : Tuning
+    , tuningOpen : Bool
     , focus : Maybe Focus
     , key : Nav.Key
     , wakeLockOn : Bool
@@ -156,6 +157,7 @@ type Msg
     | SetStringSet StringSet
     | TuneString Int Int
     | SetFocus (Maybe Focus)
+    | ToggleTuningList
     | Activate Int
     | AddNeck
     | RemoveNeck Int
@@ -178,6 +180,7 @@ init _ url key =
       , active = state.active
       , drag = Nothing
       , tuning = state.tuning
+      , tuningOpen = False
       , focus = state.focus
       , key = key
       , wakeLockOn = False
@@ -203,7 +206,13 @@ update msg model =
             sync { model | necks = mapActive (\neck -> { neck | stringSet = set }) model }
 
         SetTuning t ->
-            sync { model | tuning = t }
+            -- Picking a preset is the end of the errand, so the list folds
+            -- away again. Custom is not: the per-string steppers it reveals
+            -- are the thing you opened the list for.
+            sync { model | tuning = t, tuningOpen = isCustom t }
+
+        ToggleTuningList ->
+            ( { model | tuningOpen = not model.tuningOpen }, Cmd.none )
 
         TuneString s delta ->
             let
@@ -833,12 +842,22 @@ tuningFromSlug s =
                 Nothing
 
 
+isCustom : Tuning -> Bool
+isCustom t =
+    t.name == customName
+
+
+customName : String
+customName =
+    "Custom"
+
+
 {-| A custom tuning from six pitch classes, always named "Custom" so the UI
 stays in custom mode (steppers visible) even when the notes happen to match a
 preset. The slug encodes the notes so it round-trips through the URL. -}
 customFrom : List Int -> Tuning
 customFrom strings =
-    { name = "Custom"
+    { name = customName
     , slug = String.join "-" (List.map rootSlug strings)
     , strings = strings
     }
@@ -2611,15 +2630,19 @@ viewControls model =
             , style "gap" "6px 12px"
             ]
             [ label "Root", noteButtonRow model ]
-        , highlightRow model
-        , div [ style "margin-bottom" "8px" ]
-            (label "Tuning"
-                :: List.map (tuningButton model) tunings
-                ++ [ customButton model ]
-            )
-        , if model.tuning.name == "Custom" then
+        , setupRow model
+        , if model.tuningOpen then
+            div [ style "margin-bottom" "8px" ]
+                (label ""
+                    :: List.map (tuningButton model) tunings
+                    ++ [ customButton model ]
+                )
+
+          else
+            text ""
+        , if model.tuningOpen && isCustom model.tuning then
             div [ style "display" "flex", style "align-items" "center" ]
-                [ label "Strings"
+                [ label ""
                 , span [] (List.map (stringStepper model) (List.range 1 6))
                 ]
 
@@ -2628,15 +2651,12 @@ viewControls model =
         ]
 
 
-{-| The **Highlight shapes** row: the stretch of neck you are practicing in.
-Everything outside it fades to gray on every neck at once, so a whole chord
-progression shows you only the shapes that fall under your hand. -}
-highlightRow : Model -> Html Msg
-highlightRow model =
-    let
-        ( lo, hi ) =
-            Maybe.withDefault defaultFocus model.focus
-    in
+{-| The bottom row: the two settings you reach for least, each folded down to a
+button that says where it stands. Everything above it is a list you pick from
+every time you set a neck up, so those stay open; these two you set once and
+play, so they stay shut until you ask. -}
+setupRow : Model -> Html Msg
+setupRow model =
     div
         [ style "margin-bottom" "8px"
         , style "display" "flex"
@@ -2644,31 +2664,96 @@ highlightRow model =
         , style "flex-wrap" "wrap"
         , style "gap" "6px 12px"
         ]
-        [ label "Highlight shapes"
-        , button
-            ([ onClick (SetFocus Nothing)
-             , style "min-width" "80px"
-             ]
-                ++ buttonBaseStyle (model.focus == Nothing)
-            )
-            [ text "Off" ]
-        , span
-            [ style "display" "inline-flex"
-            , style "align-items" "center"
-            , style "gap" "2px"
-            , style "font-size" "13px"
-            , style "color" "var(--text-2)"
-            ]
-            [ text "Frets"
+        (label ""
+            :: tuningToggle model
+            :: highlightToggle model
+            :: highlightFrets model
+        )
 
-            -- Nudging either end switches the window on, so there is nothing
-            -- to arm first: you reach for the frets you want and the neck
-            -- fades around them.
-            , fretStepper lo (\d -> SetFocus (Just ( lo + d, hi )))
-            , text "–"
-            , fretStepper hi (\d -> SetFocus (Just ( lo, hi + d )))
-            ]
+
+{-| Names the tuning you are in, and opens the list of them when pressed. -}
+tuningToggle : Model -> Html Msg
+tuningToggle model =
+    button
+        ([ onClick ToggleTuningList
+         , style "min-width" "80px"
+         ]
+            ++ buttonBaseStyle model.tuningOpen
+        )
+        -- The caret is what separates this from the toggle beside it: one
+        -- opens a list, the other is on or off.
+        [ text
+            (tuningLabel model.tuning
+                ++ (if model.tuningOpen then
+                        " ▴"
+
+                    else
+                        " ▾"
+                   )
+            )
         ]
+
+
+{-| A preset says its own name. A custom tuning has no name worth reading, so
+it spells out its six notes instead — written low string to high, the way a
+tuning is normally written down — and the button stays readable with the
+steppers folded away. -}
+tuningLabel : Tuning -> String
+tuningLabel t =
+    if isCustom t then
+        "Custom tuning: " ++ String.join " " (List.map noteName (List.reverse t.strings))
+
+    else
+        t.name ++ " tuning"
+
+
+{-| Switches the highlight window on and reveals the fret steppers. Pressing it
+again puts them away and returns every shape to its own color. -}
+highlightToggle : Model -> Html Msg
+highlightToggle model =
+    let
+        on =
+            model.focus /= Nothing
+    in
+    button
+        ([ onClick
+            (SetFocus
+                (if on then
+                    Nothing
+
+                 else
+                    Just defaultFocus
+                )
+            )
+         , style "min-width" "80px"
+         ]
+            ++ buttonBaseStyle on
+        )
+        [ text "Highlight shapes" ]
+
+
+{-| The window itself, shown only while the highlight is on — there is nothing
+to say about a window that is not in use. -}
+highlightFrets : Model -> List (Html Msg)
+highlightFrets model =
+    case model.focus of
+        Nothing ->
+            []
+
+        Just ( lo, hi ) ->
+            [ span
+                [ style "display" "inline-flex"
+                , style "align-items" "center"
+                , style "gap" "2px"
+                , style "font-size" "13px"
+                , style "color" "var(--text-2)"
+                ]
+                [ text "Frets"
+                , fretStepper lo (\d -> SetFocus (Just ( lo + d, hi )))
+                , text "–"
+                , fretStepper hi (\d -> SetFocus (Just ( lo, hi + d )))
+                ]
+            ]
 
 
 fretStepper : Int -> (Int -> Msg) -> Html Msg
@@ -2712,7 +2797,7 @@ customButton model =
         ([ onClick (SetTuning (customFrom model.tuning.strings))
          , style "min-width" "80px"
          ]
-            ++ buttonBaseStyle (model.tuning.name == "Custom")
+            ++ buttonBaseStyle (isCustom model.tuning)
         )
         [ text "Custom" ]
 
