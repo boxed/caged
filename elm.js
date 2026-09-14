@@ -6887,6 +6887,29 @@ var $author$project$Main$orderedNecks = function (model) {
 		return model.necks;
 	}
 };
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $author$project$Main$fretWidth = 58;
+var $author$project$Main$leftMargin = 18;
+var $author$project$Main$nutWidth = 70;
+var $author$project$Main$rightMargin = 18;
+var $author$project$Main$totalWidth = (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets)) + $author$project$Main$rightMargin;
+var $author$project$Main$controlBlock = function (groups) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'row-gap', '6px'),
+				A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'max-width',
+				$elm$core$String$fromFloat($author$project$Main$totalWidth) + 'px')
+			]),
+		groups);
+};
 var $author$project$Main$SetTuning = function (a) {
 	return {$: 'SetTuning', a: a};
 };
@@ -6909,24 +6932,38 @@ var $author$project$Main$customButton = function (model) {
 			]));
 };
 var $elm$html$Html$span = _VirtualDom_node('span');
-var $author$project$Main$label = function (s) {
-	return A2(
-		$elm$html$Html$span,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
-				A2($elm$html$Html$Attributes$style, 'width', '80px'),
-				A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
-				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
-				A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
-				A2($elm$html$Html$Attributes$style, 'text-transform', 'uppercase'),
-				A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.05em')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text(s)
-			]));
-};
+var $author$project$Main$pickerGroup = F2(
+	function (caption, buttons) {
+		return A2(
+			$elm$html$Html$span,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+					A2($elm$html$Html$Attributes$style, 'row-gap', '6px'),
+					A2($elm$html$Html$Attributes$style, 'margin-right', '14px')
+				]),
+			A2(
+				$elm$core$List$cons,
+				A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+							A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'text-transform', 'uppercase'),
+							A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.06em'),
+							A2($elm$html$Html$Attributes$style, 'margin-right', '7px'),
+							A2($elm$html$Html$Attributes$style, 'white-space', 'nowrap')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(caption)
+						])),
+				buttons));
+	});
 var $author$project$Main$SetRoot = function (a) {
 	return {$: 'SetRoot', a: a};
 };
@@ -7268,15 +7305,6 @@ var $author$project$Main$rootButton = F2(
 					A2($author$project$Main$rootSpelling, neck.scale, n))
 				]));
 	});
-var $author$project$Main$noteButtonRow = function (model) {
-	return A2(
-		$elm$html$Html$span,
-		_List_Nil,
-		A2(
-			$elm$core$List$map,
-			$author$project$Main$rootButton(model),
-			A2($elm$core$List$range, 0, 11)));
-};
 var $author$project$Main$SetScale = function (a) {
 	return {$: 'SetScale', a: a};
 };
@@ -7468,14 +7496,11 @@ var $author$project$Main$setupRow = function (model) {
 			]),
 		A2(
 			$elm$core$List$cons,
-			$author$project$Main$label(''),
+			$author$project$Main$tuningToggle(model),
 			A2(
 				$elm$core$List$cons,
-				$author$project$Main$tuningToggle(model),
-				A2(
-					$elm$core$List$cons,
-					$author$project$Main$highlightToggle(model),
-					$author$project$Main$highlightFrets(model)))));
+				$author$project$Main$highlightToggle(model),
+				$author$project$Main$highlightFrets(model))));
 };
 var $author$project$Main$SetStringSet = function (a) {
 	return {$: 'SetStringSet', a: a};
@@ -7580,128 +7605,120 @@ var $author$project$Main$viewControls = function (model) {
 			]),
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$div,
+				$author$project$Main$controlBlock(
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				_List_fromArray(
-					[
-						$author$project$Main$label('Scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major pentatonic'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor pentatonic'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Major (Ionian)'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Minor (Aeolian)'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Mixolydian, 'Mixolydian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Phrygian, 'Phrygian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Lydian, 'Lydian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Locrian, 'Locrian'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$Blues, 'Blues'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMajor, 'Harmonic major'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMinor, 'Harmonic minor'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMajor, 'Melodic major'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMinor, 'Melodic minor')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				_List_fromArray(
-					[
-						$author$project$Main$label('Diag. Scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major pentatonic'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor pentatonic'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalBlues, 'Blues')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				_List_fromArray(
-					[
-						$author$project$Main$label('Triads'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMajor, 'Major'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMinor, 'Minor'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadDim, 'Diminished'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$TriadAug, 'Augmented')
-					])),
-				$author$project$Main$isTriad(
-				$author$project$Main$activeNeck(model).scale) ? A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				A2(
-					$elm$core$List$cons,
-					$author$project$Main$label('Strings'),
-					A2(
-						$elm$core$List$cons,
-						A3($author$project$Main$stringSetButton, model, $author$project$Main$AllStrings, 'All'),
 						A2(
-							$elm$core$List$map,
-							function (t) {
-								return A3(
-									$author$project$Main$stringSetButton,
-									model,
-									$author$project$Main$StringTrio(t),
-									$author$project$Main$stringSetSlug(
-										$author$project$Main$StringTrio(t)));
-							},
-							_List_fromArray(
-								[1, 2, 3, 4]))))) : $elm$html$Html$text(''),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				_List_fromArray(
-					[
-						$author$project$Main$label('No scale'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMajor, 'All notes (major)'),
-						A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMinor, 'All notes (minor)')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
-						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
-						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
-						A2($elm$html$Html$Attributes$style, 'gap', '6px 12px')
-					]),
-				_List_fromArray(
-					[
-						$author$project$Main$label('Root'),
-						$author$project$Main$noteButtonRow(model)
-					])),
-				$author$project$Main$setupRow(model),
-				model.tuningOpen ? A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
-					]),
-				A2(
-					$elm$core$List$cons,
-					$author$project$Main$label(''),
-					_Utils_ap(
-						A2(
-							$elm$core$List$map,
-							$author$project$Main$tuningButton(model),
-							$author$project$Main$tunings),
+						$author$project$Main$pickerGroup,
+						'Pentatonic',
 						_List_fromArray(
 							[
-								$author$project$Main$customButton(model)
-							])))) : $elm$html$Html$text(''),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Blues, 'Blues')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
+						'Modes',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Ionian, 'Major (Ionian)'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Aeolian, 'Minor (Aeolian)'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Dorian, 'Dorian'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Mixolydian, 'Mixolydian'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Phrygian, 'Phrygian'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Lydian, 'Lydian'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Locrian, 'Locrian')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
+						'Harmonic',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMajor, 'Major'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMinor, 'Minor')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
+						'Melodic',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMajor, 'Major'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMinor, 'Minor')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
+						'Diagonal',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalMajorPent, 'Major'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalPent, 'Minor'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$DiagonalBlues, 'Blues')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
+						'Triads',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMajor, 'Major'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMinor, 'Minor'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadDim, 'Diminished'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadAug, 'Augmented')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
+						'All notes',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMajor, 'Major'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$ChromaticMinor, 'Minor')
+							]))
+					])),
+				$author$project$Main$isTriad(
+				$author$project$Main$activeNeck(model).scale) ? $author$project$Main$controlBlock(
+				_List_fromArray(
+					[
+						A2(
+						$author$project$Main$pickerGroup,
+						'Strings',
+						A2(
+							$elm$core$List$cons,
+							A3($author$project$Main$stringSetButton, model, $author$project$Main$AllStrings, 'All'),
+							A2(
+								$elm$core$List$map,
+								function (t) {
+									return A3(
+										$author$project$Main$stringSetButton,
+										model,
+										$author$project$Main$StringTrio(t),
+										$author$project$Main$stringSetSlug(
+											$author$project$Main$StringTrio(t)));
+								},
+								_List_fromArray(
+									[1, 2, 3, 4]))))
+					])) : $elm$html$Html$text(''),
+				$author$project$Main$controlBlock(
+				_List_fromArray(
+					[
+						A2(
+						$author$project$Main$pickerGroup,
+						'Root',
+						A2(
+							$elm$core$List$map,
+							$author$project$Main$rootButton(model),
+							A2($elm$core$List$range, 0, 11)))
+					])),
+				$author$project$Main$setupRow(model),
+				model.tuningOpen ? $author$project$Main$controlBlock(
+				_Utils_ap(
+					A2(
+						$elm$core$List$map,
+						$author$project$Main$tuningButton(model),
+						$author$project$Main$tunings),
+					_List_fromArray(
+						[
+							$author$project$Main$customButton(model)
+						]))) : $elm$html$Html$text(''),
 				(model.tuningOpen && $author$project$Main$isCustom(model.tuning)) ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -7709,17 +7726,10 @@ var $author$project$Main$viewControls = function (model) {
 						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
 						A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 					]),
-				_List_fromArray(
-					[
-						$author$project$Main$label(''),
-						A2(
-						$elm$html$Html$span,
-						_List_Nil,
-						A2(
-							$elm$core$List$map,
-							$author$project$Main$stringStepper(model),
-							A2($elm$core$List$range, 1, 6)))
-					])) : $elm$html$Html$text('')
+				A2(
+					$elm$core$List$map,
+					$author$project$Main$stringStepper(model),
+					A2($elm$core$List$range, 1, 6))) : $elm$html$Html$text('')
 			]));
 };
 var $author$project$Main$isDiagonal = function (scale) {
@@ -8601,13 +8611,9 @@ var $author$project$Main$isMuted = F2(
 	});
 var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
 var $elm$svg$Svg$polygon = $elm$svg$Svg$trustedNode('polygon');
-var $author$project$Main$fretWidth = 58;
-var $author$project$Main$leftMargin = 18;
-var $author$project$Main$nutWidth = 70;
 var $author$project$Main$fretCenterX = function (f) {
 	return (f <= 0) ? (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5))) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
 };
-var $elm$core$String$fromFloat = _String_fromNumber;
 var $author$project$Main$stringSpacing = 36;
 var $author$project$Main$topMargin = 30;
 var $author$project$Main$stringY = function (s) {
@@ -10524,8 +10530,6 @@ var $author$project$Main$stripePatternDefs = function (board) {
 };
 var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $author$project$Main$totalHeight = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 80;
-var $author$project$Main$rightMargin = 18;
-var $author$project$Main$totalWidth = (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets)) + $author$project$Main$rightMargin;
 var $author$project$Main$viewFretboard = function (board) {
 	var neckAndRegions = $author$project$Main$isTriad(board.scale) ? _Utils_ap(
 		$author$project$Main$drawFretMarkers,

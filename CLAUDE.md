@@ -85,7 +85,8 @@ the shapes from the intervals. It requires:
    `fifthInterval` case if the 5th is not 7 semitones).
 6. Add `scaleDegrees` case (for enharmonic spelling) and a `scaleSlug` /
    `scaleFromSlug` pair for the URL.
-7. Add button, title, and interval labels in the view.
+7. Add a button to the right `pickerGroup` in `viewControls`, plus title and
+   interval labels in the view.
 8. Add to `boxScales` in `tests/BoxShapeTests.elm` and to its `scaleName`.
 9. Run `elm-test` — `coverage` checks every scale note sits in a box and
    `edgeSanity` checks every box is well-formed in every tuning.
@@ -138,7 +139,9 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
     (= `R − 7` standard).
 - **Note roles** (`noteRole`): Root / Third / Fifth / Other. Scale-wide, not
   per-box. 3rd = interval 3 (minor) or 4 (major). 5th = interval 7 always.
-- **Naming and order**: Ionian and Aeolian are labeled **Major (Ionian)** and
+- **Naming and order**: a button says only what its picker group does not
+  already say — the **Pentatonic** group's buttons read "Major" and "Minor",
+  not "Major pentatonic". Ionian and Aeolian are labeled **Major (Ionian)** and
   **Minor (Aeolian)** — the common name first, the mode name in parentheses.
   Every major/minor pair is listed major-first, in the buttons, in the
   `ScaleType` constructors and in every `case` over them (major/minor
@@ -281,6 +284,18 @@ each folds down to a single button that says where it stands and gets out of
 the way. That is most of the panel's height back, and on a phone it is the
 difference between the neck being on screen and not.
 
+- **The scale picker is one radio group of 23 options**, broken into the
+  families a player would look in: Pentatonic, Modes, Harmonic, Melodic,
+  Diagonal, Triads, All notes. Each is a `pickerGroup` — an uppercase caption
+  riding with its own buttons rather than sitting in a column — and the groups
+  flow and wrap between themselves inside a `controlBlock`. Since the caption
+  carries the context, the buttons inside it can just say "Major", which is
+  what gets the whole picker into two lines instead of four long rows.
+- **`controlBlock` is capped at `totalWidth`**, the neck's width. Without the
+  cap the flex row would lay every group on one line and drag the page out to
+  match, because the body sizes itself to its widest row. With it, the neck is
+  what sets the page width — which the old 14-button scale row did not allow:
+  it was wider than the neck and every screen paid for it.
 - **Tuning** is a disclosure: the button reads `Standard tuning ▾`, opens the
   list of presets when pressed, and closes again as soon as you pick one.
   **Custom** is the exception — `SetTuning` leaves the list open for it, because
@@ -295,9 +310,8 @@ difference between the neck being on screen and not.
 - `tuningOpen` is on the model but deliberately **not** in the URL: it is the
   state of a drawer, not of the diagram, and a shared link should not reopen
   someone else's drawer.
-- Every row is indented by the same 80px `label` column, the empty ones
-  included, so the buttons all start at one x whether or not their row is
-  named.
+- There is no label column any more. Every caption rides with the buttons it
+  names, so rows start at the left edge and a row can hold several groups.
 
 ## Highlight shapes
 

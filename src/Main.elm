@@ -2576,75 +2576,73 @@ aside s =
 viewControls : Model -> Html Msg
 viewControls model =
     div [ style "margin-bottom" "18px" ]
-        [ div [ style "margin-bottom" "8px" ]
-            [ label "Scale"
-            , scaleButton model MajorPent "Major pentatonic"
-            , scaleButton model MinorPent "Minor pentatonic"
-            , scaleButton model Ionian "Major (Ionian)"
-            , scaleButton model Aeolian "Minor (Aeolian)"
-            , scaleButton model Dorian "Dorian"
-            , scaleButton model Mixolydian "Mixolydian"
-            , scaleButton model Phrygian "Phrygian"
-            , scaleButton model Lydian "Lydian"
-            , scaleButton model Locrian "Locrian"
-            , scaleButton model Blues "Blues"
-            , scaleButton model HarmonicMajor "Harmonic major"
-            , scaleButton model HarmonicMinor "Harmonic minor"
-            , scaleButton model MelodicMajor "Melodic major"
-            , scaleButton model MelodicMinor "Melodic minor"
-            ]
-        , div [ style "margin-bottom" "8px" ]
-            [ label "Diag. Scale"
-            , scaleButton model DiagonalMajorPent "Major pentatonic"
-            , scaleButton model DiagonalPent "Minor pentatonic"
-            , scaleButton model DiagonalBlues "Blues"
-            ]
-        , div [ style "margin-bottom" "8px" ]
-            [ label "Triads"
-            , scaleButton model TriadMajor "Major"
-            , scaleButton model TriadMinor "Minor"
-            , scaleButton model TriadDim "Diminished"
-            , scaleButton model TriadAug "Augmented"
+        [ controlBlock
+            -- One radio group of 23 options, broken into the families a player
+            -- would look in. The family name carries the context, so the
+            -- buttons inside it can just say "Major" — which is what makes the
+            -- whole picker fit in two lines instead of four long rows.
+            [ pickerGroup "Pentatonic"
+                [ scaleButton model MajorPent "Major"
+                , scaleButton model MinorPent "Minor"
+                , scaleButton model Blues "Blues"
+                ]
+            , pickerGroup "Modes"
+                [ scaleButton model Ionian "Major (Ionian)"
+                , scaleButton model Aeolian "Minor (Aeolian)"
+                , scaleButton model Dorian "Dorian"
+                , scaleButton model Mixolydian "Mixolydian"
+                , scaleButton model Phrygian "Phrygian"
+                , scaleButton model Lydian "Lydian"
+                , scaleButton model Locrian "Locrian"
+                ]
+            , pickerGroup "Harmonic"
+                [ scaleButton model HarmonicMajor "Major"
+                , scaleButton model HarmonicMinor "Minor"
+                ]
+            , pickerGroup "Melodic"
+                [ scaleButton model MelodicMajor "Major"
+                , scaleButton model MelodicMinor "Minor"
+                ]
+            , pickerGroup "Diagonal"
+                [ scaleButton model DiagonalMajorPent "Major"
+                , scaleButton model DiagonalPent "Minor"
+                , scaleButton model DiagonalBlues "Blues"
+                ]
+            , pickerGroup "Triads"
+                [ scaleButton model TriadMajor "Major"
+                , scaleButton model TriadMinor "Minor"
+                , scaleButton model TriadDim "Diminished"
+                , scaleButton model TriadAug "Augmented"
+                ]
+            , pickerGroup "All notes"
+                [ scaleButton model ChromaticMajor "Major"
+                , scaleButton model ChromaticMinor "Minor"
+                ]
             ]
         , if isTriad (activeNeck model).scale then
-            div [ style "margin-bottom" "8px" ]
-                (label "Strings"
-                    :: stringSetButton model AllStrings "All"
-                    :: List.map
-                        (\t -> stringSetButton model (StringTrio t) (stringSetSlug (StringTrio t)))
-                        [ 1, 2, 3, 4 ]
-                )
+            controlBlock
+                [ pickerGroup "Strings"
+                    (stringSetButton model AllStrings "All"
+                        :: List.map
+                            (\t -> stringSetButton model (StringTrio t) (stringSetSlug (StringTrio t)))
+                            [ 1, 2, 3, 4 ]
+                    )
+                ]
 
           else
             text ""
-        , div [ style "margin-bottom" "8px" ]
-            [ label "No scale"
-            , scaleButton model ChromaticMajor "All notes (major)"
-            , scaleButton model ChromaticMinor "All notes (minor)"
-            ]
-        , div
-            [ style "margin-bottom" "8px"
-            , style "display" "flex"
-            , style "align-items" "center"
-            , style "flex-wrap" "wrap"
-            , style "gap" "6px 12px"
-            ]
-            [ label "Root", noteButtonRow model ]
+        , controlBlock
+            [ pickerGroup "Root" (List.map (rootButton model) (List.range 0 11)) ]
         , setupRow model
         , if model.tuningOpen then
-            div [ style "margin-bottom" "8px" ]
-                (label ""
-                    :: List.map (tuningButton model) tunings
-                    ++ [ customButton model ]
-                )
+            controlBlock
+                (List.map (tuningButton model) tunings ++ [ customButton model ])
 
           else
             text ""
         , if model.tuningOpen && isCustom model.tuning then
             div [ style "display" "flex", style "align-items" "center" ]
-                [ label ""
-                , span [] (List.map (stringStepper model) (List.range 1 6))
-                ]
+                (List.map (stringStepper model) (List.range 1 6))
 
           else
             text ""
@@ -2664,8 +2662,7 @@ setupRow model =
         , style "flex-wrap" "wrap"
         , style "gap" "6px 12px"
         ]
-        (label ""
-            :: tuningToggle model
+        (tuningToggle model
             :: highlightToggle model
             :: highlightFrets model
         )
@@ -2851,21 +2848,48 @@ stepperButton msg glyph =
         [ text glyph ]
 
 
-{-| The name in the left-hand column of a control row. The column is wide
-enough for the longest label to sit on one line, so every row's buttons start
-at the same x. -}
-label : String -> Html Msg
-label s =
-    span
-        [ style "display" "inline-block"
-        , style "width" "80px"
-        , style "font-size" "13px"
-        , style "color" "var(--text-2)"
-        , style "font-weight" "600"
-        , style "text-transform" "uppercase"
-        , style "letter-spacing" "0.05em"
+{-| A line of the control panel: groups laid side by side, wrapping between
+them as the window narrows. Capped at the width of the neck it controls —
+without that the panel would lay every group on one line and drag the whole
+page out to match, since the body sizes itself to its widest row. -}
+controlBlock : List (Html Msg) -> Html Msg
+controlBlock groups =
+    div
+        [ style "display" "flex"
+        , style "align-items" "center"
+        , style "flex-wrap" "wrap"
+        , style "row-gap" "6px"
+        , style "margin-bottom" "8px"
+        , style "max-width" (String.fromFloat totalWidth ++ "px")
         ]
-        [ text s ]
+        groups
+
+
+{-| One named family of buttons. The name rides with the buttons rather than
+sitting in a column of its own, which is what lets several families share a
+line. A family wraps internally only when it has to, so its name never breaks
+away from what it names. -}
+pickerGroup : String -> List (Html Msg) -> Html Msg
+pickerGroup caption buttons =
+    span
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "flex-wrap" "wrap"
+        , style "row-gap" "6px"
+        , style "margin-right" "14px"
+        ]
+        (span
+            [ style "font-size" "11px"
+            , style "color" "var(--text-2)"
+            , style "font-weight" "600"
+            , style "text-transform" "uppercase"
+            , style "letter-spacing" "0.06em"
+            , style "margin-right" "7px"
+            , style "white-space" "nowrap"
+            ]
+            [ text caption ]
+            :: buttons
+        )
 
 
 noteButtonRow : Model -> Html Msg

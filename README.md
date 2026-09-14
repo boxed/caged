@@ -23,7 +23,8 @@ color — matching the style of `fretboard-reference.jpeg`.
   - Box 5 — green
 - **Note names printed on every scale tone**, with the root shown in a dark
   square and every other note in a white circle.
-- **All notes (minor)** and **All notes (major)** modes (under "No scale") —
+- **All notes (minor)** and **All notes (major)** modes (the **All notes**
+  group) —
   not scales at all, just every note on the whole neck, with no box shading.
   Each note is colored by pitch class (hues run round the circle of fifths, so
   neighboring frets never look alike and the naturals come out warm, the
