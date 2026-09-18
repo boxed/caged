@@ -63,8 +63,8 @@ color — matching the style of `fretboard-reference.jpeg`.
 Requires [Elm 0.19.1](https://guide.elm-lang.org/install/elm.html).
 
 ```sh
-# Compile
-elm make src/Main.elm --output=elm.js
+# Compile (--optimize: elm.js is the file the site serves)
+elm make src/Main.elm --optimize --output=elm.js
 
 # Serve (any static server works — e.g. Python's built-in)
 python3 -m http.server 8000

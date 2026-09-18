@@ -15,9 +15,15 @@ Live site: https://boxed.github.io/caged/
 ## Build & test
 
 ```sh
-elm make src/Main.elm --output=elm.js   # compile
-elm-test                                 # run tests (~5300 tests)
+elm make src/Main.elm --optimize --output=elm.js   # compile
+elm-test                                          # run tests (~5300 tests)
 ```
+
+`--optimize` is not optional: `elm.js` is the artifact the site serves, so the
+committed build has to be the release build. Without it the shipped file keeps
+full record field names and skips Elm's dead-code elimination and unboxing.
+`--optimize` also refuses to compile any `Debug.*` call, which is the check you
+want on a file that goes straight to production.
 
 `elm.js` **is committed** — Pages has no build step, so the compiled artifact
 must be part of the repo. After any change to `src/Main.elm`, recompile and
