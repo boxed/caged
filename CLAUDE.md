@@ -303,10 +303,12 @@ difference between the neck being on screen and not.
   custom tuning has no name worth reading, so the button spells out its six
   notes instead (`tuningLabel`), written low string to high the way a tuning is
   normally written down.
-- **Highlight shapes** is a plain on/off toggle: pressing it switches the
-  window on at `defaultFocus` and reveals the fret steppers; pressing it again
-  puts them away. The caret on the tuning button is what separates the two —
-  one opens a list, the other is on or off.
+- **Highlight shapes** and **Highlight string** are plain on/off toggles:
+  pressing one switches it on at `defaultFocus` / `defaultStringFocus` and
+  reveals its steppers; pressing it again puts them away. The caret on the
+  tuning button is what separates those from it — one opens a list, the others
+  are on or off. Both steppers are the same `stepper`, which takes its label
+  already rendered because a string reads as `6 (E)`, not as a bare number.
 - `tuningOpen` is on the model but deliberately **not** in the URL: it is the
   state of a drawer, not of the diagram, and a shared link should not reopen
   someone else's drawer.
@@ -348,6 +350,33 @@ box 1, box 1, box 3 and box 4, one per neck, and fades everything else.
   "outside frets 4–8" to say what the gray means. `clampFocus` keeps the window on the neck
   and the right way round, clamping the low end against the high end rather
   than swapping past it, so a stepper pushed too far just stops.
+
+## Highlight string
+
+The **Highlight string** button picks one string — `String 6 (E)` — and every
+note *off* it is drawn faded. It is `stringFocus : Maybe Int` on the model, a
+string number 1–6, and like the fret window it belongs to the hand rather than
+to one neck: one string applies to every neck at once. The two are independent
+and compose — one box, one string — which is the pair you want when you are
+learning a position string by string.
+
+- It fades the **note markers only**, and by opacity (`offStringOpacity`,
+  applied to the whole marker group in `offString`) rather than by swapping in
+  a gray. The boxes and lassos are fret-position shapes and have nothing to say
+  about strings, so they are left alone; and the notes fade rather than vanish
+  because where the note you want sits relative to its neighbors is half of
+  what you are looking at.
+- The highlighted string's own line is drawn heavier and in `--string-on`
+  (`drawStrings`, which takes the `Board` for this). That says which string is
+  live on the stretches of neck that carry no notes. In triad mode the strings
+  go under the opaque pills, so a lasso covers it — the same trade-off the
+  inlay dots already make.
+- The stepper names the string's open note as well as its number
+  (`stringLabel`), since in a custom tuning the number alone does not say what
+  you are on. **▲ moves toward string 1**, the one drawn at the top of the
+  neck. `clampString` holds it to 1–6.
+- The legend grows a faded note chip (`legendFade`, at the same
+  `offStringOpacity`) reading "off string 6 (E)".
 
 ## Dark mode
 
@@ -433,6 +462,8 @@ address bar is always a link to exactly what is on screen.
 - `&focus=4-8` carries the highlight window, omitted when it is off. It is
   clamped on the way in, so a hand-edited or stale window cannot land off the
   neck or inside out.
+- `&string=6` carries the highlighted string, omitted when it is off, and
+  clamped to 1–6 on the way in for the same reason.
 - The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots
   all sharing the one `scale`) so links from that version keep working. It is
   never written any more; the next change rewrites the URL in the new form.

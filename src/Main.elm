@@ -42,6 +42,13 @@ type alias Model =
     , tuning : Tuning
     , tuningOpen : Bool
     , focus : Maybe Focus
+
+    -- The one string you are working on — the **Highlight string** button.
+    -- With one set, every note off that string is drawn faded, so a scale you
+    -- are walking up a single string reads on its own while the notes around
+    -- it stay visible as context. Like the fret window it belongs to the hand
+    -- rather than to one neck, so it lives here and applies to every neck.
+    , stringFocus : Maybe Int
     , key : Nav.Key
     , wakeLockOn : Bool
     }
@@ -77,6 +84,7 @@ type alias Board =
     , stringSet : StringSet
     , tuning : Tuning
     , focus : Maybe Focus
+    , stringFocus : Maybe Int
     , id : String
     }
 
@@ -157,6 +165,7 @@ type Msg
     | SetStringSet StringSet
     | TuneString Int Int
     | SetFocus (Maybe Focus)
+    | SetStringFocus (Maybe Int)
     | ToggleTuningList
     | Activate Int
     | AddNeck
@@ -182,6 +191,7 @@ init _ url key =
       , tuning = state.tuning
       , tuningOpen = False
       , focus = state.focus
+      , stringFocus = state.stringFocus
       , key = key
       , wakeLockOn = False
       }
@@ -231,6 +241,9 @@ update msg model =
 
         SetFocus f ->
             sync { model | focus = Maybe.map clampFocus f }
+
+        SetStringFocus s ->
+            sync { model | stringFocus = Maybe.map clampString s }
 
         Activate i ->
             sync { model | active = clampIndex model.necks i }
@@ -321,6 +334,7 @@ update msg model =
                 , active = state.active
                 , tuning = state.tuning
                 , focus = state.focus
+                , stringFocus = state.stringFocus
               }
             , Cmd.none
             )
@@ -398,13 +412,20 @@ modelUrl model =
 
             else
                 base ++ "&tuning=" ++ model.tuning.slug
-    in
-    case model.focus of
-        Nothing ->
-            withTuning
+        withFocus =
+            case model.focus of
+                Nothing ->
+                    withTuning
 
-        Just ( lo, hi ) ->
-            withTuning ++ "&focus=" ++ String.fromInt lo ++ "-" ++ String.fromInt hi
+                Just ( lo, hi ) ->
+                    withTuning ++ "&focus=" ++ String.fromInt lo ++ "-" ++ String.fromInt hi
+    in
+    case model.stringFocus of
+        Nothing ->
+            withFocus
+
+        Just s ->
+            withFocus ++ "&string=" ++ String.fromInt s
 
 
 {-| One neck as `root.scale`, with the string set appended in the triad modes
@@ -571,6 +592,7 @@ type alias UrlState =
     , active : Int
     , tuning : Tuning
     , focus : Maybe Focus
+    , stringFocus : Maybe Int
     }
 
 
@@ -649,6 +671,10 @@ parseUrl url =
         lookup "focus"
             |> Maybe.andThen focusFromSlug
             |> Maybe.map clampFocus
+    , stringFocus =
+        lookup "string"
+            |> Maybe.andThen String.toInt
+            |> Maybe.map clampString
     }
 
 
@@ -723,6 +749,7 @@ boardAt model i neck =
     , stringSet = neck.stringSet
     , tuning = model.tuning
     , focus = model.focus
+    , stringFocus = model.stringFocus
     , id = "n" ++ String.fromInt i ++ "-"
     }
 
@@ -745,6 +772,27 @@ clampFocus ( lo, hi ) =
             clamp 0 numFrets hi
     in
     ( clamp 0 h lo, h )
+
+
+{-| The string a fresh string highlight opens on: the low E, which is the
+string the boxes are anchored to and the one a scale is usually walked up
+first. -}
+defaultStringFocus : Int
+defaultStringFocus =
+    6
+
+
+clampString : Int -> Int
+clampString =
+    clamp 1 6
+
+
+{-| How far back the notes off the highlighted string are drawn. They fade
+rather than disappear: where the note you want sits relative to its neighbors
+is half of what you are looking at. -}
+offStringOpacity : Float
+offStringOpacity =
+    0.25
 
 
 {-| How many frets a shape spanning `lo`–`hi` has inside the focus window. -}
@@ -2649,9 +2697,9 @@ viewControls model =
         ]
 
 
-{-| The bottom row: the two settings you reach for least, each folded down to a
+{-| The bottom row: the settings you reach for least, each folded down to a
 button that says where it stands. Everything above it is a list you pick from
-every time you set a neck up, so those stay open; these two you set once and
+every time you set a neck up, so those stay open; these you set once and
 play, so they stay shut until you ask. -}
 setupRow : Model -> Html Msg
 setupRow model =
@@ -2665,6 +2713,7 @@ setupRow model =
         (tuningToggle model
             :: highlightToggle model
             :: highlightFrets model
+            ++ (stringToggle model :: highlightString model)
         )
 
 
@@ -2746,15 +2795,73 @@ highlightFrets model =
                 , style "color" "var(--text-2)"
                 ]
                 [ text "Frets"
-                , fretStepper lo (\d -> SetFocus (Just ( lo + d, hi )))
+                , stepper (String.fromInt lo) (\d -> SetFocus (Just ( lo + d, hi )))
                 , text "–"
-                , fretStepper hi (\d -> SetFocus (Just ( lo, hi + d )))
+                , stepper (String.fromInt hi) (\d -> SetFocus (Just ( lo, hi + d )))
                 ]
             ]
 
 
-fretStepper : Int -> (Int -> Msg) -> Html Msg
-fretStepper value toMsg =
+{-| Switches the string highlight on and reveals its stepper. Pressing it
+again puts it away and brings every string back to full strength. -}
+stringToggle : Model -> Html Msg
+stringToggle model =
+    let
+        on =
+            model.stringFocus /= Nothing
+    in
+    button
+        ([ onClick
+            (SetStringFocus
+                (if on then
+                    Nothing
+
+                 else
+                    Just defaultStringFocus
+                )
+            )
+         , style "min-width" "80px"
+         ]
+            ++ buttonBaseStyle on
+        )
+        [ text "Highlight string" ]
+
+
+{-| Which string, shown only while the highlight is on. The stepper names the
+string's open note as well as its number, since in a custom tuning the number
+alone does not say what you are on. ▲ moves toward string 1, which is the one
+drawn at the top of the neck. -}
+highlightString : Model -> List (Html Msg)
+highlightString model =
+    case model.stringFocus of
+        Nothing ->
+            []
+
+        Just s ->
+            [ span
+                [ style "display" "inline-flex"
+                , style "align-items" "center"
+                , style "gap" "2px"
+                , style "font-size" "13px"
+                , style "color" "var(--text-2)"
+                ]
+                [ text "String"
+                , stepper (stringLabel model.tuning s) (\d -> SetStringFocus (Just (s - d)))
+                ]
+            ]
+
+
+{-| A string as the stepper says it: its number and the note it is tuned to. -}
+stringLabel : Tuning -> Int -> String
+stringLabel tuning s =
+    String.fromInt s ++ " (" ++ noteName (openString tuning s) ++ ")"
+
+
+{-| The ▲/▼ pair the fret and string windows are set with. It takes the label
+already rendered, because a string reads as `6 (E)` rather than as a bare
+number. -}
+stepper : String -> (Int -> Msg) -> Html Msg
+stepper value toMsg =
     div
         [ style "display" "inline-flex"
         , style "flex-direction" "column"
@@ -2770,7 +2877,7 @@ fretStepper value toMsg =
             , style "text-align" "center"
             , style "color" "var(--text)"
             ]
-            [ text (String.fromInt value) ]
+            [ text value ]
         , stepperButton (toMsg -1) "▼"
         ]
 
@@ -2987,10 +3094,10 @@ viewFretboard board =
         -- alike — goes under the lassos.
         neckAndRegions =
             if isTriad board.scale then
-                drawFretMarkers ++ drawFretLines ++ drawStrings ++ drawBoxRegions board
+                drawFretMarkers ++ drawFretLines ++ drawStrings board ++ drawBoxRegions board
 
             else
-                drawFretMarkers ++ drawBoxRegions board ++ drawFretLines ++ drawStrings
+                drawFretMarkers ++ drawBoxRegions board ++ drawFretLines ++ drawStrings board
     in
     Svg.svg
         [ SA.viewBox ("0 0 " ++ String.fromFloat totalWidth ++ " " ++ String.fromFloat totalHeight)
@@ -3647,8 +3754,11 @@ drawFretLines =
     nut :: List.map fretLine (List.range 1 numFrets)
 
 
-drawStrings : List (Svg.Svg Msg)
-drawStrings =
+{-| The six strings. The highlighted one is drawn heavier and in the text
+color: the faded notes say which string is live, and this says it again on the
+stretches of neck that carry no notes. -}
+drawStrings : Board -> List (Svg.Svg Msg)
+drawStrings board =
     let
         leftX =
             leftMargin
@@ -3656,14 +3766,29 @@ drawStrings =
         rightX =
             leftMargin + nutWidth + fretWidth * toFloat numFrets
 
+        lit s =
+            board.stringFocus == Just s
+
         drawLine s =
             Svg.line
                 [ SA.x1 (String.fromFloat leftX)
                 , SA.x2 (String.fromFloat rightX)
                 , SA.y1 (String.fromFloat (stringY s))
                 , SA.y2 (String.fromFloat (stringY s))
-                , SA.stroke "var(--string)"
-                , SA.strokeWidth "1"
+                , SA.stroke
+                    (if lit s then
+                        "var(--string-on)"
+
+                     else
+                        "var(--string)"
+                    )
+                , SA.strokeWidth
+                    (if lit s then
+                        "2.4"
+
+                     else
+                        "1"
+                    )
                 ]
                 []
     in
@@ -3808,10 +3933,28 @@ drawNoteAt board s f =
                         ]
                         [ Svg.text (spelledName board n) ]
             in
-            Just (Svg.g [] [ background, labelNode ])
+            Just (Svg.g (offString board s) [ background, labelNode ])
 
         Nothing ->
             Nothing
+
+
+
+{-| What a note marker wears when the string highlight is on and this note is
+not on that string: the whole marker, label included, faded back behind the
+one string you are working on. -}
+offString : Board -> Int -> List (Svg.Attribute Msg)
+offString board s =
+    case board.stringFocus of
+        Just t ->
+            if t == s then
+                []
+
+            else
+                [ SA.opacity (String.fromFloat offStringOpacity) ]
+
+        Nothing ->
+            []
 
 
 
@@ -3952,6 +4095,14 @@ viewLegend board =
                       ]
                     ]
 
+        strings =
+            case board.stringFocus of
+                Nothing ->
+                    []
+
+                Just s ->
+                    [ [ legendFade ("off string " ++ stringLabel board.tuning s) ] ]
+
         tones =
             if isChromatic board.scale then
                 [ legendText "Tones:"
@@ -4009,7 +4160,7 @@ viewLegend board =
               else
                 [ boxes ]
              )
-                ++ (tones :: highlight)
+                ++ (tones :: (highlight ++ strings))
             )
         )
 
@@ -4027,6 +4178,30 @@ legendGroup children =
         , style "gap" "18px"
         ]
         children
+
+
+{-| The off-string notes in miniature: an ordinary note marker at the opacity
+they are drawn with. -}
+legendFade : String -> Html Msg
+legendFade lbl =
+    span
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "gap" "6px"
+        ]
+        [ span
+            [ style "display" "inline-block"
+            , style "width" "16px"
+            , style "height" "16px"
+            , style "box-sizing" "border-box"
+            , style "background" "var(--note-bg)"
+            , style "border" "1px solid var(--note-bd)"
+            , style "border-radius" "50%"
+            , style "opacity" (String.fromFloat offStringOpacity)
+            ]
+            []
+        , text lbl
+        ]
 
 
 legendText : String -> Html Msg

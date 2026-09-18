@@ -5236,6 +5236,7 @@ var $author$project$Main$clampIndex = F2(
 			$elm$core$List$length(xs) - 1,
 			i);
 	});
+var $author$project$Main$clampString = A2($elm$core$Basics$clamp, 1, 6);
 var $elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
@@ -5765,6 +5766,13 @@ var $author$project$Main$parseUrl = function (url) {
 				$author$project$Main$focusFromSlug,
 				lookup('focus'))),
 		necks: necks,
+		stringFocus: A2(
+			$elm$core$Maybe$map,
+			$author$project$Main$clampString,
+			A2(
+				$elm$core$Maybe$andThen,
+				$elm$core$String$toInt,
+				lookup('string'))),
 		tuning: A2(
 			$elm$core$Maybe$withDefault,
 			$author$project$Main$standardTuning,
@@ -5778,7 +5786,7 @@ var $author$project$Main$init = F3(
 	function (_v0, url, key) {
 		var state = $author$project$Main$parseUrl(url);
 		return _Utils_Tuple2(
-			{active: state.active, drag: $elm$core$Maybe$Nothing, focus: state.focus, key: key, necks: state.necks, tuning: state.tuning, tuningOpen: false, wakeLockOn: false},
+			{active: state.active, drag: $elm$core$Maybe$Nothing, focus: state.focus, key: key, necks: state.necks, stringFocus: state.stringFocus, tuning: state.tuning, tuningOpen: false, wakeLockOn: false},
 			$elm$core$Platform$Cmd$none);
 	});
 var $author$project$Main$DragEnd = {$: 'DragEnd'};
@@ -6494,12 +6502,12 @@ var $author$project$Main$neckSlug = function (neck) {
 };
 var $author$project$Main$modelUrl = function (model) {
 	var base = function () {
-		var _v2 = model.necks;
-		if (_v2.b && (!_v2.b.b)) {
-			var neck = _v2.a;
+		var _v3 = model.necks;
+		if (_v3.b && (!_v3.b.b)) {
+			var neck = _v3.a;
 			return '?root=' + ($author$project$Main$rootSlug(neck.root) + ('&scale=' + ($author$project$Main$scaleSlug(neck.scale) + ($author$project$Main$hasStringSet(neck) ? ('&strings=' + $author$project$Main$stringSetSlug(neck.stringSet)) : ''))));
 		} else {
-			var necks = _v2;
+			var necks = _v3;
 			return '?necks=' + (A2(
 				$elm$core$String$join,
 				',',
@@ -6507,14 +6515,23 @@ var $author$project$Main$modelUrl = function (model) {
 		}
 	}();
 	var withTuning = _Utils_eq(model.tuning.slug, $author$project$Main$standardTuning.slug) ? base : (base + ('&tuning=' + model.tuning.slug));
-	var _v0 = model.focus;
+	var withFocus = function () {
+		var _v1 = model.focus;
+		if (_v1.$ === 'Nothing') {
+			return withTuning;
+		} else {
+			var _v2 = _v1.a;
+			var lo = _v2.a;
+			var hi = _v2.b;
+			return withTuning + ('&focus=' + ($elm$core$String$fromInt(lo) + ('-' + $elm$core$String$fromInt(hi))));
+		}
+	}();
+	var _v0 = model.stringFocus;
 	if (_v0.$ === 'Nothing') {
-		return withTuning;
+		return withFocus;
 	} else {
-		var _v1 = _v0.a;
-		var lo = _v1.a;
-		var hi = _v1.b;
-		return withTuning + ('&focus=' + ($elm$core$String$fromInt(lo) + ('-' + $elm$core$String$fromInt(hi))));
+		var s = _v0.a;
+		return withFocus + ('&string=' + $elm$core$String$fromInt(s));
 	}
 };
 var $elm$browser$Browser$Navigation$replaceUrl = _Browser_replaceUrl;
@@ -6659,6 +6676,14 @@ var $author$project$Main$update = F2(
 						{
 							focus: A2($elm$core$Maybe$map, $author$project$Main$clampFocus, f)
 						}));
+			case 'SetStringFocus':
+				var s = msg.a;
+				return $author$project$Main$sync(
+					_Utils_update(
+						model,
+						{
+							stringFocus: A2($elm$core$Maybe$map, $author$project$Main$clampString, s)
+						}));
 			case 'Activate':
 				var i = msg.a;
 				return $author$project$Main$sync(
@@ -6755,7 +6780,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{active: state.active, focus: state.focus, necks: state.necks, tuning: state.tuning}),
+						{active: state.active, focus: state.focus, necks: state.necks, stringFocus: state.stringFocus, tuning: state.tuning}),
 					$elm$core$Platform$Cmd$none);
 			case 'LinkClicked':
 				var request = msg.a;
@@ -6797,6 +6822,7 @@ var $author$project$Main$boardAt = F3(
 			id: 'n' + ($elm$core$String$fromInt(i) + '-'),
 			root: neck.root,
 			scale: neck.scale,
+			stringFocus: model.stringFocus,
 			stringSet: neck.stringSet,
 			tuning: model.tuning
 		};
@@ -7353,7 +7379,7 @@ var $author$project$Main$stepperButton = F2(
 					$elm$html$Html$text(glyph)
 				]));
 	});
-var $author$project$Main$fretStepper = F2(
+var $author$project$Main$stepper = F2(
 	function (value, toMsg) {
 		return A2(
 			$elm$html$Html$div,
@@ -7383,8 +7409,7 @@ var $author$project$Main$fretStepper = F2(
 						]),
 					_List_fromArray(
 						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(value))
+							$elm$html$Html$text(value)
 						])),
 					A2(
 					$author$project$Main$stepperButton,
@@ -7416,8 +7441,8 @@ var $author$project$Main$highlightFrets = function (model) {
 					[
 						$elm$html$Html$text('Frets'),
 						A2(
-						$author$project$Main$fretStepper,
-						lo,
+						$author$project$Main$stepper,
+						$elm$core$String$fromInt(lo),
 						function (d) {
 							return $author$project$Main$SetFocus(
 								$elm$core$Maybe$Just(
@@ -7425,12 +7450,60 @@ var $author$project$Main$highlightFrets = function (model) {
 						}),
 						$elm$html$Html$text('–'),
 						A2(
-						$author$project$Main$fretStepper,
-						hi,
+						$author$project$Main$stepper,
+						$elm$core$String$fromInt(hi),
 						function (d) {
 							return $author$project$Main$SetFocus(
 								$elm$core$Maybe$Just(
 									_Utils_Tuple2(lo, hi + d)));
+						})
+					]))
+			]);
+	}
+};
+var $author$project$Main$SetStringFocus = function (a) {
+	return {$: 'SetStringFocus', a: a};
+};
+var $author$project$Main$openString = F2(
+	function (tuning, s) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$head(
+				A2($elm$core$List$drop, s - 1, tuning.strings)));
+	});
+var $author$project$Main$stringLabel = F2(
+	function (tuning, s) {
+		return $elm$core$String$fromInt(s) + (' (' + ($author$project$Main$noteName(
+			A2($author$project$Main$openString, tuning, s)) + ')'));
+	});
+var $author$project$Main$highlightString = function (model) {
+	var _v0 = model.stringFocus;
+	if (_v0.$ === 'Nothing') {
+		return _List_Nil;
+	} else {
+		var s = _v0.a;
+		return _List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'gap', '2px'),
+						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('String'),
+						A2(
+						$author$project$Main$stepper,
+						A2($author$project$Main$stringLabel, model.tuning, s),
+						function (d) {
+							return $author$project$Main$SetStringFocus(
+								$elm$core$Maybe$Just(s - d));
 						})
 					]))
 			]);
@@ -7453,6 +7526,25 @@ var $author$project$Main$highlightToggle = function (model) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text('Highlight shapes')
+			]));
+};
+var $author$project$Main$defaultStringFocus = 6;
+var $author$project$Main$stringToggle = function (model) {
+	var on = !_Utils_eq(model.stringFocus, $elm$core$Maybe$Nothing);
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$SetStringFocus(
+						on ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just($author$project$Main$defaultStringFocus))),
+					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+				]),
+			$author$project$Main$buttonBaseStyle(on)),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Highlight string')
 			]));
 };
 var $author$project$Main$ToggleTuningList = {$: 'ToggleTuningList'};
@@ -7500,7 +7592,12 @@ var $author$project$Main$setupRow = function (model) {
 			A2(
 				$elm$core$List$cons,
 				$author$project$Main$highlightToggle(model),
-				$author$project$Main$highlightFrets(model))));
+				_Utils_ap(
+					$author$project$Main$highlightFrets(model),
+					A2(
+						$elm$core$List$cons,
+						$author$project$Main$stringToggle(model),
+						$author$project$Main$highlightString(model))))));
 };
 var $author$project$Main$SetStringSet = function (a) {
 	return {$: 'SetStringSet', a: a};
@@ -7528,14 +7625,6 @@ var $author$project$Main$stringSetButton = F3(
 var $author$project$Main$TuneString = F2(
 	function (a, b) {
 		return {$: 'TuneString', a: a, b: b};
-	});
-var $author$project$Main$openString = F2(
-	function (tuning, s) {
-		return A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			$elm$core$List$head(
-				A2($elm$core$List$drop, s - 1, tuning.strings)));
 	});
 var $author$project$Main$stringStepper = F2(
 	function (model, uiIndex) {
@@ -7770,6 +7859,38 @@ var $author$project$Main$legendChip = F2(
 					$elm$html$Html$text(lbl)
 				]));
 	});
+var $author$project$Main$offStringOpacity = 0.25;
+var $author$project$Main$legendFade = function (lbl) {
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '6px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+						A2($elm$html$Html$Attributes$style, 'width', '16px'),
+						A2($elm$html$Html$Attributes$style, 'height', '16px'),
+						A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box'),
+						A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+						A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
+						A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'opacity',
+						$elm$core$String$fromFloat($author$project$Main$offStringOpacity))
+					]),
+				_List_Nil),
+				$elm$html$Html$text(lbl)
+			]));
+};
 var $author$project$Main$legendGroup = function (children) {
 	return A2(
 		$elm$html$Html$div,
@@ -8046,6 +8167,22 @@ var $author$project$Main$viewLegend = function (board) {
 			A2($author$project$Main$legendMarker, 'circle-double', '7th'),
 			A2($author$project$Main$legendMarker, 'circle-plain', 'other')
 		]));
+	var strings = function () {
+		var _v2 = board.stringFocus;
+		if (_v2.$ === 'Nothing') {
+			return _List_Nil;
+		} else {
+			var s = _v2.a;
+			return _List_fromArray(
+				[
+					_List_fromArray(
+					[
+						$author$project$Main$legendFade(
+						'off string ' + A2($author$project$Main$stringLabel, board.tuning, s))
+					])
+				]);
+		}
+	}();
 	var highlight = function () {
 		var _v0 = board.focus;
 		if (_v0.$ === 'Nothing') {
@@ -8119,7 +8256,10 @@ var $author$project$Main$viewLegend = function (board) {
 			_Utils_ap(
 				$elm$core$List$isEmpty(boxes) ? _List_Nil : _List_fromArray(
 					[boxes]),
-				A2($elm$core$List$cons, tones, highlight))));
+				A2(
+					$elm$core$List$cons,
+					tones,
+					_Utils_ap(highlight, strings)))));
 };
 var $author$project$Main$Activate = function (a) {
 	return {$: 'Activate', a: a};
@@ -10155,6 +10295,21 @@ var $author$project$Main$noteRole = F2(
 				$author$project$Main$fifthInterval(board.scale)) ? $author$project$Main$Fifth : (_Utils_eq(interval, seventhInterval) ? $author$project$Main$Seventh : $author$project$Main$Other)));
 		}
 	});
+var $elm$svg$Svg$Attributes$opacity = _VirtualDom_attribute('opacity');
+var $author$project$Main$offString = F2(
+	function (board, s) {
+		var _v0 = board.stringFocus;
+		if (_v0.$ === 'Just') {
+			var t = _v0.a;
+			return _Utils_eq(t, s) ? _List_Nil : _List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$opacity(
+					$elm$core$String$fromFloat($author$project$Main$offStringOpacity))
+				]);
+		} else {
+			return _List_Nil;
+		}
+	});
 var $author$project$Main$diagonalBoxOf = F5(
 	function (tuning, scale, root, s, f) {
 		var rel = A2(
@@ -10385,7 +10540,7 @@ var $author$project$Main$drawNoteAt = F3(
 			return $elm$core$Maybe$Just(
 				A2(
 					$elm$svg$Svg$g,
-					_List_Nil,
+					A2($author$project$Main$offString, board, s),
 					_List_fromArray(
 						[background, labelNode])));
 		} else {
@@ -10404,8 +10559,13 @@ var $author$project$Main$drawNotes = function (board) {
 		forString,
 		A2($elm$core$List$range, 1, 6));
 };
-var $author$project$Main$drawStrings = function () {
+var $author$project$Main$drawStrings = function (board) {
 	var rightX = ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets);
+	var lit = function (s) {
+		return _Utils_eq(
+			board.stringFocus,
+			$elm$core$Maybe$Just(s));
+	};
 	var leftX = $author$project$Main$leftMargin;
 	var drawLine = function (s) {
 		return A2(
@@ -10422,8 +10582,10 @@ var $author$project$Main$drawStrings = function () {
 					$elm$svg$Svg$Attributes$y2(
 					$elm$core$String$fromFloat(
 						$author$project$Main$stringY(s))),
-					$elm$svg$Svg$Attributes$stroke('var(--string)'),
-					$elm$svg$Svg$Attributes$strokeWidth('1')
+					$elm$svg$Svg$Attributes$stroke(
+					lit(s) ? 'var(--string-on)' : 'var(--string)'),
+					$elm$svg$Svg$Attributes$strokeWidth(
+					lit(s) ? '2.4' : '1')
 				]),
 			_List_Nil);
 	};
@@ -10431,7 +10593,7 @@ var $author$project$Main$drawStrings = function () {
 		$elm$core$List$map,
 		drawLine,
 		A2($elm$core$List$range, 1, 6));
-}();
+};
 var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
 var $author$project$Main$boxBlendPct = '55%';
 var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
@@ -10536,12 +10698,14 @@ var $author$project$Main$viewFretboard = function (board) {
 		_Utils_ap(
 			$author$project$Main$drawFretLines,
 			_Utils_ap(
-				$author$project$Main$drawStrings,
+				$author$project$Main$drawStrings(board),
 				$author$project$Main$drawBoxRegions(board)))) : _Utils_ap(
 		$author$project$Main$drawFretMarkers,
 		_Utils_ap(
 			$author$project$Main$drawBoxRegions(board),
-			_Utils_ap($author$project$Main$drawFretLines, $author$project$Main$drawStrings)));
+			_Utils_ap(
+				$author$project$Main$drawFretLines,
+				$author$project$Main$drawStrings(board))));
 	return A2(
 		$elm$svg$Svg$svg,
 		_List_fromArray(

@@ -50,6 +50,11 @@ color — matching the style of `fretboard-reference.jpeg`.
   the one shape that lives there — box 1, box 1, box 3, box 4 — with the rest
   of the neck out of the way. In the triad modes it keeps the voicings you can
   reach without moving your hand.
+- **Highlight string.** Press **Highlight string** to pick one string, and every
+  note off it fades back while the string itself is drawn heavier. Walk a scale
+  up the low E, or find every chord tone on the G string, without losing sight
+  of where the neighboring notes sit. Like the fret window it applies to every
+  neck at once, and the two combine — one box, one string.
 - **Fret markers** at 3, 5, 7, 9, 12 (double), 15, 17, 19, 21 and fret numbers
   labeled below the neck.
 
