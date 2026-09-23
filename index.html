@@ -92,6 +92,19 @@
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: env(safe-area-inset-left);
         }
+        /* Printing is for sheets of necks (blank ones especially), so drop
+           everything you click: the controls, the list furniture, the
+           buttons. Elm styles inline, hence the !important on the neck rows. */
+        @media print {
+            :root { color-scheme: light; --bg: #fff; --surface: #fff; }
+            html, body { background: #fff !important; }
+            .no-print { display: none !important; }
+            .neck-row {
+                border-left-color: transparent !important;
+                background: transparent !important;
+                break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>

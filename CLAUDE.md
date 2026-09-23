@@ -48,7 +48,7 @@ Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
 `MelodicMajor`/`MelodicMinor` (major with ♭6 ♭7 / minor with a raised 6th and
 7th), three diagonal climbing variants
 (`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`), the two all-notes
-maps `ChromaticMinor`/`ChromaticMajor`, and the four triads
+maps `ChromaticMinor`/`ChromaticMajor`, the empty `Blank` neck, and the four triads
 `TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`.
 
 `ChromaticMinor` and `ChromaticMajor` (the **All notes (minor)** / **All notes
@@ -78,6 +78,12 @@ through the code:
   the conventional sharp names are used on both the fretboard and root buttons.
 - The legend drops the box swatches and shows pitch-gradient chips for
   Root / ♭3 or 3rd / 5th / ♭7 or 7th / other plus a "hue = note" note.
+
+`Blank` (the **None** button in the All notes group, slug `blank`) is the same
+bare neck with no markers at all — for printing empty necks to practice on. It
+has no intervals, so nothing is drawn; it is folded into `isChromatic` so it
+inherits the no-boxes path, and the heading drops the root ("Blank neck") and
+the legend drops the tones row.
 
 Adding a new mode no longer needs per-mode box tables — `deriveBox` generates
 the shapes from the intervals. It requires:
@@ -384,6 +390,52 @@ learning a position string by string.
 - The legend grows a faded note chip (`legendFade`, at the same
   `offStringOpacity`) reading "off string 6 (E)".
 
+## Print
+
+`index.html` has a `@media print` block for printing sheets of necks. Anything
+you click carries the `no-print` class (the control panel, the drag handle, ×,
+Add neck, the page header with Keep screen on) and is hidden, as is the
+"Blank neck" heading — a printed blank neck needs no caption. `neck-row` drops the active accent and
+drag tint (with `!important`, since Elm styles inline) and keeps a neck from
+splitting across pages. Print forces the light scheme and a pure white page (`--bg`, `--surface`, and
+the `html`/`body` background).
+
+## Monochrome
+
+The **Monochrome** button (`mono` on the model, `&mono=1` in the URL) swaps
+every color on the necks for black-and-white dither textures, for a printer with
+no color. It has to be a switch: browsers never match `@media (monochrome)` in
+print, and a Black & white print setting only turns the finished page gray. It
+is on screen as well, so what you see is what prints.
+
+- **`ditherCells`** holds the five textures, on a 4×4 grid of `ditherPixel`
+  squares: scattered dots, horizontal lines, rising diagonals, vertical lines,
+  falling diagonals. They differ in *structure*, not only density, so
+  neighboring boxes stay apart in gray. Boxes 1–3 are also the three triad
+  inversions, which is why those three are the least alike.
+- `ditherPatternDefs` mints them per neck (`n0-dither-3`) and `regionPaint` is
+  the one place a box's paint is chosen: color at an opacity, or a texture at
+  full strength (it is mostly holes, so the neck shows through).
+- **No overlap stripes** in monochrome. The textures are transparent, so
+  where two boxes overlap both textures show, and that already reads as the
+  pair.
+- A **muted** shape (outside the highlight window) is left unpainted, since
+  any gray would read as one more texture. The legend shows it as an empty
+  outlined chip (`legendBlank`).
+- Triad pills stay opaque: `triadFill` strokes the page color, then the
+  inversion's texture over it. The rings are plain ink (`ringColor`), gray
+  when muted.
+- The all-notes markers drop their pitch hues for `--note-bg`, and "hue = note"
+  goes from the heading and the legend.
+
+## Two columns
+
+The **Two columns** button (`twoColumns`, `&cols=2`) lays the neck list out as
+a two-column grid pinned to one neck's width (`totalWidth`), so each neck
+renders at half size and a printed page holds twice as many. With it off, the
+list has no grid styles, so the one-column layout is unchanged. A drag moves
+a neck two slots per row, so it stays in its column.
+
 ## Dark mode
 
 All colors go through CSS custom properties with `light-dark()` in
@@ -470,6 +522,8 @@ address bar is always a link to exactly what is on screen.
   neck or inside out.
 - `&string=6` carries the highlighted string, omitted when it is off, and
   clamped to 1–6 on the way in for the same reason.
+- `&mono=1` and `&cols=2` carry the Monochrome and Two columns switches,
+  omitted when off.
 - The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots
   all sharing the one `scale`) so links from that version keep working. It is
   never written any more; the next change rewrites the URL in the new form.

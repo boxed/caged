@@ -153,6 +153,7 @@ scaleName scale =
         MelodicMajor -> "MelodicMajor"
         MelodicMinor -> "MelodicMinor"
         ChromaticMinor -> "ChromaticMinor"
+        Blank -> "Blank"
         ChromaticMajor -> "ChromaticMajor"
         TriadMajor -> "TriadMajor"
         TriadMinor -> "TriadMinor"

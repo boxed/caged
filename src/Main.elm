@@ -23,7 +23,7 @@ import Browser
 import Browser.Events
 import Browser.Navigation as Nav
 import Html exposing (Html, button, div, h1, p, span, text)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Json.Decode as Decode
 import Svg
@@ -49,6 +49,17 @@ type alias Model =
     -- it stay visible as context. Like the fret window it belongs to the hand
     -- rather than to one neck, so it lives here and applies to every neck.
     , stringFocus : Maybe Int
+
+    -- The **Monochrome** button: boxes and lassos swap their colors for dither
+    -- textures, for printing on a black-and-white printer. Browsers do not
+    -- tell a page what the printer can do (`@media (monochrome)` never matches
+    -- in print), so it has to be a switch. Like the tuning it applies to every
+    -- neck, since a sheet goes to one printer.
+    , mono : Bool
+
+    -- The **Two columns** button: the necks sit two to a row at half width,
+    -- which fits twice as many on a printed page.
+    , twoColumns : Bool
     , key : Nav.Key
     , wakeLockOn : Bool
     }
@@ -85,6 +96,7 @@ type alias Board =
     , tuning : Tuning
     , focus : Maybe Focus
     , stringFocus : Maybe Int
+    , mono : Bool
     , id : String
     }
 
@@ -139,6 +151,7 @@ type ScaleType
     | MelodicMinor
     | ChromaticMajor
     | ChromaticMinor
+    | Blank
     | TriadMajor
     | TriadMinor
     | TriadDim
@@ -166,6 +179,8 @@ type Msg
     | TuneString Int Int
     | SetFocus (Maybe Focus)
     | SetStringFocus (Maybe Int)
+    | ToggleMono
+    | ToggleColumns
     | ToggleTuningList
     | Activate Int
     | AddNeck
@@ -192,6 +207,8 @@ init _ url key =
       , tuningOpen = False
       , focus = state.focus
       , stringFocus = state.stringFocus
+      , mono = state.mono
+      , twoColumns = state.twoColumns
       , key = key
       , wakeLockOn = False
       }
@@ -244,6 +261,12 @@ update msg model =
 
         SetStringFocus s ->
             sync { model | stringFocus = Maybe.map clampString s }
+
+        ToggleMono ->
+            sync { model | mono = not model.mono }
+
+        ToggleColumns ->
+            sync { model | twoColumns = not model.twoColumns }
 
         Activate i ->
             sync { model | active = clampIndex model.necks i }
@@ -303,9 +326,18 @@ update msg model =
                     -- Measured from where the grab started, not from the last
                     -- move, so previewing the reorder cannot feed back into
                     -- the arithmetic and make the neck chase the finger.
+                    -- In two columns a row down is two slots on, so the
+                    -- neck keeps its column as it travels.
                     let
+                        perRow =
+                            if model.twoColumns then
+                                2
+
+                            else
+                                1
+
                         slots =
-                            round ((y - drag.startY) / max 1 drag.rowHeight)
+                            perRow * round ((y - drag.startY) / max 1 drag.rowHeight)
                     in
                     ( { model | drag = Just { drag | to = clampIndex model.necks (drag.from + slots) } }
                     , Cmd.none
@@ -335,6 +367,8 @@ update msg model =
                 , tuning = state.tuning
                 , focus = state.focus
                 , stringFocus = state.stringFocus
+                , mono = state.mono
+                , twoColumns = state.twoColumns
               }
             , Cmd.none
             )
@@ -419,13 +453,27 @@ modelUrl model =
 
                 Just ( lo, hi ) ->
                     withTuning ++ "&focus=" ++ String.fromInt lo ++ "-" ++ String.fromInt hi
-    in
-    case model.stringFocus of
-        Nothing ->
-            withFocus
 
-        Just s ->
-            withFocus ++ "&string=" ++ String.fromInt s
+        withString =
+            case model.stringFocus of
+                Nothing ->
+                    withFocus
+
+                Just s ->
+                    withFocus ++ "&string=" ++ String.fromInt s
+
+        withMono =
+            if model.mono then
+                withString ++ "&mono=1"
+
+            else
+                withString
+    in
+    if model.twoColumns then
+        withMono ++ "&cols=2"
+
+    else
+        withMono
 
 
 {-| One neck as `root.scale`, with the string set appended in the triad modes
@@ -524,6 +572,7 @@ scaleSlug s =
         MelodicMinor -> "melodic-minor"
         ChromaticMajor -> "all-notes-major"
         ChromaticMinor -> "all-notes-minor"
+        Blank -> "blank"
         TriadMajor -> "triad-major"
         TriadMinor -> "triad-minor"
         TriadDim -> "triad-dim"
@@ -552,6 +601,7 @@ scaleFromSlug s =
         "melodic-minor" -> Just MelodicMinor
         "all-notes-major" -> Just ChromaticMajor
         "all-notes-minor" -> Just ChromaticMinor
+        "blank" -> Just Blank
         "triad-major" -> Just TriadMajor
         "triad-minor" -> Just TriadMinor
         "triad-dim" -> Just TriadDim
@@ -593,6 +643,8 @@ type alias UrlState =
     , tuning : Tuning
     , focus : Maybe Focus
     , stringFocus : Maybe Int
+    , mono : Bool
+    , twoColumns : Bool
     }
 
 
@@ -675,6 +727,8 @@ parseUrl url =
         lookup "string"
             |> Maybe.andThen String.toInt
             |> Maybe.map clampString
+    , mono = lookup "mono" == Just "1"
+    , twoColumns = lookup "cols" == Just "2"
     }
 
 
@@ -750,6 +804,7 @@ boardAt model i neck =
     , tuning = model.tuning
     , focus = model.focus
     , stringFocus = model.stringFocus
+    , mono = model.mono
     , id = "n" ++ String.fromInt i ++ "-"
     }
 
@@ -1110,6 +1165,7 @@ scaleDegrees st =
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         ChromaticMajor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
+        Blank -> []
         TriadMajor -> [ 1, 3, 5 ]
         TriadMinor -> [ 1, 3, 5 ]
         TriadDim -> [ 1, 3, 5 ]
@@ -1292,6 +1348,9 @@ scaleIntervals st =
         ChromaticMinor ->
             List.range 0 11
 
+        Blank ->
+            []
+
         TriadMajor ->
             [ 0, 4, 7 ]
 
@@ -1394,6 +1453,9 @@ rootFret board =
         ChromaticMinor ->
             minorAnchor
 
+        Blank ->
+            minorAnchor
+
         TriadMajor ->
             -- Triads draw lassos, not boxes, so the anchor is never read.
             majorAnchor
@@ -1424,10 +1486,12 @@ isDiagonal scale =
 
 {-| The two all-notes maps — every note on the neck, with the chord tones read
 through a minor (♭3, 5, ♭7) or major (3, 5, 7) lens. Neither is a scale, so they
-share every special case in the code; only `noteRole` tells them apart. -}
+share every special case in the code; only `noteRole` tells them apart. `Blank`
+rides along: it is the same bare neck with no notes on it at all.
+-}
 isChromatic : ScaleType -> Bool
 isChromatic scale =
-    scale == ChromaticMinor || scale == ChromaticMajor
+    scale == ChromaticMinor || scale == ChromaticMajor || scale == Blank
 
 
 {-| The four triad modes: not scales either, but chords — three notes, drawn as
@@ -1857,6 +1921,7 @@ noteRole board n =
                 MelodicMinor -> 3
                 ChromaticMajor -> -1
                 ChromaticMinor -> -1
+                Blank -> -1
                 TriadMajor -> 4
                 TriadMinor -> 3
                 TriadDim -> 3
@@ -1883,6 +1948,7 @@ noteRole board n =
                 MelodicMinor -> 11
                 ChromaticMajor -> -1
                 ChromaticMinor -> -1
+                Blank -> -1
                 TriadMajor -> -1
                 TriadMinor -> -1
                 TriadDim -> -1
@@ -1957,15 +2023,15 @@ pitchColor n =
 {-| Marker for the all-notes map: the pitch-class color carries the identity,
 so the shape only has to say root-or-not (square vs circle).
 -}
-chromaticMarker : NoteRole -> Float -> Float -> Int -> Svg.Svg Msg
-chromaticMarker role cx cy n =
+chromaticMarker : NoteRole -> Float -> Float -> String -> Svg.Svg Msg
+chromaticMarker role cx cy fill =
     let
         ring extra =
             Svg.circle
                 ([ SA.cx (String.fromFloat cx)
                  , SA.cy (String.fromFloat cy)
                  , SA.r "14"
-                 , SA.fill (pitchColor n)
+                 , SA.fill fill
                  ]
                     ++ extra
                 )
@@ -1979,7 +2045,7 @@ chromaticMarker role cx cy n =
                 , SA.width "28"
                 , SA.height "28"
                 , SA.rx "3"
-                , SA.fill (pitchColor n)
+                , SA.fill fill
                 , SA.stroke "var(--nut)"
                 , SA.strokeWidth "2.5"
                 ]
@@ -2036,6 +2102,96 @@ boxColor b =
         4 -> "var(--box-4)"
         5 -> "var(--box-5)"
         _ -> "var(--surface-bd)"
+
+
+{-| A box's paint: its color at `opacity`, or in monochrome its dither texture
+at full strength — the texture is mostly holes already, so the neck shows
+through it. A muted box in monochrome is left unpainted: any gray it could fade
+to would read as one more texture. -}
+regionPaint : Board -> String -> Bool -> Int -> List (Svg.Attribute Msg)
+regionPaint board opacity muted b =
+    if not board.mono then
+        [ SA.fill (boxFill muted b), SA.fillOpacity opacity ]
+
+    else if muted then
+        [ SA.fill "none" ]
+
+    else
+        [ SA.fill (ditherRef board b) ]
+
+
+{-| The monochrome stand-ins for the five box colors: ordered-dither textures
+on a 4×4 grid of `ditherPixel` squares. Each is a different *structure*, not
+just a different density, so two boxes side by side stay apart on paper, and
+where two overlap — monochrome draws both textures there instead of a stripe —
+the pair reads as both. Boxes 1–3 double as the triad inversions, so those
+three are the most unlike each other. -}
+ditherCells : Int -> List ( Int, Int )
+ditherCells b =
+    case b of
+        -- Scattered dots.
+        1 -> [ ( 0, 0 ), ( 2, 2 ) ]
+        -- Horizontal lines.
+        2 -> [ ( 0, 0 ), ( 1, 0 ), ( 2, 0 ), ( 3, 0 ) ]
+        -- Rising diagonals.
+        3 -> [ ( 0, 3 ), ( 1, 2 ), ( 2, 1 ), ( 3, 0 ) ]
+        -- Vertical lines.
+        4 -> [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 0, 3 ) ]
+        -- Falling diagonals.
+        _ -> [ ( 0, 0 ), ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ]
+
+
+{-| Big enough that a half-width neck (two columns) still lands each dot on a
+whole screen pixel instead of smearing into moiré. -}
+ditherPixel : Float
+ditherPixel =
+    2
+
+
+ditherPattern : String -> Int -> Svg.Svg Msg
+ditherPattern id b =
+    let
+        tile =
+            String.fromFloat (4 * ditherPixel)
+    in
+    Svg.pattern
+        [ SA.id id
+        , SA.patternUnits "userSpaceOnUse"
+        , SA.width tile
+        , SA.height tile
+        ]
+        (List.map
+            (\( c, r ) ->
+                Svg.rect
+                    [ SA.x (String.fromFloat (toFloat c * ditherPixel))
+                    , SA.y (String.fromFloat (toFloat r * ditherPixel))
+                    , SA.width (String.fromFloat ditherPixel)
+                    , SA.height (String.fromFloat ditherPixel)
+                    , SA.fill "var(--text)"
+                    ]
+                    []
+            )
+            (ditherCells b)
+        )
+
+
+ditherRef : Board -> Int -> String
+ditherRef board b =
+    "url(#" ++ board.id ++ "dither-" ++ String.fromInt b ++ ")"
+
+
+ditherPatternDefs : Board -> List (Svg.Svg Msg)
+ditherPatternDefs board =
+    if board.mono then
+        [ Svg.defs []
+            (List.map
+                (\b -> ditherPattern (board.id ++ "dither-" ++ String.fromInt b) b)
+                [ 1, 2, 3, 4, 5 ]
+            )
+        ]
+
+    else
+        []
 
 
 {-| One color per inversion, so a lasso says at a glance which chord tone is in
@@ -2216,7 +2372,8 @@ viewBody model =
     in
     div [ style "margin" "1rem 0.5rem" ]
         [ div
-            [ style "display" "flex"
+            [ class "no-print"
+            , style "display" "flex"
             , style "justify-content" "space-between"
             , style "align-items" "center"
             , style "gap" "12px"
@@ -2236,7 +2393,7 @@ viewBody model =
         , div
             -- A drag is a press and a sweep, which is also how you select
             -- text; without this the sweep paints the page blue.
-            [ style "user-select"
+            ([ style "user-select"
                 (case model.drag of
                     Just _ ->
                         "none"
@@ -2245,6 +2402,21 @@ viewBody model =
                         "auto"
                 )
             ]
+                ++ (if model.twoColumns then
+                        -- Pinned to one neck's width, so two columns halve
+                        -- each neck instead of the grid growing the page to
+                        -- fit two whole ones.
+                        [ style "display" "grid"
+                        , style "grid-template-columns" "repeat(2, minmax(0, 1fr))"
+                        , style "column-gap" "16px"
+                        , style "width" (String.fromFloat totalWidth ++ "px")
+                        , style "max-width" "100%"
+                        ]
+
+                    else
+                        []
+                   )
+            )
             (List.indexedMap (viewNeck model many) necks)
         , addNeckButton
         , viewLegend (activeBoard model)
@@ -2284,6 +2456,7 @@ viewNeck model many i neck =
     else
         div
             [ onClick (Activate slot)
+            , class "neck-row"
             , style "display" "flex"
             , style "align-items" "flex-start"
             , style "gap" "8px"
@@ -2364,7 +2537,8 @@ something you reorder on the tablet propped up in front of you. -}
 dragHandle : Int -> Html Msg
 dragHandle i =
     div
-        [ Html.Events.on "pointerdown" (dragStartDecoder i)
+        [ class "no-print"
+        , Html.Events.on "pointerdown" (dragStartDecoder i)
         , Html.Events.on "pointermove" (Decode.map DragMove clientY)
         , Html.Events.on "pointerup" (Decode.succeed DragEnd)
         , Html.Events.on "pointercancel" (Decode.succeed DragEnd)
@@ -2425,7 +2599,8 @@ clientY =
 removeNeckButton : Int -> Html Msg
 removeNeckButton i =
     button
-        [ Html.Events.stopPropagationOn "click" (Decode.succeed ( RemoveNeck i, True ))
+        [ class "no-print"
+        , Html.Events.stopPropagationOn "click" (Decode.succeed ( RemoveNeck i, True ))
         , Html.Attributes.title "Remove this neck"
         , style "flex" "0 0 auto"
         , style "padding" "2px 8px"
@@ -2445,7 +2620,7 @@ removeNeckButton i =
 scale buttons rather than building a neck from nothing. -}
 addNeckButton : Html Msg
 addNeckButton =
-    div [ style "margin" "4px 0 0 3px" ]
+    div [ class "no-print", style "margin" "4px 0 0 3px" ]
         [ button
             ([ onClick AddNeck ] ++ buttonBaseStyle False)
             [ text "+ Add neck" ]
@@ -2456,6 +2631,7 @@ wakeLockButton : Model -> Html Msg
 wakeLockButton model =
     button
         ([ onClick ToggleWakeLock
+         , class "no-print"
          , style "min-width" "120px"
          ]
             ++ buttonBaseStyle model.wakeLockOn
@@ -2474,8 +2650,12 @@ viewScaleTitle : Board -> Html Msg
 viewScaleTitle board =
     let
         scaleName =
-            rootSpelling board.scale board.root
-                ++ " "
+            (if board.scale == Blank then
+                ""
+
+             else
+                rootSpelling board.scale board.root ++ " "
+            )
                 ++ (case board.scale of
                         MajorPent -> "Major Pentatonic"
                         MinorPent -> "Minor Pentatonic"
@@ -2493,6 +2673,7 @@ viewScaleTitle board =
                         MelodicMinor -> "Melodic Minor"
                         ChromaticMajor -> "— All Notes (major)"
                         ChromaticMinor -> "— All Notes (minor)"
+                        Blank -> "Blank neck"
                         TriadMajor -> "Major Triad"
                         TriadMinor -> "Minor Triad"
                         TriadDim -> "Diminished Triad"
@@ -2520,6 +2701,7 @@ viewScaleTitle board =
                 MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
                 ChromaticMajor -> List.repeat 12 ""
                 ChromaticMinor -> List.repeat 12 ""
+                Blank -> []
                 TriadMajor -> [ "R", "3", "5" ]
                 TriadMinor -> [ "R", "♭3", "5" ]
                 TriadDim -> [ "R", "♭3", "♭5" ]
@@ -2533,9 +2715,18 @@ viewScaleTitle board =
         -- one line of vertical space instead of two, and the degrees line up
         -- into their own row you can read across.
         detail =
-            if isChromatic board.scale then
+            if board.scale == Blank then
+                []
+
+            else if isChromatic board.scale then
                 [ aside
-                    ("Every note on the neck · hue = note · "
+                    ("Every note on the neck · "
+                        ++ (if board.mono then
+                                ""
+
+                            else
+                                "hue = note · "
+                           )
                         ++ (if board.scale == ChromaticMajor then
                                 "3 · 5 · 7"
 
@@ -2561,7 +2752,16 @@ viewScaleTitle board =
         -- (22 × 1.2 for the name, 13 + 10 at 1.15 for a note over its degree),
         -- so centering lines their tops and bottoms up and the pair reads as
         -- one band rather than as a title with something hanging off it.
-        [ style "display" "flex"
+        [ -- A printed blank neck speaks for itself; "Blank neck" over each
+          -- one on the sheet would just be noise.
+          class
+            (if board.scale == Blank then
+                "no-print"
+
+             else
+                ""
+            )
+        , style "display" "flex"
         , style "align-items" "center"
         , style "flex-wrap" "wrap"
         , style "gap" "2px 20px"
@@ -2623,7 +2823,7 @@ aside s =
 
 viewControls : Model -> Html Msg
 viewControls model =
-    div [ style "margin-bottom" "18px" ]
+    div [ class "no-print", style "margin-bottom" "18px" ]
         [ controlBlock
             -- One radio group of 23 options, broken into the families a player
             -- would look in. The family name carries the context, so the
@@ -2665,6 +2865,7 @@ viewControls model =
             , pickerGroup "All notes"
                 [ scaleButton model ChromaticMajor "Major"
                 , scaleButton model ChromaticMinor "Minor"
+                , scaleButton model Blank "None"
                 ]
             ]
         , if isTriad (activeNeck model).scale then
@@ -2714,6 +2915,7 @@ setupRow model =
             :: highlightToggle model
             :: highlightFrets model
             ++ (stringToggle model :: highlightString model)
+            ++ [ monoToggle model, columnsToggle model ]
         )
 
 
@@ -2825,6 +3027,24 @@ stringToggle model =
             ++ buttonBaseStyle on
         )
         [ text "Highlight string" ]
+
+
+{-| Swaps every color on the necks for black-and-white dither textures, for a
+printer that has no color. It is on screen too, so what you see is what the
+page will print. -}
+monoToggle : Model -> Html Msg
+monoToggle model =
+    button
+        ([ onClick ToggleMono, style "min-width" "80px" ] ++ buttonBaseStyle model.mono)
+        [ text "Monochrome" ]
+
+
+{-| Lays the necks out two to a row at half width, for fitting a page. -}
+columnsToggle : Model -> Html Msg
+columnsToggle model =
+    button
+        ([ onClick ToggleColumns, style "min-width" "80px" ] ++ buttonBaseStyle model.twoColumns)
+        [ text "Two columns" ]
 
 
 {-| Which string, shown only while the highlight is on. The stepper names the
@@ -3106,6 +3326,7 @@ viewFretboard board =
         ]
         (List.concat
             [ [ stripePatternDefs board ]
+            , ditherPatternDefs board
             , neckAndRegions
             , drawNotes board
             , drawFretNumbers
@@ -3171,7 +3392,13 @@ drawBoxRegionsBoxes board =
         wrapOverlaps =
             List.filterMap (drawWrapOverlap board lit) octaves
     in
-    solids ++ overlaps ++ wrapOverlaps
+    if board.mono then
+        -- Dither textures are mostly holes, so where two boxes overlap both
+        -- simply show; a stripe would only chop each texture in half.
+        solids
+
+    else
+        solids ++ overlaps ++ wrapOverlaps
 
 
 drawDiagonalRegions : Board -> List (Svg.Svg Msg)
@@ -3199,7 +3426,7 @@ drawDiagonalRegions board =
     in
     List.filterMap
         (\( key, shape, o ) ->
-            drawDiagonalShape board.tuning board.scale board.root (isMuted lit key) shape o
+            drawDiagonalShape board.tuning board.scale board.root (regionPaint board "0.45" (isMuted lit key) shape.color) shape o
         )
         instances
 
@@ -3237,8 +3464,8 @@ Both edges are staircases that step at the midline between the strings; an
 edge where both strings share a fret (pattern 1's right, pattern 2's left)
 collapses to a vertical line. The shape repeats every 12 frets (one octave)
 to fill the neck. -}
-drawDiagonalShape : Tuning -> ScaleType -> Int -> Bool -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
-drawDiagonalShape tuning scale root muted shape octave =
+drawDiagonalShape : Tuning -> ScaleType -> Int -> List (Svg.Attribute Msg) -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
+drawDiagonalShape tuning scale root paint shape octave =
     let
         shift =
             diagonalAnchor tuning scale root + 12 * octave
@@ -3299,10 +3526,7 @@ drawDiagonalShape tuning scale root muted shape octave =
     if inRange then
         Just
             (Svg.polygon
-                [ SA.points pointsStr
-                , SA.fill (boxFill muted shape.color)
-                , SA.fillOpacity "0.45"
-                ]
+                (SA.points pointsStr :: paint)
                 []
             )
 
@@ -3336,10 +3560,10 @@ drawTriadLassos board =
                 Just ( lo, hi ) ->
                     not (List.all (\( _, f ) -> f >= lo && f <= hi) triad.notes)
     in
-    List.map (\triad -> triadFill (muted triad) triad) voicings
+    List.map (\triad -> triadFill board (muted triad) triad) voicings
         ++ List.concat
             (List.indexedMap
-                (\i triad -> triadRing board.id (muted triad) i triad)
+                (\i triad -> triadRing board.id (ringColor board (muted triad) triad.inversion) i triad)
                 voicings
             )
 
@@ -3371,10 +3595,38 @@ triadPath triad =
         |> String.append "M "
 
 
-{-| The lasso's interior. -}
-triadFill : Bool -> Triad -> Svg.Svg Msg
-triadFill muted triad =
-    triadCapsule triad 0 [ SA.stroke (inversionFill muted triad.inversion) ]
+{-| The lasso's interior. In monochrome the pill is still opaque — the page
+color first, then the inversion's dither texture over it — so it hides what it
+covers exactly as the colored one does. -}
+triadFill : Board -> Bool -> Triad -> Svg.Svg Msg
+triadFill board muted triad =
+    if board.mono then
+        Svg.g []
+            (triadCapsule triad 0 [ SA.stroke "var(--bg)" ]
+                :: (if muted then
+                        []
+
+                    else
+                        [ triadCapsule triad 0 [ SA.stroke (ditherRef board (triad.inversion + 1)) ] ]
+                   )
+            )
+
+    else
+        triadCapsule triad 0 [ SA.stroke (inversionFill muted triad.inversion) ]
+
+
+{-| The lasso's ring. In monochrome the texture inside says the inversion, so
+the ring only has to be ink — or gray when the highlight window mutes it. -}
+ringColor : Board -> Bool -> Int -> String
+ringColor board muted inv =
+    if not board.mono then
+        inversionColor muted inv
+
+    else if muted then
+        "var(--inv-off)"
+
+    else
+        "var(--text-strong)"
 
 
 {-| The lasso outline: the shape minus the same shape inset, which leaves an
@@ -3383,8 +3635,8 @@ strokes (wide in the color, narrower in the background color) because that pair
 would paint over whatever sits under the lasso — the inlay dots, and the rings
 of any lasso it crosses. The mask punches the middle out instead, so the ring
 is genuinely hollow and lassos can overlap freely. -}
-triadRing : String -> Bool -> Int -> Triad -> List (Svg.Svg Msg)
-triadRing prefix muted index triad =
+triadRing : String -> String -> Int -> Triad -> List (Svg.Svg Msg)
+triadRing prefix ringFill index triad =
     let
         maskId =
             prefix ++ "triad-lasso-" ++ String.fromInt index
@@ -3423,7 +3675,7 @@ triadRing prefix muted index triad =
         [ layer "#ffffff" 0
         , layer "#000000" triadLassoInset
         ]
-    , Svg.rect (SA.fill (inversionColor muted triad.inversion) :: SA.mask ("url(#" ++ maskId ++ ")") :: box) []
+    , Svg.rect (SA.fill ringFill :: SA.mask ("url(#" ++ maskId ++ ")") :: box) []
     ]
 
 
@@ -3467,10 +3719,9 @@ drawSolidBox board lit b octave =
     if inRange then
         Just
             (Svg.polygon
-                [ SA.points (polygonPoints positions)
-                , SA.fill (boxFill (isMuted lit ( b, octave )) b)
-                , SA.fillOpacity boxFillOpacity
-                ]
+                (SA.points (polygonPoints positions)
+                    :: regionPaint board boxFillOpacity (isMuted lit ( b, octave )) b
+                )
                 []
             )
 
@@ -3840,7 +4091,15 @@ drawNoteAt board s f =
 
                 background =
                     if isChromatic board.scale then
-                        chromaticMarker role cx cy n
+                        -- Monochrome has no hues to spend, so the note
+                        -- names alone say which note is which.
+                        chromaticMarker role cx cy
+                            (if board.mono then
+                                "var(--note-bg)"
+
+                             else
+                                pitchColor n
+                            )
 
                     else
                     case role of
@@ -4074,15 +4333,15 @@ viewLegend board =
 
             else if isTriad board.scale then
                 legendText "Bass note:"
-                    :: List.map legendRing [ ( 0, "root" ), ( 1, "3rd (1st inv)" ), ( 2, "5th (2nd inv)" ) ]
+                    :: List.map (legendRing board) [ ( 0, "root" ), ( 1, "3rd (1st inv)" ), ( 2, "5th (2nd inv)" ) ]
 
             else if isDiagonal board.scale then
                 legendText "Patterns:"
-                    :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ) ]
+                    :: List.map (legendSwatch board) [ ( 1, "1" ), ( 2, "2" ) ]
 
             else
                 legendText "Boxes:"
-                    :: List.map legendSwatch [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
+                    :: List.map (legendSwatch board) [ ( 1, "1" ), ( 2, "2" ), ( 3, "3" ), ( 4, "4" ), ( 5, "5" ) ]
 
         highlight =
             case board.focus of
@@ -4090,7 +4349,12 @@ viewLegend board =
                     []
 
                 Just ( lo, hi ) ->
-                    [ [ legendChip "var(--box-off)"
+                    [ [ (if board.mono then
+                            legendBlank
+
+                         else
+                            legendChip "var(--box-off)"
+                        )
                             ("outside frets " ++ String.fromInt lo ++ "–" ++ String.fromInt hi)
                       ]
                     ]
@@ -4104,44 +4368,53 @@ viewLegend board =
                     [ [ legendFade ("off string " ++ stringLabel board.tuning s) ] ]
 
         tones =
-            if isChromatic board.scale then
+            if board.scale == Blank then
+                -- Nothing is drawn, so there is nothing to explain.
+                []
+
+            else if isChromatic board.scale then
                 [ legendText "Tones:"
-                , legendMarker "square-pc" "Root"
-                , legendMarker "circle-pc-dashed"
+                , legendMarker board.mono "square-pc" "Root"
+                , legendMarker board.mono "circle-pc-dashed"
                     (if board.scale == ChromaticMajor then
                         "3rd"
 
                      else
                         "♭3"
                     )
-                , legendMarker "circle-pc-dotted" "5th"
-                , legendMarker "circle-pc-double"
+                , legendMarker board.mono "circle-pc-dotted" "5th"
+                , legendMarker board.mono "circle-pc-double"
                     (if board.scale == ChromaticMajor then
                         "7th"
 
                      else
                         "♭7"
                     )
-                , legendMarker "circle-pc" "other"
-                , legendText "hue = note"
+                , legendMarker board.mono "circle-pc" "other"
                 ]
+                    ++ (if board.mono then
+                            []
+
+                        else
+                            [ legendText "hue = note" ]
+                       )
 
             else if isTriad board.scale then
                 -- A triad has nothing but chord tones, so there is no 7th and
                 -- no "other" to explain.
                 [ legendText "Tones:"
-                , legendMarker "square-dark" "Root"
-                , legendMarker "circle-dashed" "3rd"
-                , legendMarker "circle-dotted" "5th"
+                , legendMarker board.mono "square-dark" "Root"
+                , legendMarker board.mono "circle-dashed" "3rd"
+                , legendMarker board.mono "circle-dotted" "5th"
                 ]
 
             else
                 [ legendText "Tones:"
-                , legendMarker "square-dark" "Root"
-                , legendMarker "circle-dashed" "3rd"
-                , legendMarker "circle-dotted" "5th"
-                , legendMarker "circle-double" "7th"
-                , legendMarker "circle-plain" "other"
+                , legendMarker board.mono "square-dark" "Root"
+                , legendMarker board.mono "circle-dashed" "3rd"
+                , legendMarker board.mono "circle-dotted" "5th"
+                , legendMarker board.mono "circle-double" "7th"
+                , legendMarker board.mono "circle-plain" "other"
                 ]
     in
     div
@@ -4160,7 +4433,7 @@ viewLegend board =
               else
                 [ boxes ]
              )
-                ++ (tones :: (highlight ++ strings))
+                ++ List.filter (not << List.isEmpty) (tones :: (highlight ++ strings))
             )
         )
 
@@ -4209,9 +4482,70 @@ legendText s =
     span [ style "font-weight" "600", style "color" "var(--text-strong)" ] [ text s ]
 
 
-legendSwatch : ( Int, String ) -> Html Msg
-legendSwatch ( b, lbl ) =
-    legendChip (boxColor b) lbl
+legendSwatch : Board -> ( Int, String ) -> Html Msg
+legendSwatch board ( b, lbl ) =
+    if board.mono then
+        ditherChip False b lbl
+
+    else
+        legendChip (boxColor b) lbl
+
+
+{-| A box or lasso in monochrome: its dither texture in a chip, square for a
+box, a ringed circle for a lasso. The legend is one per page, so its pattern
+ids cannot collide with another legend's. -}
+ditherChip : Bool -> Int -> String -> Html Msg
+ditherChip round b lbl =
+    let
+        id =
+            "legend-dither-" ++ String.fromInt b
+    in
+    span
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "gap" "6px"
+        ]
+        [ Svg.svg [ SA.width "16", SA.height "16", SA.viewBox "0 0 16 16" ]
+            [ Svg.defs [] [ ditherPattern id b ]
+            , Svg.rect
+                ([ SA.x "1"
+                 , SA.y "1"
+                 , SA.width "14"
+                 , SA.height "14"
+                 , SA.fill ("url(#" ++ id ++ ")")
+                 ]
+                    ++ (if round then
+                            [ SA.rx "7", SA.stroke "var(--text-strong)", SA.strokeWidth "2" ]
+
+                        else
+                            [ SA.rx "2", SA.stroke "var(--surface-bd)", SA.strokeWidth "1" ]
+                       )
+                )
+                []
+            ]
+        , text lbl
+        ]
+
+
+{-| What a muted shape looks like in monochrome: nothing, inside an outline. -}
+legendBlank : String -> Html Msg
+legendBlank lbl =
+    span
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "gap" "6px"
+        ]
+        [ span
+            [ style "display" "inline-block"
+            , style "width" "16px"
+            , style "height" "16px"
+            , style "box-sizing" "border-box"
+            , style "border" "1px solid var(--surface-bd)"
+            , style "border-radius" "3px"
+            ]
+            []
+        , text lbl
+        ]
 
 
 legendChip : String -> String -> Html Msg
@@ -4236,8 +4570,12 @@ legendChip color lbl =
 
 
 {-| A lasso in miniature: a hollow ring in the inversion's color. -}
-legendRing : ( Int, String ) -> Html Msg
-legendRing ( inv, lbl ) =
+legendRing : Board -> ( Int, String ) -> Html Msg
+legendRing board ( inv, lbl ) =
+    if board.mono then
+        ditherChip True (inv + 1) lbl
+
+    else
     span
         [ style "display" "inline-flex"
         , style "align-items" "center"
@@ -4256,8 +4594,8 @@ legendRing ( inv, lbl ) =
         ]
 
 
-legendMarker : String -> String -> Html Msg
-legendMarker kind lbl =
+legendMarker : Bool -> String -> String -> Html Msg
+legendMarker mono kind lbl =
     let
         common =
             [ style "display" "inline-block"
@@ -4268,7 +4606,11 @@ legendMarker kind lbl =
 
         -- A few pitch-class hues in one chip, to say "colored by note".
         pcGradient =
-            "linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))"
+            if mono then
+                "var(--note-bg)"
+
+            else
+                "linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))"
 
         marker =
             case kind of
