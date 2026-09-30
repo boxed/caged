@@ -26,9 +26,16 @@ color — matching the style of `fretboard-reference.jpeg`.
 - **All notes (minor)** and **All notes (major)** modes (the **All notes**
   group) —
   not scales at all, just every note on the whole neck, with no box shading.
-  Each note is colored by pitch class (hues run round the circle of fifths, so
-  neighboring frets never look alike and the naturals come out warm, the
-  accidentals cool), and the chord tones relative to your chosen root are
+  Each note is colored by pitch class, a rainbow run round the circle of fifths
+  (C red, G orange, D yellow, … F pink): neighboring frets never look alike,
+  and across one fret the E-A-D-G strings step smoothly through the rainbow
+  while the B string visibly jumps. Each note is also joined to the next
+  note round the circle on the string above, so every fret becomes a ladder
+  that climbs straight up E-A-D-G and jogs a fret along at the B string
+  (tunings in fourths only, give or take a semitone per string — in DADGAD or an open tuning the ladders
+  would zigzag without saying anything, so they are left off). The
+  chord tones relative to your chosen
+  root are
   ringed: root, ♭3/5/♭7 in the minor map, 3/5/7 in the major one. Useful for
   learning note names across the fretboard and for spotting arpeggio shapes.
 - **Triads** (major, minor, diminished, augmented) — a chord, not a scale, so

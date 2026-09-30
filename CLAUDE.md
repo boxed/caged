@@ -69,10 +69,27 @@ through the code:
   With no scale there is nothing to pick which third is the diatonic one, which
   is exactly why the choice is split across two modes.
 - Every marker is filled with its pitch-class color (`pitchColor`, the `--pc-*`
-  vars). Hues follow the circle of fifths, so a semitone step is half the wheel
-  away (adjacent frets never look alike) and the naturals land in the warm half,
-  the accidentals in the cool half. Markers are drawn by `chromaticMarker`;
-  the label uses `--note-text` on every fill.
+  vars): a rainbow walked round the circle of fifths, C red, G orange, D yellow
+  … F pink. Strings a fourth apart are one step round it, so across a fret the
+  E-A-D-G strings form a smooth gradient and the major third to B shows as a
+  jump; a semitone is half the wheel away, so adjacent frets never look alike.
+  Lightness varies with hue like a real rainbow and chroma sits just inside
+  sRGB — the earlier equal-lightness pastels washed neighboring hues together.
+  Markers are drawn by `chromaticMarker`; the label uses `--note-text` on
+  every fill.
+- **Fifths ladders** (`drawFifthsLadders`, under the markers): every note is
+  linked to the note a fourth up on the string above — the next step round the
+  circle of fifths — by a 6px rung stroked in a gradient between the two notes'
+  colors. `fifthsStep` gives the rung's fret offset per string pair, read off
+  the tuning (0 for a fourth, 1 for standard G→B, −2 for Drop D's low pair),
+  so each fret becomes a ladder that jogs wherever the tuning is not in
+  fourths. That jog is the point: it is what makes the B string's one-fret
+  shift visible. Not drawn for `Blank`; plain `--note-bd` ink in monochrome.
+  Only drawn when `laddersFit` the tuning — every pair of the top five
+  strings a fourth apart or a semitone off one (a major third kinks right, a
+  tritone left), the lowest pair free (so standard, the drop tunings, E A D G
+  C F#) — since in DADGAD or an open tuning the jogs go back and forth and
+  say nothing.
 - `rootSpelling` and `spelledName` short-circuit to `noteName` — all twelve
   pitch classes are present, so there is no key signature to spell against and
   the conventional sharp names are used on both the fretboard and root buttons.
@@ -276,7 +293,7 @@ SVG draw order (later = on top):
 3. Overlap stripe polygons (adjacent pairs + wrap). Drawn with opaque
    pre-blended colors (`color-mix`) so they fully cover underlying solids
    without alpha contamination.
-4. Fret lines, nut, strings.
+4. Fret lines, nut, strings, then (all-notes maps only) the fifths ladders.
 5. Note markers (circles/squares by role).
 
 In triad mode 1 and 4 both move ahead of the regions — the whole neck is drawn

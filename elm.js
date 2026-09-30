@@ -5789,7 +5789,7 @@ var $author$project$Main$init = F3(
 	function (_v0, url, key) {
 		var state = $author$project$Main$parseUrl(url);
 		return _Utils_Tuple2(
-			{j: state.j, K: $elm$core$Maybe$Nothing, n: state.n, aG: key, d: state.d, f: state.f, v: state.v, c: state.c, V: false, J: state.J, al: false},
+			{j: state.j, K: $elm$core$Maybe$Nothing, n: state.n, aG: key, d: state.d, f: state.f, v: state.v, c: state.c, W: false, J: state.J, al: false},
 			$elm$core$Platform$Cmd$none);
 	});
 var $author$project$Main$DragEnd = {$: 15};
@@ -6653,13 +6653,13 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							c: t,
-							V: $author$project$Main$isCustom(t)
+							W: $author$project$Main$isCustom(t)
 						}));
 			case 9:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{V: !model.V}),
+						{W: !model.W}),
 					$elm$core$Platform$Cmd$none);
 			case 4:
 				var s = msg.a;
@@ -6839,7 +6839,7 @@ var $author$project$Main$boardAt = F3(
 	function (model, i, neck) {
 		return {
 			n: model.n,
-			Y: 'n' + ($elm$core$String$fromInt(i) + '-'),
+			U: 'n' + ($elm$core$String$fromInt(i) + '-'),
 			d: model.d,
 			g: neck.g,
 			a: neck.a,
@@ -7633,13 +7633,13 @@ var $author$project$Main$tuningToggle = function (model) {
 					$elm$html$Html$Events$onClick($author$project$Main$ToggleTuningList),
 					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.V)),
+			$author$project$Main$buttonBaseStyle(model.W)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
 				_Utils_ap(
 					$author$project$Main$tuningLabel(model.c),
-					model.V ? ' ▴' : ' ▾'))
+					model.W ? ' ▴' : ' ▾'))
 			]));
 };
 var $author$project$Main$setupRow = function (model) {
@@ -7873,7 +7873,7 @@ var $author$project$Main$viewControls = function (model) {
 							A2($elm$core$List$range, 0, 11)))
 					])),
 				$author$project$Main$setupRow(model),
-				model.V ? $author$project$Main$controlBlock(
+				model.W ? $author$project$Main$controlBlock(
 				_Utils_ap(
 					A2(
 						$elm$core$List$map,
@@ -7883,7 +7883,7 @@ var $author$project$Main$viewControls = function (model) {
 						[
 							$author$project$Main$customButton(model)
 						]))) : $elm$html$Html$text(''),
-				(model.V && $author$project$Main$isCustom(model.c)) ? A2(
+				(model.W && $author$project$Main$isCustom(model.c)) ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -8734,7 +8734,7 @@ var $author$project$Main$ditherPatternDefs = function (board) {
 				function (b) {
 					return A2(
 						$author$project$Main$ditherPattern,
-						board.Y + ('dither-' + $elm$core$String$fromInt(b)),
+						board.U + ('dither-' + $elm$core$String$fromInt(b)),
 						b);
 				},
 				_List_fromArray(
@@ -9220,7 +9220,7 @@ var $author$project$Main$drawOverlapStripe = F4(
 						$elm$svg$Svg$Attributes$fill(
 						A3(
 							$author$project$Main$stripeRef,
-							board.Y,
+							board.U,
 							_Utils_Tuple2(b1, b2),
 							_Utils_Tuple2(
 								A2(
@@ -9241,7 +9241,7 @@ var $author$project$Main$boxFill = F2(
 	});
 var $author$project$Main$ditherRef = F2(
 	function (board, b) {
-		return 'url(#' + (board.Y + ('dither-' + ($elm$core$String$fromInt(b) + ')')));
+		return 'url(#' + (board.U + ('dither-' + ($elm$core$String$fromInt(b) + ')')));
 	});
 var $elm$svg$Svg$Attributes$fillOpacity = _VirtualDom_attribute('fill-opacity');
 var $author$project$Main$regionPaint = F4(
@@ -9346,7 +9346,7 @@ var $author$project$Main$drawWrapOverlap = F3(
 						$elm$svg$Svg$Attributes$fill(
 						A3(
 							$author$project$Main$stripeRef,
-							board.Y,
+							board.U,
 							_Utils_Tuple2(5, 1),
 							_Utils_Tuple2(
 								A2(
@@ -10164,7 +10164,7 @@ var $author$project$Main$drawTriadLassos = function (board) {
 					function (i, triad) {
 						return A4(
 							$author$project$Main$triadRing,
-							board.Y,
+							board.U,
 							A3(
 								$author$project$Main$ringColor,
 								board,
@@ -10178,15 +10178,147 @@ var $author$project$Main$drawTriadLassos = function (board) {
 var $author$project$Main$drawBoxRegions = function (board) {
 	return $author$project$Main$isChromatic(board.a) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? $author$project$Main$drawTriadLassos(board) : ($author$project$Main$isDiagonal(board.a) ? $author$project$Main$drawDiagonalRegions(board) : $author$project$Main$drawBoxRegionsBoxes(board)));
 };
-var $author$project$Main$fretLineX = function (f) {
-	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
+var $author$project$Main$fifthsStep = F2(
+	function (tuning, s) {
+		var o = A2(
+			$elm$core$Basics$modBy,
+			12,
+			(A2($author$project$Main$openString, tuning, s + 1) + 5) - A2($author$project$Main$openString, tuning, s));
+		return (o > 6) ? (o - 12) : o;
+	});
+var $elm$svg$Svg$Attributes$gradientUnits = _VirtualDom_attribute('gradientUnits');
+var $author$project$Main$laddersFit = function (tuning) {
+	return A2(
+		$elm$core$List$all,
+		function (s) {
+			return $elm$core$Basics$abs(
+				A2($author$project$Main$fifthsStep, tuning, s)) <= 1;
+		},
+		A2($elm$core$List$range, 1, 4));
 };
-var $author$project$Main$fretboardHeight = $author$project$Main$stringSpacing * 5;
 var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
+var $elm$svg$Svg$linearGradient = $elm$svg$Svg$trustedNode('linearGradient');
+var $elm$svg$Svg$Attributes$offset = _VirtualDom_attribute('offset');
+var $author$project$Main$pitchColor = function (n) {
+	return 'var(--pc-' + ($elm$core$String$fromInt(
+		A2($elm$core$Basics$modBy, 12, n)) + ')');
+};
+var $elm$svg$Svg$stop = $elm$svg$Svg$trustedNode('stop');
+var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
 var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
 var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
 var $elm$svg$Svg$Attributes$y2 = _VirtualDom_attribute('y2');
+var $author$project$Main$drawFifthsLadders = function (board) {
+	var stop = F2(
+		function (offset, n) {
+			return A2(
+				$elm$svg$Svg$stop,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$offset(offset),
+						$elm$svg$Svg$Attributes$style(
+						'stop-color: ' + $author$project$Main$pitchColor(n))
+					]),
+				_List_Nil);
+		});
+	var rung = F2(
+		function (s, f) {
+			var g = f + A2($author$project$Main$fifthsStep, board.c, s);
+			return ((g < 0) || (_Utils_cmp(g, $author$project$Main$numFrets) > 0)) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
+				_Utils_Tuple3(s, f, g));
+		});
+	var rungs = A2(
+		$elm$core$List$concatMap,
+		function (s) {
+			return A2(
+				$elm$core$List$filterMap,
+				rung(s),
+				A2($elm$core$List$range, 0, $author$project$Main$numFrets));
+		},
+		A2($elm$core$List$range, 1, 5));
+	var gradId = function (_v0) {
+		var s = _v0.a;
+		var f = _v0.b;
+		return board.U + ('ladder-' + ($elm$core$String$fromInt(s) + ('-' + $elm$core$String$fromInt(f))));
+	};
+	var gradient = function (r) {
+		var s = r.a;
+		var f = r.b;
+		var g = r.c;
+		return A2(
+			$elm$svg$Svg$linearGradient,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$id(
+					gradId(r)),
+					$elm$svg$Svg$Attributes$gradientUnits('userSpaceOnUse'),
+					$elm$svg$Svg$Attributes$x1(
+					$elm$core$String$fromFloat(
+						$author$project$Main$noteX(f))),
+					$elm$svg$Svg$Attributes$y1(
+					$elm$core$String$fromFloat(
+						$author$project$Main$stringY(s + 1))),
+					$elm$svg$Svg$Attributes$x2(
+					$elm$core$String$fromFloat(
+						$author$project$Main$noteX(g))),
+					$elm$svg$Svg$Attributes$y2(
+					$elm$core$String$fromFloat(
+						$author$project$Main$stringY(s)))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					stop,
+					'0',
+					A3($author$project$Main$noteAt, board.c, s + 1, f)),
+					A2(
+					stop,
+					'1',
+					A3($author$project$Main$noteAt, board.c, s, g))
+				]));
+	};
+	var line = function (r) {
+		var s = r.a;
+		var f = r.b;
+		var g = r.c;
+		return A2(
+			$elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x1(
+					$elm$core$String$fromFloat(
+						$author$project$Main$noteX(f))),
+					$elm$svg$Svg$Attributes$y1(
+					$elm$core$String$fromFloat(
+						$author$project$Main$stringY(s + 1))),
+					$elm$svg$Svg$Attributes$x2(
+					$elm$core$String$fromFloat(
+						$author$project$Main$noteX(g))),
+					$elm$svg$Svg$Attributes$y2(
+					$elm$core$String$fromFloat(
+						$author$project$Main$stringY(s))),
+					$elm$svg$Svg$Attributes$stroke(
+					board.d ? 'var(--note-bd)' : ('url(#' + (gradId(r) + ')'))),
+					$elm$svg$Svg$Attributes$strokeWidth('6'),
+					$elm$svg$Svg$Attributes$strokeLinecap('round')
+				]),
+			_List_Nil);
+	};
+	return (((board.a === 15) || (board.a === 14)) && $author$project$Main$laddersFit(board.c)) ? _Utils_ap(
+		board.d ? _List_Nil : _List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$defs,
+				_List_Nil,
+				A2($elm$core$List$map, gradient, rungs))
+			]),
+		A2($elm$core$List$map, line, rungs)) : _List_Nil;
+};
+var $author$project$Main$fretLineX = function (f) {
+	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
+};
+var $author$project$Main$fretboardHeight = $author$project$Main$stringSpacing * 5;
 var $author$project$Main$drawFretLines = function () {
 	var top = $author$project$Main$topMargin - 4;
 	var bot = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 4;
@@ -10623,10 +10755,6 @@ var $author$project$Main$offString = F2(
 			return _List_Nil;
 		}
 	});
-var $author$project$Main$pitchColor = function (n) {
-	return 'var(--pc-' + ($elm$core$String$fromInt(
-		A2($elm$core$Basics$modBy, 12, n)) + ')');
-};
 var $author$project$Main$diagonalBoxOf = F5(
 	function (tuning, scale, root, s, f) {
 		var rel = A2(
@@ -10997,7 +11125,7 @@ var $author$project$Main$stripePatternDefs = function (board) {
 			function (pair) {
 				return A2(
 					$elm$core$List$map,
-					A2($author$project$Main$overlapStripePattern, board.Y, pair),
+					A2($author$project$Main$overlapStripePattern, board.U, pair),
 					$author$project$Main$stripeMutings);
 			},
 			_List_fromArray(
@@ -11009,7 +11137,6 @@ var $author$project$Main$stripePatternDefs = function (board) {
 					_Utils_Tuple2(5, 1)
 				])));
 };
-var $elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
 var $author$project$Main$totalHeight = ($author$project$Main$topMargin + $author$project$Main$fretboardHeight) + 80;
 var $author$project$Main$viewFretboard = function (board) {
 	var neckAndRegions = $author$project$Main$isTriad(board.a) ? _Utils_ap(
@@ -11044,6 +11171,7 @@ var $author$project$Main$viewFretboard = function (board) {
 					]),
 					$author$project$Main$ditherPatternDefs(board),
 					neckAndRegions,
+					$author$project$Main$drawFifthsLadders(board),
 					$author$project$Main$drawNotes(board),
 					$author$project$Main$drawFretNumbers,
 					$author$project$Main$drawInlayDots

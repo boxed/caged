@@ -2010,10 +2010,11 @@ chromaticSeventh scale =
 
 
 {-| All-notes mode paints each marker with its pitch-class color, so the neck
-reads as twelve repeating hues instead of a field of identical circles. Hues
-follow the circle of fifths (see the `--pc-*` vars in index.html): a semitone
-step lands half the wheel away, so adjacent frets never look alike, and the
-naturals fall in the warm half with the accidentals in the cool half.
+reads as twelve repeating hues instead of a field of identical circles. The
+hues are a rainbow walked round the circle of fifths (see the `--pc-*` vars in
+index.html): strings a fourth apart sit one step apart, so a fret reads as a
+gradient that jumps at the B string, and a semitone lands half the wheel away,
+so adjacent frets never look alike.
 -}
 pitchColor : Int -> String
 pitchColor n =
@@ -3328,6 +3329,7 @@ viewFretboard board =
             [ [ stripePatternDefs board ]
             , ditherPatternDefs board
             , neckAndRegions
+            , drawFifthsLadders board
             , drawNotes board
             , drawFretNumbers
             , drawInlayDots
@@ -4065,6 +4067,123 @@ drawFretMarkers =
     List.map (\f -> dot f 0) singles
         ++ List.concatMap (\f -> [ dot f -stringSpacing, dot f stringSpacing ]) doubles
 
+
+
+-- CIRCLE-OF-FIFTHS LADDERS
+
+
+{-| Where the circle of fifths goes from string `s + 1` to the string above it:
+the fret offset of the note a fourth up from the lower string, which is the
+next pitch class round the circle (read the way the strings climb, B E A D G C
+F …). 0 for strings a fourth apart, 1 across the major third from G to B in
+standard tuning, and whatever the tuning says elsewhere, kept to −5…6 so the
+path jogs the short way.
+-}
+fifthsStep : Tuning -> Int -> Int
+fifthsStep tuning s =
+    let
+        o =
+            modBy 12 (openString tuning (s + 1) + 5 - openString tuning s)
+    in
+    if o > 6 then
+        o - 12
+
+    else
+        o
+
+
+{-| Whether the ladders mean anything in this tuning: they read as "the circle
+of fifths, shifted a fret" only on a neck tuned in fourths. So every pair of
+the top five strings has to be a fourth apart or a semitone off one — a major
+third (standard's G–B) kinks the ladder toward the body, a tritone (E A D G C
+F#) toward the nut. The lowest pair may be anything, so the drop tunings
+qualify. DADGAD and the open tunings fail, and their ladders would jog back and
+forth to no purpose.
+-}
+laddersFit : Tuning -> Bool
+laddersFit tuning =
+    List.all (\s -> abs (fifthsStep tuning s) <= 1) (List.range 1 4)
+
+
+{-| The all-notes map's answer to "why are the top two strings off by one":
+each note is linked to the note a fourth up on the string above, i.e. the next
+step round the circle of fifths. Across strings a fourth apart that link is
+straight up the fret, so each fret becomes a ladder walking the rainbow; at the
+G–B major third it jogs a fret toward the body, and that kink, repeated on every
+fret, is the shift made visible. Each rung is a gradient between its two notes'
+colors, so the line itself walks the circle. Drawn under the note markers.
+-}
+drawFifthsLadders : Board -> List (Svg.Svg Msg)
+drawFifthsLadders board =
+    let
+        rung s f =
+            let
+                g =
+                    f + fifthsStep board.tuning s
+            in
+            if g < 0 || g > numFrets then
+                Nothing
+
+            else
+                Just ( s, f, g )
+
+        rungs =
+            List.concatMap
+                (\s -> List.filterMap (rung s) (List.range 0 numFrets))
+                (List.range 1 5)
+
+        gradId ( s, f, _ ) =
+            board.id ++ "ladder-" ++ String.fromInt s ++ "-" ++ String.fromInt f
+
+        stop offset n =
+            Svg.stop
+                [ SA.offset offset
+                , SA.style ("stop-color: " ++ pitchColor n)
+                ]
+                []
+
+        gradient (( s, f, g ) as r) =
+            Svg.linearGradient
+                [ SA.id (gradId r)
+                , SA.gradientUnits "userSpaceOnUse"
+                , SA.x1 (String.fromFloat (noteX f))
+                , SA.y1 (String.fromFloat (stringY (s + 1)))
+                , SA.x2 (String.fromFloat (noteX g))
+                , SA.y2 (String.fromFloat (stringY s))
+                ]
+                [ stop "0" (noteAt board.tuning (s + 1) f)
+                , stop "1" (noteAt board.tuning s g)
+                ]
+
+        line (( s, f, g ) as r) =
+            Svg.line
+                [ SA.x1 (String.fromFloat (noteX f))
+                , SA.y1 (String.fromFloat (stringY (s + 1)))
+                , SA.x2 (String.fromFloat (noteX g))
+                , SA.y2 (String.fromFloat (stringY s))
+                , SA.stroke
+                    (if board.mono then
+                        "var(--note-bd)"
+
+                     else
+                        "url(#" ++ gradId r ++ ")"
+                    )
+                , SA.strokeWidth "6"
+                , SA.strokeLinecap "round"
+                ]
+                []
+    in
+    if (board.scale == ChromaticMinor || board.scale == ChromaticMajor) && laddersFit board.tuning then
+        (if board.mono then
+            []
+
+         else
+            [ Svg.defs [] (List.map gradient rungs) ]
+        )
+            ++ List.map line rungs
+
+    else
+        []
 
 
 -- NOTES
