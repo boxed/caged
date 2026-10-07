@@ -5572,7 +5572,7 @@ var $author$project$Main$tunings = _List_fromArray(
 			[4, 11, 7, 2, 9, 2])
 	},
 		{
-		D: 'D#/Eb Standard',
+		D: 'D♯/E♭ Standard',
 		q: 'eb-standard',
 		z: _List_fromArray(
 			[3, 10, 6, 1, 8, 3])
@@ -5590,7 +5590,7 @@ var $author$project$Main$tunings = _List_fromArray(
 			[2, 9, 5, 0, 7, 0])
 	},
 		{
-		D: 'C#/Db Standard',
+		D: 'C♯/D♭ Standard',
 		q: 'cs-standard',
 		z: _List_fromArray(
 			[1, 8, 4, 11, 6, 1])
@@ -10409,6 +10409,7 @@ var $author$project$Main$drawFretMarkers = function () {
 }();
 var $elm$svg$Svg$Attributes$fontFamily = _VirtualDom_attribute('font-family');
 var $elm$svg$Svg$Attributes$fontSize = _VirtualDom_attribute('font-size');
+var $author$project$Main$svgFont = '-apple-system, system-ui, \u0022Segoe UI\u0022, Helvetica, Arial, sans-serif';
 var $elm$svg$Svg$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$svg$Svg$Attributes$textAnchor = _VirtualDom_attribute('text-anchor');
 var $elm$svg$Svg$text_ = $elm$svg$Svg$trustedNode('text');
@@ -10444,7 +10445,7 @@ var $author$project$Main$drawFretNumbers = function () {
 					$elm$core$String$fromFloat(y)),
 					$elm$svg$Svg$Attributes$textAnchor('middle'),
 					$elm$svg$Svg$Attributes$fontSize('13'),
-					$elm$svg$Svg$Attributes$fontFamily('-apple-system, Helvetica, Arial, sans-serif'),
+					$elm$svg$Svg$Attributes$fontFamily($author$project$Main$svgFont),
 					$elm$svg$Svg$Attributes$fill('var(--fret-num)')
 				]),
 			_List_fromArray(
@@ -10596,7 +10597,113 @@ var $author$project$Main$chromaticMarker = F4(
 						]));
 		}
 	});
+var $author$project$Main$accidentalGap = 0.8;
+var $author$project$Main$accidentalPath = function (c) {
+	switch (c) {
+		case '♭':
+			return $elm$core$Maybe$Just('M0,-10 H0.8 V-3.7 C2.3,-5.2 5.0,-5.0 5.0,-3.1 C5.0,-1.5 2.7,-0.3 0,1.1 Z M0.8,-2.6 V-0.1 C2.1,-0.9 3.5,-1.9 3.5,-2.9 C3.5,-3.9 1.9,-3.7 0.8,-2.6 Z');
+		case '♯':
+			return $elm$core$Maybe$Just('M1.0,-9.6 H1.6 V1.4 H1.0 Z M3.4,-10.4 H4.0 V0.6 H3.4 Z M0,-5.6 L5,-7.0 V-5.7 L0,-4.3 Z M0,-1.6 L5,-3.0 V-1.7 L0,-0.3 Z');
+		case 'x':
+			return $elm$core$Maybe$Just('M0,-7 H1.3 L5,-2.5 V-1.2 H3.7 L0,-5.7 Z M5,-7 V-5.7 L1.3,-1.2 H0 V-2.5 L3.7,-7 Z');
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$accidentalWidth = 4.5;
+var $elm$svg$Svg$Attributes$fillRule = _VirtualDom_attribute('fill-rule');
 var $elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
+var $elm$core$String$cons = _String_cons;
+var $elm$core$String$fromChar = function (_char) {
+	return A2($elm$core$String$cons, _char, '');
+};
+var $author$project$Main$letterWidth = function (c) {
+	switch (c) {
+		case 'A':
+			return 9.45;
+		case 'B':
+			return 8.94;
+		case 'C':
+			return 9.56;
+		case 'D':
+			return 9.64;
+		case 'E':
+			return 8.01;
+		case 'F':
+			return 7.69;
+		case 'G':
+			return 9.81;
+		default:
+			return 9;
+	}
+};
+var $elm$core$String$foldr = _String_foldr;
+var $elm$core$String$toList = function (string) {
+	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
+};
+var $elm$svg$Svg$Attributes$transform = _VirtualDom_attribute('transform');
+var $author$project$Main$noteLabel = F3(
+	function (name, cx, y) {
+		var letterNode = F3(
+			function (x, anchor, txt) {
+				return A2(
+					$elm$svg$Svg$text_,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$x(
+							$elm$core$String$fromFloat(x)),
+							$elm$svg$Svg$Attributes$y(
+							$elm$core$String$fromFloat(y)),
+							$elm$svg$Svg$Attributes$textAnchor(anchor),
+							$elm$svg$Svg$Attributes$fontSize('13'),
+							$elm$svg$Svg$Attributes$fontWeight('700'),
+							$elm$svg$Svg$Attributes$fontFamily($author$project$Main$svgFont)
+						]),
+					_List_fromArray(
+						[
+							$elm$svg$Svg$text(txt)
+						]));
+			});
+		var _v0 = $elm$core$String$uncons(name);
+		if (!_v0.$) {
+			var _v1 = _v0.a;
+			var letter = _v1.a;
+			var acc = _v1.b;
+			var step = $author$project$Main$accidentalWidth + $author$project$Main$accidentalGap;
+			var letterW = $author$project$Main$letterWidth(letter);
+			var glyphs = A2(
+				$elm$core$List$filterMap,
+				$author$project$Main$accidentalPath,
+				$elm$core$String$toList(acc));
+			var left = cx - ((letterW + ($elm$core$List$length(glyphs) * step)) / 2);
+			var glyphAt = F2(
+				function (i, d) {
+					return A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d(d),
+								$elm$svg$Svg$Attributes$fillRule('evenodd'),
+								$elm$svg$Svg$Attributes$transform(
+								'translate(' + ($elm$core$String$fromFloat(((left + letterW) + $author$project$Main$accidentalGap) + (i * step)) + (',' + ($elm$core$String$fromFloat(y - 3.5) + ') scale(0.9)'))))
+							]),
+						_List_Nil);
+				});
+			return $elm$core$List$isEmpty(glyphs) ? _List_fromArray(
+				[
+					A3(letterNode, cx, 'middle', name)
+				]) : A2(
+				$elm$core$List$cons,
+				A3(
+					letterNode,
+					left,
+					'start',
+					$elm$core$String$fromChar(letter)),
+				A2($elm$core$List$indexedMap, glyphAt, glyphs));
+		} else {
+			return _List_Nil;
+		}
+	});
 var $author$project$Main$Fifth = 2;
 var $author$project$Main$Other = 4;
 var $author$project$Main$Root = 0;
@@ -10873,24 +10980,16 @@ var $author$project$Main$drawNoteAt = F3(
 			var cy = $author$project$Main$stringY(s);
 			var cx = $author$project$Main$noteX(f);
 			var labelNode = A2(
-				$elm$svg$Svg$text_,
+				$elm$svg$Svg$g,
 				_List_fromArray(
 					[
-						$elm$svg$Svg$Attributes$x(
-						$elm$core$String$fromFloat(cx)),
-						$elm$svg$Svg$Attributes$y(
-						$elm$core$String$fromFloat(cy + 4)),
-						$elm$svg$Svg$Attributes$textAnchor('middle'),
-						$elm$svg$Svg$Attributes$fontSize('13'),
-						$elm$svg$Svg$Attributes$fontWeight('700'),
-						$elm$svg$Svg$Attributes$fontFamily('-apple-system, Helvetica, Arial, sans-serif'),
 						$elm$svg$Svg$Attributes$fill(textColor)
 					]),
-				_List_fromArray(
-					[
-						$elm$svg$Svg$text(
-						A2($author$project$Main$spelledName, board, n))
-					]));
+				A3(
+					$author$project$Main$noteLabel,
+					A2($author$project$Main$spelledName, board, n),
+					cx,
+					cy + 4));
 			var background = function () {
 				if ($author$project$Main$isChromatic(board.a)) {
 					return A4(

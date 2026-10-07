@@ -11,7 +11,7 @@ color — matching the style of `fretboard-reference.jpeg`.
 
 - **22-fret, 6-string** diagram with standard tuning (E A D G B E), high E on
   top to match the reference image.
-- **12 root notes** (C, C#, D, ..., B) selectable with one click.
+- **12 root notes** (C, C♯, D, ..., B) selectable with one click.
 - **Major / Minor pentatonic** toggle. Major pentatonic uses the same shapes
   as its relative minor, so the five boxes slide together as you change scale.
 - **Five colored box regions** drawn as translucent polygons, matching the

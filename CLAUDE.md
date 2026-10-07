@@ -92,7 +92,7 @@ through the code:
   Only drawn when `laddersFit` the tuning — every pair of the top five
   strings a fourth apart or a semitone off one (a major third kinks right, a
   tritone left), the lowest pair free (so standard, the drop tunings, E A D G
-  C F#) — since in DADGAD or an open tuning the jogs go back and forth and
+  C F♯) — since in DADGAD or an open tuning the jogs go back and forth and
   say nothing.
 - `rootSpelling` and `spelledName` short-circuit to `noteName` — all twelve
   pitch classes are present, so there is no key signature to spell against and
@@ -180,11 +180,18 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
   `ScaleType` constructors and in every `case` over them (major/minor
   pentatonic, Ionian/Aeolian, harmonic, melodic, the all-notes maps, the
   diagonals).
+- **Accidentals** are always the real symbols, ♯ and ♭ (𝄪/𝄫 for doubles), in
+  anything a person reads: note names, tuning names, interval labels, docs.
+  Never `#` or `b`. The only ASCII spellings are URL slugs (`Cs`, `eb-standard`).
+  Inside the note markers the accidentals are not text at all: `noteLabel`
+  draws them as paths (`accidentalPath`), raised like a superscript, because
+  the system font's ♭ reads as a lowercase b. Elm cannot measure text, so
+  centering uses the measured letter widths in `letterWidth`.
 
 ## Tunings
 
-The selector offers preset tunings (Standard, Drop D, D#/Eb Standard, D Standard, Drop C,
-C#/Db Standard, DADGAD, Open G/D/E) **plus arbitrary custom tunings**
+The selector offers preset tunings (Standard, Drop D, D♯/E♭ Standard, D Standard, Drop C,
+C♯/D♭ Standard, DADGAD, Open G/D/E) **plus arbitrary custom tunings**
 via per-string ▲/▼ steppers (shown only after pressing **Custom**). A custom
 tuning round-trips through the URL as six dash-joined note slugs
 (`?tuning=D-A-G-D-A-D`); presets use their slug. A note-encoded slug always

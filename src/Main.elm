@@ -1218,10 +1218,10 @@ tunings : List Tuning
 tunings =
     [ standardTuning
     , { name = "Drop D", slug = "drop-d", strings = [ 4, 11, 7, 2, 9, 2 ] }
-    , { name = "D#/Eb Standard", slug = "eb-standard", strings = [ 3, 10, 6, 1, 8, 3 ] }
+    , { name = "D♯/E♭ Standard", slug = "eb-standard", strings = [ 3, 10, 6, 1, 8, 3 ] }
     , { name = "D Standard", slug = "d-standard", strings = [ 2, 9, 5, 0, 7, 2 ] }
     , { name = "Drop C", slug = "drop-c", strings = [ 2, 9, 5, 0, 7, 0 ] }
-    , { name = "C#/Db Standard", slug = "cs-standard", strings = [ 1, 8, 4, 11, 6, 1 ] }
+    , { name = "C♯/D♭ Standard", slug = "cs-standard", strings = [ 1, 8, 4, 11, 6, 1 ] }
     , { name = "DADGAD", slug = "dadgad", strings = [ 2, 9, 7, 2, 9, 2 ] }
     , { name = "Open G", slug = "open-g", strings = [ 2, 11, 7, 2, 7, 2 ] }
     , { name = "Open D", slug = "open-d", strings = [ 2, 9, 6, 2, 9, 2 ] }
@@ -4300,22 +4300,127 @@ drawNoteAt board s f =
                         Other -> "var(--note-text)"
 
                 labelNode =
-                    Svg.text_
-                        [ SA.x (String.fromFloat cx)
-                        , SA.y (String.fromFloat (cy + 4))
-                        , SA.textAnchor "middle"
-                        , SA.fontSize "13"
-                        , SA.fontWeight "700"
-                        , SA.fontFamily "-apple-system, Helvetica, Arial, sans-serif"
-                        , SA.fill textColor
-                        ]
-                        [ Svg.text (spelledName board n) ]
+                    Svg.g [ SA.fill textColor ]
+                        (noteLabel (spelledName board n) cx (cy + 4))
             in
             Just (Svg.g (offString board s) [ background, labelNode ])
 
         Nothing ->
             Nothing
 
+
+
+{-| The font stack for text drawn in the SVG, the same as the page's. Chrome
+does not know `-apple-system`, so without `system-ui` it falls through to
+Helvetica. -}
+svgFont : String
+svgFont =
+    "-apple-system, system-ui, \"Segoe UI\", Helvetica, Arial, sans-serif"
+
+
+{-| A note name for a marker, centered on `cx` with its baseline at `y`: the
+letter as bold text, then each accidental drawn as a path, raised like a
+superscript. The font's own ♭ will not do: the system font draws it as a plain
+lowercase b, and fonts with a real engraved flat are not on every platform.
+Elm cannot measure text, so the letter's width comes from `letterWidth`. -}
+noteLabel : String -> Float -> Float -> List (Svg.Svg Msg)
+noteLabel name cx y =
+    let
+        letterNode x anchor txt =
+            Svg.text_
+                [ SA.x (String.fromFloat x)
+                , SA.y (String.fromFloat y)
+                , SA.textAnchor anchor
+                , SA.fontSize "13"
+                , SA.fontWeight "700"
+                , SA.fontFamily svgFont
+                ]
+                [ Svg.text txt ]
+    in
+    case String.uncons name of
+        Just ( letter, acc ) ->
+            let
+                glyphs =
+                    List.filterMap accidentalPath (String.toList acc)
+
+                step =
+                    accidentalWidth + accidentalGap
+
+                letterW =
+                    letterWidth letter
+
+                left =
+                    cx - (letterW + toFloat (List.length glyphs) * step) / 2
+
+                glyphAt i d =
+                    Svg.path
+                        [ SA.d d
+                        , SA.fillRule "evenodd"
+                        , SA.transform
+                            ("translate("
+                                ++ String.fromFloat (left + letterW + accidentalGap + toFloat i * step)
+                                ++ ","
+                                ++ String.fromFloat (y - 3.5)
+                                ++ ") scale(0.9)"
+                            )
+                        ]
+                        []
+            in
+            if List.isEmpty glyphs then
+                [ letterNode cx "middle" name ]
+
+            else
+                letterNode left "start" (String.fromChar letter)
+                    :: List.indexedMap glyphAt glyphs
+
+        Nothing ->
+            []
+
+
+{-| Advance width of a bold 13px note letter in the system font, measured in
+the browser. Only used to center a letter and its accidentals together, so a
+platform whose font runs a little wider is off by a fraction of a pixel. -}
+letterWidth : Char -> Float
+letterWidth c =
+    case c of
+        'A' -> 9.45
+        'B' -> 8.94
+        'C' -> 9.56
+        'D' -> 9.64
+        'E' -> 8.01
+        'F' -> 7.69
+        'G' -> 9.81
+        _ -> 9
+
+
+accidentalWidth : Float
+accidentalWidth =
+    4.5
+
+
+accidentalGap : Float
+accidentalGap =
+    0.8
+
+
+{-| Path for one accidental character as `accidentalGlyph` writes it, in a box
+5 wide with the baseline at 0 (scaled by 0.9 when drawn). The flat is an
+engraved one, a thin stem and a heavy pointed bowl, so it does not read as a
+b; the sharp has the slanted, heavier bars of a printed one. -}
+accidentalPath : Char -> Maybe String
+accidentalPath c =
+    case c of
+        '\u{266D}' ->
+            Just "M0,-10 H0.8 V-3.7 C2.3,-5.2 5.0,-5.0 5.0,-3.1 C5.0,-1.5 2.7,-0.3 0,1.1 Z M0.8,-2.6 V-0.1 C2.1,-0.9 3.5,-1.9 3.5,-2.9 C3.5,-3.9 1.9,-3.7 0.8,-2.6 Z"
+
+        '\u{266F}' ->
+            Just "M1.0,-9.6 H1.6 V1.4 H1.0 Z M3.4,-10.4 H4.0 V0.6 H3.4 Z M0,-5.6 L5,-7.0 V-5.7 L0,-4.3 Z M0,-1.6 L5,-3.0 V-1.7 L0,-0.3 Z"
+
+        'x' ->
+            Just "M0,-7 H1.3 L5,-2.5 V-1.2 H3.7 L0,-5.7 Z M5,-7 V-5.7 L1.3,-1.2 H0 V-2.5 L3.7,-7 Z"
+
+        _ ->
+            Nothing
 
 
 {-| What a note marker wears when the string highlight is on and this note is
@@ -4405,7 +4510,7 @@ drawFretNumbers =
                         , SA.y (String.fromFloat y)
                         , SA.textAnchor "middle"
                         , SA.fontSize "13"
-                        , SA.fontFamily "-apple-system, Helvetica, Arial, sans-serif"
+                        , SA.fontFamily svgFont
                         , SA.fill "var(--fret-num)"
                         ]
                         [ Svg.text txt ]
