@@ -6,7 +6,7 @@ Live site: https://boxed.github.io/caged/
 
 ## Stack
 
-- **Elm 0.19.1** — `port module` in `src/Main.elm` (~1400 lines).
+- **Elm 0.19.2** — `port module` in `src/Main.elm` (~1400 lines).
   Uses `Browser.application` (not sandbox) for URL-based state.
 - **elm-test** — `elm-explorations/test` for box-shape validation.
 - No bundler, no npm. `index.html` loads the compiled `elm.js` directly.
@@ -16,8 +16,12 @@ Live site: https://boxed.github.io/caged/
 
 ```sh
 elm make src/Main.elm --optimize --output=elm.js   # compile
-elm-test                                          # run tests (~5300 tests)
+npx --yes elm-test@0.19.1-revision12 --compiler /usr/local/bin/elm   # run tests
 ```
+
+The app builds with Elm 0.19.2 (`elm.json` pins it), but elm-test generates its
+own `elm.json` with a hardcoded compiler version, so it needs the 0.19.1
+compiler: revision12 wants 0.19.1, `elm-test@latest` wants 0.19.3.
 
 `--optimize` is not optional: `elm.js` is the artifact the site serves, so the
 committed build has to be the release build. Without it the shipped file keeps
@@ -179,8 +183,8 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 
 ## Tunings
 
-The selector offers preset tunings (Standard, Drop D, Eb/D Standard, Drop C,
-C# Standard (Iommi), DADGAD, Open G/D/E) **plus arbitrary custom tunings**
+The selector offers preset tunings (Standard, Drop D, D#/Eb Standard, D Standard, Drop C,
+C#/Db Standard, DADGAD, Open G/D/E) **plus arbitrary custom tunings**
 via per-string ▲/▼ steppers (shown only after pressing **Custom**). A custom
 tuning round-trips through the URL as six dash-joined note slugs
 (`?tuning=D-A-G-D-A-D`); presets use their slug. A note-encoded slug always
