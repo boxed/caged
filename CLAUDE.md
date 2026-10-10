@@ -179,7 +179,9 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
   Every major/minor pair is listed major-first, in the buttons, in the
   `ScaleType` constructors and in every `case` over them (major/minor
   pentatonic, Ionian/Aeolian, harmonic, melodic, the all-notes maps, the
-  diagonals).
+  diagonals). The seven modes go in scale-degree order — Ionian, Dorian,
+  Phrygian, Lydian, Mixolydian, Aeolian, Locrian — in the buttons and the
+  `ScaleType` constructors.
 - **Accidentals** are always the real symbols, ♯ and ♭ (𝄪/𝄫 for doubles), in
   anything a person reads: note names, tuning names, interval labels, docs.
   Never `#` or `b`. The only ASCII spellings are URL slugs (`Cs`, `eb-standard`).

@@ -138,11 +138,11 @@ type ScaleType
     = MajorPent
     | MinorPent
     | Ionian
-    | Aeolian
     | Dorian
-    | Mixolydian
     | Phrygian
     | Lydian
+    | Mixolydian
+    | Aeolian
     | Locrian
     | Blues
     | HarmonicMajor
@@ -2837,11 +2837,11 @@ viewControls model =
                 ]
             , pickerGroup "Modes"
                 [ scaleButton model Ionian "Major (Ionian)"
-                , scaleButton model Aeolian "Minor (Aeolian)"
                 , scaleButton model Dorian "Dorian"
-                , scaleButton model Mixolydian "Mixolydian"
                 , scaleButton model Phrygian "Phrygian"
                 , scaleButton model Lydian "Lydian"
+                , scaleButton model Mixolydian "Mixolydian"
+                , scaleButton model Aeolian "Minor (Aeolian)"
                 , scaleButton model Locrian "Locrian"
                 ]
             , pickerGroup "Harmonic"

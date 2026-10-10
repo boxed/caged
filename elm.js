@@ -5364,7 +5364,7 @@ var $author$project$Main$rootFromSlug = function (s) {
 			return $elm$core$Maybe$Nothing;
 	}
 };
-var $author$project$Main$Aeolian = 3;
+var $author$project$Main$Aeolian = 7;
 var $author$project$Main$Blank = 16;
 var $author$project$Main$Blues = 9;
 var $author$project$Main$ChromaticMajor = 14;
@@ -5372,17 +5372,17 @@ var $author$project$Main$ChromaticMinor = 15;
 var $author$project$Main$DiagonalBlues = 23;
 var $author$project$Main$DiagonalMajorPent = 21;
 var $author$project$Main$DiagonalPent = 22;
-var $author$project$Main$Dorian = 4;
+var $author$project$Main$Dorian = 3;
 var $author$project$Main$HarmonicMajor = 10;
 var $author$project$Main$HarmonicMinor = 11;
 var $author$project$Main$Ionian = 2;
 var $author$project$Main$Locrian = 8;
-var $author$project$Main$Lydian = 7;
+var $author$project$Main$Lydian = 5;
 var $author$project$Main$MajorPent = 0;
 var $author$project$Main$MelodicMajor = 12;
 var $author$project$Main$MelodicMinor = 13;
-var $author$project$Main$Mixolydian = 5;
-var $author$project$Main$Phrygian = 6;
+var $author$project$Main$Mixolydian = 6;
+var $author$project$Main$Phrygian = 4;
 var $author$project$Main$TriadAug = 20;
 var $author$project$Main$TriadDim = 19;
 var $author$project$Main$TriadMajor = 17;
@@ -5396,15 +5396,15 @@ var $author$project$Main$scaleFromSlug = function (s) {
 		case 'ionian':
 			return $elm$core$Maybe$Just(2);
 		case 'aeolian':
-			return $elm$core$Maybe$Just(3);
-		case 'dorian':
-			return $elm$core$Maybe$Just(4);
-		case 'mixolydian':
-			return $elm$core$Maybe$Just(5);
-		case 'phrygian':
-			return $elm$core$Maybe$Just(6);
-		case 'lydian':
 			return $elm$core$Maybe$Just(7);
+		case 'dorian':
+			return $elm$core$Maybe$Just(3);
+		case 'mixolydian':
+			return $elm$core$Maybe$Just(6);
+		case 'phrygian':
+			return $elm$core$Maybe$Just(4);
+		case 'lydian':
+			return $elm$core$Maybe$Just(5);
 		case 'locrian':
 			return $elm$core$Maybe$Just(8);
 		case 'blues':
@@ -6440,15 +6440,15 @@ var $author$project$Main$scaleSlug = function (s) {
 			return 'minor-pent';
 		case 2:
 			return 'ionian';
-		case 3:
-			return 'aeolian';
-		case 4:
-			return 'dorian';
-		case 5:
-			return 'mixolydian';
-		case 6:
-			return 'phrygian';
 		case 7:
+			return 'aeolian';
+		case 3:
+			return 'dorian';
+		case 6:
+			return 'mixolydian';
+		case 4:
+			return 'phrygian';
+		case 5:
 			return 'lydian';
 		case 8:
 			return 'locrian';
@@ -7079,19 +7079,19 @@ var $author$project$Main$scaleDegrees = function (st) {
 		case 2:
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
+		case 7:
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
 		case 3:
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 6:
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
 		case 4:
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
 		case 5:
-			return _List_fromArray(
-				[1, 2, 3, 4, 5, 6, 7]);
-		case 6:
-			return _List_fromArray(
-				[1, 2, 3, 4, 5, 6, 7]);
-		case 7:
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
 		case 8:
@@ -7154,19 +7154,19 @@ var $author$project$Main$scaleIntervals = function (st) {
 		case 2:
 			return _List_fromArray(
 				[0, 2, 4, 5, 7, 9, 11]);
-		case 3:
+		case 7:
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 8, 10]);
-		case 4:
+		case 3:
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 9, 10]);
-		case 5:
-			return _List_fromArray(
-				[0, 2, 4, 5, 7, 9, 10]);
 		case 6:
 			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 10]);
+		case 4:
+			return _List_fromArray(
 				[0, 1, 3, 5, 7, 8, 10]);
-		case 7:
+		case 5:
 			return _List_fromArray(
 				[0, 2, 4, 6, 7, 9, 11]);
 		case 8:
@@ -7786,11 +7786,11 @@ var $author$project$Main$viewControls = function (model) {
 						_List_fromArray(
 							[
 								A3($author$project$Main$scaleButton, model, 2, 'Major (Ionian)'),
-								A3($author$project$Main$scaleButton, model, 3, 'Minor (Aeolian)'),
-								A3($author$project$Main$scaleButton, model, 4, 'Dorian'),
-								A3($author$project$Main$scaleButton, model, 5, 'Mixolydian'),
-								A3($author$project$Main$scaleButton, model, 6, 'Phrygian'),
-								A3($author$project$Main$scaleButton, model, 7, 'Lydian'),
+								A3($author$project$Main$scaleButton, model, 3, 'Dorian'),
+								A3($author$project$Main$scaleButton, model, 4, 'Phrygian'),
+								A3($author$project$Main$scaleButton, model, 5, 'Lydian'),
+								A3($author$project$Main$scaleButton, model, 6, 'Mixolydian'),
+								A3($author$project$Main$scaleButton, model, 7, 'Minor (Aeolian)'),
 								A3($author$project$Main$scaleButton, model, 8, 'Locrian')
 							])),
 						A2(
@@ -8747,13 +8747,13 @@ var $author$project$Main$majorFlavored = function (scale) {
 			return true;
 		case 2:
 			return true;
-		case 4:
-			return true;
-		case 5:
+		case 3:
 			return true;
 		case 6:
 			return true;
-		case 7:
+		case 4:
+			return true;
+		case 5:
 			return true;
 		case 8:
 			return true;
@@ -8942,15 +8942,15 @@ var $author$project$Main$rootFret = function (board) {
 			return minorAnchor;
 		case 2:
 			return majorAnchor;
-		case 3:
+		case 7:
 			return minorAnchor;
-		case 4:
-			return majorAnchor;
-		case 5:
+		case 3:
 			return majorAnchor;
 		case 6:
 			return majorAnchor;
-		case 7:
+		case 4:
+			return majorAnchor;
+		case 5:
 			return majorAnchor;
 		case 8:
 			return majorAnchor;
@@ -10744,15 +10744,15 @@ var $author$project$Main$noteRole = F2(
 						return 3;
 					case 2:
 						return 4;
+					case 7:
+						return 3;
 					case 3:
 						return 3;
+					case 6:
+						return 4;
 					case 4:
 						return 3;
 					case 5:
-						return 4;
-					case 6:
-						return 3;
-					case 7:
 						return 4;
 					case 8:
 						return 3;
@@ -10797,15 +10797,15 @@ var $author$project$Main$noteRole = F2(
 						return 10;
 					case 2:
 						return 11;
+					case 7:
+						return 10;
 					case 3:
+						return 10;
+					case 6:
 						return 10;
 					case 4:
 						return 10;
 					case 5:
-						return 10;
-					case 6:
-						return 10;
-					case 7:
 						return 11;
 					case 8:
 						return 10;
@@ -11371,15 +11371,15 @@ var $author$project$Main$viewScaleTitle = function (board) {
 					return 'Minor Pentatonic';
 				case 2:
 					return 'Major (Ionian)';
-				case 3:
-					return 'Minor (Aeolian)';
-				case 4:
-					return 'Dorian';
-				case 5:
-					return 'Mixolydian';
-				case 6:
-					return 'Phrygian';
 				case 7:
+					return 'Minor (Aeolian)';
+				case 3:
+					return 'Dorian';
+				case 6:
+					return 'Mixolydian';
+				case 4:
+					return 'Phrygian';
+				case 5:
 					return 'Lydian';
 				case 8:
 					return 'Locrian';
@@ -11427,19 +11427,19 @@ var $author$project$Main$viewScaleTitle = function (board) {
 			case 2:
 				return _List_fromArray(
 					['R', '2', '3', '4', '5', '6', '7']);
-			case 3:
+			case 7:
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '♭6', '♭7']);
-			case 4:
+			case 3:
 				return _List_fromArray(
 					['R', '2', '♭3', '4', '5', '6', '♭7']);
-			case 5:
-				return _List_fromArray(
-					['R', '2', '3', '4', '5', '6', '♭7']);
 			case 6:
 				return _List_fromArray(
+					['R', '2', '3', '4', '5', '6', '♭7']);
+			case 4:
+				return _List_fromArray(
 					['R', '♭2', '♭3', '4', '5', '♭6', '♭7']);
-			case 7:
+			case 5:
 				return _List_fromArray(
 					['R', '2', '3', '♯4', '5', '6', '7']);
 			case 8:
