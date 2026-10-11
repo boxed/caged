@@ -251,10 +251,13 @@ than offsetting a standard-tuning shape.
 A lasso is a **pill** (`triadCapsule`): one round-capped, round-joined stroke
 threaded through the three note centers, so every note sits in a rounded end or
 elbow of an even-width shape. The outline is that pill minus the same pill
-inset by `triadLassoInset`, which leaves an even ring. It is drawn as a **masked
-rect**, not the obvious wide-stroke + background-stroke pair, because that pair
-would paint over what sits under the lasso: the inlay dots, and the rings of any
-lasso it crosses in the all-sets view.
+inset by `triadLassoInset`, which leaves an even ring. It is drawn as **one
+path holding both outlines, filled even-odd** (`pillOutline` computes the
+outline of the round-capped, round-joined stroke), not the obvious wide-stroke +
+background-stroke pair, because that pair would paint over what sits under the
+lasso: the inlay dots, and the rings of any lasso it crosses in the all-sets
+view. It used to be a rect masked by those two strokes, but Chrome prints SVG
+masks (and patterns) as bitmaps, so the rings came out jagged on paper.
 
 The interior is the same pill stroked in an **opaque** blend of its color with
 `--bg` (`inversionFill`, `triadFillPct`), the way the overlap stripes pre-blend
@@ -433,19 +436,38 @@ the `html`/`body` background).
 ## Monochrome
 
 The **Monochrome** button (`mono` on the model, `&mono=1` in the URL) swaps
-every color on the necks for black-and-white dither textures, for a printer with
+every color on the necks for black-and-white hatched textures, for a printer with
 no color. It has to be a switch: browsers never match `@media (monochrome)` in
 print, and a Black & white print setting only turns the finished page gray. It
 is on screen as well, so what you see is what prints.
 
-- **`ditherCells`** holds the five textures, on a 4×4 grid of `ditherPixel`
-  squares: scattered dots, horizontal lines, rising diagonals, vertical lines,
-  falling diagonals. They differ in *structure*, not only density, so
-  neighboring boxes stay apart in gray. Boxes 1–3 are also the three triad
-  inversions, which is why those three are the least alike.
-- `ditherPatternDefs` mints them per neck (`n0-dither-3`) and `regionPaint` is
-  the one place a box's paint is chosen: color at an opacity, or a texture at
-  full strength (it is mostly holes, so the neck shows through).
+- **No `<pattern>` fills and no masks.** Chrome rasterizes both when it prints,
+  even to PDF, so a patterned texture comes out blurred. Each texture is real
+  geometry instead — one path per region (`hatchTexture`), clipped to it with
+  a `<clipPath>` (`hatchClipped`), which stays vector.
+- **`hatchTexture`** draws the five textures: 1 dots, 2 rising diagonals, 3 open
+  rings, 4 small diagonal crosses, 5 falling diagonals. Adjacent boxes never
+  get both diagonals, nor dots and crosses (they blur together), and none has a horizontal or vertical line, since those
+  run along the strings and frets and muddle the neck.
+- **Everything composes, with each other and with the neck.** The texture
+  repeats every fret and string gap, anchored on the first fret line and the
+  top string (`hatchOrigin`), so every cell shows the same piece of it. The
+  diagonals step `fretWidth / 6` × `stringSpacing / 4` and cross on strings,
+  frets and box edges. The marks sit on the other crossings, all three on the same sites and sized to nest — dot inside
+  cross inside ring — so 3+4 reads ⊗, 1+3 ◉, and both diagonals run through
+  every mark.
+- Box and diagonal-shape edges run along fret centers and string midpoints,
+  which the lattice keeps marks off, so an edge falls between marks. Nothing
+  else is done to avoid clipped marks (at note halos, pill edges, the nut):
+  an earlier pass that dropped every mark that would be clipped left large
+  bare patches, which is worse.
+- `regionShape` is the one place a box region is drawn: its polygon in color
+  at an opacity, or a texture at full strength clipped to it (mostly holes, so
+  the neck shows through). Clip ids are namespaced per neck (`n0-clip-box-3_0`).
+  A triad pill's clip is the pill spelled out as fills — a disc per note and a
+  band per leg — since a clip path ignores strokes.
+- Every note marker sits on a `noteHalo`, its own shape grown 3px in `--bg`,
+  so it stands clear of the hatching instead of dissolving into it.
 - **No overlap stripes** in monochrome. The textures are transparent, so
   where two boxes overlap both textures show, and that already reads as the
   pair.
@@ -493,7 +515,7 @@ point of the list.
   controls are pointed at, and it feeds the legend and (single-neck only) the
   title above the controls.
 - **`board.id`** namespaces the SVG ids a neck mints — the `ovlp-*` stripe
-  patterns and the `triad-lasso-*` masks. Ids are document-global, so without
+  patterns and the `clip-*` texture clip paths. Ids are document-global, so without
   a prefix a `url(#…)` would resolve to whichever neck rendered first and every
   later neck would wear the first one's patterns. The prefix is the neck's
   **index** (`n0-`), not its root, because two necks may now share a root (the

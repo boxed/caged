@@ -50,7 +50,7 @@ type alias Model =
     -- rather than to one neck, so it lives here and applies to every neck.
     , stringFocus : Maybe Int
 
-    -- The **Monochrome** button: boxes and lassos swap their colors for dither
+    -- The **Monochrome** button: boxes and lassos swap their colors for hatched
     -- textures, for printing on a black-and-white printer. Browsers do not
     -- tell a page what the printer can do (`@media (monochrome)` never matches
     -- in print), so it has to be a switch. Like the tuning it applies to every
@@ -2105,94 +2105,203 @@ boxColor b =
         _ -> "var(--surface-bd)"
 
 
-{-| A box's paint: its color at `opacity`, or in monochrome its dither texture
-at full strength — the texture is mostly holes already, so the neck shows
-through it. A muted box in monochrome is left unpainted: any gray it could fade
-to would read as one more texture. -}
-regionPaint : Board -> String -> Bool -> Int -> List (Svg.Attribute Msg)
-regionPaint board opacity muted b =
+{-| A box region: its polygon in its color at `opacity`, or in monochrome its
+hatching at full strength — the texture is mostly holes already, so the neck
+shows through it. A muted box in monochrome is left unpainted: any gray it could
+fade to would read as one more texture. `key` names the region's clip path, so
+it has to be unique on the neck. -}
+regionShape : Board -> String -> String -> Bool -> Int -> List ( Float, Float ) -> Svg.Svg Msg
+regionShape board key opacity muted b verts =
     if not board.mono then
-        [ SA.fill (boxFill muted b), SA.fillOpacity opacity ]
+        Svg.polygon [ SA.points (pointsAttr verts), SA.fill (boxFill muted b), SA.fillOpacity opacity ] []
 
     else if muted then
-        [ SA.fill "none" ]
+        Svg.g [] []
 
     else
-        [ SA.fill (ditherRef board b) ]
+        hatchClipped (board.id ++ "clip-" ++ key)
+            [ Svg.polygon [ SA.points (pointsAttr verts) ] [] ]
+            (bounds verts)
+            b
 
 
-{-| The monochrome stand-ins for the five box colors: ordered-dither textures
-on a 4×4 grid of `ditherPixel` squares. Each is a different *structure*, not
-just a different density, so two boxes side by side stay apart on paper, and
-where two overlap — monochrome draws both textures there instead of a stripe —
-the pair reads as both. Boxes 1–3 double as the triad inversions, so those
-three are the most unlike each other. -}
-ditherCells : Int -> List ( Int, Int )
-ditherCells b =
-    case b of
-        -- Scattered dots.
-        1 -> [ ( 0, 0 ), ( 2, 2 ) ]
-        -- Horizontal lines.
-        2 -> [ ( 0, 0 ), ( 1, 0 ), ( 2, 0 ), ( 3, 0 ) ]
-        -- Rising diagonals.
-        3 -> [ ( 0, 3 ), ( 1, 2 ), ( 2, 1 ), ( 3, 0 ) ]
-        -- Vertical lines.
-        4 -> [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 0, 3 ) ]
-        -- Falling diagonals.
-        _ -> [ ( 0, 0 ), ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ]
+pointsAttr : List ( Float, Float ) -> String
+pointsAttr verts =
+    verts
+        |> List.map (\( x, y ) -> String.fromFloat x ++ "," ++ String.fromFloat y)
+        |> String.join " "
 
 
-{-| Big enough that a half-width neck (two columns) still lands each dot on a
-whole screen pixel instead of smearing into moiré. -}
-ditherPixel : Float
-ditherPixel =
-    2
-
-
-ditherPattern : String -> Int -> Svg.Svg Msg
-ditherPattern id b =
+{-| The bounding box of some points, as ( ( left, right ), ( top, bottom ) ). -}
+bounds : List ( Float, Float ) -> ( ( Float, Float ), ( Float, Float ) )
+bounds pts =
     let
-        tile =
-            String.fromFloat (4 * ditherPixel)
+        xs =
+            List.map Tuple.first pts
+
+        ys =
+            List.map Tuple.second pts
+
+        lo =
+            List.minimum >> Maybe.withDefault 0
+
+        hi =
+            List.maximum >> Maybe.withDefault 0
     in
-    Svg.pattern
-        [ SA.id id
-        , SA.patternUnits "userSpaceOnUse"
-        , SA.width tile
-        , SA.height tile
+    ( ( lo xs, hi xs ), ( lo ys, hi ys ) )
+
+
+{-| The monochrome stand-ins for the five box colors: vector textures, so a
+printer draws them as clean marks at its own resolution instead of enlarging a
+pixel grid. They are real geometry — one path per region, clipped to it
+(`hatchClipped`) — not SVG `<pattern>` fills: Chrome rasterizes a pattern
+when it prints, even to PDF, and every texture came out blurred. Each is a different *structure*, not just a different density, so
+two boxes side by side stay apart on paper, and where two overlap — monochrome
+draws both textures there instead of a stripe — the pair reads as both:
+
+  1. dots
+  2. rising diagonals
+  3. open rings
+  4. small diagonal crosses
+  5. falling diagonals
+
+Adjacent boxes never get the two diagonals, which together are one more
+crosshatch, nor the dots and the crosses, which blur together; boxes 1–3
+double as the triad inversions. None of the textures
+has a horizontal or vertical line in it, since those would run along the
+strings and frets and muddle the neck.
+
+**Everything composes, including with the neck.** The texture repeats every
+fret and every string gap, anchored on a fret line and a string (`hatchOrigin`),
+so every cell of the neck carries exactly the same piece of it, phase-locked to the
+strings and frets instead of beating against them. The diagonals step
+`fretWidth / 6` across and `stringSpacing / 4` down — whole divisions of the
+cell — and cross on the
+strings, the fret lines, and the box edges (fret centers, string midpoints).
+The marks all sit on crossings too, so both diagonals run
+through every mark and any pair of textures interlocks the same way
+everywhere. The three mark textures share the same crossings and nest: a dot
+fits inside the cross, the cross inside the ring, so boxes 3 and 4 overlapping
+read ⊗ and 1 and 3 read ◉.
+
+Box edges run along fret centers and string midpoints, and the lattice keeps
+every mark clear of those, so an edge falls between marks rather than through
+them. -}
+hatchTexture : Int -> ( Float, Float ) -> ( ( Float, Float ), ( Float, Float ) ) -> Svg.Svg Msg
+hatchTexture b ( ox, oy ) ( ( xa, xb ), ( ya, yb ) ) =
+    let
+        num =
+            String.fromFloat
+
+        wx =
+            fretWidth / 6
+
+        wy =
+            stringSpacing / 4
+
+        -- Overrun the box a little, so nothing stops short of the clip edge.
+        top =
+            ya - wy
+
+        bottom =
+            yb + wy
+
+        -- A diagonal family: line c runs through x = `x c y`, and lines `cs`
+        -- are the ones that cross the box.
+        lines x cs =
+            Svg.path
+                [ SA.d
+                    (String.concat
+                        (List.map
+                            (\c ->
+                                "M" ++ num (x c top) ++ " " ++ num top
+                                    ++ " L" ++ num (x c bottom) ++ " " ++ num bottom ++ " "
+                            )
+                            cs
+                        )
+                    )
+                , SA.stroke "var(--text)"
+                , SA.strokeWidth "1"
+                , SA.fill "none"
+                ]
+                []
+
+        u a =
+            (a - ox) / wx
+
+        v a =
+            (a - oy) / wy
+
+        -- The odd multiples of half a step between two coordinates.
+        odds a z step =
+            List.range (floor (a / step)) (ceiling (z / step))
+                |> List.filter (\n -> modBy 2 n == 1)
+                |> List.map (\n -> toFloat n * step)
+
+        marks =
+            List.concatMap
+                (\x -> List.map (\y -> ( ox + x, oy + y )) (odds (top - oy) (bottom - oy) (wy / 2)))
+                (odds (xa - wx - ox) (xb + wx - ox) (wx / 2))
+
+        markPath draw attrs =
+            Svg.path (SA.d (String.concat (List.map draw marks)) :: attrs) []
+
+        stroked =
+            [ SA.fill "none", SA.stroke "var(--text)", SA.strokeWidth "0.9" ]
+
+        -- A circle as two half arcs, so a whole texture is one path.
+        circle r ( x, y ) =
+            "M" ++ num (x - r) ++ " " ++ num y
+                ++ " a" ++ num r ++ " " ++ num r ++ " 0 1 0 " ++ num (2 * r) ++ " 0"
+                ++ " a" ++ num r ++ " " ++ num r ++ " 0 1 0 " ++ num (-2 * r) ++ " 0Z "
+
+        cross a ( x, y ) =
+            "M" ++ num (x - a) ++ " " ++ num (y - a) ++ " L" ++ num (x + a) ++ " " ++ num (y + a)
+                ++ " M" ++ num (x + a) ++ " " ++ num (y - a) ++ " L" ++ num (x - a) ++ " " ++ num (y + a) ++ " "
+    in
+    case b of
+        2 ->
+            -- (x − ox)/wx + (y − oy)/wy = c
+            lines (\c y -> ox + wx * (toFloat c - v y))
+                (List.range (floor (u xa + v top)) (ceiling (u xb + v bottom)))
+
+        5 ->
+            -- (x − ox)/wx − (y − oy)/wy = c
+            lines (\c y -> ox + wx * (toFloat c + v y))
+                (List.range (floor (u xa - v bottom)) (ceiling (u xb - v top)))
+
+        -- The marks take the crossings at odd multiples of half a step both
+        -- ways, since the even ones include every crossing that lands on a
+        -- string, a fret or a box edge. Each quarter of a fret-by-string
+        -- rectangle gets six, symmetric within it. They are sized to nest: a
+        -- dot inside the cross, and the cross's arms just reaching the inside
+        -- of the ring, the way ⊗ is drawn.
+        1 ->
+            markPath (circle 1.55) [ SA.fill "var(--text)" ]
+
+        3 ->
+            markPath (circle 2.3) stroked
+
+        _ ->
+            markPath (cross 1.4) stroked
+
+
+{-| Box `b`'s texture clipped to a shape: the clip path, then the texture drawn
+over the shape's bounding box through it. Clip paths stay vector when Chrome
+prints; pattern fills do not. -}
+hatchClipped : String -> List (Svg.Svg Msg) -> ( ( Float, Float ), ( Float, Float ) ) -> Int -> Svg.Svg Msg
+hatchClipped id shape box b =
+    Svg.g []
+        [ Svg.clipPath [ SA.id id ] shape
+        , Svg.g [ SA.clipPath ("url(#" ++ id ++ ")") ] [ hatchTexture b hatchOrigin box ]
         ]
-        (List.map
-            (\( c, r ) ->
-                Svg.rect
-                    [ SA.x (String.fromFloat (toFloat c * ditherPixel))
-                    , SA.y (String.fromFloat (toFloat r * ditherPixel))
-                    , SA.width (String.fromFloat ditherPixel)
-                    , SA.height (String.fromFloat ditherPixel)
-                    , SA.fill "var(--text)"
-                    ]
-                    []
-            )
-            (ditherCells b)
-        )
 
 
-ditherRef : Board -> Int -> String
-ditherRef board b =
-    "url(#" ++ board.id ++ "dither-" ++ String.fromInt b ++ ")"
-
-
-ditherPatternDefs : Board -> List (Svg.Svg Msg)
-ditherPatternDefs board =
-    if board.mono then
-        [ Svg.defs []
-            (List.map
-                (\b -> ditherPattern (board.id ++ "dither-" ++ String.fromInt b) b)
-                [ 1, 2, 3, 4, 5 ]
-            )
-        ]
-
-    else
-        []
+{-| Pins the texture to the neck: anchored on the first fret line and the top
+string, so the strings and fret lines fall at the same place in it everywhere. -}
+hatchOrigin : ( Float, Float )
+hatchOrigin =
+    ( fretLineX 0, stringY 1 )
 
 
 {-| One color per inversion, so a lasso says at a glance which chord tone is in
@@ -3030,7 +3139,7 @@ stringToggle model =
         [ text "Highlight string" ]
 
 
-{-| Swaps every color on the necks for black-and-white dither textures, for a
+{-| Swaps every color on the necks for black-and-white hatched textures, for a
 printer that has no color. It is on screen too, so what you see is what the
 page will print. -}
 monoToggle : Model -> Html Msg
@@ -3327,7 +3436,6 @@ viewFretboard board =
         ]
         (List.concat
             [ [ stripePatternDefs board ]
-            , ditherPatternDefs board
             , neckAndRegions
             , drawFifthsLadders board
             , drawNotes board
@@ -3395,7 +3503,7 @@ drawBoxRegionsBoxes board =
             List.filterMap (drawWrapOverlap board lit) octaves
     in
     if board.mono then
-        -- Dither textures are mostly holes, so where two boxes overlap both
+        -- Hatchings are mostly holes, so where two boxes overlap both
         -- simply show; a stripe would only chop each texture in half.
         solids
 
@@ -3428,7 +3536,17 @@ drawDiagonalRegions board =
     in
     List.filterMap
         (\( key, shape, o ) ->
-            drawDiagonalShape board.tuning board.scale board.root (regionPaint board "0.45" (isMuted lit key) shape.color) shape o
+            drawDiagonalShape board.tuning
+                board.scale
+                board.root
+                (regionShape board
+                    ("diag-" ++ String.fromInt (Tuple.first key) ++ "_" ++ String.fromInt o)
+                    "0.45"
+                    (isMuted lit key)
+                    shape.color
+                )
+                shape
+                o
         )
         instances
 
@@ -3466,7 +3584,7 @@ Both edges are staircases that step at the midline between the strings; an
 edge where both strings share a fret (pattern 1's right, pattern 2's left)
 collapses to a vertical line. The shape repeats every 12 frets (one octave)
 to fill the neck. -}
-drawDiagonalShape : Tuning -> ScaleType -> Int -> List (Svg.Attribute Msg) -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
+drawDiagonalShape : Tuning -> ScaleType -> Int -> (List ( Float, Float ) -> Svg.Svg Msg) -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
 drawDiagonalShape tuning scale root paint shape octave =
     let
         shift =
@@ -3519,18 +3637,9 @@ drawDiagonalShape tuning scale root paint shape octave =
             , ( fretCenterX loU, yMid )
             , ( fretCenterX loL, yMid )
             ]
-
-        pointsStr =
-            verts
-                |> List.map (\( x, y ) -> String.fromFloat x ++ "," ++ String.fromFloat y)
-                |> String.join " "
     in
     if inRange then
-        Just
-            (Svg.polygon
-                (SA.points pointsStr :: paint)
-                []
-            )
+        Just (paint verts)
 
     else
         Nothing
@@ -3562,7 +3671,7 @@ drawTriadLassos board =
                 Just ( lo, hi ) ->
                     not (List.all (\( _, f ) -> f >= lo && f <= hi) triad.notes)
     in
-    List.map (\triad -> triadFill board (muted triad) triad) voicings
+    List.indexedMap (\i triad -> triadFill board i (muted triad) triad) voicings
         ++ List.concat
             (List.indexedMap
                 (\i triad -> triadRing board.id (ringColor board (muted triad) triad.inversion) i triad)
@@ -3598,18 +3707,68 @@ triadPath triad =
 
 
 {-| The lasso's interior. In monochrome the pill is still opaque — the page
-color first, then the inversion's dither texture over it — so it hides what it
-covers exactly as the colored one does. -}
-triadFill : Board -> Bool -> Triad -> Svg.Svg Msg
-triadFill board muted triad =
+color first, then the inversion's hatching over it — so it hides what it
+covers exactly as the colored one does. The hatching is clipped to the pill,
+and a clip path takes its children's fill, not their stroke, so the clip is
+the pill spelled out as fills: a disc on each note and a band along each leg,
+which is exactly what a round-capped, round-joined stroke covers. -}
+triadFill : Board -> Int -> Bool -> Triad -> Svg.Svg Msg
+triadFill board index muted triad =
     if board.mono then
+        let
+            r =
+                triadLassoRadius triad
+
+            pts =
+                List.map (\( s, f ) -> ( noteX f, stringY s )) triad.notes
+
+            num =
+                String.fromFloat
+
+            disc ( x, y ) =
+                Svg.circle [ SA.cx (num x), SA.cy (num y), SA.r (num r) ] []
+
+            band ( ax, ay ) ( bx, by ) =
+                let
+                    len =
+                        max 0.001 (sqrt ((bx - ax) ^ 2 + (by - ay) ^ 2))
+
+                    nx =
+                        -(by - ay) / len * r
+
+                    ny =
+                        (bx - ax) / len * r
+                in
+                Svg.polygon
+                    [ SA.points
+                        (pointsAttr
+                            [ ( ax + nx, ay + ny ), ( bx + nx, by + ny ), ( bx - nx, by - ny ), ( ax - nx, ay - ny ) ]
+                        )
+                    ]
+                    []
+
+            bands =
+                case pts of
+                    first :: rest ->
+                        List.map2 band (first :: rest) rest
+
+                    [] ->
+                        []
+
+            ( ( xa, xb ), ( ya, yb ) ) =
+                bounds pts
+        in
         Svg.g []
             (triadCapsule triad 0 [ SA.stroke "var(--bg)" ]
                 :: (if muted then
                         []
 
                     else
-                        [ triadCapsule triad 0 [ SA.stroke (ditherRef board (triad.inversion + 1)) ] ]
+                        [ hatchClipped (board.id ++ "clip-triad-" ++ String.fromInt index)
+                            (List.map disc pts ++ bands)
+                            ( ( xa - r, xb + r ), ( ya - r, yb + r ) )
+                            (triad.inversion + 1)
+                        ]
                    )
             )
 
@@ -3632,53 +3791,145 @@ ringColor board muted inv =
 
 
 {-| The lasso outline: the shape minus the same shape inset, which leaves an
-even ring around it. It is a masked rectangle rather than the obvious pair of
-strokes (wide in the color, narrower in the background color) because that pair
-would paint over whatever sits under the lasso — the inlay dots, and the rings
-of any lasso it crosses. The mask punches the middle out instead, so the ring
-is genuinely hollow and lassos can overlap freely. -}
+even ring around it. It is one path holding both outlines, filled even-odd, so
+the ring is genuinely hollow and lassos can overlap freely — the obvious pair
+of strokes (wide in the color, narrower in the background color) would paint
+over whatever sits under the lasso: the inlay dots, and the rings of any lasso
+it crosses. It used to be a rectangle masked by those two strokes, but Chrome
+prints a mask as a bitmap, so the rings came out jagged on paper; a path stays
+vector. -}
 triadRing : String -> String -> Int -> Triad -> List (Svg.Svg Msg)
-triadRing prefix ringFill index triad =
+triadRing _ ringFill _ triad =
     let
-        maskId =
-            prefix ++ "triad-lasso-" ++ String.fromInt index
+        pts =
+            List.map (\( s, f ) -> ( noteX f, stringY s )) triad.notes
 
-        -- Clear of the widest part of the shape, so the mask never clips it.
-        pad =
-            triadLassoRadius triad + 4
-
-        span toCoord =
-            let
-                vs =
-                    List.map toCoord triad.notes
-
-                lo =
-                    List.minimum vs |> Maybe.withDefault 0
-            in
-            ( lo - pad, (List.maximum vs |> Maybe.withDefault 0) - lo + 2 * pad )
-
-        ( x0, w ) =
-            span (\( _, f ) -> noteX f)
-
-        ( y0, h ) =
-            span (\( s, _ ) -> stringY s)
-
-        box =
-            [ SA.x (String.fromFloat x0)
-            , SA.y (String.fromFloat y0)
-            , SA.width (String.fromFloat w)
-            , SA.height (String.fromFloat h)
-            ]
-
-        layer color inset =
-            triadCapsule triad inset [ SA.stroke color ]
+        r =
+            triadLassoRadius triad
     in
-    [ Svg.mask (SA.id maskId :: SA.maskUnits "userSpaceOnUse" :: box)
-        [ layer "#ffffff" 0
-        , layer "#000000" triadLassoInset
+    [ Svg.path
+        [ SA.d (pillOutline pts r ++ pillOutline pts (r - triadLassoInset))
+        , SA.fill ringFill
+        , SA.fillRule "evenodd"
         ]
-    , Svg.rect (SA.fill ringFill :: SA.mask ("url(#" ++ maskId ++ ")") :: box) []
+        []
     ]
+
+
+{-| The outline of what a round-capped, round-joined stroke of width 2r along
+a polyline covers, as a closed path: out along one side, round the far cap,
+back along the other side, round the near cap. At each bend the outer side
+goes round an arc and the inner side cuts the corner where the two offset
+lines meet. That corner stays on both legs as long as r is under the legs'
+rise, which it is: legs join adjacent strings, and the lassos are narrower
+than a string gap. -}
+pillOutline : List ( Float, Float ) -> Float -> String
+pillOutline pts r =
+    let
+        num =
+            String.fromFloat
+
+        pt ( x, y ) =
+            num x ++ " " ++ num y
+
+        add ( ax, ay ) ( bx, by ) =
+            ( ax + bx, ay + by )
+
+        scale k ( x, y ) =
+            ( k * x, k * y )
+
+        cross ( ax, ay ) ( bx, by ) =
+            ax * by - ay * bx
+
+        unit ( ( ax, ay ), ( bx, by ) ) =
+            let
+                len =
+                    max 0.001 (sqrt ((bx - ax) ^ 2 + (by - ay) ^ 2))
+            in
+            ( (bx - ax) / len, (by - ay) / len )
+
+        normal ( dx, dy ) =
+            ( -dy, dx )
+
+        segs =
+            case pts of
+                first :: rest ->
+                    List.map2 Tuple.pair (first :: rest) rest
+
+                [] ->
+                    []
+
+        dirs =
+            List.map unit segs
+
+        arc to sweep =
+            " A" ++ num r ++ " " ++ num r ++ " 0 0 " ++ sweep ++ " " ++ pt to
+
+        sweepOf a b =
+            if cross a b > 0 then
+                "1"
+
+            else
+                "0"
+
+        -- The join at vertex p between legs d1 and d2, on the side `side`
+        -- (+1 or −1) of the normals, walking from leg `from` to leg `to`.
+        join side p d1 d2 =
+            let
+                n1 =
+                    scale side (normal d1)
+
+                n2 =
+                    scale side (normal d2)
+
+                ( from, to ) =
+                    if side > 0 then
+                        ( n1, n2 )
+
+                    else
+                        ( n2, n1 )
+
+                outer =
+                    side * cross d1 d2 < 0
+
+                dot =
+                    Tuple.first n1 * Tuple.first n2 + Tuple.second n1 * Tuple.second n2
+            in
+            if outer then
+                " L" ++ pt (add p (scale r from)) ++ arc (add p (scale r to)) (sweepOf from to)
+
+            else
+                " L" ++ pt (add p (scale (r / (1 + dot)) (add n1 n2)))
+
+        bends =
+            List.map3 (\p d1 d2 -> ( p, d1, d2 ))
+                (List.drop 1 pts)
+                dirs
+                (List.drop 1 dirs)
+    in
+    case ( List.head pts, List.head (List.reverse pts), ( List.head dirs, List.head (List.reverse dirs) ) ) of
+        ( Just p0, Just pm, ( Just d0, Just dm ) ) ->
+            let
+                n0 =
+                    normal d0
+
+                nm =
+                    normal dm
+            in
+            "M"
+                ++ pt (add p0 (scale r n0))
+                ++ String.concat (List.map (\( p, d1, d2 ) -> join 1 p d1 d2) bends)
+                ++ " L"
+                ++ pt (add pm (scale r nm))
+                ++ arc (add pm (scale -r nm)) "0"
+                ++ String.concat (List.map (\( p, d1, d2 ) -> join -1 p d1 d2) (List.reverse bends))
+                ++ " L"
+                ++ pt (add p0 (scale -r n0))
+                ++ arc (add p0 (scale r n0)) "0"
+                ++ "Z "
+
+        _ ->
+            ""
 
 
 {-| The stretch of neck one drawn box instance covers, lowest fret on any
@@ -3720,11 +3971,12 @@ drawSolidBox board lit b octave =
     in
     if inRange then
         Just
-            (Svg.polygon
-                (SA.points (polygonPoints positions)
-                    :: regionPaint board boxFillOpacity (isMuted lit ( b, octave )) b
-                )
-                []
+            (regionShape board
+                ("box-" ++ String.fromInt b ++ "_" ++ String.fromInt octave)
+                boxFillOpacity
+                (isMuted lit ( b, octave ))
+                b
+                (polygonVerts positions)
             )
 
     else
@@ -3761,7 +4013,7 @@ drawOverlapStripe board lit ( b1, b2 ) octave =
     if hasRealOverlap && inRange then
         Just
             (Svg.polygon
-                [ SA.points (polygonPoints overlapPositions)
+                [ SA.points (pointsAttr (polygonVerts overlapPositions))
                 , SA.fill
                     (stripeRef board.id
                         ( b1, b2 )
@@ -3847,7 +4099,7 @@ drawWrapOverlap board lit octave =
     if hasRealOverlap && inRange then
         Just
             (Svg.polygon
-                [ SA.points (polygonPoints overlapPositions)
+                [ SA.points (pointsAttr (polygonVerts overlapPositions))
                 , SA.fill
                     (stripeRef board.id
                         ( 5, 1 )
@@ -3907,8 +4159,8 @@ ends *beneath* the boundary scale note. Used for both solid boxes and
 stripe overlaps. Pinch overlaps (lo == hi) collapse to a single point on
 that string and are visually invisible there — accepted trade-off for
 consistent edge alignment with notes. -}
-polygonPoints : List ( Int, Int, Int ) -> String
-polygonPoints positions =
+polygonVerts : List ( Int, Int, Int ) -> List ( Float, Float )
+polygonVerts positions =
     let
         pad =
             stringSpacing * 0.55
@@ -3957,8 +4209,6 @@ polygonPoints positions =
             ]
     in
     verts
-        |> List.map (\( x, y ) -> String.fromFloat x ++ "," ++ String.fromFloat y)
-        |> String.join " "
 
 
 fretCenterX : Int -> Float
@@ -4303,11 +4553,49 @@ drawNoteAt board s f =
                     Svg.g [ SA.fill textColor ]
                         (noteLabel (spelledName board n) cx (cy + 4))
             in
-            Just (Svg.g (offString board s) [ background, labelNode ])
+            Just
+                (Svg.g (offString board s)
+                    ((if board.mono then
+                        [ noteHalo role cx cy ]
+
+                      else
+                        []
+                     )
+                        ++ [ background, labelNode ]
+                    )
+                )
 
         Nothing ->
             Nothing
 
+
+
+{-| A page-colored rim under a note marker in monochrome, so a marker stands
+clear of the hatching behind it instead of dissolving into its lines. It is the
+marker's own shape grown by 3px; the circles' rim stops at the inner edge of
+the smallest triad lasso ring. -}
+noteHalo : NoteRole -> Float -> Float -> Svg.Svg Msg
+noteHalo role cx cy =
+    case role of
+        Root ->
+            Svg.rect
+                [ SA.x (String.fromFloat (cx - 17))
+                , SA.y (String.fromFloat (cy - 17))
+                , SA.width "34"
+                , SA.height "34"
+                , SA.rx "6"
+                , SA.fill "var(--bg)"
+                ]
+                []
+
+        _ ->
+            Svg.circle
+                [ SA.cx (String.fromFloat cx)
+                , SA.cy (String.fromFloat cy)
+                , SA.r "17"
+                , SA.fill "var(--bg)"
+                ]
+                []
 
 
 {-| The font stack for text drawn in the SVG, the same as the page's. Chrome
@@ -4709,20 +4997,30 @@ legendText s =
 legendSwatch : Board -> ( Int, String ) -> Html Msg
 legendSwatch board ( b, lbl ) =
     if board.mono then
-        ditherChip False b lbl
+        hatchChip False b lbl
 
     else
         legendChip (boxColor b) lbl
 
 
-{-| A box or lasso in monochrome: its dither texture in a chip, square for a
-box, a ringed circle for a lasso. The legend is one per page, so its pattern
-ids cannot collide with another legend's. -}
-ditherChip : Bool -> Int -> String -> Html Msg
-ditherChip round b lbl =
+{-| A box or lasso in monochrome: its hatching in a chip, square for a
+box, a ringed circle for a lasso — half size, centered on the middle of a
+fret-by-string cell. The legend is one per page, so its clip ids cannot collide
+with another legend's. -}
+hatchChip : Bool -> Int -> String -> Html Msg
+hatchChip round b lbl =
     let
         id =
-            "legend-dither-" ++ String.fromInt b
+            "legend-hatch-" ++ String.fromInt b
+
+        shape =
+            [ SA.x "1", SA.y "1", SA.width "14", SA.height "14" ]
+                ++ (if round then
+                        [ SA.rx "7" ]
+
+                    else
+                        [ SA.rx "2" ]
+                   )
     in
     span
         [ style "display" "inline-flex"
@@ -4730,19 +5028,22 @@ ditherChip round b lbl =
         , style "gap" "6px"
         ]
         [ Svg.svg [ SA.width "16", SA.height "16", SA.viewBox "0 0 16 16" ]
-            [ Svg.defs [] [ ditherPattern id b ]
+            [ Svg.clipPath [ SA.id id ] [ Svg.rect shape [] ]
+            , Svg.g [ SA.clipPath ("url(#" ++ id ++ ")") ]
+                [ Svg.g
+                    [ SA.transform
+                        ("translate(" ++ String.fromFloat (8 - fretWidth / 4) ++ " " ++ String.fromFloat (8 - stringSpacing / 4) ++ ") scale(0.5)")
+                    ]
+                    [ hatchTexture b ( 0, 0 ) ( ( 0, fretWidth ), ( 0, stringSpacing ) ) ]
+                ]
             , Svg.rect
-                ([ SA.x "1"
-                 , SA.y "1"
-                 , SA.width "14"
-                 , SA.height "14"
-                 , SA.fill ("url(#" ++ id ++ ")")
-                 ]
-                    ++ (if round then
-                            [ SA.rx "7", SA.stroke "var(--text-strong)", SA.strokeWidth "2" ]
+                (shape
+                    ++ SA.fill "none"
+                    :: (if round then
+                            [ SA.stroke "var(--text-strong)", SA.strokeWidth "2" ]
 
                         else
-                            [ SA.rx "2", SA.stroke "var(--surface-bd)", SA.strokeWidth "1" ]
+                            [ SA.stroke "var(--surface-bd)", SA.strokeWidth "1" ]
                        )
                 )
                 []
@@ -4797,7 +5098,7 @@ legendChip color lbl =
 legendRing : Board -> ( Int, String ) -> Html Msg
 legendRing board ( inv, lbl ) =
     if board.mono then
-        ditherChip True (inv + 1) lbl
+        hatchChip True (inv + 1) lbl
 
     else
     span

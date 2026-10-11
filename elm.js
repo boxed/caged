@@ -5789,7 +5789,7 @@ var $author$project$Main$init = F3(
 	function (_v0, url, key) {
 		var state = $author$project$Main$parseUrl(url);
 		return _Utils_Tuple2(
-			{j: state.j, K: $elm$core$Maybe$Nothing, n: state.n, aG: key, d: state.d, f: state.f, v: state.v, c: state.c, W: false, J: state.J, al: false},
+			{j: state.j, K: $elm$core$Maybe$Nothing, n: state.n, aG: key, d: state.d, f: state.f, v: state.v, c: state.c, W: false, J: state.J, am: false},
 			$elm$core$Platform$Cmd$none);
 	});
 var $author$project$Main$DragEnd = {$: 15};
@@ -6753,7 +6753,7 @@ var $author$project$Main$update = F2(
 						{
 							j: A2($author$project$Main$clampIndex, model.f, i),
 							K: $elm$core$Maybe$Just(
-								{ao: i, aU: rowHeight, aX: y, ab: i})
+								{ap: i, aU: rowHeight, aX: y, ab: i})
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 14:
@@ -6774,7 +6774,7 @@ var $author$project$Main$update = F2(
 									_Utils_update(
 										drag,
 										{
-											ab: A2($author$project$Main$clampIndex, model.f, drag.ao + slots)
+											ab: A2($author$project$Main$clampIndex, model.f, drag.ap + slots)
 										}))
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -6791,7 +6791,7 @@ var $author$project$Main$update = F2(
 							{
 								j: drag.ab,
 								K: $elm$core$Maybe$Nothing,
-								f: A3($author$project$Main$moveItem, drag.ao, drag.ab, model.f)
+								f: A3($author$project$Main$moveItem, drag.ap, drag.ab, model.f)
 							}));
 				}
 			case 16:
@@ -6819,19 +6819,19 @@ var $author$project$Main$update = F2(
 						$elm$browser$Browser$Navigation$load(href));
 				}
 			case 18:
-				var next = !model.al;
+				var next = !model.am;
 				var cmd = next ? $author$project$Main$requestWakeLock(0) : $author$project$Main$releaseWakeLock(0);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{al: next}),
+						{am: next}),
 					cmd);
 			default:
 				var on = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{al: on}),
+						{am: on}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -6940,7 +6940,7 @@ var $author$project$Main$orderedNecks = function (model) {
 	var _v0 = model.K;
 	if (!_v0.$) {
 		var drag = _v0.a;
-		return A3($author$project$Main$moveItem, drag.ao, drag.ab, model.f);
+		return A3($author$project$Main$moveItem, drag.ap, drag.ab, model.f);
 	} else {
 		return model.f;
 	}
@@ -8160,102 +8160,210 @@ var $author$project$Main$legendMarker = F3(
 				]));
 	});
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
-var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
-var $author$project$Main$ditherCells = function (b) {
-	switch (b) {
-		case 1:
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(0, 0),
-					_Utils_Tuple2(2, 2)
-				]);
-		case 2:
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(0, 0),
-					_Utils_Tuple2(1, 0),
-					_Utils_Tuple2(2, 0),
-					_Utils_Tuple2(3, 0)
-				]);
-		case 3:
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(0, 3),
-					_Utils_Tuple2(1, 2),
-					_Utils_Tuple2(2, 1),
-					_Utils_Tuple2(3, 0)
-				]);
-		case 4:
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(0, 0),
-					_Utils_Tuple2(0, 1),
-					_Utils_Tuple2(0, 2),
-					_Utils_Tuple2(0, 3)
-				]);
-		default:
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(0, 0),
-					_Utils_Tuple2(1, 1),
-					_Utils_Tuple2(2, 2),
-					_Utils_Tuple2(3, 3)
-				]);
-	}
-};
-var $author$project$Main$ditherPixel = 2;
+var $elm$svg$Svg$clipPath = $elm$svg$Svg$trustedNode('clipPath');
+var $elm$svg$Svg$Attributes$clipPath = _VirtualDom_attribute('clip-path');
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
+var $elm$core$String$concat = function (strings) {
+	return A2($elm$core$String$join, '', strings);
+};
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
+var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
+var $author$project$Main$stringSpacing = 36;
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
+var $author$project$Main$hatchTexture = F3(
+	function (b, _v0, _v1) {
+		var ox = _v0.a;
+		var oy = _v0.b;
+		var _v2 = _v1.a;
+		var xa = _v2.a;
+		var xb = _v2.b;
+		var _v3 = _v1.b;
+		var ya = _v3.a;
+		var yb = _v3.b;
+		var wy = $author$project$Main$stringSpacing / 4;
+		var wx = $author$project$Main$fretWidth / 6;
+		var v = function (a) {
+			return (a - oy) / wy;
+		};
+		var u = function (a) {
+			return (a - ox) / wx;
+		};
+		var top = ya - wy;
+		var stroked = _List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$fill('none'),
+				$elm$svg$Svg$Attributes$stroke('var(--text)'),
+				$elm$svg$Svg$Attributes$strokeWidth('0.9')
+			]);
+		var odds = F3(
+			function (a, z, step) {
+				return A2(
+					$elm$core$List$map,
+					function (n) {
+						return n * step;
+					},
+					A2(
+						$elm$core$List$filter,
+						function (n) {
+							return A2($elm$core$Basics$modBy, 2, n) === 1;
+						},
+						A2(
+							$elm$core$List$range,
+							$elm$core$Basics$floor(a / step),
+							$elm$core$Basics$ceiling(z / step))));
+			});
+		var num = $elm$core$String$fromFloat;
+		var cross = F2(
+			function (a, _v6) {
+				var x = _v6.a;
+				var y = _v6.b;
+				return 'M' + (num(x - a) + (' ' + (num(y - a) + (' L' + (num(x + a) + (' ' + (num(y + a) + (' M' + (num(x + a) + (' ' + (num(y - a) + (' L' + (num(x - a) + (' ' + (num(y + a) + ' ')))))))))))))));
+			});
+		var circle = F2(
+			function (r, _v5) {
+				var x = _v5.a;
+				var y = _v5.b;
+				return 'M' + (num(x - r) + (' ' + (num(y) + (' a' + (num(r) + (' ' + (num(r) + (' 0 1 0 ' + (num(2 * r) + (' 0' + (' a' + (num(r) + (' ' + (num(r) + (' 0 1 0 ' + (num((-2) * r) + ' 0Z '))))))))))))))));
+			});
+		var bottom = yb + wy;
+		var lines = F2(
+			function (x, cs) {
+				return A2(
+					$elm$svg$Svg$path,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$d(
+							$elm$core$String$concat(
+								A2(
+									$elm$core$List$map,
+									function (c) {
+										return 'M' + (num(
+											A2(x, c, top)) + (' ' + (num(top) + (' L' + (num(
+											A2(x, c, bottom)) + (' ' + (num(bottom) + ' ')))))));
+									},
+									cs))),
+							$elm$svg$Svg$Attributes$stroke('var(--text)'),
+							$elm$svg$Svg$Attributes$strokeWidth('1'),
+							$elm$svg$Svg$Attributes$fill('none')
+						]),
+					_List_Nil);
+			});
+		var marks = A2(
+			$elm$core$List$concatMap,
+			function (x) {
+				return A2(
+					$elm$core$List$map,
+					function (y) {
+						return _Utils_Tuple2(ox + x, oy + y);
+					},
+					A3(odds, top - oy, bottom - oy, wy / 2));
+			},
+			A3(odds, (xa - wx) - ox, (xb + wx) - ox, wx / 2));
+		var markPath = F2(
+			function (draw, attrs) {
+				return A2(
+					$elm$svg$Svg$path,
+					A2(
+						$elm$core$List$cons,
+						$elm$svg$Svg$Attributes$d(
+							$elm$core$String$concat(
+								A2($elm$core$List$map, draw, marks))),
+						attrs),
+					_List_Nil);
+			});
+		switch (b) {
+			case 2:
+				return A2(
+					lines,
+					F2(
+						function (c, y) {
+							return ox + (wx * (c - v(y)));
+						}),
+					A2(
+						$elm$core$List$range,
+						$elm$core$Basics$floor(
+							u(xa) + v(top)),
+						$elm$core$Basics$ceiling(
+							u(xb) + v(bottom))));
+			case 5:
+				return A2(
+					lines,
+					F2(
+						function (c, y) {
+							return ox + (wx * (c + v(y)));
+						}),
+					A2(
+						$elm$core$List$range,
+						$elm$core$Basics$floor(
+							u(xa) - v(bottom)),
+						$elm$core$Basics$ceiling(
+							u(xb) - v(top))));
+			case 1:
+				return A2(
+					markPath,
+					circle(1.55),
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$fill('var(--text)')
+						]));
+			case 3:
+				return A2(
+					markPath,
+					circle(2.3),
+					stroked);
+			default:
+				return A2(
+					markPath,
+					cross(1.4),
+					stroked);
+		}
+	});
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
-var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
-var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
+var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$svg$Svg$Attributes$transform = _VirtualDom_attribute('transform');
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
-var $author$project$Main$ditherPattern = F2(
-	function (id, b) {
-		var tile = $elm$core$String$fromFloat(4 * $author$project$Main$ditherPixel);
-		return A2(
-			$elm$svg$Svg$pattern,
+var $author$project$Main$hatchChip = F3(
+	function (round, b, lbl) {
+		var shape = _Utils_ap(
 			_List_fromArray(
 				[
-					$elm$svg$Svg$Attributes$id(id),
-					$elm$svg$Svg$Attributes$patternUnits('userSpaceOnUse'),
-					$elm$svg$Svg$Attributes$width(tile),
-					$elm$svg$Svg$Attributes$height(tile)
+					$elm$svg$Svg$Attributes$x('1'),
+					$elm$svg$Svg$Attributes$y('1'),
+					$elm$svg$Svg$Attributes$width('14'),
+					$elm$svg$Svg$Attributes$height('14')
 				]),
-			A2(
-				$elm$core$List$map,
-				function (_v0) {
-					var c = _v0.a;
-					var r = _v0.b;
-					return A2(
-						$elm$svg$Svg$rect,
-						_List_fromArray(
-							[
-								$elm$svg$Svg$Attributes$x(
-								$elm$core$String$fromFloat(c * $author$project$Main$ditherPixel)),
-								$elm$svg$Svg$Attributes$y(
-								$elm$core$String$fromFloat(r * $author$project$Main$ditherPixel)),
-								$elm$svg$Svg$Attributes$width(
-								$elm$core$String$fromFloat($author$project$Main$ditherPixel)),
-								$elm$svg$Svg$Attributes$height(
-								$elm$core$String$fromFloat($author$project$Main$ditherPixel)),
-								$elm$svg$Svg$Attributes$fill('var(--text)')
-							]),
-						_List_Nil);
-				},
-				$author$project$Main$ditherCells(b)));
-	});
-var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
-var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
-var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
-var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
-var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
-var $author$project$Main$ditherChip = F3(
-	function (round, b, lbl) {
-		var id = 'legend-dither-' + $elm$core$String$fromInt(b);
+			round ? _List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$rx('7')
+				]) : _List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$rx('2')
+				]));
+		var id = 'legend-hatch-' + $elm$core$String$fromInt(b);
 		return A2(
 			$elm$html$Html$span,
 			_List_fromArray(
@@ -8277,34 +8385,57 @@ var $author$project$Main$ditherChip = F3(
 					_List_fromArray(
 						[
 							A2(
-							$elm$svg$Svg$defs,
-							_List_Nil,
+							$elm$svg$Svg$clipPath,
 							_List_fromArray(
 								[
-									A2($author$project$Main$ditherPattern, id, b)
+									$elm$svg$Svg$Attributes$id(id)
+								]),
+							_List_fromArray(
+								[
+									A2($elm$svg$Svg$rect, shape, _List_Nil)
+								])),
+							A2(
+							$elm$svg$Svg$g,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$clipPath('url(#' + (id + ')'))
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$svg$Svg$g,
+									_List_fromArray(
+										[
+											$elm$svg$Svg$Attributes$transform(
+											'translate(' + ($elm$core$String$fromFloat(8 - ($author$project$Main$fretWidth / 4)) + (' ' + ($elm$core$String$fromFloat(8 - ($author$project$Main$stringSpacing / 4)) + ') scale(0.5)'))))
+										]),
+									_List_fromArray(
+										[
+											A3(
+											$author$project$Main$hatchTexture,
+											b,
+											_Utils_Tuple2(0, 0),
+											_Utils_Tuple2(
+												_Utils_Tuple2(0, $author$project$Main$fretWidth),
+												_Utils_Tuple2(0, $author$project$Main$stringSpacing)))
+										]))
 								])),
 							A2(
 							$elm$svg$Svg$rect,
 							_Utils_ap(
-								_List_fromArray(
-									[
-										$elm$svg$Svg$Attributes$x('1'),
-										$elm$svg$Svg$Attributes$y('1'),
-										$elm$svg$Svg$Attributes$width('14'),
-										$elm$svg$Svg$Attributes$height('14'),
-										$elm$svg$Svg$Attributes$fill('url(#' + (id + ')'))
-									]),
-								round ? _List_fromArray(
-									[
-										$elm$svg$Svg$Attributes$rx('7'),
-										$elm$svg$Svg$Attributes$stroke('var(--text-strong)'),
-										$elm$svg$Svg$Attributes$strokeWidth('2')
-									]) : _List_fromArray(
-									[
-										$elm$svg$Svg$Attributes$rx('2'),
-										$elm$svg$Svg$Attributes$stroke('var(--surface-bd)'),
-										$elm$svg$Svg$Attributes$strokeWidth('1')
-									])),
+								shape,
+								A2(
+									$elm$core$List$cons,
+									$elm$svg$Svg$Attributes$fill('none'),
+									round ? _List_fromArray(
+										[
+											$elm$svg$Svg$Attributes$stroke('var(--text-strong)'),
+											$elm$svg$Svg$Attributes$strokeWidth('2')
+										]) : _List_fromArray(
+										[
+											$elm$svg$Svg$Attributes$stroke('var(--surface-bd)'),
+											$elm$svg$Svg$Attributes$strokeWidth('1')
+										]))),
 							_List_Nil)
 						])),
 					$elm$html$Html$text(lbl)
@@ -8329,7 +8460,7 @@ var $author$project$Main$legendRing = F2(
 	function (board, _v0) {
 		var inv = _v0.a;
 		var lbl = _v0.b;
-		return board.d ? A3($author$project$Main$ditherChip, true, inv + 1, lbl) : A2(
+		return board.d ? A3($author$project$Main$hatchChip, true, inv + 1, lbl) : A2(
 			$elm$html$Html$span,
 			_List_fromArray(
 				[
@@ -8377,7 +8508,7 @@ var $author$project$Main$legendSwatch = F2(
 	function (board, _v0) {
 		var b = _v0.a;
 		var lbl = _v0.b;
-		return board.d ? A3($author$project$Main$ditherChip, false, b, lbl) : A2(
+		return board.d ? A3($author$project$Main$hatchChip, false, b, lbl) : A2(
 			$author$project$Main$legendChip,
 			$author$project$Main$boxColor(b),
 			lbl);
@@ -8542,7 +8673,7 @@ var $author$project$Main$displayIndexOf = F2(
 			return i;
 		} else {
 			var drag = _v0.a;
-			return A3($author$project$Main$indexAfterMove, drag.ao, drag.ab, i);
+			return A3($author$project$Main$indexAfterMove, drag.ap, drag.ab, i);
 		}
 	});
 var $author$project$Main$committedIndexOf = F2(
@@ -8562,22 +8693,6 @@ var $author$project$Main$committedIndexOf = F2(
 						$elm$core$List$range,
 						0,
 						$elm$core$List$length(model.f) - 1))));
-	});
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
 	});
 var $author$project$Main$DragStart = F3(
 	function (a, b, c) {
@@ -8722,24 +8837,6 @@ var $author$project$Main$removeNeckButton = function (i) {
 			[
 				$elm$html$Html$text('×')
 			]));
-};
-var $author$project$Main$ditherPatternDefs = function (board) {
-	return board.d ? _List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$defs,
-			_List_Nil,
-			A2(
-				$elm$core$List$map,
-				function (b) {
-					return A2(
-						$author$project$Main$ditherPattern,
-						board.U + ('dither-' + $elm$core$String$fromInt(b)),
-						b);
-				},
-				_List_fromArray(
-					[1, 2, 3, 4, 5])))
-		]) : _List_Nil;
 };
 var $author$project$Main$majorFlavored = function (scale) {
 	switch (scale) {
@@ -9024,16 +9121,28 @@ var $author$project$Main$isMuted = F2(
 		}
 	});
 var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
+var $author$project$Main$pointsAttr = function (verts) {
+	return A2(
+		$elm$core$String$join,
+		' ',
+		A2(
+			$elm$core$List$map,
+			function (_v0) {
+				var x = _v0.a;
+				var y = _v0.b;
+				return $elm$core$String$fromFloat(x) + (',' + $elm$core$String$fromFloat(y));
+			},
+			verts));
+};
 var $elm$svg$Svg$polygon = $elm$svg$Svg$trustedNode('polygon');
 var $author$project$Main$fretCenterX = function (f) {
 	return (f <= 0) ? (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5))) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
 };
-var $author$project$Main$stringSpacing = 36;
 var $author$project$Main$topMargin = 30;
 var $author$project$Main$stringY = function (s) {
 	return $author$project$Main$topMargin + ($author$project$Main$stringSpacing * (s - 1));
 };
-var $author$project$Main$polygonPoints = function (positions) {
+var $author$project$Main$polygonVerts = function (positions) {
 	var yMid = F2(
 		function (sa, sb) {
 			return ($author$project$Main$stringY(sa) + $author$project$Main$stringY(sb)) / 2;
@@ -9046,8 +9155,8 @@ var $author$project$Main$polygonPoints = function (positions) {
 			$elm$core$List$head(
 				A2(
 					$elm$core$List$filter,
-					function (_v7) {
-						var str = _v7.a;
+					function (_v6) {
+						var str = _v6.a;
 						return _Utils_eq(str, s);
 					},
 					positions)));
@@ -9145,17 +9254,7 @@ var $author$project$Main$polygonPoints = function (positions) {
 			$author$project$Main$fretCenterX(lo1),
 			A2(yMid, 1, 2))
 		]);
-	return A2(
-		$elm$core$String$join,
-		' ',
-		A2(
-			$elm$core$List$map,
-			function (_v6) {
-				var x = _v6.a;
-				var y = _v6.b;
-				return $elm$core$String$fromFloat(x) + (',' + $elm$core$String$fromFloat(y));
-			},
-			verts));
+	return verts;
 };
 var $author$project$Main$stripeId = F2(
 	function (_v0, _v1) {
@@ -9216,7 +9315,8 @@ var $author$project$Main$drawOverlapStripe = F4(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$points(
-						$author$project$Main$polygonPoints(overlapPositions)),
+						$author$project$Main$pointsAttr(
+							$author$project$Main$polygonVerts(overlapPositions))),
 						$elm$svg$Svg$Attributes$fill(
 						A3(
 							$author$project$Main$stripeRef,
@@ -9235,30 +9335,90 @@ var $author$project$Main$drawOverlapStripe = F4(
 				_List_Nil)) : $elm$core$Maybe$Nothing;
 	});
 var $author$project$Main$boxFillOpacity = '0.55';
+var $author$project$Main$bounds = function (pts) {
+	var ys = A2($elm$core$List$map, $elm$core$Tuple$second, pts);
+	var xs = A2($elm$core$List$map, $elm$core$Tuple$first, pts);
+	var lo = A2(
+		$elm$core$Basics$composeR,
+		$elm$core$List$minimum,
+		$elm$core$Maybe$withDefault(0));
+	var hi = A2(
+		$elm$core$Basics$composeR,
+		$elm$core$List$maximum,
+		$elm$core$Maybe$withDefault(0));
+	return _Utils_Tuple2(
+		_Utils_Tuple2(
+			lo(xs),
+			hi(xs)),
+		_Utils_Tuple2(
+			lo(ys),
+			hi(ys)));
+};
 var $author$project$Main$boxFill = F2(
 	function (muted, b) {
 		return muted ? 'var(--box-off)' : $author$project$Main$boxColor(b);
 	});
-var $author$project$Main$ditherRef = F2(
-	function (board, b) {
-		return 'url(#' + (board.U + ('dither-' + ($elm$core$String$fromInt(b) + ')')));
-	});
 var $elm$svg$Svg$Attributes$fillOpacity = _VirtualDom_attribute('fill-opacity');
-var $author$project$Main$regionPaint = F4(
-	function (board, opacity, muted, b) {
-		return (!board.d) ? _List_fromArray(
-			[
-				$elm$svg$Svg$Attributes$fill(
-				A2($author$project$Main$boxFill, muted, b)),
-				$elm$svg$Svg$Attributes$fillOpacity(opacity)
-			]) : (muted ? _List_fromArray(
-			[
-				$elm$svg$Svg$Attributes$fill('none')
-			]) : _List_fromArray(
-			[
-				$elm$svg$Svg$Attributes$fill(
-				A2($author$project$Main$ditherRef, board, b))
-			]));
+var $author$project$Main$fretLineX = function (f) {
+	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
+};
+var $author$project$Main$hatchOrigin = _Utils_Tuple2(
+	$author$project$Main$fretLineX(0),
+	$author$project$Main$stringY(1));
+var $author$project$Main$hatchClipped = F4(
+	function (id, shape, box, b) {
+		return A2(
+			$elm$svg$Svg$g,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$clipPath,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$id(id)
+						]),
+					shape),
+					A2(
+					$elm$svg$Svg$g,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$clipPath('url(#' + (id + ')'))
+						]),
+					_List_fromArray(
+						[
+							A3($author$project$Main$hatchTexture, b, $author$project$Main$hatchOrigin, box)
+						]))
+				]));
+	});
+var $author$project$Main$regionShape = F6(
+	function (board, key, opacity, muted, b, verts) {
+		return (!board.d) ? A2(
+			$elm$svg$Svg$polygon,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$points(
+					$author$project$Main$pointsAttr(verts)),
+					$elm$svg$Svg$Attributes$fill(
+					A2($author$project$Main$boxFill, muted, b)),
+					$elm$svg$Svg$Attributes$fillOpacity(opacity)
+				]),
+			_List_Nil) : (muted ? A2($elm$svg$Svg$g, _List_Nil, _List_Nil) : A4(
+			$author$project$Main$hatchClipped,
+			board.U + ('clip-' + key),
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$polygon,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$points(
+							$author$project$Main$pointsAttr(verts))
+						]),
+					_List_Nil)
+				]),
+			$author$project$Main$bounds(verts),
+			b));
 	});
 var $author$project$Main$drawSolidBox = F4(
 	function (board, lit, b, octave) {
@@ -9282,22 +9442,17 @@ var $author$project$Main$drawSolidBox = F4(
 			},
 			positions);
 		return inRange ? $elm$core$Maybe$Just(
-			A2(
-				$elm$svg$Svg$polygon,
+			A6(
+				$author$project$Main$regionShape,
+				board,
+				'box-' + ($elm$core$String$fromInt(b) + ('_' + $elm$core$String$fromInt(octave))),
+				$author$project$Main$boxFillOpacity,
 				A2(
-					$elm$core$List$cons,
-					$elm$svg$Svg$Attributes$points(
-						$author$project$Main$polygonPoints(positions)),
-					A4(
-						$author$project$Main$regionPaint,
-						board,
-						$author$project$Main$boxFillOpacity,
-						A2(
-							$author$project$Main$isMuted,
-							lit,
-							_Utils_Tuple2(b, octave)),
-						b)),
-				_List_Nil)) : $elm$core$Maybe$Nothing;
+					$author$project$Main$isMuted,
+					lit,
+					_Utils_Tuple2(b, octave)),
+				b,
+				$author$project$Main$polygonVerts(positions))) : $elm$core$Maybe$Nothing;
 	});
 var $author$project$Main$drawWrapOverlap = F3(
 	function (board, lit, octave) {
@@ -9342,7 +9497,8 @@ var $author$project$Main$drawWrapOverlap = F3(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$points(
-						$author$project$Main$polygonPoints(overlapPositions)),
+						$author$project$Main$pointsAttr(
+							$author$project$Main$polygonVerts(overlapPositions))),
 						$elm$svg$Svg$Attributes$fill(
 						A3(
 							$author$project$Main$stripeRef,
@@ -9642,9 +9798,9 @@ var $author$project$Main$drawDiagonalShape = F6(
 			$elm$core$List$maximum(shape.t));
 		var inRange = A2(
 			$elm$core$List$any,
-			function (_v1) {
-				var lo = _v1.a;
-				var hi = _v1.b;
+			function (_v0) {
+				var lo = _v0.a;
+				var hi = _v0.b;
 				return ((lo >= 0) && (_Utils_cmp(lo, $author$project$Main$numFrets) < 1)) || ((hi >= 0) && (_Utils_cmp(hi, $author$project$Main$numFrets) < 1));
 			},
 			_List_fromArray(
@@ -9679,25 +9835,8 @@ var $author$project$Main$drawDiagonalShape = F6(
 				$author$project$Main$fretCenterX(loL),
 				yMid)
 			]);
-		var pointsStr = A2(
-			$elm$core$String$join,
-			' ',
-			A2(
-				$elm$core$List$map,
-				function (_v0) {
-					var x = _v0.a;
-					var y = _v0.b;
-					return $elm$core$String$fromFloat(x) + (',' + $elm$core$String$fromFloat(y));
-				},
-				verts));
 		return inRange ? $elm$core$Maybe$Just(
-			A2(
-				$elm$svg$Svg$polygon,
-				A2(
-					$elm$core$List$cons,
-					$elm$svg$Svg$Attributes$points(pointsStr),
-					paint),
-				_List_Nil)) : $elm$core$Maybe$Nothing;
+			paint(verts)) : $elm$core$Maybe$Nothing;
 	});
 var $elm$core$Tuple$pair = F2(
 	function (a, b) {
@@ -9748,9 +9887,10 @@ var $author$project$Main$drawDiagonalRegions = function (board) {
 				board.c,
 				board.a,
 				board.g,
-				A4(
-					$author$project$Main$regionPaint,
+				A5(
+					$author$project$Main$regionShape,
 					board,
+					'diag-' + ($elm$core$String$fromInt(key.a) + ('_' + $elm$core$String$fromInt(o))),
 					'0.45',
 					A2($author$project$Main$isMuted, lit, key),
 					shape.A),
@@ -9770,18 +9910,20 @@ var $author$project$Main$ringColor = F3(
 	function (board, muted, inv) {
 		return (!board.d) ? A2($author$project$Main$inversionColor, muted, inv) : (muted ? 'var(--inv-off)' : 'var(--text-strong)');
 	});
-var $elm$svg$Svg$g = $elm$svg$Svg$trustedNode('g');
 var $author$project$Main$triadFillPct = '18%';
 var $author$project$Main$inversionFill = F2(
 	function (muted, inv) {
 		return 'color-mix(in srgb, ' + (A2($author$project$Main$inversionColor, muted, inv) + (' ' + ($author$project$Main$triadFillPct + ', var(--bg))')));
 	});
-var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
-var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
+var $author$project$Main$noteX = function (f) {
+	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
+};
+var $elm$core$Basics$pow = _Basics_pow;
+var $elm$core$Basics$sqrt = _Basics_sqrt;
 var $elm$svg$Svg$Attributes$strokeLinecap = _VirtualDom_attribute('stroke-linecap');
 var $elm$svg$Svg$Attributes$strokeLinejoin = _VirtualDom_attribute('stroke-linejoin');
 var $author$project$Main$triadSizeStep = function (triad) {
-	var _v0 = triad.ap;
+	var _v0 = triad.ag;
 	_v0$3:
 	while (true) {
 		if (_v0.b) {
@@ -9808,9 +9950,6 @@ var $author$project$Main$triadLassoRadius = function (triad) {
 	return 20 + (5 * $author$project$Main$triadSizeStep(triad));
 };
 var $elm$core$String$append = _String_append;
-var $author$project$Main$noteX = function (f) {
-	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
-};
 var $author$project$Main$triadPath = function (triad) {
 	return A2(
 		$elm$core$String$append,
@@ -9827,7 +9966,7 @@ var $author$project$Main$triadPath = function (triad) {
 						$author$project$Main$noteX(f)) + (',' + $elm$core$String$fromFloat(
 						$author$project$Main$stringY(s)));
 				},
-				triad.ap)));
+				triad.ag)));
 };
 var $author$project$Main$triadCapsule = F3(
 	function (triad, inset, attrs) {
@@ -9854,124 +9993,330 @@ var $author$project$Main$triadCapsule = F3(
 								attrs))))),
 			_List_Nil);
 	});
-var $author$project$Main$triadFill = F3(
-	function (board, muted, triad) {
-		return board.d ? A2(
-			$elm$svg$Svg$g,
-			_List_Nil,
-			A2(
-				$elm$core$List$cons,
-				A3(
-					$author$project$Main$triadCapsule,
-					triad,
-					0,
+var $author$project$Main$triadFill = F4(
+	function (board, index, muted, triad) {
+		if (board.d) {
+			var r = $author$project$Main$triadLassoRadius(triad);
+			var pts = A2(
+				$elm$core$List$map,
+				function (_v7) {
+					var s = _v7.a;
+					var f = _v7.b;
+					return _Utils_Tuple2(
+						$author$project$Main$noteX(f),
+						$author$project$Main$stringY(s));
+				},
+				triad.ag);
+			var num = $elm$core$String$fromFloat;
+			var disc = function (_v6) {
+				var x = _v6.a;
+				var y = _v6.b;
+				return A2(
+					$elm$svg$Svg$circle,
 					_List_fromArray(
 						[
-							$elm$svg$Svg$Attributes$stroke('var(--bg)')
-						])),
-				muted ? _List_Nil : _List_fromArray(
-					[
-						A3(
+							$elm$svg$Svg$Attributes$cx(
+							num(x)),
+							$elm$svg$Svg$Attributes$cy(
+							num(y)),
+							$elm$svg$Svg$Attributes$r(
+							num(r))
+						]),
+					_List_Nil);
+			};
+			var band = F2(
+				function (_v4, _v5) {
+					var ax = _v4.a;
+					var ay = _v4.b;
+					var bx = _v5.a;
+					var by = _v5.b;
+					var len = A2(
+						$elm$core$Basics$max,
+						0.001,
+						$elm$core$Basics$sqrt(
+							A2($elm$core$Basics$pow, bx - ax, 2) + A2($elm$core$Basics$pow, by - ay, 2)));
+					var nx = ((-(by - ay)) / len) * r;
+					var ny = ((bx - ax) / len) * r;
+					return A2(
+						$elm$svg$Svg$polygon,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$points(
+								$author$project$Main$pointsAttr(
+									_List_fromArray(
+										[
+											_Utils_Tuple2(ax + nx, ay + ny),
+											_Utils_Tuple2(bx + nx, by + ny),
+											_Utils_Tuple2(bx - nx, by - ny),
+											_Utils_Tuple2(ax - nx, ay - ny)
+										])))
+							]),
+						_List_Nil);
+				});
+			var bands = function () {
+				if (pts.b) {
+					var first = pts.a;
+					var rest = pts.b;
+					return A3(
+						$elm$core$List$map2,
+						band,
+						A2($elm$core$List$cons, first, rest),
+						rest);
+				} else {
+					return _List_Nil;
+				}
+			}();
+			var _v0 = $author$project$Main$bounds(pts);
+			var _v1 = _v0.a;
+			var xa = _v1.a;
+			var xb = _v1.b;
+			var _v2 = _v0.b;
+			var ya = _v2.a;
+			var yb = _v2.b;
+			return A2(
+				$elm$svg$Svg$g,
+				_List_Nil,
+				A2(
+					$elm$core$List$cons,
+					A3(
 						$author$project$Main$triadCapsule,
 						triad,
 						0,
 						_List_fromArray(
 							[
-								$elm$svg$Svg$Attributes$stroke(
-								A2($author$project$Main$ditherRef, board, triad.ax + 1))
-							]))
-					]))) : A3(
-			$author$project$Main$triadCapsule,
-			triad,
-			0,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$stroke(
-					A2($author$project$Main$inversionFill, muted, triad.ax))
-				]));
+								$elm$svg$Svg$Attributes$stroke('var(--bg)')
+							])),
+					muted ? _List_Nil : _List_fromArray(
+						[
+							A4(
+							$author$project$Main$hatchClipped,
+							board.U + ('clip-triad-' + $elm$core$String$fromInt(index)),
+							_Utils_ap(
+								A2($elm$core$List$map, disc, pts),
+								bands),
+							_Utils_Tuple2(
+								_Utils_Tuple2(xa - r, xb + r),
+								_Utils_Tuple2(ya - r, yb + r)),
+							triad.ax + 1)
+						])));
+		} else {
+			return A3(
+				$author$project$Main$triadCapsule,
+				triad,
+				0,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$stroke(
+						A2($author$project$Main$inversionFill, muted, triad.ax))
+					]));
+		}
 	});
-var $elm$svg$Svg$mask = $elm$svg$Svg$trustedNode('mask');
-var $elm$svg$Svg$Attributes$mask = _VirtualDom_attribute('mask');
-var $elm$svg$Svg$Attributes$maskUnits = _VirtualDom_attribute('maskUnits');
+var $elm$svg$Svg$Attributes$fillRule = _VirtualDom_attribute('fill-rule');
+var $elm$core$List$map3 = _List_map3;
+var $author$project$Main$pillOutline = F2(
+	function (pts, r) {
+		var unit = function (_v13) {
+			var _v14 = _v13.a;
+			var ax = _v14.a;
+			var ay = _v14.b;
+			var _v15 = _v13.b;
+			var bx = _v15.a;
+			var by = _v15.b;
+			var len = A2(
+				$elm$core$Basics$max,
+				0.001,
+				$elm$core$Basics$sqrt(
+					A2($elm$core$Basics$pow, bx - ax, 2) + A2($elm$core$Basics$pow, by - ay, 2)));
+			return _Utils_Tuple2((bx - ax) / len, (by - ay) / len);
+		};
+		var segs = function () {
+			if (pts.b) {
+				var first = pts.a;
+				var rest = pts.b;
+				return A3(
+					$elm$core$List$map2,
+					$elm$core$Tuple$pair,
+					A2($elm$core$List$cons, first, rest),
+					rest);
+			} else {
+				return _List_Nil;
+			}
+		}();
+		var scale = F2(
+			function (k, _v11) {
+				var x = _v11.a;
+				var y = _v11.b;
+				return _Utils_Tuple2(k * x, k * y);
+			});
+		var num = $elm$core$String$fromFloat;
+		var pt = function (_v10) {
+			var x = _v10.a;
+			var y = _v10.b;
+			return num(x) + (' ' + num(y));
+		};
+		var normal = function (_v9) {
+			var dx = _v9.a;
+			var dy = _v9.b;
+			return _Utils_Tuple2(-dy, dx);
+		};
+		var dirs = A2($elm$core$List$map, unit, segs);
+		var cross = F2(
+			function (_v7, _v8) {
+				var ax = _v7.a;
+				var ay = _v7.b;
+				var bx = _v8.a;
+				var by = _v8.b;
+				return (ax * by) - (ay * bx);
+			});
+		var sweepOf = F2(
+			function (a, b) {
+				return (A2(cross, a, b) > 0) ? '1' : '0';
+			});
+		var bends = A4(
+			$elm$core$List$map3,
+			F3(
+				function (p, d1, d2) {
+					return _Utils_Tuple3(p, d1, d2);
+				}),
+			A2($elm$core$List$drop, 1, pts),
+			dirs,
+			A2($elm$core$List$drop, 1, dirs));
+		var arc = F2(
+			function (to, sweep) {
+				return ' A' + (num(r) + (' ' + (num(r) + (' 0 0 ' + (sweep + (' ' + pt(to)))))));
+			});
+		var add = F2(
+			function (_v5, _v6) {
+				var ax = _v5.a;
+				var ay = _v5.b;
+				var bx = _v6.a;
+				var by = _v6.b;
+				return _Utils_Tuple2(ax + bx, ay + by);
+			});
+		var join = F4(
+			function (side, p, d1, d2) {
+				var outer = (side * A2(cross, d1, d2)) < 0;
+				var n2 = A2(
+					scale,
+					side,
+					normal(d2));
+				var n1 = A2(
+					scale,
+					side,
+					normal(d1));
+				var dot = (n1.a * n2.a) + (n1.b * n2.b);
+				var _v4 = (side > 0) ? _Utils_Tuple2(n1, n2) : _Utils_Tuple2(n2, n1);
+				var from = _v4.a;
+				var to = _v4.b;
+				return outer ? (' L' + (pt(
+					A2(
+						add,
+						p,
+						A2(scale, r, from))) + A2(
+					arc,
+					A2(
+						add,
+						p,
+						A2(scale, r, to)),
+					A2(sweepOf, from, to)))) : (' L' + pt(
+					A2(
+						add,
+						p,
+						A2(
+							scale,
+							r / (1 + dot),
+							A2(add, n1, n2)))));
+			});
+		var _v0 = _Utils_Tuple3(
+			$elm$core$List$head(pts),
+			$elm$core$List$head(
+				$elm$core$List$reverse(pts)),
+			_Utils_Tuple2(
+				$elm$core$List$head(dirs),
+				$elm$core$List$head(
+					$elm$core$List$reverse(dirs))));
+		if ((((!_v0.a.$) && (!_v0.b.$)) && (!_v0.c.a.$)) && (!_v0.c.b.$)) {
+			var p0 = _v0.a.a;
+			var pm = _v0.b.a;
+			var _v1 = _v0.c;
+			var d0 = _v1.a.a;
+			var dm = _v1.b.a;
+			var nm = normal(dm);
+			var n0 = normal(d0);
+			return 'M' + (pt(
+				A2(
+					add,
+					p0,
+					A2(scale, r, n0))) + ($elm$core$String$concat(
+				A2(
+					$elm$core$List$map,
+					function (_v2) {
+						var p = _v2.a;
+						var d1 = _v2.b;
+						var d2 = _v2.c;
+						return A4(join, 1, p, d1, d2);
+					},
+					bends)) + (' L' + (pt(
+				A2(
+					add,
+					pm,
+					A2(scale, r, nm))) + (A2(
+				arc,
+				A2(
+					add,
+					pm,
+					A2(scale, -r, nm)),
+				'0') + ($elm$core$String$concat(
+				A2(
+					$elm$core$List$map,
+					function (_v3) {
+						var p = _v3.a;
+						var d1 = _v3.b;
+						var d2 = _v3.c;
+						return A4(join, -1, p, d1, d2);
+					},
+					$elm$core$List$reverse(bends))) + (' L' + (pt(
+				A2(
+					add,
+					p0,
+					A2(scale, -r, n0))) + (A2(
+				arc,
+				A2(
+					add,
+					p0,
+					A2(scale, r, n0)),
+				'0') + 'Z ')))))))));
+		} else {
+			return '';
+		}
+	});
 var $author$project$Main$triadLassoInset = 3;
 var $author$project$Main$triadRing = F4(
-	function (prefix, ringFill, index, triad) {
-		var pad = $author$project$Main$triadLassoRadius(triad) + 4;
-		var span = function (toCoord) {
-			var vs = A2($elm$core$List$map, toCoord, triad.ap);
-			var lo = A2(
-				$elm$core$Maybe$withDefault,
-				0,
-				$elm$core$List$minimum(vs));
-			return _Utils_Tuple2(
-				lo - pad,
-				(A2(
-					$elm$core$Maybe$withDefault,
-					0,
-					$elm$core$List$maximum(vs)) - lo) + (2 * pad));
-		};
-		var maskId = prefix + ('triad-lasso-' + $elm$core$String$fromInt(index));
-		var layer = F2(
-			function (color, inset) {
-				return A3(
-					$author$project$Main$triadCapsule,
-					triad,
-					inset,
-					_List_fromArray(
-						[
-							$elm$svg$Svg$Attributes$stroke(color)
-						]));
-			});
-		var _v0 = span(
-			function (_v1) {
-				var f = _v1.b;
-				return $author$project$Main$noteX(f);
-			});
-		var x0 = _v0.a;
-		var w = _v0.b;
-		var _v2 = span(
-			function (_v3) {
-				var s = _v3.a;
-				return $author$project$Main$stringY(s);
-			});
-		var y0 = _v2.a;
-		var h = _v2.b;
-		var box = _List_fromArray(
-			[
-				$elm$svg$Svg$Attributes$x(
-				$elm$core$String$fromFloat(x0)),
-				$elm$svg$Svg$Attributes$y(
-				$elm$core$String$fromFloat(y0)),
-				$elm$svg$Svg$Attributes$width(
-				$elm$core$String$fromFloat(w)),
-				$elm$svg$Svg$Attributes$height(
-				$elm$core$String$fromFloat(h))
-			]);
+	function (_v0, ringFill, _v1, triad) {
+		var r = $author$project$Main$triadLassoRadius(triad);
+		var pts = A2(
+			$elm$core$List$map,
+			function (_v2) {
+				var s = _v2.a;
+				var f = _v2.b;
+				return _Utils_Tuple2(
+					$author$project$Main$noteX(f),
+					$author$project$Main$stringY(s));
+			},
+			triad.ag);
 		return _List_fromArray(
 			[
 				A2(
-				$elm$svg$Svg$mask,
-				A2(
-					$elm$core$List$cons,
-					$elm$svg$Svg$Attributes$id(maskId),
-					A2(
-						$elm$core$List$cons,
-						$elm$svg$Svg$Attributes$maskUnits('userSpaceOnUse'),
-						box)),
+				$elm$svg$Svg$path,
 				_List_fromArray(
 					[
-						A2(layer, '#ffffff', 0),
-						A2(layer, '#000000', $author$project$Main$triadLassoInset)
-					])),
-				A2(
-				$elm$svg$Svg$rect,
-				A2(
-					$elm$core$List$cons,
-					$elm$svg$Svg$Attributes$fill(ringFill),
-					A2(
-						$elm$core$List$cons,
-						$elm$svg$Svg$Attributes$mask('url(#' + (maskId + ')')),
-						box)),
+						$elm$svg$Svg$Attributes$d(
+						_Utils_ap(
+							A2($author$project$Main$pillOutline, pts, r),
+							A2($author$project$Main$pillOutline, pts, r - $author$project$Main$triadLassoInset))),
+						$elm$svg$Svg$Attributes$fill(ringFill),
+						$elm$svg$Svg$Attributes$fillRule('evenodd')
+					]),
 				_List_Nil)
 			]);
 	});
@@ -10083,7 +10428,7 @@ var $author$project$Main$triadsOnStringSet = F4(
 							function (high) {
 								return {
 									ax: inv,
-									ap: _List_fromArray(
+									ag: _List_fromArray(
 										[
 											_Utils_Tuple2(top, high),
 											_Utils_Tuple2(top + 1, mid),
@@ -10143,19 +10488,21 @@ var $author$project$Main$drawTriadLassos = function (board) {
 					var f = _v2.b;
 					return (_Utils_cmp(f, lo) > -1) && (_Utils_cmp(f, hi) < 1);
 				},
-				triad.ap);
+				triad.ag);
 		}
 	};
 	return _Utils_ap(
 		A2(
-			$elm$core$List$map,
-			function (triad) {
-				return A3(
-					$author$project$Main$triadFill,
-					board,
-					muted(triad),
-					triad);
-			},
+			$elm$core$List$indexedMap,
+			F2(
+				function (i, triad) {
+					return A4(
+						$author$project$Main$triadFill,
+						board,
+						i,
+						muted(triad),
+						triad);
+				}),
 			voicings),
 		$elm$core$List$concat(
 			A2(
@@ -10178,6 +10525,7 @@ var $author$project$Main$drawTriadLassos = function (board) {
 var $author$project$Main$drawBoxRegions = function (board) {
 	return $author$project$Main$isChromatic(board.a) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? $author$project$Main$drawTriadLassos(board) : ($author$project$Main$isDiagonal(board.a) ? $author$project$Main$drawDiagonalRegions(board) : $author$project$Main$drawBoxRegionsBoxes(board)));
 };
+var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
 var $author$project$Main$fifthsStep = F2(
 	function (tuning, s) {
 		var o = A2(
@@ -10314,9 +10662,6 @@ var $author$project$Main$drawFifthsLadders = function (board) {
 				A2($elm$core$List$map, gradient, rungs))
 			]),
 		A2($elm$core$List$map, line, rungs)) : _List_Nil;
-};
-var $author$project$Main$fretLineX = function (f) {
-	return ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * f);
 };
 var $author$project$Main$fretboardHeight = $author$project$Main$stringSpacing * 5;
 var $author$project$Main$drawFretLines = function () {
@@ -10597,6 +10942,38 @@ var $author$project$Main$chromaticMarker = F4(
 						]));
 		}
 	});
+var $author$project$Main$noteHalo = F3(
+	function (role, cx, cy) {
+		if (!role) {
+			return A2(
+				$elm$svg$Svg$rect,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x(
+						$elm$core$String$fromFloat(cx - 17)),
+						$elm$svg$Svg$Attributes$y(
+						$elm$core$String$fromFloat(cy - 17)),
+						$elm$svg$Svg$Attributes$width('34'),
+						$elm$svg$Svg$Attributes$height('34'),
+						$elm$svg$Svg$Attributes$rx('6'),
+						$elm$svg$Svg$Attributes$fill('var(--bg)')
+					]),
+				_List_Nil);
+		} else {
+			return A2(
+				$elm$svg$Svg$circle,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$cx(
+						$elm$core$String$fromFloat(cx)),
+						$elm$svg$Svg$Attributes$cy(
+						$elm$core$String$fromFloat(cy)),
+						$elm$svg$Svg$Attributes$r('17'),
+						$elm$svg$Svg$Attributes$fill('var(--bg)')
+					]),
+				_List_Nil);
+		}
+	});
 var $author$project$Main$accidentalGap = 0.8;
 var $author$project$Main$accidentalPath = function (c) {
 	switch (c) {
@@ -10611,7 +10988,6 @@ var $author$project$Main$accidentalPath = function (c) {
 	}
 };
 var $author$project$Main$accidentalWidth = 4.5;
-var $elm$svg$Svg$Attributes$fillRule = _VirtualDom_attribute('fill-rule');
 var $elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
 var $elm$core$String$cons = _String_cons;
 var $elm$core$String$fromChar = function (_char) {
@@ -10641,7 +11017,6 @@ var $elm$core$String$foldr = _String_foldr;
 var $elm$core$String$toList = function (string) {
 	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
 };
-var $elm$svg$Svg$Attributes$transform = _VirtualDom_attribute('transform');
 var $author$project$Main$noteLabel = F3(
 	function (name, cx, y) {
 		var letterNode = F3(
@@ -11090,8 +11465,13 @@ var $author$project$Main$drawNoteAt = F3(
 				A2(
 					$elm$svg$Svg$g,
 					A2($author$project$Main$offString, board, s),
-					_List_fromArray(
-						[background, labelNode])));
+					_Utils_ap(
+						board.d ? _List_fromArray(
+							[
+								A3($author$project$Main$noteHalo, role, cx, cy)
+							]) : _List_Nil,
+						_List_fromArray(
+							[background, labelNode]))));
 		} else {
 			return $elm$core$Maybe$Nothing;
 		}
@@ -11144,7 +11524,9 @@ var $author$project$Main$drawStrings = function (board) {
 		A2($elm$core$List$range, 1, 6));
 };
 var $author$project$Main$boxBlendPct = '55%';
+var $elm$svg$Svg$pattern = $elm$svg$Svg$trustedNode('pattern');
 var $elm$svg$Svg$Attributes$patternTransform = _VirtualDom_attribute('patternTransform');
+var $elm$svg$Svg$Attributes$patternUnits = _VirtualDom_attribute('patternUnits');
 var $author$project$Main$overlapStripePattern = F3(
 	function (prefix, _v0, _v1) {
 		var b1 = _v0.a;
@@ -11268,7 +11650,6 @@ var $author$project$Main$viewFretboard = function (board) {
 					[
 						$author$project$Main$stripePatternDefs(board)
 					]),
-					$author$project$Main$ditherPatternDefs(board),
 					neckAndRegions,
 					$author$project$Main$drawFifthsLadders(board),
 					$author$project$Main$drawNotes(board),
@@ -11629,11 +12010,11 @@ var $author$project$Main$wakeLockButton = function (model) {
 					$elm$html$Html$Attributes$class('no-print'),
 					A2($elm$html$Html$Attributes$style, 'min-width', '120px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.al)),
+			$author$project$Main$buttonBaseStyle(model.am)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				model.al ? 'Screen on' : 'Keep screen on')
+				model.am ? 'Screen on' : 'Keep screen on')
 			]));
 };
 var $author$project$Main$viewBody = function (model) {
