@@ -480,6 +480,21 @@ is on screen as well, so what you see is what prints.
 - The all-notes markers drop their pitch hues for `--note-bg`, and "hue = note"
   goes from the heading and the legend.
 
+## Degrees
+
+The **Degrees** button (`degrees` on the model, `&degrees=1`) labels every note
+marker with its interval from the root instead of the note name: R, 2, ♭3, 3,
+♯4 … Like Monochrome it applies to every neck.
+
+- `degreeName` reads the label off the scale's own `intervalLabels` (the same
+  list the heading prints under each note), so a note is named as the scale
+  spells it — Lydian's 4th is ♯4, Locrian's 5th ♭5. The all-notes maps have no
+  scale to name by, so they fall back to the common name per semitone (R ♭2 2
+  ♭3 3 4 ♭5 5 ♭6 6 ♭7 7).
+- `degreeLabel` draws it like `noteLabel` but accidental first, as an interval
+  is written (♭3), with the accidental as a raised path. Centering uses the
+  measured digit widths in `letterWidth`.
+
 ## Two columns
 
 The **Two columns** button (`twoColumns`, `&cols=2`) lays the neck list out as
@@ -574,7 +589,8 @@ address bar is always a link to exactly what is on screen.
   neck or inside out.
 - `&string=6` carries the highlighted string, omitted when it is off, and
   clamped to 1–6 on the way in for the same reason.
-- `&mono=1` and `&cols=2` carry the Monochrome and Two columns switches,
+- `&degrees=1`, `&mono=1` and `&cols=2` carry the Degrees, Monochrome and Two
+  columns switches,
   omitted when off.
 - The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots
   all sharing the one `scale`) so links from that version keep working. It is

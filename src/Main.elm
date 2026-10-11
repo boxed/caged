@@ -57,6 +57,11 @@ type alias Model =
     -- neck, since a sheet goes to one printer.
     , mono : Bool
 
+    -- The **Degrees** button: every note marker names its interval from the
+    -- root (R, 2, ♭3 …) instead of the note. Like monochrome it is a way of
+    -- reading the whole page, so it applies to every neck.
+    , degrees : Bool
+
     -- The **Two columns** button: the necks sit two to a row at half width,
     -- which fits twice as many on a printed page.
     , twoColumns : Bool
@@ -97,6 +102,7 @@ type alias Board =
     , focus : Maybe Focus
     , stringFocus : Maybe Int
     , mono : Bool
+    , degrees : Bool
     , id : String
     }
 
@@ -180,6 +186,7 @@ type Msg
     | SetFocus (Maybe Focus)
     | SetStringFocus (Maybe Int)
     | ToggleMono
+    | ToggleDegrees
     | ToggleColumns
     | ToggleTuningList
     | Activate Int
@@ -208,6 +215,7 @@ init _ url key =
       , focus = state.focus
       , stringFocus = state.stringFocus
       , mono = state.mono
+      , degrees = state.degrees
       , twoColumns = state.twoColumns
       , key = key
       , wakeLockOn = False
@@ -264,6 +272,9 @@ update msg model =
 
         ToggleMono ->
             sync { model | mono = not model.mono }
+
+        ToggleDegrees ->
+            sync { model | degrees = not model.degrees }
 
         ToggleColumns ->
             sync { model | twoColumns = not model.twoColumns }
@@ -368,6 +379,7 @@ update msg model =
                 , focus = state.focus
                 , stringFocus = state.stringFocus
                 , mono = state.mono
+                , degrees = state.degrees
                 , twoColumns = state.twoColumns
               }
             , Cmd.none
@@ -468,12 +480,19 @@ modelUrl model =
 
             else
                 withString
+
+        withDegrees =
+            if model.degrees then
+                withMono ++ "&degrees=1"
+
+            else
+                withMono
     in
     if model.twoColumns then
-        withMono ++ "&cols=2"
+        withDegrees ++ "&cols=2"
 
     else
-        withMono
+        withDegrees
 
 
 {-| One neck as `root.scale`, with the string set appended in the triad modes
@@ -644,6 +663,7 @@ type alias UrlState =
     , focus : Maybe Focus
     , stringFocus : Maybe Int
     , mono : Bool
+    , degrees : Bool
     , twoColumns : Bool
     }
 
@@ -728,6 +748,7 @@ parseUrl url =
             |> Maybe.andThen String.toInt
             |> Maybe.map clampString
     , mono = lookup "mono" == Just "1"
+    , degrees = lookup "degrees" == Just "1"
     , twoColumns = lookup "cols" == Just "2"
     }
 
@@ -805,6 +826,7 @@ boardAt model i neck =
     , focus = model.focus
     , stringFocus = model.stringFocus
     , mono = model.mono
+    , degrees = model.degrees
     , id = "n" ++ String.fromInt i ++ "-"
     }
 
@@ -2793,33 +2815,6 @@ viewScaleTitle board =
                         DiagonalBlues -> "Diagonal Blues"
                    )
 
-        intervalLabels =
-            case board.scale of
-                MajorPent -> [ "R", "2", "3", "5", "6" ]
-                MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
-                Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
-                Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
-                Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
-                Mixolydian -> [ "R", "2", "3", "4", "5", "6", "♭7" ]
-                Phrygian -> [ "R", "♭2", "♭3", "4", "5", "♭6", "♭7" ]
-                Lydian -> [ "R", "2", "3", "♯4", "5", "6", "7" ]
-                Locrian -> [ "R", "♭2", "♭3", "4", "♭5", "♭6", "♭7" ]
-                Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
-                HarmonicMajor -> [ "R", "2", "3", "4", "5", "♭6", "7" ]
-                HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
-                MelodicMajor -> [ "R", "2", "3", "4", "5", "♭6", "♭7" ]
-                MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
-                ChromaticMajor -> List.repeat 12 ""
-                ChromaticMinor -> List.repeat 12 ""
-                Blank -> []
-                TriadMajor -> [ "R", "3", "5" ]
-                TriadMinor -> [ "R", "♭3", "5" ]
-                TriadDim -> [ "R", "♭3", "♭5" ]
-                TriadAug -> [ "R", "3", "♯5" ]
-                DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
-                DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
-                DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
-
         -- The notes ride alongside the heading rather than under it, each with
         -- its scale degree stacked beneath instead of trailing in brackets:
         -- one line of vertical space instead of two, and the degrees line up
@@ -2849,7 +2844,7 @@ viewScaleTitle board =
                 ]
 
             else
-                List.map2 noteChip (spelledNotes board) intervalLabels
+                List.map2 noteChip (spelledNotes board) (intervalLabels board.scale)
                     ++ (if isTriad board.scale then
                             [ aside (stringSetLabel board.stringSet) ]
 
@@ -2891,6 +2886,60 @@ viewScaleTitle board =
             ]
             detail
         ]
+
+
+{-| The interval of each scale tone from the root, as a player names it —
+parallel to `scaleIntervals`. The all-notes maps have no degrees of their
+own, so their heading lists none (`degreeName` names their notes instead). -}
+intervalLabels : ScaleType -> List String
+intervalLabels st =
+    case st of
+        MajorPent -> [ "R", "2", "3", "5", "6" ]
+        MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
+        Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
+        Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
+        Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
+        Mixolydian -> [ "R", "2", "3", "4", "5", "6", "♭7" ]
+        Phrygian -> [ "R", "♭2", "♭3", "4", "5", "♭6", "♭7" ]
+        Lydian -> [ "R", "2", "3", "♯4", "5", "6", "7" ]
+        Locrian -> [ "R", "♭2", "♭3", "4", "♭5", "♭6", "♭7" ]
+        Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
+        HarmonicMajor -> [ "R", "2", "3", "4", "5", "♭6", "7" ]
+        HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
+        MelodicMajor -> [ "R", "2", "3", "4", "5", "♭6", "♭7" ]
+        MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
+        ChromaticMajor -> List.repeat 12 ""
+        ChromaticMinor -> List.repeat 12 ""
+        Blank -> []
+        TriadMajor -> [ "R", "3", "5" ]
+        TriadMinor -> [ "R", "♭3", "5" ]
+        TriadDim -> [ "R", "♭3", "♭5" ]
+        TriadAug -> [ "R", "3", "♯5" ]
+        DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
+        DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
+        DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
+
+
+{-| What a note marker reads in Degrees mode: the interval from the root, as
+the scale names it — so the 4th of Lydian is ♯4, not ♭5. The all-notes maps
+have no scale to name it by, so they use the common name for each interval. -}
+degreeName : Board -> Int -> String
+degreeName board n =
+    let
+        interval =
+            modBy 12 (n - board.root)
+
+        common =
+            [ "R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7" ]
+                |> List.drop interval
+                |> List.head
+                |> Maybe.withDefault ""
+    in
+    List.map2 Tuple.pair (scaleIntervals board.scale) (intervalLabels board.scale)
+        |> List.filter (\( i, lbl ) -> i == interval && lbl /= "")
+        |> List.head
+        |> Maybe.map Tuple.second
+        |> Maybe.withDefault common
 
 
 {-| One note of the scale with its degree stacked under it, in place of the
@@ -3025,7 +3074,7 @@ setupRow model =
             :: highlightToggle model
             :: highlightFrets model
             ++ (stringToggle model :: highlightString model)
-            ++ [ monoToggle model, columnsToggle model ]
+            ++ [ degreesToggle model, monoToggle model, columnsToggle model ]
         )
 
 
@@ -3137,6 +3186,15 @@ stringToggle model =
             ++ buttonBaseStyle on
         )
         [ text "Highlight string" ]
+
+
+{-| Labels every note marker with its interval from the root instead of its
+note name, for learning a shape as degrees rather than as letters. -}
+degreesToggle : Model -> Html Msg
+degreesToggle model =
+    button
+        ([ onClick ToggleDegrees, style "min-width" "80px" ] ++ buttonBaseStyle model.degrees)
+        [ text "Degrees" ]
 
 
 {-| Swaps every color on the necks for black-and-white hatched textures, for a
@@ -4551,7 +4609,12 @@ drawNoteAt board s f =
 
                 labelNode =
                     Svg.g [ SA.fill textColor ]
-                        (noteLabel (spelledName board n) cx (cy + 4))
+                        (if board.degrees then
+                            degreeLabel (degreeName board n) cx (cy + 4)
+
+                         else
+                            noteLabel (spelledName board n) cx (cy + 4)
+                        )
             in
             Just
                 (Svg.g (offString board s)
@@ -4665,9 +4728,59 @@ noteLabel name cx y =
             []
 
 
-{-| Advance width of a bold 13px note letter in the system font, measured in
-the browser. Only used to center a letter and its accidentals together, so a
-platform whose font runs a little wider is off by a fraction of a pixel. -}
+{-| An interval name for a marker, centered on `cx`: its accidentals drawn as
+paths, raised like a superscript the way `noteLabel` raises them, then the
+number (or R) as bold text. The accidental leads, as it is written: ♭3. -}
+degreeLabel : String -> Float -> Float -> List (Svg.Svg Msg)
+degreeLabel name cx y =
+    let
+        ( accs, rest ) =
+            ( String.filter (\c -> accidentalPath c /= Nothing) name
+            , String.filter (\c -> accidentalPath c == Nothing) name
+            )
+
+        glyphs =
+            List.filterMap accidentalPath (String.toList accs)
+
+        step =
+            accidentalWidth + accidentalGap
+
+        restW =
+            String.toList rest |> List.map letterWidth |> List.sum
+
+        left =
+            cx - (toFloat (List.length glyphs) * step + restW) / 2
+
+        glyphAt i d =
+            Svg.path
+                [ SA.d d
+                , SA.fillRule "evenodd"
+                , SA.transform
+                    ("translate("
+                        ++ String.fromFloat (left + toFloat i * step)
+                        ++ ","
+                        ++ String.fromFloat (y - 3.5)
+                        ++ ") scale(0.9)"
+                    )
+                ]
+                []
+    in
+    Svg.text_
+        [ SA.x (String.fromFloat (left + toFloat (List.length glyphs) * step))
+        , SA.y (String.fromFloat y)
+        , SA.textAnchor "start"
+        , SA.fontSize "13"
+        , SA.fontWeight "700"
+        , SA.fontFamily svgFont
+        ]
+        [ Svg.text rest ]
+        :: List.indexedMap glyphAt glyphs
+
+
+{-| Advance width of a bold 13px note letter, or interval digit, in the system
+font, measured in the browser. Only used to center a label and its accidentals
+together, so a platform whose font runs a little wider is off by a fraction of
+a pixel. -}
 letterWidth : Char -> Float
 letterWidth c =
     case c of
@@ -4678,6 +4791,14 @@ letterWidth c =
         'E' -> 8.01
         'F' -> 7.69
         'G' -> 9.81
+        'R' -> 8.95
+        '1' -> 6.58
+        '2' -> 8.28
+        '3' -> 8.62
+        '4' -> 8.85
+        '5' -> 8.55
+        '6' -> 8.81
+        '7' -> 7.78
         _ -> 9
 
 
