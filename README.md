@@ -45,6 +45,15 @@ color — matching the style of `fretboard-reference.jpeg`.
   **Strings** row picks a three-string set (1-2-3, 2-3-4, 3-4-5, 4-5-6) or
   shows all four at once, and the chord tones outside the lassos stay on the
   neck for context.
+- **Build your own scale.** Click any spot on the neck to add that note to
+  the scale or take it out, everywhere on the neck at once. The scale buttons
+  are just starting points: edit one and its button goes dark, and the heading
+  says what changed (`A Minor Pentatonic +2 +6`); put the notes back and the
+  button lights up again. The boxes are re-derived for whatever you build, and
+  the edited scale is part of the link.
+- **Hear any note.** Every click on a string plays the note at that fret, as a
+  plucked string, in whatever tuning you have selected. Shift-click to just
+  listen without changing the scale.
 - **Stack as many necks as you like.** **+ Add neck** copies the neck you are
   looking at; from there the root, scale and tuning buttons reshape whichever
   neck is selected, so you can put A minor pentatonic above a C major triad and

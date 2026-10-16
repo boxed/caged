@@ -104,6 +104,7 @@ type alias Board =
     , mono : Bool
     , degrees : Bool
     , id : String
+    , slot : Int
     }
 
 
@@ -140,6 +141,10 @@ port releaseWakeLock : () -> Cmd msg
 port wakeLockChanged : (Bool -> msg) -> Sub msg
 
 
+{-| Plucks a note, as a MIDI note number — `index.html` synthesizes it. -}
+port playNote : Int -> Cmd msg
+
+
 type ScaleType
     = MajorPent
     | MinorPent
@@ -165,6 +170,7 @@ type ScaleType
     | DiagonalMajorPent
     | DiagonalPent
     | DiagonalBlues
+    | Custom ScaleType (List Int)
 
 
 {-| Which three adjacent strings carry the triad lassos. `StringTrio t` names a
@@ -199,6 +205,7 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | ToggleWakeLock
     | WakeLockChanged Bool
+    | FretClicked Int Int Int Bool
 
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -410,6 +417,34 @@ update msg model =
         WakeLockChanged on ->
             ( { model | wakeLockOn = on }, Cmd.none )
 
+        FretClicked _ s f True ->
+            -- Shift-click only listens.
+            ( model, playNote (midiAt model.tuning s f) )
+
+        FretClicked slot s f False ->
+            -- A click both sounds the note and toggles its pitch class in or
+            -- out of that neck's scale.
+            let
+                toggle neck =
+                    { neck | scale = toggleInterval (modBy 12 (noteAt model.tuning s f - neck.root)) neck.scale }
+
+                ( synced, cmd ) =
+                    sync
+                        { model
+                            | necks =
+                                List.indexedMap
+                                    (\j neck ->
+                                        if j == slot then
+                                            toggle neck
+
+                                        else
+                                            neck
+                                    )
+                                    model.necks
+                        }
+            in
+            ( synced, Cmd.batch [ cmd, playNote (midiAt model.tuning s f) ] )
+
 
 
 {-| Every state change reaches the URL, so the address bar is always a link to
@@ -599,10 +634,35 @@ scaleSlug s =
         DiagonalMajorPent -> "diagonal-major-pent"
         DiagonalPent -> "diagonal-pent"
         DiagonalBlues -> "diagonal-blues"
+        Custom base intervals -> scaleSlug base ++ "_" ++ String.concat (List.map intervalDigit intervals)
+
+
+{-| One interval as a single hex digit, so a custom scale's notes pack into
+the URL as `minor-pent_0257a` without separators. -}
+intervalDigit : Int -> String
+intervalDigit i =
+    String.slice i (i + 1) "0123456789ab"
 
 
 scaleFromSlug : String -> Maybe ScaleType
-scaleFromSlug s =
+scaleFromSlug str =
+    case String.split "_" str of
+        [ base, digits ] ->
+            presetFromSlug base
+                |> Maybe.map
+                    (\b ->
+                        customScale b
+                            (String.toList digits
+                                |> List.filterMap (\c -> String.indexes (String.fromChar c) "0123456789ab" |> List.head)
+                            )
+                    )
+
+        _ ->
+            presetFromSlug str
+
+
+presetFromSlug : String -> Maybe ScaleType
+presetFromSlug s =
     case s of
         "major-pent" -> Just MajorPent
         "minor-pent" -> Just MinorPent
@@ -828,6 +888,7 @@ boardAt model i neck =
     , mono = model.mono
     , degrees = model.degrees
     , id = "n" ++ String.fromInt i ++ "-"
+    , slot = i
     }
 
 
@@ -1195,6 +1256,19 @@ scaleDegrees st =
         DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
         DiagonalPent -> [ 1, 3, 4, 5, 7 ]
         DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
+        Custom base intervals -> List.map (customDegree base) intervals
+
+
+{-| The scale degree an edited scale's interval is spelled as: the preset's own
+where it has that note, otherwise the common reading (♭2, ♭3, ♭5, ♭6, ♭7). -}
+customDegree : ScaleType -> Int -> Int
+customDegree base i =
+    List.map2 Tuple.pair (scaleIntervals base) (scaleDegrees base)
+        |> List.filter (\( j, _ ) -> j == i)
+        |> List.head
+        |> Maybe.map Tuple.second
+        |> Maybe.withDefault
+            (List.drop i [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ] |> List.head |> Maybe.withDefault 1)
 
 
 {-| Enharmonically spelled names for the scale's notes, parallel to
@@ -1394,6 +1468,83 @@ scaleIntervals st =
         DiagonalBlues ->
             [ 0, 3, 5, 6, 7, 10 ]
 
+        Custom _ intervals ->
+            intervals
+
+
+{-| A scale built by clicking notes on and off the neck. It remembers the
+preset it started from: that names it, spells it, and picks its third and
+seventh where the notes alone leave it open — and toggling back to the
+preset's own notes turns it back into that preset, so its button lights up
+again. -}
+customScale : ScaleType -> List Int -> ScaleType
+customScale base intervals =
+    let
+        sorted =
+            List.sort (List.foldl (\i acc -> if List.member i acc then acc else i :: acc) [] intervals)
+    in
+    if sorted == List.sort (scaleIntervals base) then
+        base
+
+    else
+        Custom base sorted
+
+
+{-| The preset a scale started from — itself, unless it has been edited. -}
+baseScale : ScaleType -> ScaleType
+baseScale scale =
+    case scale of
+        Custom base _ ->
+            base
+
+        _ ->
+            scale
+
+
+{-| Adds the interval to the scale, or takes it out if it is already there. -}
+toggleInterval : Int -> ScaleType -> ScaleType
+toggleInterval interval scale =
+    let
+        intervals =
+            scaleIntervals scale
+    in
+    customScale (baseScale scale)
+        (if List.member interval intervals then
+            List.filter ((/=) interval) intervals
+
+         else
+            interval :: intervals
+        )
+
+
+{-| Of two candidate intervals for a chord tone (♭3 or 3, ♭7 or 7), the one an
+edited scale holds — or, if it holds both, the one its preset uses. -}
+pickTone : ScaleType -> List Int -> Int -> Int -> Int -> Int
+pickTone base intervals fromBase a b =
+    case ( List.member a intervals, List.member b intervals ) of
+        ( True, False ) ->
+            a
+
+        ( False, True ) ->
+            b
+
+        ( True, True ) ->
+            fromBase
+
+        ( False, False ) ->
+            -1
+
+
+{-| The MIDI note sounding at a fret. The lowest string sits nearest the low E
+of a guitar (E2 = 40), and the rest are stacked above it by `openAbs`. -}
+midiAt : Tuning -> Int -> Int -> Int
+midiAt tuning s f =
+    let
+        low =
+            40 + modBy 12 (openString tuning 6 - 4 + 6) - 6
+    in
+    low + openAbs tuning s - openString tuning 6 + f
+
 
 scaleNotes : Board -> List Int
 scaleNotes board =
@@ -1500,6 +1651,13 @@ rootFret board =
         DiagonalBlues ->
             diagonalAnchor board.tuning DiagonalBlues board.root
 
+        Custom _ _ ->
+            if majorFlavored board.scale then
+                majorAnchor
+
+            else
+                minorAnchor
+
 
 isDiagonal : ScaleType -> Bool
 isDiagonal scale =
@@ -1553,6 +1711,13 @@ majorFlavored scale =
         Locrian -> True
         HarmonicMajor -> True
         MelodicMajor -> True
+        Custom base intervals ->
+            -- An edited scale goes by its third; only with both or neither
+            -- does the preset it came from decide.
+            case pickTone base intervals 0 3 4 of
+                3 -> False
+                4 -> True
+                _ -> majorFlavored base
         _ -> False
 
 
@@ -1926,58 +2091,10 @@ noteRole board n =
             modBy 12 (n - board.root)
 
         thirdInterval =
-            case board.scale of
-                MajorPent -> 4
-                MinorPent -> 3
-                Ionian -> 4
-                Aeolian -> 3
-                Dorian -> 3
-                Mixolydian -> 4
-                Phrygian -> 3
-                Lydian -> 4
-                Locrian -> 3
-                Blues -> 3
-                HarmonicMajor -> 4
-                HarmonicMinor -> 3
-                MelodicMajor -> 4
-                MelodicMinor -> 3
-                ChromaticMajor -> -1
-                ChromaticMinor -> -1
-                Blank -> -1
-                TriadMajor -> 4
-                TriadMinor -> 3
-                TriadDim -> 3
-                TriadAug -> 4
-                DiagonalMajorPent -> 4
-                DiagonalPent -> 3
-                DiagonalBlues -> 3
+            thirdOf board.scale
 
         seventhInterval =
-            case board.scale of
-                MajorPent -> -1
-                MinorPent -> 10
-                Ionian -> 11
-                Aeolian -> 10
-                Dorian -> 10
-                Mixolydian -> 10
-                Phrygian -> 10
-                Lydian -> 11
-                Locrian -> 10
-                Blues -> 10
-                HarmonicMajor -> 11
-                HarmonicMinor -> 11
-                MelodicMajor -> 10
-                MelodicMinor -> 11
-                ChromaticMajor -> -1
-                ChromaticMinor -> -1
-                Blank -> -1
-                TriadMajor -> -1
-                TriadMinor -> -1
-                TriadDim -> -1
-                TriadAug -> -1
-                DiagonalMajorPent -> -1
-                DiagonalPent -> 10
-                DiagonalBlues -> 10
+            seventhOf board.scale
     in
     if interval == 0 then
         Root
@@ -1995,6 +2112,68 @@ noteRole board n =
         Other
 
 
+{-| Which third a scale's markers mark: 3 (minor) or 4 (major), −1 for none. -}
+thirdOf : ScaleType -> Int
+thirdOf scale =
+    case scale of
+        MajorPent -> 4
+        MinorPent -> 3
+        Ionian -> 4
+        Aeolian -> 3
+        Dorian -> 3
+        Mixolydian -> 4
+        Phrygian -> 3
+        Lydian -> 4
+        Locrian -> 3
+        Blues -> 3
+        HarmonicMajor -> 4
+        HarmonicMinor -> 3
+        MelodicMajor -> 4
+        MelodicMinor -> 3
+        ChromaticMajor -> -1
+        ChromaticMinor -> -1
+        Blank -> -1
+        TriadMajor -> 4
+        TriadMinor -> 3
+        TriadDim -> 3
+        TriadAug -> 4
+        DiagonalMajorPent -> 4
+        DiagonalPent -> 3
+        DiagonalBlues -> 3
+        Custom base intervals -> pickTone base intervals (thirdOf base) 3 4
+
+
+{-| Which seventh a scale's markers mark: 10 (♭7) or 11 (7), −1 for none. -}
+seventhOf : ScaleType -> Int
+seventhOf scale =
+    case scale of
+        MajorPent -> -1
+        MinorPent -> 10
+        Ionian -> 11
+        Aeolian -> 10
+        Dorian -> 10
+        Mixolydian -> 10
+        Phrygian -> 10
+        Lydian -> 11
+        Locrian -> 10
+        Blues -> 10
+        HarmonicMajor -> 11
+        HarmonicMinor -> 11
+        MelodicMajor -> 10
+        MelodicMinor -> 11
+        ChromaticMajor -> -1
+        ChromaticMinor -> -1
+        Blank -> -1
+        TriadMajor -> -1
+        TriadMinor -> -1
+        TriadDim -> -1
+        TriadAug -> -1
+        DiagonalMajorPent -> -1
+        DiagonalPent -> 10
+        DiagonalBlues -> 10
+        Custom base intervals -> pickTone base intervals (seventhOf base) 10 11
+
+
 {-| The 5th's interval. Everything in the app treats 7 semitones as the 5th —
 the blues ♭5 and Locrian's ♭5 are marked as ordinary tones — and only the
 diminished and augmented triads, whose 5th *is* the altered note, differ. -}
@@ -2006,6 +2185,13 @@ fifthInterval scale =
 
         TriadAug ->
             8
+
+        Custom base intervals ->
+            if List.member (fifthInterval base) intervals then
+                fifthInterval base
+
+            else
+                7
 
         _ ->
             7
@@ -2788,32 +2974,7 @@ viewScaleTitle board =
              else
                 rootSpelling board.scale board.root ++ " "
             )
-                ++ (case board.scale of
-                        MajorPent -> "Major Pentatonic"
-                        MinorPent -> "Minor Pentatonic"
-                        Ionian -> "Major (Ionian)"
-                        Aeolian -> "Minor (Aeolian)"
-                        Dorian -> "Dorian"
-                        Mixolydian -> "Mixolydian"
-                        Phrygian -> "Phrygian"
-                        Lydian -> "Lydian"
-                        Locrian -> "Locrian"
-                        Blues -> "Blues"
-                        HarmonicMajor -> "Harmonic Major"
-                        HarmonicMinor -> "Harmonic Minor"
-                        MelodicMajor -> "Melodic Major"
-                        MelodicMinor -> "Melodic Minor"
-                        ChromaticMajor -> "— All Notes (major)"
-                        ChromaticMinor -> "— All Notes (minor)"
-                        Blank -> "Blank neck"
-                        TriadMajor -> "Major Triad"
-                        TriadMinor -> "Minor Triad"
-                        TriadDim -> "Diminished Triad"
-                        TriadAug -> "Augmented Triad"
-                        DiagonalMajorPent -> "Diagonal Major Pentatonic"
-                        DiagonalPent -> "Diagonal Minor Pentatonic"
-                        DiagonalBlues -> "Diagonal Blues"
-                   )
+                ++ scaleTitle board.scale
 
         -- The notes ride alongside the heading rather than under it, each with
         -- its scale degree stacked beneath instead of trailing in brackets:
@@ -2888,6 +3049,58 @@ viewScaleTitle board =
         ]
 
 
+{-| The name a scale goes by in its heading, after the root. An edited scale
+is named after the preset it came from plus what changed (`Minor Pentatonic
++2 +6`), while that is short enough to read; past that it is just custom. -}
+scaleTitle : ScaleType -> String
+scaleTitle scale =
+    case scale of
+        MajorPent -> "Major Pentatonic"
+        MinorPent -> "Minor Pentatonic"
+        Ionian -> "Major (Ionian)"
+        Aeolian -> "Minor (Aeolian)"
+        Dorian -> "Dorian"
+        Mixolydian -> "Mixolydian"
+        Phrygian -> "Phrygian"
+        Lydian -> "Lydian"
+        Locrian -> "Locrian"
+        Blues -> "Blues"
+        HarmonicMajor -> "Harmonic Major"
+        HarmonicMinor -> "Harmonic Minor"
+        MelodicMajor -> "Melodic Major"
+        MelodicMinor -> "Melodic Minor"
+        ChromaticMajor -> "— All Notes (major)"
+        ChromaticMinor -> "— All Notes (minor)"
+        Blank -> "Blank neck"
+        TriadMajor -> "Major Triad"
+        TriadMinor -> "Minor Triad"
+        TriadDim -> "Diminished Triad"
+        TriadAug -> "Augmented Triad"
+        DiagonalMajorPent -> "Diagonal Major Pentatonic"
+        DiagonalPent -> "Diagonal Minor Pentatonic"
+        DiagonalBlues -> "Diagonal Blues"
+        Custom base intervals ->
+            let
+                baseIntervals =
+                    scaleIntervals base
+
+                added =
+                    List.filter (\i -> not (List.member i baseIntervals)) intervals
+
+                removed =
+                    List.filter (\i -> not (List.member i intervals)) baseIntervals
+
+                changes =
+                    List.map (\i -> "+" ++ customLabel base i) added
+                        ++ List.map (\i -> "\u{2212}" ++ customLabel base i) removed
+            in
+            if base == Blank || isChromatic base || List.length changes > 3 then
+                "Custom scale"
+
+            else
+                scaleTitle base ++ " " ++ String.join " " changes
+
+
 {-| The interval of each scale tone from the root, as a player names it —
 parallel to `scaleIntervals`. The all-notes maps have no degrees of their
 own, so their heading lists none (`degreeName` names their notes instead). -}
@@ -2918,6 +3131,19 @@ intervalLabels st =
         DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
         DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
         DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
+        Custom base intervals -> List.map (customLabel base) intervals
+
+
+{-| How an edited scale labels an interval: as its preset does where the preset
+has that note, otherwise by the common name. -}
+customLabel : ScaleType -> Int -> String
+customLabel base i =
+    List.map2 Tuple.pair (scaleIntervals base) (intervalLabels base)
+        |> List.filter (\( j, lbl ) -> j == i && lbl /= "")
+        |> List.head
+        |> Maybe.map Tuple.second
+        |> Maybe.withDefault
+            (List.drop i [ "R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7" ] |> List.head |> Maybe.withDefault "")
 
 
 {-| What a note marker reads in Degrees mode: the interval from the root, as
@@ -3499,8 +3725,40 @@ viewFretboard board =
             , drawNotes board
             , drawFretNumbers
             , drawInlayDots
+            , drawHitAreas board
             ]
         )
+
+
+{-| An invisible cell over every string at every fret, on top of everything
+else, so a click anywhere on the neck plays that note and toggles it in or out
+of the scale — the scale buttons are then just starting points for your own.
+A shift-click only plays it. -}
+drawHitAreas : Board -> List (Svg.Svg Msg)
+drawHitAreas board =
+    let
+        cell s f =
+            let
+                ( x0, x1 ) =
+                    if f == 0 then
+                        ( leftMargin, leftMargin + nutWidth )
+
+                    else
+                        ( fretLineX (f - 1), fretLineX f )
+            in
+            Svg.rect
+                [ SA.x (String.fromFloat x0)
+                , SA.y (String.fromFloat (stringY s - stringSpacing / 2))
+                , SA.width (String.fromFloat (x1 - x0))
+                , SA.height (String.fromFloat stringSpacing)
+                , SA.fill "transparent"
+                , SA.style "cursor: pointer"
+                , Html.Events.on "click"
+                    (Decode.map (FretClicked board.slot s f) (Decode.field "shiftKey" Decode.bool))
+                ]
+                []
+    in
+    List.concatMap (\s -> List.map (cell s) (List.range 0 numFrets)) (List.range 1 6)
 
 
 

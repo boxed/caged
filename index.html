@@ -146,6 +146,35 @@
             }
         });
 
+        // A plucked string, synthesized by Karplus-Strong: a burst of noise
+        // fed round a delay line one period long, averaged a little on every
+        // pass so the highs die first, the way a real string's do.
+        let audio = null;
+
+        function pluck(midi) {
+            audio = audio || new AudioContext();
+            if (audio.state === 'suspended') audio.resume();
+            const rate = audio.sampleRate;
+            const freq = 440 * Math.pow(2, (midi - 69) / 12);
+            const period = Math.round(rate / freq);
+            const length = Math.round(rate * 2.5);
+            const buffer = audio.createBuffer(1, length, rate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < period; i++) data[i] = Math.random() * 2 - 1;
+            const decay = 0.996;
+            for (let i = period; i < length; i++) {
+                data[i] = decay * 0.5 * (data[i - period] + data[i - period + 1]);
+            }
+            const source = audio.createBufferSource();
+            source.buffer = buffer;
+            const gain = audio.createGain();
+            gain.gain.value = 0.32;
+            source.connect(gain).connect(audio.destination);
+            source.start();
+        }
+
+        app.ports.playNote.subscribe(pluck);
+
         document.addEventListener('visibilitychange', () => {
             if (wakeLockWanted && document.visibilityState === 'visible') {
                 acquireWakeLock();

@@ -53,7 +53,8 @@ Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
 7th), three diagonal climbing variants
 (`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`), the two all-notes
 maps `ChromaticMinor`/`ChromaticMajor`, the empty `Blank` neck, and the four triads
-`TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`.
+`TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`, plus `Custom`, a scale
+edited by clicking notes on the neck (see **Custom scales**).
 
 `ChromaticMinor` and `ChromaticMajor` (the **All notes (minor)** / **All notes
 (major)** buttons, slugs `all-notes-minor` / `all-notes-major`) are deliberately
@@ -123,6 +124,36 @@ the shapes from the intervals. It requires:
 8. Add to `boxScales` in `tests/BoxShapeTests.elm` and to its `scaleName`.
 9. Run `elm-test` — `coverage` checks every scale note sits in a box and
    `edgeSanity` checks every box is well-formed in every tuning.
+
+## Custom scales
+
+Clicking anywhere on a neck (`drawHitAreas`, an invisible cell per string ×
+fret drawn on top of everything) sends `FretClicked slot string fret shift`,
+which does two things: it plucks the note and toggles its pitch class in that
+neck's scale. A shift-click only plucks it.
+
+- **`Custom base intervals`** is the edited scale: the preset it started from
+  plus the sorted intervals it now has. `customScale` builds one and collapses
+  it back to `base` when the intervals match the preset again — that is what
+  re-lights the preset's button, since `scaleButton` compares with `==`. Only
+  the *base* preset is matched, not every preset, so editing Ionian down to
+  1-3-5 does not suddenly turn into the triad lassos.
+- The base decides everything the notes alone leave open: spelling
+  (`customDegree`), interval labels (`customLabel`), and which third/seventh
+  `noteRole` marks when the scale has both or neither (`pickTone`). Box
+  flavor follows the third — ♭3 only is minor-anchored, 3 only major, else the
+  base's — and the test's `fRootFor` mirrors that rule.
+- A custom scale is always drawn with the CAGED boxes (`deriveBox` works from
+  intervals alone), whatever its base: an edited triad, diagonal or all-notes
+  map becomes an ordinary box scale.
+- The heading names it `scaleTitle base` plus its changes (`+2 −♭7`), up to
+  three; beyond that, or from a blank or all-notes base, "Custom scale".
+- **URL**: the slug is the base slug, `_`, then one hex digit per interval —
+  `minor-pent_02357a`. It has to be in the URL: `Nav.replaceUrl` re-fires
+  `UrlChanged`, which re-parses the whole neck list.
+- **Sound**: the `playNote` port sends a MIDI note number (`midiAt`: lowest
+  string placed nearest E2, the rest stacked by `openAbs`), and `index.html`
+  synthesizes a Karplus-Strong pluck with Web Audio.
 
 ## Triads
 
@@ -596,10 +627,10 @@ address bar is always a link to exactly what is on screen.
   all sharing the one `scale`) so links from that version keep working. It is
   never written any more; the next change rewrites the URL in the new form.
 
-## Ports (Wake Lock)
+## Ports (Wake Lock, sound)
 
-`port module Main` exposes `requestWakeLock`, `releaseWakeLock` (outgoing)
-and `wakeLockChanged` (incoming). `index.html` wires these to
+`port module Main` exposes `requestWakeLock`, `releaseWakeLock`, `playNote`
+(outgoing) and `wakeLockChanged` (incoming). `index.html` wires these to
 `navigator.wakeLock` with auto-reacquire on `visibilitychange`.
 
 ## Tests (`tests/BoxShapeTests.elm`)

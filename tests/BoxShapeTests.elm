@@ -53,6 +53,12 @@ climbing shapes). -}
 boxScales : List ScaleType
 boxScales =
     [ MajorPent, MinorPent, Ionian, Aeolian, Dorian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMajor, HarmonicMinor, MelodicMajor, MelodicMinor ]
+        -- Scales edited on the neck: one note added, one taken away, and a
+        -- sparse one built up from a blank neck, whose third flips it major.
+        ++ [ Custom MinorPent [ 0, 2, 3, 5, 7, 10 ]
+           , Custom Ionian [ 0, 2, 4, 5, 7, 9 ]
+           , Custom Blank [ 0, 4, 9 ]
+           ]
 
 
 {-| Preset tunings plus a few pathological ones (all strings the same pitch),
@@ -123,6 +129,19 @@ fRootFor tuning scale root =
         DiagonalMajorPent ->
             minorAnchor
 
+        Custom base intervals ->
+            -- An edited scale anchors by its third; with both or neither, as
+            -- the preset it came from does.
+            case ( List.member 3 intervals, List.member 4 intervals ) of
+                ( True, False ) ->
+                    minorAnchor
+
+                ( False, True ) ->
+                    majorAnchor
+
+                _ ->
+                    fRootFor tuning base root
+
         _ ->
             minorAnchor
 
@@ -162,6 +181,7 @@ scaleName scale =
         DiagonalPent -> "DiagonalPent"
         DiagonalMajorPent -> "DiagonalMajorPent"
         DiagonalBlues -> "DiagonalBlues"
+        Custom base intervals -> scaleName base ++ "+" ++ String.join "," (List.map String.fromInt intervals)
 
 
 
