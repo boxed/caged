@@ -1318,6 +1318,7 @@ tunings =
     , { name = "D Standard", slug = "d-standard", strings = [ 2, 9, 5, 0, 7, 2 ] }
     , { name = "Drop C", slug = "drop-c", strings = [ 2, 9, 5, 0, 7, 0 ] }
     , { name = "C♯/D♭ Standard", slug = "cs-standard", strings = [ 1, 8, 4, 11, 6, 1 ] }
+    , { name = "All Fourths", slug = "all-fourths", strings = [ 5, 0, 7, 2, 9, 4 ] }
     , { name = "DADGAD", slug = "dadgad", strings = [ 2, 9, 7, 2, 9, 2 ] }
     , { name = "Open G", slug = "open-g", strings = [ 2, 11, 7, 2, 7, 2 ] }
     , { name = "Open D", slug = "open-d", strings = [ 2, 9, 6, 2, 9, 2 ] }
@@ -1563,85 +1564,13 @@ Major pent of R → relative minor (R - 3)'s fret on low E.
 rootFret : Board -> Int
 rootFret board =
     let
-        -- The anchor is the root's (or relative minor's) fret on the low-E
-        -- string, so it follows the low E's open pitch in any tuning. In
-        -- standard tuning (low E = 4) these reduce to the familiar −4 / −7.
+        -- The anchor is a fret on the low string, so it follows that string's
+        -- open pitch in any tuning. In standard tuning (low E = 4) a minor
+        -- scale anchors at R − 4 and a major one at R − 7.
         lowE =
             openString board.tuning 6
-
-        minorAnchor =
-            modBy 12 (board.root - lowE)
-
-        majorAnchor =
-            modBy 12 (board.root - 3 - lowE)
     in
     case board.scale of
-        MajorPent ->
-            majorAnchor
-
-        MinorPent ->
-            minorAnchor
-
-        Ionian ->
-            majorAnchor
-
-        Aeolian ->
-            minorAnchor
-
-        Dorian ->
-            majorAnchor
-
-        Mixolydian ->
-            majorAnchor
-
-        Phrygian ->
-            majorAnchor
-
-        Lydian ->
-            majorAnchor
-
-        Locrian ->
-            majorAnchor
-
-        Blues ->
-            minorAnchor
-
-        HarmonicMajor ->
-            majorAnchor
-
-        HarmonicMinor ->
-            minorAnchor
-
-        MelodicMajor ->
-            majorAnchor
-
-        MelodicMinor ->
-            minorAnchor
-
-        ChromaticMajor ->
-            -- No boxes are drawn for the all-notes maps, so the anchor is
-            -- unused; the matching flavor's anchor is the sane value.
-            majorAnchor
-
-        ChromaticMinor ->
-            minorAnchor
-
-        Blank ->
-            minorAnchor
-
-        TriadMajor ->
-            -- Triads draw lassos, not boxes, so the anchor is never read.
-            majorAnchor
-
-        TriadMinor ->
-            minorAnchor
-
-        TriadDim ->
-            minorAnchor
-
-        TriadAug ->
-            majorAnchor
-
         DiagonalMajorPent ->
             diagonalAnchor board.tuning DiagonalMajorPent board.root
 
@@ -1651,12 +1580,8 @@ rootFret board =
         DiagonalBlues ->
             diagonalAnchor board.tuning DiagonalBlues board.root
 
-        Custom _ _ ->
-            if majorFlavored board.scale then
-                majorAnchor
-
-            else
-                minorAnchor
+        _ ->
+            modBy 12 (board.root - anchorOffset board.scale - lowE)
 
 
 isDiagonal : ScaleType -> Bool
@@ -1695,30 +1620,57 @@ pentAnchor b =
         _ -> 10
 
 
-{-| Major-flavored scales anchor box 1 on the relative minor (a minor third
-below the root), exactly as `rootFret` does. Measured from that anchor note the
-scale's intervals rotate up a minor third. Minor-flavored scales anchor on the
-root and need no rotation. -}
-majorFlavored : ScaleType -> Bool
-majorFlavored scale =
+{-| How far the root sits above box 1's anchor note, in semitones. Box 1
+anchors on the low string at the minor-pentatonic root that the scale's boxes
+are built around: the root itself for minor scales, and the relative minor (a
+minor third below) for major ones.
+
+The church modes all borrow the boxes of their parent major scale, so they all
+anchor on that scale's relative minor — D Dorian on A, like C major, since it
+holds the same notes. Anchoring Dorian on its own relative minor (B) put its
+boxes two frets off C major's, in positions no one plays. -}
+anchorOffset : ScaleType -> Int
+anchorOffset scale =
     case scale of
-        MajorPent -> True
-        Ionian -> True
-        Dorian -> True
-        Mixolydian -> True
-        Phrygian -> True
-        Lydian -> True
-        Locrian -> True
-        HarmonicMajor -> True
-        MelodicMajor -> True
+        MajorPent -> 3
+        Ionian -> 3
+        Dorian -> 5
+        Phrygian -> 7
+        Lydian -> 8
+        Mixolydian -> 10
+        Locrian -> 2
+        HarmonicMajor -> 3
+        MelodicMajor -> 3
+        ChromaticMajor -> 3
+        TriadMajor -> 3
+        TriadAug -> 3
         Custom base intervals ->
-            -- An edited scale goes by its third; only with both or neither
-            -- does the preset it came from decide.
+            -- An edited scale goes by its third: while it still has the
+            -- preset's third it keeps the preset's boxes, and once it has
+            -- swapped it for the other one it anchors as a plain minor or major
+            -- scale. With both thirds or neither the preset decides.
+            let
+                baseThird =
+                    pickTone base (scaleIntervals base) 0 3 4
+            in
             case pickTone base intervals 0 3 4 of
-                3 -> False
-                4 -> True
-                _ -> majorFlavored base
-        _ -> False
+                3 ->
+                    if baseThird == 3 then
+                        anchorOffset base
+
+                    else
+                        0
+
+                4 ->
+                    if baseThird == 4 then
+                        anchorOffset base
+
+                    else
+                        3
+
+                _ ->
+                    anchorOffset base
+        _ -> 0
 
 
 {-| A box is a compact playing position: a five-fret window (a four-fret hand
@@ -1735,18 +1687,10 @@ boxWindow =
 
 
 {-| Pitch classes that count as scale notes *measured from a box's anchor note*
-(see `majorFlavored`). -}
+(see `anchorOffset`). -}
 anchorScaleSet : ScaleType -> List Int
 anchorScaleSet scale =
-    let
-        rotation =
-            if majorFlavored scale then
-                3
-
-            else
-                0
-    in
-    List.map (\i -> modBy 12 (i + rotation)) (scaleIntervals scale)
+    List.map (\i -> modBy 12 (i + anchorOffset scale)) (scaleIntervals scale)
 
 
 {-| Derive box `b` (1–5) for a tuning and scale as `(string, lo, hi)` frets
@@ -1763,6 +1707,14 @@ For every ordinary tuning the base window is already complete, so nothing grows
 and standard tuning reproduces the canonical pentatonic and Ionian shapes — the
 major-scale positions land on the same windows as the pentatonic boxes. Only
 degenerate tunings (e.g. all six strings the same pitch) force wider boxes.
+
+The window is a range of *pitches*, not of frets: on each string it is moved by
+however far that string is tuned from standard (`stringShift`), so a box holds
+the same notes as the standard-tuning shape, refingered. In E A D G C F the top
+two strings sit a semitone above standard, so their window drops a fret and
+every pentatonic box keeps two notes per string. Held to one fret range on
+every string, those strings picked up a third note in some boxes and lost one
+in others.
 
 It is the single source of truth for all CAGED box geometry — no per-mode or
 per-tuning tables — and is root-independent (the root cancels against the
@@ -1791,12 +1743,12 @@ deriveBox tuning scale b =
         inScale s off =
             List.member (degreeAt s off) scaleSet
 
-        -- Distinct scale degrees reachable on any string within [lo, upper].
+        -- Distinct scale degrees reachable on any string within its window.
         degreesIn upper =
             List.range 1 6
                 |> List.concatMap
                     (\s ->
-                        List.range lo upper
+                        List.range (lo + stringShift tuning s) (upper + stringShift tuning s)
                             |> List.filterMap
                                 (\off ->
                                     if inScale s off then
@@ -1831,11 +1783,25 @@ deriveBox tuning scale b =
         forString s =
             let
                 offs =
-                    List.filter (inScale s) (List.range lo hi)
+                    List.filter (inScale s)
+                        (List.range (lo + stringShift tuning s) (hi + stringShift tuning s))
             in
             Maybe.map2 (\loF hiF -> ( s, loF, hiF )) (List.minimum offs) (List.maximum offs)
     in
     List.filterMap forString (List.range 1 6)
+
+
+{-| How many frets a box window moves on string `s` so it covers the pitches it
+would in standard tuning: minus however far the string sits above its standard
+interval over the low string. Taken the short way round the octave, since a
+tuning stores only pitch classes, so no string moves more than six frets. -}
+stringShift : Tuning -> Int -> Int
+stringShift tuning s =
+    let
+        interval t =
+            openString t s - openString t 6
+    in
+    negate (modBy 12 (interval tuning - interval standardTuning + 6) - 6)
 
 
 positionBox : Board -> Int -> Int -> Maybe Int
@@ -3787,8 +3753,10 @@ drawBoxRegions board =
 drawBoxRegionsBoxes : Board -> List (Svg.Svg Msg)
 drawBoxRegionsBoxes board =
     let
+        -- A string whose window shifts (see `stringShift`) can need the box an
+        -- octave further out at either end of the neck.
         octaves =
-            [ -1, 0, 1 ]
+            [ -2, -1, 0, 1, 2 ]
 
         -- Which box instances the highlight window lights, keyed by box number
         -- and octave, since the same box repeats up the neck and only the one

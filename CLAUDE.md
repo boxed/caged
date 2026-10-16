@@ -111,18 +111,18 @@ Adding a new mode no longer needs per-mode box tables — `deriveBox` generates
 the shapes from the intervals. It requires:
 1. Add constructor to `ScaleType`.
 2. Add intervals to `scaleIntervals`.
-3. Add `rootFret` case (`majorAnchor` for major-flavored, `minorAnchor` for
-   minor-flavored — these already fold in the tuning's low-E open pitch).
-4. Add `majorFlavored` case (True iff box 1 anchors on the relative minor —
-   matches the `majorAnchor` choice in step 3).
-5. Add `thirdInterval`/`seventhInterval` cases in `noteRole` (and a
+3. Add an `anchorOffset` case if box 1 should not anchor on the root: 3 for a
+   major scale (relative minor), or for a mode of the major scale the distance
+   from its parent's relative minor up to its root (Dorian 5). `rootFret`
+   and `anchorScaleSet` both read it.
+4. Add `thirdInterval`/`seventhInterval` cases in `noteRole` (and a
    `fifthInterval` case if the 5th is not 7 semitones).
-6. Add `scaleDegrees` case (for enharmonic spelling) and a `scaleSlug` /
+5. Add `scaleDegrees` case (for enharmonic spelling) and a `scaleSlug` /
    `scaleFromSlug` pair for the URL.
-7. Add a button to the right `pickerGroup` in `viewControls`, plus title and
+6. Add a button to the right `pickerGroup` in `viewControls`, plus title and
    interval labels in the view.
-8. Add to `boxScales` in `tests/BoxShapeTests.elm` and to its `scaleName`.
-9. Run `elm-test` — `coverage` checks every scale note sits in a box and
+7. Add to `boxScales` in `tests/BoxShapeTests.elm` and to its `scaleName`.
+8. Run `elm-test` — `coverage` checks every scale note sits in a box and
    `edgeSanity` checks every box is well-formed in every tuning.
 
 ## Custom scales
@@ -140,9 +140,10 @@ neck's scale. A shift-click only plucks it.
   1-3-5 does not suddenly turn into the triad lassos.
 - The base decides everything the notes alone leave open: spelling
   (`customDegree`), interval labels (`customLabel`), and which third/seventh
-  `noteRole` marks when the scale has both or neither (`pickTone`). Box
-  flavor follows the third — ♭3 only is minor-anchored, 3 only major, else the
-  base's — and the test's `fRootFor` mirrors that rule.
+  `noteRole` marks when the scale has both or neither (`pickTone`). The box
+  anchor follows the third: while the scale keeps the base's third it keeps
+  the base's anchor, a swapped third anchors as plain minor (♭3) or major (3),
+  and with both or neither the base decides. The test's `fRootFor` mirrors it.
 - A custom scale is always drawn with the CAGED boxes (`deriveBox` works from
   intervals alone), whatever its base: an edited triad, diagonal or all-notes
   map becomes an ordinary box scale.
@@ -196,11 +197,13 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
   pitch classes (S1→S6). `openString tuning s` indexes it; `noteAt tuning s f`
   is the pitch class at a fret. Standard tuning = `[4,11,7,2,9,4]`.
 - **rootFret** anchors boxes on the low-E string, following its open pitch:
-  - Minor-flavored (MinorPent, Aeolian, Blues, Harmonic/Melodic minor):
-    `(R − openLowE) mod 12` — root on low E (= `R − 4` in standard tuning).
-  - Major-flavored (MajorPent, Ionian, Dorian, Mixolydian, Harmonic/Melodic
-    major, …): `(R − 3 − openLowE) mod 12` — relative minor on low E
-    (= `R − 7` standard).
+  `(R − anchorOffset − openLowE) mod 12`. `anchorOffset` is 0 for minor scales
+  (root on low E, `R − 4` in standard), 3 for major ones (relative minor,
+  `R − 7`), and for the church modes the distance up from their **parent major
+  scale's** relative minor: Dorian 5, Phrygian 7, Lydian 8, Mixolydian 10,
+  Locrian 2. So D Dorian anchors on A and draws exactly C major's boxes. (Modes
+  used to anchor a minor third below their own root, which put Dorian's boxes
+  two frets off its parent's.)
 - **Note roles** (`noteRole`): Root / Third / Fifth / Other. Scale-wide, not
   per-box. 3rd = interval 3 (minor) or 4 (major). 5th = interval 7 always.
 - **Naming and order**: a button says only what its picker group does not
@@ -224,7 +227,7 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 ## Tunings
 
 The selector offers preset tunings (Standard, Drop D, D♯/E♭ Standard, D Standard, Drop C,
-C♯/D♭ Standard, DADGAD, Open G/D/E) **plus arbitrary custom tunings**
+C♯/D♭ Standard, All Fourths (E A D G C F), DADGAD, Open G/D/E) **plus arbitrary custom tunings**
 via per-string ▲/▼ steppers (shown only after pressing **Custom**). A custom
 tuning round-trips through the URL as six dash-joined note slugs
 (`?tuning=D-A-G-D-A-D`); presets use their slug. A note-encoded slug always
@@ -238,13 +241,20 @@ geometry — no per-mode or per-tuning tables. A box is a *playing position* tha
 **must contain the complete scale** (every degree, somewhere across its strings)
 so you can play the whole scale within it — that is the hard requirement.
 Ergonomics (a compact fret window) is secondary and yields when it conflicts.
-It works for any tuning because it reads the actual open-string pitches rather
-than offsetting a standard-tuning shape.
+It works for any tuning because it reads the actual open-string pitches: the
+standard shape is the reference only for which pitches a box spans.
 
 - **Anchors**: the 5 boxes sit on the minor-pentatonic degrees of the low string
   relative to `rootFret` — `pentAnchor` = `[0,3,5,7,10]`.
 - **Window** (`boxWindow`): base window `[A−1, A+3]` for *every* scale — a
-  compact 5-fret CAGED position. Seven-note modes use the same window as the
+  compact 5-fret CAGED position. It is a range of **pitches**: on each string
+  it moves by `stringShift`, minus how far that string sits from its
+  standard-tuning interval above the low string (short way round, ≤6 frets).
+  So a box holds the same notes as the standard shape, refingered — in
+  E A D G C F the top two strings' windows drop a fret and every pentatonic
+  box keeps two notes per string. A fixed fret range on every string gave
+  those strings three notes in some boxes. Because a window can shift by up
+  to 6 frets, boxes are drawn for octaves −2…2. Seven-note modes use the same window as the
   pentatonic, so mode box N and pentatonic box N are the same hand position;
   the two extra degrees fill in inside the window instead of pushing the
   position up the neck. (An earlier `[A, A+4]` for 7-note scales put boxes 1,
@@ -255,19 +265,18 @@ than offsetting a standard-tuning shape.
   strings the same pitch — where a compact box *cannot* hold all degrees) force
   wider, heavily-overlapping boxes. Guarded by the `completeness` test.
 - **Membership** (`anchorScaleSet`): a note at relative fret `off` on string `s`
-  is in the box iff `(open s − open 6 + off) mod 12` is a scale degree. Major-
-  flavored scales (`majorFlavored`) rotate the intervals up a minor third because
-  box 1 anchors on the relative minor. The root cancels, so shapes are
+  is in the box iff `(open s − open 6 + off) mod 12` is a scale degree. The intervals
+  are rotated up by `anchorOffset`, since box 1 anchors that far below the
+  root. The root cancels, so shapes are
   root-independent.
 - **Reproduces the canon**: in standard tuning this yields the exact textbook
   pentatonic and Ionian/Aeolian shapes — locked by the `canonicalShapes` test.
-  Dorian/Lydian/Locrian etc. are now the algorithm's consistent CAGED shapes
-  (they used to be hand-tuned / imported and differed slightly).
+  The other church modes draw their parent major scale's boxes exactly.
 - **Overlaps**: wherever adjacent box windows overlap, the shared band is drawn
   as diagonal two-color stripes (`drawOverlapStripe`), plus the 5→1 octave wrap
   (`drawWrapOverlap`). This is computed for *every* non-diagonal scale, since
-  `deriveBox` can produce real overlaps in any tuning (e.g. pentatonic in Open
-  G). In standard tuning pentatonic boxes only touch, so those overlaps collapse
+  `deriveBox` can produce real overlaps (seven-note scales always do, and
+  degenerate tunings do). In standard tuning pentatonic boxes only touch, so those overlaps collapse
   to invisible zero-width pinches. Solid fill (`boxFillOpacity`) and the stripe
   pre-blend (`boxBlendPct`) share one ratio so a stripe reads like the solids
   around it.

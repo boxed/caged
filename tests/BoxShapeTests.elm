@@ -40,7 +40,7 @@ testRoot =
 
 octaves : List Int
 octaves =
-    [ -1, 0, 1 ]
+    [ -2, -1, 0, 1, 2 ]
 
 
 fretboardFrets : List Int
@@ -85,41 +85,8 @@ fRootFor tuning scale root =
     let
         lowE =
             openString tuning 6
-
-        minorAnchor =
-            modBy 12 (root - lowE)
-
-        majorAnchor =
-            modBy 12 (root - 3 - lowE)
     in
     case scale of
-        MajorPent ->
-            majorAnchor
-
-        Ionian ->
-            majorAnchor
-
-        Dorian ->
-            majorAnchor
-
-        Mixolydian ->
-            majorAnchor
-
-        Phrygian ->
-            majorAnchor
-
-        Lydian ->
-            majorAnchor
-
-        Locrian ->
-            majorAnchor
-
-        HarmonicMajor ->
-            majorAnchor
-
-        MelodicMajor ->
-            majorAnchor
-
         DiagonalPent ->
             modBy 12 (root + 3 - lowE)
 
@@ -127,23 +94,51 @@ fRootFor tuning scale root =
             modBy 12 (root + 3 - lowE)
 
         DiagonalMajorPent ->
-            minorAnchor
-
-        Custom base intervals ->
-            -- An edited scale anchors by its third; with both or neither, as
-            -- the preset it came from does.
-            case ( List.member 3 intervals, List.member 4 intervals ) of
-                ( True, False ) ->
-                    minorAnchor
-
-                ( False, True ) ->
-                    majorAnchor
-
-                _ ->
-                    fRootFor tuning base root
+            modBy 12 (root - lowE)
 
         _ ->
-            minorAnchor
+            modBy 12 (root - offsetFor scale - lowE)
+
+
+{-| Semitones from box 1's anchor up to the root: the modes anchor on their
+parent major scale's relative minor. -}
+offsetFor : ScaleType -> Int
+offsetFor scale =
+    case scale of
+        MajorPent -> 3
+        Ionian -> 3
+        Dorian -> 5
+        Phrygian -> 7
+        Lydian -> 8
+        Mixolydian -> 10
+        Locrian -> 2
+        HarmonicMajor -> 3
+        MelodicMajor -> 3
+        Custom base intervals ->
+            -- An edited scale keeps its preset's anchor while it keeps the
+            -- preset's third, and anchors as plain minor or major once the
+            -- third has changed.
+            let
+                third ivs =
+                    case ( List.member 3 ivs, List.member 4 ivs ) of
+                        ( True, False ) -> Just 3
+                        ( False, True ) -> Just 4
+                        _ -> Nothing
+            in
+            case third intervals of
+                Nothing ->
+                    offsetFor base
+
+                Just t ->
+                    if third (scaleIntervals base) == Just t then
+                        offsetFor base
+
+                    else if t == 3 then
+                        0
+
+                    else
+                        3
+        _ -> 0
 
 
 rangeOnString : List ( Int, Int, Int ) -> Int -> Maybe ( Int, Int )
