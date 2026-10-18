@@ -166,6 +166,8 @@
         let audio = null;
 
         function pluck(midi) {
+            // A neck of a dozen strings reaches below anything a speaker plays.
+            if (midi < 12) return;
             audio = audio || new AudioContext();
             if (audio.state === 'suspended') audio.resume();
             const rate = audio.sampleRate;

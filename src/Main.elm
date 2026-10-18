@@ -2,21 +2,31 @@ port module Main exposing
     ( ScaleType(..)
     , StringSet(..)
     , Tuning
+    , anchorOpen
     , deriveBox
     , diagonalAnchor
     , diagonalShapes
     , diagonalShapesFor
+    , fourthsFor
     , main
+    , midiAt
+    , nextLowString
     , noteAt
     , openAbs
     , openString
+    , resizeTuning
     , rootSpelling
     , scaleDegrees
     , scaleIntervals
     , spell
+    , standardFor
     , standardTuning
+    , stringCount
+    , thirdsFor
     , triadVoicingsFor
+    , tuningFromSlug
     , tunings
+    , tuningsFor
     )
 
 import Browser
@@ -133,10 +143,12 @@ type alias Drag =
     }
 
 
-{-| A guitar tuning is fully described by its six open-string pitch classes,
-ordered string 1 (high E in standard) down to string 6 (low E). Everything
-else — which notes are in the scale, where the CAGED boxes land, how the
-diagonal shapes climb — is derived from these six numbers at runtime. -}
+{-| A tuning is fully described by its open-string pitch classes, one per
+string, ordered string 1 (high E in standard) down to the lowest string (the low
+E, string 6, on a guitar). There can be any number of strings, so the length of
+the list is the string count. Everything else — which notes are in the scale,
+where the CAGED boxes land, how the diagonal shapes climb — is derived from
+these numbers at runtime. -}
 type alias Tuning =
     { name : String
     , slug : String
@@ -188,8 +200,9 @@ type ScaleType
 
 
 {-| Which three adjacent strings carry the triad lassos. `StringTrio t` names a
-set by its highest string `t` (1–4) — strings t, t+1 and t+2 — and `AllStrings`
-draws all four sets at once. Only the triad modes use it. -}
+set by its highest string `t` — strings t, t+1 and t+2, so 1 up to two short of
+the string count — and `AllStrings` draws every set at once. Only the triad
+modes use it. -}
 type StringSet
     = AllStrings
     | StringTrio Int
@@ -203,6 +216,7 @@ type Msg
     | SetTuning Tuning
     | SetStringSet Int StringSet
     | TuneString Int Int
+    | ChangeStringCount Int
     | SetFocus (Maybe Focus)
     | SetStringFocus (Maybe Int)
     | ToggleMono
@@ -339,11 +353,29 @@ update msg model =
             in
             sync { model | tuning = customFrom newStrings }
 
+        ChangeStringCount delta ->
+            -- Strings come and go at the low end, so every string keeps its
+            -- number, and a new one is tuned by continuing the pattern. What
+            -- pointed at a string that is gone is pulled back onto the neck.
+            let
+                tuning =
+                    resizeTuning (stringCount model.tuning + delta) model.tuning
+
+                strings =
+                    stringCount tuning
+            in
+            sync
+                { model
+                    | tuning = tuning
+                    , necks = List.map (normalizeNeck strings) model.necks
+                    , stringFocus = Maybe.map (clampString strings) model.stringFocus
+                }
+
         SetFocus f ->
             sync { model | focus = Maybe.map clampFocus f }
 
         SetStringFocus s ->
-            sync { model | stringFocus = Maybe.map clampString s }
+            sync { model | stringFocus = Maybe.map (clampString (stringCount model.tuning)) s }
 
         ToggleMono ->
             sync { model | mono = not model.mono }
@@ -774,13 +806,42 @@ stringSetSlug set =
 
 stringSetFromSlug : String -> Maybe StringSet
 stringSetFromSlug s =
-    case s of
-        "all" -> Just AllStrings
-        "1-2-3" -> Just (StringTrio 1)
-        "2-3-4" -> Just (StringTrio 2)
-        "3-4-5" -> Just (StringTrio 3)
-        "4-5-6" -> Just (StringTrio 4)
-        _ -> Nothing
+    if s == "all" then
+        Just AllStrings
+
+    else
+        case List.map String.toInt (String.split "-" s) of
+            [ Just a, Just b, Just c ] ->
+                if a >= 1 && b == a + 1 && c == a + 2 then
+                    Just (StringTrio a)
+
+                else
+                    Nothing
+
+            _ ->
+                Nothing
+
+
+{-| A string set the tuning actually has: three adjacent strings that exist, or
+all of them. Taking a string away leaves a set that pointed at it meaning
+"all", rather than nothing. -}
+normalizeSet : Int -> StringSet -> StringSet
+normalizeSet n set =
+    case set of
+        StringTrio t ->
+            if t >= 1 && t <= n - 2 then
+                set
+
+            else
+                AllStrings
+
+        AllStrings ->
+            AllStrings
+
+
+normalizeNeck : Int -> Neck -> Neck
+normalizeNeck n neck =
+    { neck | stringSet = normalizeSet n neck.stringSet }
 
 
 {-| Everything the URL carries: the list of necks, which of them the controls
@@ -857,17 +918,22 @@ parseUrl url =
 
                         [] ->
                             [ single ]
+
+        tuning =
+            lookup "tuning"
+                |> Maybe.andThen tuningFromSlug
+                |> Maybe.withDefault standardTuning
+
+        strings =
+            stringCount tuning
     in
-    { necks = necks
+    { necks = List.map (normalizeNeck strings) necks
     , active =
         lookup "active"
             |> Maybe.andThen String.toInt
             |> Maybe.withDefault 0
             |> clampIndex necks
-    , tuning =
-        lookup "tuning"
-            |> Maybe.andThen tuningFromSlug
-            |> Maybe.withDefault standardTuning
+    , tuning = tuning
     , focus =
         lookup "focus"
             |> Maybe.andThen focusFromSlug
@@ -875,7 +941,7 @@ parseUrl url =
     , stringFocus =
         lookup "string"
             |> Maybe.andThen String.toInt
-            |> Maybe.map clampString
+            |> Maybe.map (clampString strings)
     , mono = lookup "mono" == Just "1"
     , degrees = lookup "degrees" == Just "1"
     , twoColumns = lookup "cols" == Just "2"
@@ -950,7 +1016,7 @@ boardAt : Model -> Int -> Neck -> Board
 boardAt model i neck =
     { root = neck.root
     , scale = neck.scale
-    , stringSet = neck.stringSet
+    , stringSet = normalizeSet (stringCount model.tuning) neck.stringSet
     , tuning = model.tuning
     , focus = model.focus
     , stringFocus = model.stringFocus
@@ -981,17 +1047,18 @@ clampFocus ( lo, hi ) =
     ( clamp 0 h lo, h )
 
 
-{-| The string a fresh string highlight opens on: the low E, which is the
-string the boxes are anchored to and the one a scale is usually walked up
-first. -}
-defaultStringFocus : Int
+{-| The string a fresh string highlight opens on: the lowest string, the one a
+scale is usually walked up first (the low E on a six-string neck, which is also
+the string the boxes are anchored to). -}
+defaultStringFocus : Tuning -> Int
 defaultStringFocus =
-    6
+    stringCount
 
 
-clampString : Int -> Int
-clampString =
-    clamp 1 6
+{-| Keeps a string number on the neck, given how many strings it has. -}
+clampString : Int -> Int -> Int
+clampString n =
+    clamp 1 n
 
 
 {-| How far back the notes off the highlighted string are drawn. They fade
@@ -1074,27 +1141,70 @@ moveItem from to xs =
             insertAt to x (List.take from xs ++ List.drop (from + 1) xs)
 
 
-{-| Named presets resolve by their slug; anything else is parsed as a custom
-tuning encoded as six dash-joined note slugs, high string to low (e.g.
-`E-A-D-G-B-E`). A note-encoded slug always stays Custom — even when its notes
-match a preset — so editing/entering custom mode round-trips through the URL
-(`Nav.replaceUrl` re-fires `UrlChanged`) without collapsing back to a preset. -}
+{-| Named presets resolve by their slug. The ones that carry on to any number
+of strings take the count as a suffix (`standard-7`, `all-fourths-8`); without
+one they mean six, as they always did. Anything else is parsed as a custom
+tuning encoded as dash-joined note slugs, high string to low (e.g.
+`E-A-D-G-B-E`, as many as it has strings). A note-encoded slug always stays
+Custom — even when its notes match a preset — so editing/entering custom mode
+round-trips through the URL (`Nav.replaceUrl` re-fires `UrlChanged`) without
+collapsing back to a preset. -}
 tuningFromSlug : String -> Maybe Tuning
 tuningFromSlug s =
-    case List.filter (\t -> t.slug == s) tunings of
+    case List.filter (\t -> t.slug == s) (tunings ++ extendedTunings) of
         match :: _ ->
             Just match
 
         [] ->
-            let
-                parsed =
-                    String.split "-" s |> List.filterMap rootFromSlug
-            in
-            if List.length parsed == 6 then
-                Just (customFrom parsed)
+            case generatedFromSlug s of
+                Just t ->
+                    Just t
 
-            else
-                Nothing
+                Nothing ->
+                    let
+                        tokens =
+                            String.split "-" s
+
+                        parsed =
+                            List.filterMap rootFromSlug tokens
+                    in
+                    if List.length parsed == List.length tokens && List.length parsed <= maxStrings then
+                        Just (customFrom parsed)
+
+                    else
+                        Nothing
+
+
+{-| `standard-7`, `all-fourths-8`, `all-major-thirds-5`: a rule-built tuning and
+its string count. -}
+generatedFromSlug : String -> Maybe Tuning
+generatedFromSlug s =
+    case List.reverse (String.split "-" s) of
+        last :: rest ->
+            case String.toInt last of
+                Just n ->
+                    if n >= 1 && n <= maxStrings then
+                        case String.join "-" (List.reverse rest) of
+                            "standard" ->
+                                Just (standardFor n)
+
+                            "all-fourths" ->
+                                Just (fourthsFor n)
+
+                            "all-major-thirds" ->
+                                Just (thirdsFor n)
+
+                            _ ->
+                                Nothing
+
+                    else
+                        Nothing
+
+                Nothing ->
+                    Nothing
+
+        [] ->
+            Nothing
 
 
 isCustom : Tuning -> Bool
@@ -1107,7 +1217,7 @@ customName =
     "Custom"
 
 
-{-| A custom tuning from six pitch classes, always named "Custom" so the UI
+{-| A custom tuning from its open-string pitch classes, always named "Custom" so the UI
 stays in custom mode (steppers visible) even when the notes happen to match a
 preset. The slug encodes the notes so it round-trips through the URL. -}
 customFrom : List Int -> Tuning
@@ -1377,8 +1487,127 @@ standardTuning =
     { name = "Standard", slug = "standard", strings = [ 4, 11, 7, 2, 9, 4 ] }
 
 
-{-| Built-in tunings offered in the selector. `strings` lists the six open
-pitch classes high (string 1) to low (string 6). Any tuning not in this list
+{-| How many strings a tuning has. The list *is* the tuning, so this is the
+whole of the string count: nothing else on the model has to agree with it. -}
+stringCount : Tuning -> Int
+stringCount t =
+    max 1 (List.length t.strings)
+
+
+{-| The most strings the page will draw. It is only here so a hand-edited link
+cannot ask for a neck with a hundred million strings; the stepper stops at the
+same number, since the URL is re-read after every change. -}
+maxStrings : Int
+maxStrings =
+    1000
+
+
+{-| The open pitch class of string `s` in standard tuning, continued below the
+low E in fourths (B, F♯, C♯ …) for as many strings as there are. Strings are
+numbered from the top, so a string keeps its standard note whatever is added
+below it. This is what Standard means at seven strings and up, and what the
+diagonal shapes are measured against (`stringDelta`), since their pairs of
+strings climb in fourths. The box windows use `windowOpen` instead. -}
+referenceOpen : Int -> Int
+referenceOpen s =
+    if s <= 6 then
+        standardTuning.strings |> List.drop (s - 1) |> List.head |> Maybe.withDefault 4
+
+    else
+        modBy 12 (4 - 5 * (s - 6))
+
+
+{-| The open pitch class each string's box window is measured against: standard
+tuning, repeated every five strings (E A D G B, then E B G D A … down the neck),
+so below the sixth string a string is measured against the one five above it.
+Standard tuning's top and bottom strings are both E, two octaves apart, and the
+boxes show the same notes on both. This carries that on: strings five apart
+sit two octaves apart in the reference, so each box shows the same notes on
+them whatever the tuning, rather than slipping a fret every five strings the
+way a tuning in fourths drifts against itself (25 semitones, not 24). -}
+windowOpen : Int -> Int
+windowOpen s =
+    if s <= 6 then
+        referenceOpen s
+
+    else
+        referenceOpen (modBy 5 (s - 2) + 2)
+
+
+{-| The MIDI note of string `s` in standard tuning, continued down in fourths
+the same way: the low E is E2 (40), the high E is E4 (64), a seventh string is
+B1 (35). -}
+referenceMidi : Int -> Int
+referenceMidi s =
+    if s <= 6 then
+        [ 64, 59, 55, 50, 45, 40 ] |> List.drop (s - 1) |> List.head |> Maybe.withDefault 40
+
+    else
+        40 - 5 * (s - 6)
+
+
+{-| The string the box geometry is anchored to: the low E, or the lowest string
+there is when there are fewer than six. -}
+anchorString : Tuning -> Int
+anchorString t =
+    min 6 (stringCount t)
+
+
+{-| The open pitch the low E would have in this tuning, whether or not there is
+one. With six or more strings it is just string 6. With fewer, it is the
+lowest string's pitch moved to where standard tuning keeps the low E relative
+to it — so a five-string neck without its low E draws its boxes in the same
+places the six-string one does, instead of sliding them to the A string. -}
+anchorOpen : Tuning -> Int
+anchorOpen t =
+    let
+        a =
+            anchorString t
+    in
+    modBy 12 (openString t a + referenceOpen 6 - referenceOpen a)
+
+
+{-| A tuning of `n` strings from a rule that gives the pitch class of string
+`s`, named and slugged so it can be looked up again. Only the six-string slug is
+bare (`all-fourths`), so every link made before there were other counts still
+means what it did. -}
+generated : String -> String -> Int -> (Int -> Int) -> Tuning
+generated name base n note =
+    { name = name
+    , slug =
+        if n == 6 then
+            base
+
+        else
+            base ++ "-" ++ String.fromInt n
+    , strings = List.map (\s -> modBy 12 (note s)) (List.range 1 n)
+    }
+
+
+{-| Standard tuning for any number of strings: the top `n` of standard
+tuning, continued below in fourths. -}
+standardFor : Int -> Tuning
+standardFor n =
+    generated "Standard" "standard" n referenceOpen
+
+
+{-| Every string a fourth below the one above, from the high F: E A D G C F at
+six strings, B E A D G C F at seven. -}
+fourthsFor : Int -> Tuning
+fourthsFor n =
+    generated "All Fourths" "all-fourths" n (\s -> 5 - 5 * (s - 1))
+
+
+{-| Every string a major third below the one above, from the high C: E G♯ C E
+G♯ C at six strings. Three strings go all the way round the octave, so the
+pattern repeats every third string. -}
+thirdsFor : Int -> Tuning
+thirdsFor n =
+    generated "All Major Thirds" "all-major-thirds" n (\s -> 0 - 4 * (s - 1))
+
+
+{-| Built-in six-string tunings offered in the selector. `strings` lists the
+open pitch classes high (string 1) to low (string 6). Any tuning not in a list
 is still fully supported as a custom tuning — the geometry is derived, not
 table-driven. -}
 tunings : List Tuning
@@ -1389,7 +1618,8 @@ tunings =
     , { name = "D Standard", slug = "d-standard", strings = [ 2, 9, 5, 0, 7, 2 ] }
     , { name = "Drop C", slug = "drop-c", strings = [ 2, 9, 5, 0, 7, 0 ] }
     , { name = "C♯/D♭ Standard", slug = "cs-standard", strings = [ 1, 8, 4, 11, 6, 1 ] }
-    , { name = "All Fourths", slug = "all-fourths", strings = [ 5, 0, 7, 2, 9, 4 ] }
+    , fourthsFor 6
+    , thirdsFor 6
     , { name = "DADGAD", slug = "dadgad", strings = [ 2, 9, 7, 2, 9, 2 ] }
     , { name = "Open G", slug = "open-g", strings = [ 2, 11, 7, 2, 7, 2 ] }
     , { name = "Open D", slug = "open-d", strings = [ 2, 9, 6, 2, 9, 2 ] }
@@ -1397,7 +1627,96 @@ tunings =
     ]
 
 
-{-| Open-string pitch class for string `s` (1 = high E … 6 = low E). -}
+{-| The named seven- and eight-string tunings, which only exist at their own
+string count. -}
+extendedTunings : List Tuning
+extendedTunings =
+    [ { name = "Drop A", slug = "drop-a", strings = [ 4, 11, 7, 2, 9, 4, 9 ] }
+    , { name = "A Standard", slug = "a-standard", strings = [ 2, 9, 5, 0, 7, 2, 9 ] }
+    , { name = "Russian (Open G)", slug = "russian", strings = [ 2, 11, 7, 2, 11, 7, 2 ] }
+    , { name = "Drop E", slug = "drop-e", strings = [ 4, 11, 7, 2, 9, 4, 11, 4 ] }
+    , { name = "E Standard", slug = "e-standard", strings = [ 2, 9, 5, 0, 7, 2, 9, 4 ] }
+    ]
+
+
+{-| The tunings offered for a string count: whatever is named for it, then
+standard, all fourths and all major thirds, which carry on to any number of
+strings. -}
+tuningsFor : Int -> List Tuning
+tuningsFor n =
+    if n == 6 then
+        tunings
+
+    else
+        [ standardFor n ]
+            ++ List.filter (\t -> stringCount t == n) extendedTunings
+            ++ [ fourthsFor n, thirdsFor n ]
+
+
+{-| What the next string below the lowest is most likely tuned to: the same
+step again. A tuning in fourths goes on in fourths, so standard grows a low B
+and then an F♯, and one in major thirds goes on in major thirds. A step wider
+than a fourth (the fifth that Drop D and the open tunings end on) would drop
+the new string far below the rest, so those take a fourth instead. -}
+nextLowString : List Int -> Int
+nextLowString strings =
+    case List.reverse strings of
+        low :: next :: _ ->
+            let
+                step =
+                    modBy 12 (next - low)
+            in
+            modBy 12
+                (low
+                    - (if step >= 1 && step <= 5 then
+                        step
+
+                       else
+                        5
+                      )
+                )
+
+        [ only ] ->
+            modBy 12 (only - 5)
+
+        [] ->
+            4
+
+
+{-| The same tuning with `n` strings, taken from or added to the low end, so
+every string keeps its number. The result is a named tuning when it is one —
+standard with a string added is Standard (7) — and Custom otherwise; a
+tuning that was already Custom stays Custom, for the same reason a typed-in
+tuning always does (`customFrom`). -}
+resizeTuning : Int -> Tuning -> Tuning
+resizeTuning n tuning =
+    let
+        target =
+            clamp 1 maxStrings n
+
+        grow notes =
+            if List.length notes >= target then
+                notes
+
+            else
+                grow (notes ++ [ nextLowString notes ])
+
+        strings =
+            grow (List.take target tuning.strings)
+    in
+    if isCustom tuning then
+        customFrom strings
+
+    else
+        case List.filter (\t -> t.strings == strings) (tuningsFor (List.length strings)) of
+            named :: _ ->
+                named
+
+            [] ->
+                customFrom strings
+
+
+{-| Open-string pitch class for string `s` (1 = high E … the lowest string). -}
 openString : Tuning -> Int -> Int
 openString tuning s =
     tuning.strings |> List.drop (s - 1) |> List.head |> Maybe.withDefault 0
@@ -1411,14 +1730,14 @@ noteAt tuning s f =
 {-| The open pitch of string `s` in absolute semitones, counted up from the
 lowest string. A tuning only stores pitch *classes*, so the span between two
 adjacent strings is read as the smallest ascending interval that fits, with a
-unison reading as an octave — true for every real tuning, and it keeps the six
+unison reading as an octave — true for every real tuning, and it keeps the
 strings strictly ascending in any custom one. Triads need this: "the next chord
 tone above" is a question about pitch, not pitch class. -}
 openAbs : Tuning -> Int -> Int
 openAbs tuning s =
     List.foldl (\str acc -> acc + ascendingStep tuning str)
-        (openString tuning 6)
-        (List.range s 5)
+        (openString tuning (stringCount tuning))
+        (List.range s (stringCount tuning - 1))
 
 
 {-| How far string `s` sounds above the string below it, in semitones (1–12). -}
@@ -1437,12 +1756,13 @@ ascendingStep tuning s =
 
 {-| How far string `s` is detuned from standard, as the smallest signed
 semitone distance (e.g. Drop D's low E reads +2: a note now sounds two frets
-higher than in standard). -}
+higher than in standard). Past the sixth string, standard is continued in
+fourths (`referenceOpen`). -}
 stringDelta : Tuning -> Int -> Int
 stringDelta tuning s =
     let
         d =
-            modBy 12 (openString standardTuning s - openString tuning s)
+            modBy 12 (referenceOpen s - openString tuning s)
     in
     if d > 6 then
         d - 12
@@ -1452,14 +1772,15 @@ stringDelta tuning s =
 
 
 {-| The per-string fret shift that re-derives a standard-tuning box shape for
-an arbitrary tuning. The anchor lives on the low E (string 6); a box keeps the
-*same pitches*, so on each string its frets move by how that string detuned
-relative to the anchor string. Standard tuning gives 0 for every string, so all
-existing shapes are unchanged. The shift preserves the pitch class at every box
-edge, which is why boxes and note markers stay aligned for any tuning. -}
+an arbitrary tuning. The anchor lives on the low E (see `anchorString`); a box
+keeps the *same pitches*, so on each string its frets move by how that string
+detuned relative to the anchor string. Standard tuning gives 0 for every
+string, so all existing shapes are unchanged. The shift preserves the pitch
+class at every box edge, which is why boxes and note markers stay aligned for
+any tuning. -}
 boxShift : Tuning -> Int -> Int
 boxShift tuning s =
-    stringDelta tuning s - stringDelta tuning 6
+    stringDelta tuning s - stringDelta tuning (anchorString tuning)
 
 
 scaleIntervals : ScaleType -> List Int
@@ -1613,15 +1934,19 @@ pickTone base intervals fromBase a b =
             -1
 
 
-{-| The MIDI note sounding at a fret. The lowest string sits nearest the low E
-of a guitar (E2 = 40), and the rest are stacked above it by `openAbs`. -}
+{-| The MIDI note sounding at a fret. The lowest string sits nearest where
+standard tuning, continued down in fourths, puts it (the low E of a guitar is E2
+= 40, a seventh string B1), and the rest are stacked above it by `openAbs`. -}
 midiAt : Tuning -> Int -> Int -> Int
 midiAt tuning s f =
     let
+        n =
+            stringCount tuning
+
         low =
-            40 + modBy 12 (openString tuning 6 - 4 + 6) - 6
+            referenceMidi n + modBy 12 (openString tuning n - referenceOpen n + 6) - 6
     in
-    low + openAbs tuning s - openString tuning 6 + f
+    low + openAbs tuning s - openString tuning n + f
 
 
 scaleNotes : Board -> List Int
@@ -1634,7 +1959,7 @@ isInScale board n =
     List.member (modBy 12 n) (scaleNotes board)
 
 
-{-| The "shape anchor" fret on the low-E string.
+{-| The "shape anchor" fret on the low-E string (`anchorOpen`).
 Minor pent of R → R's fret on low E.
 Major pent of R → relative minor (R - 3)'s fret on low E.
 -}
@@ -1645,7 +1970,7 @@ rootFret board =
         -- open pitch in any tuning. In standard tuning (low E = 4) a minor
         -- scale anchors at R − 4 and a major one at R − 7.
         lowE =
-            openString board.tuning 6
+            anchorOpen board.tuning
     in
     case board.scale of
         _ ->
@@ -1807,18 +2132,21 @@ deriveBox tuning scale b =
         lo =
             anchor + loOff
 
+        strings =
+            List.range 1 (stringCount tuning)
+
         -- A note at relative fret `off` on string `s` is in the scale when its
         -- pitch class, measured from the anchor note on the low E, is in the
-        -- set. open(s) − open(6) is the string's interval above the low E.
+        -- set. open(s) − open(low E) is the string's interval above the low E.
         degreeAt s off =
-            modBy 12 (openString tuning s - openString tuning 6 + off)
+            modBy 12 (openString tuning s - anchorOpen tuning + off)
 
         inScale s off =
             List.member (degreeAt s off) scaleSet
 
         -- Distinct scale degrees reachable on any string within its window.
         degreesIn upper =
-            List.range 1 6
+            strings
                 |> List.concatMap
                     (\s ->
                         List.range (lo + stringShift tuning s) (upper + stringShift tuning s)
@@ -1861,20 +2189,24 @@ deriveBox tuning scale b =
             in
             Maybe.map2 (\loF hiF -> ( s, loF, hiF )) (List.minimum offs) (List.maximum offs)
     in
-    List.filterMap forString (List.range 1 6)
+    List.filterMap forString strings
 
 
 {-| How many frets a box window moves on string `s` so it covers the pitches it
-would in standard tuning: minus however far the string sits above its standard
-interval over the low string. Taken the short way round the octave, since a
-tuning stores only pitch classes, so no string moves more than six frets. -}
+would in standard tuning (`windowOpen`): minus however far the string sits above
+its standard interval over the low string. Taken the short way round the octave,
+since a tuning stores only pitch classes, so no string moves more than six
+frets. -}
 stringShift : Tuning -> Int -> Int
 stringShift tuning s =
     let
-        interval t =
-            openString t s - openString t 6
+        interval =
+            openString tuning s - anchorOpen tuning
+
+        standardInterval =
+            windowOpen s - windowOpen 6
     in
-    negate (modBy 12 (interval tuning - interval standardTuning + 6) - 6)
+    negate (modBy 12 (interval - standardInterval + 6) - 6)
 
 
 positionBox : Board -> Int -> Int -> Maybe Int
@@ -1899,6 +2231,10 @@ degree of the bottom note. -}
 type alias Triad =
     { notes : List ( Int, Int )
     , inversion : Int
+
+    -- How wide its lasso is drawn, which depends on the string set it sits on
+    -- (`triadSetRadius`), so that sets sharing notes nest instead of coincide.
+    , radius : Float
     }
 
 
@@ -1914,18 +2250,23 @@ comes out compact without any hand-written fret table. Reading pitch rather
 than pitch class (`openAbs`) is what makes it work in any tuning. -}
 triadVoicingsFor : Tuning -> ScaleType -> Int -> StringSet -> List Triad
 triadVoicingsFor tuning scale root set =
-    List.concatMap (triadsOnStringSet tuning scale root) (stringSetTops set)
+    List.concatMap (triadsOnStringSet tuning scale root) (stringSetTops (stringCount tuning) set)
 
 
-{-| The highest string of each three-string set in play. -}
-stringSetTops : StringSet -> List Int
-stringSetTops set =
+{-| The highest string of each three-string set in play, on a neck with `n`
+strings: every set there is, or the one named when it exists. -}
+stringSetTops : Int -> StringSet -> List Int
+stringSetTops n set =
     case set of
         AllStrings ->
-            [ 1, 2, 3, 4 ]
+            List.range 1 (n - 2)
 
         StringTrio t ->
-            [ t ]
+            if t >= 1 && t <= n - 2 then
+                [ t ]
+
+            else
+                []
 
 
 triadsOnStringSet : Tuning -> ScaleType -> Int -> Int -> List Triad
@@ -1981,6 +2322,7 @@ triadsOnStringSet tuning scale root top =
                                 (\high ->
                                     { notes = [ ( top, high ), ( top + 1, mid ), ( top + 2, low ) ]
                                     , inversion = inv
+                                    , radius = triadSetRadius (stringCount tuning) top
                                     }
                                 )
                     )
@@ -2012,73 +2354,110 @@ type alias DiagShape =
 
 diagonalShapes : List DiagShape
 diagonalShapes =
-    diagonalShapesFor DiagonalPent
+    diagonalShapesFor 6 DiagonalPent
 
 
-{-| The diagonal shapes for a given scale. Minor and major pentatonic share the
-same six shapes (only the anchor differs, handled by `diagonalAnchor`). Blues
-reuses the minor-pent shapes and inserts the ♭5 blue note on each shape's
-♭3-4-5 string, where it sits between the 4 and the 5. Because the blue note is
-interior to a string's existing fret span, the shape polygons are unchanged.
+{-| The diagonal shapes for a given scale on a neck of `n` strings. Minor and
+major pentatonic share the same six shapes (only the anchor differs, handled by
+`diagonalAnchor`). Blues reuses the minor-pent shapes and inserts the ♭5 blue
+note on each shape's ♭3-4-5 string, where it sits between the 4 and the 5.
+Because the blue note is interior to a string's existing fret span, the shape
+polygons are unchanged.
 
-The diatonic major and minor follow the same plan with an octave of seven
-notes split 4 + 3 over the string pair: minor's lower string carries R, 2, ♭3,
-4 and its upper string 5, ♭6, ♭7, then the next pair climbs an octave. The split
-starts on the minor root because the step below it is a whole tone, which holds
-the shape to six frets; starting on the ♭3 would stretch it to seven. Major is
-its relative minor, like the pentatonics, so its lower string reads 6, 7, R, 2.
-Pattern 2 swaps the halves again, and the two patterns still partition the
-scale. -}
-diagonalShapesFor : ScaleType -> List DiagShape
-diagonalShapesFor scale =
+The strings are paired from the top — 2/1, 4/3, 6/5, then 8/7 and so on — and
+the pairs climb: each is the octave split of the one below it, an octave up.
+Two strings up in fourths is ten semitones, so each step up the neck moves the
+shape two frets toward the nut, except across standard tuning's major third
+(G to B), where it moves three. The shapes are written out for the lowest of
+the three standard pairs and moved by `diagonalPairOffset` for the others, which
+carries on past the sixth string, where standard tuning is all fourths. A neck
+with an odd number of strings ends in a half pair: its last string, alone, with
+the notes it would carry in the pair (`lowerRels` is empty). -}
+diagonalShapesFor : Int -> ScaleType -> List DiagShape
+diagonalShapesFor n scale =
+    let
+        ( pattern1, pattern2 ) =
+            diagonalPatterns scale
+
+        -- Bottom pair first, the way the shapes have always been listed.
+        pairs =
+            List.reverse (List.range 0 ((n + 1) // 2 - 1))
+
+        shapeFor color ( lowerRels, upperRels ) k =
+            let
+                offset =
+                    diagonalPairOffset k
+
+                lower =
+                    2 * k + 2
+            in
+            { color = color
+            , lower = lower
+            , lowerRels =
+                if lower <= n then
+                    List.map ((+) offset) lowerRels
+
+                else
+                    []
+            , upper = 2 * k + 1
+            , upperRels = List.map ((+) offset) upperRels
+            }
+    in
+    List.map (shapeFor 1 pattern1) pairs ++ List.map (shapeFor 2 pattern2) pairs
+
+
+{-| How many frets the shapes of pair `k` (counted from the top, 0 being strings
+2/1) sit above the ones written out for the sixth/fifth strings. -}
+diagonalPairOffset : Int -> Int
+diagonalPairOffset k =
+    if k >= 2 then
+        -2 * (k - 2)
+
+    else if k == 1 then
+        2
+
+    else
+        5
+
+
+{-| The two patterns for the sixth/fifth string pair, as `( lowerRels, upperRels )`.
+Pattern 1 is the one that starts on the lower string; pattern 2 is it rotated
+180° and offset 5 frets left, so the strings swap note content. -}
+diagonalPatterns : ScaleType -> ( ( List Int, List Int ), ( List Int, List Int ) )
+diagonalPatterns scale =
     case scale of
         DiagonalMajor ->
-            diatonicDiagonalShapes
+            diatonicDiagonalPatterns
 
         DiagonalMinor ->
-            diatonicDiagonalShapes
+            diatonicDiagonalPatterns
 
         DiagonalBlues ->
             -- Pattern 1: ♭5 added between 4 and 5 on the lower string.
-            [ { color = 1, lower = 6, lowerRels = [ 0, 2, 3, 4 ], upper = 5, upperRels = [ 2, 4 ] }
-            , { color = 1, lower = 4, lowerRels = [ 2, 4, 5, 6 ], upper = 3, upperRels = [ 4, 6 ] }
-            , { color = 1, lower = 2, lowerRels = [ 5, 7, 8, 9 ], upper = 1, upperRels = [ 7, 9 ] }
-
             -- Pattern 2: ♭5 added between 4 and 5 on the upper string.
-            , { color = 2, lower = 6, lowerRels = [ -5, -3 ], upper = 5, upperRels = [ -5, -3, -2, -1 ] }
-            , { color = 2, lower = 4, lowerRels = [ -3, -1 ], upper = 3, upperRels = [ -3, -1, 0, 1 ] }
-            , { color = 2, lower = 2, lowerRels = [ 0, 2 ], upper = 1, upperRels = [ 0, 2, 3, 4 ] }
-            ]
+            ( ( [ 0, 2, 3, 4 ], [ 2, 4 ] )
+            , ( [ -5, -3 ], [ -5, -3, -2, -1 ] )
+            )
 
         _ ->
             -- Pattern 1: three notes on the lower string, two right-aligned on the upper.
-            [ { color = 1, lower = 6, lowerRels = [ 0, 2, 4 ], upper = 5, upperRels = [ 2, 4 ] }
-            , { color = 1, lower = 4, lowerRels = [ 2, 4, 6 ], upper = 3, upperRels = [ 4, 6 ] }
-            , { color = 1, lower = 2, lowerRels = [ 5, 7, 9 ], upper = 1, upperRels = [ 7, 9 ] }
-
             -- Pattern 2: each pattern-1 shape rotated 180° and offset 5 frets left —
             -- two notes on the lower string, three left-aligned on the upper.
-            , { color = 2, lower = 6, lowerRels = [ -5, -3 ], upper = 5, upperRels = [ -5, -3, -1 ] }
-            , { color = 2, lower = 4, lowerRels = [ -3, -1 ], upper = 3, upperRels = [ -3, -1, 1 ] }
-            , { color = 2, lower = 2, lowerRels = [ 0, 2 ], upper = 1, upperRels = [ 0, 2, 4 ] }
-            ]
+            ( ( [ 0, 2, 4 ], [ 2, 4 ] )
+            , ( [ -5, -3 ], [ -5, -3, -1 ] )
+            )
 
 
-diatonicDiagonalShapes : List DiagShape
-diatonicDiagonalShapes =
+diatonicDiagonalPatterns : ( ( List Int, List Int ), ( List Int, List Int ) )
+diatonicDiagonalPatterns =
     -- Pattern 1: four notes on the lower string, three on the upper.
-    [ { color = 1, lower = 6, lowerRels = [ 0, 2, 3, 5 ], upper = 5, upperRels = [ 2, 3, 5 ] }
-    , { color = 1, lower = 4, lowerRels = [ 2, 4, 5, 7 ], upper = 3, upperRels = [ 4, 5, 7 ] }
-    , { color = 1, lower = 2, lowerRels = [ 5, 7, 8, 10 ], upper = 1, upperRels = [ 7, 8, 10 ] }
-
     -- Pattern 2: three notes on the lower string, four on the upper.
-    , { color = 2, lower = 6, lowerRels = [ -5, -4, -2 ], upper = 5, upperRels = [ -5, -3, -2, 0 ] }
-    , { color = 2, lower = 4, lowerRels = [ -3, -2, 0 ], upper = 3, upperRels = [ -3, -1, 0, 2 ] }
-    , { color = 2, lower = 2, lowerRels = [ 0, 1, 3 ], upper = 1, upperRels = [ 0, 2, 3, 5 ] }
-    ]
+    ( ( [ 0, 2, 3, 5 ], [ 2, 3, 5 ] )
+    , ( [ -5, -4, -2 ], [ -5, -3, -2, 0 ] )
+    )
 
 
-{-| Anchor fret on the low-E string (open = pitch 4). Minor pentatonic anchors
+{-| Anchor fret on the low-E string (open = pitch 4, see `anchorOpen`). Minor pentatonic anchors
 on the ♭3 (root + 3 - 4 = root - 1); major pentatonic on the root (root - 4).
 The diatonic minor anchors on its root and the major on its relative minor's
 root. -}
@@ -2086,7 +2465,7 @@ diagonalAnchor : Tuning -> ScaleType -> Int -> Int
 diagonalAnchor tuning scale root =
     let
         lowE =
-            openString tuning 6
+            anchorOpen tuning
     in
     case scale of
         DiagonalMajorPent ->
@@ -2119,7 +2498,7 @@ diagonalBoxOf tuning scale root s f =
             else
                 Nothing
     in
-    diagonalShapesFor scale
+    diagonalShapesFor (stringCount tuning) scale
         |> List.filterMap matches
         |> List.head
 
@@ -2630,35 +3009,43 @@ their lassos nest instead of landing on top of each other.
 
 The sizes are *not* handed out in string order. A set overlaps its neighbor on
 two strings but the set beyond that on only one, so the sizes are interleaved —
-2-3-4 smallest, 4-5-6 next, 1-2-3 next, 3-4-5 largest — which puts two steps
-between every pair that shares two strings and leaves only the loosest pairs a
-single step apart. On any one string at most three sets meet, and they are
-always at least a step and a half apart there.
+on six strings 2-3-4 is smallest, 4-5-6 next, 1-2-3 next, 3-4-5 largest — which
+puts two steps between every pair that shares two strings and leaves only the
+loosest pairs a single step apart. On any one string at most three sets meet,
+and they are always at least a step and a half apart there.
+
+Four sizes only carry that as far as six strings: past it a fifth is needed,
+because the order 1-2-3, 2-3-4, … would otherwise have to repeat a size two sets
+apart. The pattern then repeats every five sets, and all five are squeezed under
+the same ceiling.
 
 The smallest size is the floor: the pill has to clear the root markers, whose
 corners sit 18.6px out from the note center (a 28px square, rounded 3) — not
 the 14px of the circles, which is what a first pass at this sized itself to and
 why the roots poked out of it. The largest is the ceiling: much beyond this and
 a pill swallows the neighboring strings whole. -}
-triadSizeStep : Triad -> Int
-triadSizeStep triad =
-    case triad.notes of
-        ( 1, _ ) :: _ ->
-            2
+triadSetRadius : Int -> Int -> Float
+triadSetRadius strings top =
+    let
+        size =
+            [ 2, 0, 3, 1, 4 ]
+                |> List.drop (modBy 5 (top - 1))
+                |> List.head
+                |> Maybe.withDefault 1
 
-        ( 2, _ ) :: _ ->
-            0
+        step =
+            if strings >= 7 then
+                3.75
 
-        ( 3, _ ) :: _ ->
-            3
-
-        _ ->
-            1
+            else
+                5
+    in
+    20 + step * toFloat size
 
 
 triadLassoRadius : Triad -> Float
 triadLassoRadius triad =
-    20 + 5 * toFloat (triadSizeStep triad)
+    triad.radius
 
 
 {-| How thick the ring around a lasso is. Anything the inset leaves inside the
@@ -2714,9 +3101,11 @@ rightMargin : Float
 rightMargin = 18
 
 
-fretboardHeight : Float
-fretboardHeight =
-    stringSpacing * 5
+{-| How tall the neck is for `n` strings: one gap between each pair. A single
+string still gets a gap's worth of neck, so the frets have something to span. -}
+fretboardHeight : Int -> Float
+fretboardHeight n =
+    stringSpacing * toFloat (max 1 (n - 1))
 
 
 totalWidth : Float
@@ -2724,9 +3113,9 @@ totalWidth =
     leftMargin + nutWidth + fretWidth * toFloat numFrets + rightMargin
 
 
-totalHeight : Float
-totalHeight =
-    topMargin + fretboardHeight + 80
+totalHeight : Int -> Float
+totalHeight n =
+    topMargin + fretboardHeight n + 80
 
 
 noteX : Int -> Float
@@ -3292,13 +3681,13 @@ viewOptions model =
         [ setupRow model
         , if model.tuningOpen then
             controlBlock
-                (List.map (tuningButton model) tunings ++ [ customButton model ])
+                (List.map (tuningButton model) (tuningsFor (stringCount model.tuning)) ++ [ customButton model ])
 
           else
             text ""
         , if model.tuningOpen && isCustom model.tuning then
-            div [ style "display" "flex", style "align-items" "center" ]
-                (List.map (stringStepper model) (List.range 1 6))
+            div [ style "display" "flex", style "align-items" "center", style "flex-wrap" "wrap" ]
+                (List.map (stringStepper model) (List.range 1 (stringCount model.tuning)))
 
           else
             text ""
@@ -3315,6 +3704,7 @@ setupRow model =
         , style "gap" "6px 12px"
         ]
         (tuningToggle model
+            :: stringCountControl model
             :: highlightToggle model
             :: highlightFrets model
             ++ (stringToggle model :: highlightString model)
@@ -3378,14 +3768,14 @@ neckHeading model slot board =
 
           else
             text ""
-        , if isTriad board.scale then
+        , if isTriad board.scale && stringCount board.tuning >= 3 then
             div [ class "no-print" ]
                 [ controlBlock
                     [ pickerGroup "Strings"
                         (stringSetButton slot board AllStrings "All"
                             :: List.map
                                 (\t -> stringSetButton slot board (StringTrio t) (stringSetSlug (StringTrio t)))
-                                [ 1, 2, 3, 4 ]
+                                (List.range 1 (stringCount board.tuning - 2))
                         )
                     ]
                 ]
@@ -3520,6 +3910,25 @@ scalePicker model =
         ]
 
 
+{-| How many strings the neck has. A new string goes on the low end and is
+tuned to continue the pattern of the strings above it (`nextLowString`), so
+standard tuning grows a B and then an F♯; take one away and the lowest goes.
+▲ is more strings, as ▲ is more frets next to it. -}
+stringCountControl : Model -> Html Msg
+stringCountControl model =
+    span
+        [ style "display" "inline-flex"
+        , style "align-items" "center"
+        , style "gap" "2px"
+        , style "font-size" "13px"
+        , style "color" "var(--text-2)"
+        , Html.Attributes.title "Strings are added and removed at the low end"
+        ]
+        [ text "Strings"
+        , stepper (String.fromInt (stringCount model.tuning)) ChangeStringCount
+        ]
+
+
 {-| Names the tuning you are in, and opens the list of them when pressed. -}
 tuningToggle : Model -> Html Msg
 tuningToggle model =
@@ -3620,7 +4029,7 @@ stringToggle model =
                     Nothing
 
                  else
-                    Just defaultStringFocus
+                    Just (defaultStringFocus model.tuning)
                 )
             )
          , style "min-width" "80px"
@@ -3738,12 +4147,12 @@ customButton model =
 
 {-| Per-string up/down stepper. Editing any string yields a custom tuning,
 which the box/scale geometry derives at runtime exactly like a preset. Strings
-are shown low (6) to high (1), matching how a player reads the neck. -}
+are shown low to high, matching how a player reads the neck. -}
 stringStepper : Model -> Int -> Html Msg
 stringStepper model uiIndex =
     let
         s =
-            7 - uiIndex
+            stringCount model.tuning + 1 - uiIndex
 
         note =
             openString model.tuning s
@@ -3918,19 +4327,22 @@ buttonBaseStyle active =
 viewFretboard : Board -> Html Msg
 viewFretboard board =
     let
+        strings =
+            stringCount board.tuning
+
         -- Box tints are translucent, so the neck goes under them and shows
         -- through. Triad pills are opaque and are meant to read as solid
         -- shapes, so there the whole neck — inlay dots, fret lines and strings
         -- alike — goes under the lassos.
         neckAndRegions =
             if isTriad board.scale then
-                drawFretMarkers ++ drawFretLines ++ drawStrings board ++ drawBoxRegions board
+                drawFretMarkers strings ++ drawFretLines strings ++ drawStrings board ++ drawBoxRegions board
 
             else
-                drawFretMarkers ++ drawBoxRegions board ++ drawFretLines ++ drawStrings board
+                drawFretMarkers strings ++ drawBoxRegions board ++ drawFretLines strings ++ drawStrings board
     in
     Svg.svg
-        [ SA.viewBox ("0 0 " ++ String.fromFloat totalWidth ++ " " ++ String.fromFloat totalHeight)
+        [ SA.viewBox ("0 0 " ++ String.fromFloat totalWidth ++ " " ++ String.fromFloat (totalHeight strings))
         , SA.width (String.fromFloat totalWidth)
         , SA.style "max-width: 100%; height: auto;"
         ]
@@ -3939,8 +4351,8 @@ viewFretboard board =
             , neckAndRegions
             , drawFifthsLadders board
             , drawNotes board
-            , drawFretNumbers
-            , drawInlayDots
+            , drawFretNumbers strings
+            , drawInlayDots strings
             , drawHitAreas board
             ]
         )
@@ -3974,7 +4386,7 @@ drawHitAreas board =
                 ]
                 []
     in
-    List.concatMap (\s -> List.map (cell s) (List.range 0 numFrets)) (List.range 1 6)
+    List.concatMap (\s -> List.map (cell s) (List.range 0 numFrets)) (List.range 1 (stringCount board.tuning))
 
 
 
@@ -4048,15 +4460,12 @@ drawBoxRegionsBoxes board =
 drawDiagonalRegions : Board -> List (Svg.Svg Msg)
 drawDiagonalRegions board =
     let
-        octaves =
-            [ -2, -1, 0, 1, 2 ]
-
         shapes =
-            diagonalShapesFor board.scale
+            diagonalShapesFor (stringCount board.tuning) board.scale
 
         instances =
             List.concatMap
-                (\( i, shape ) -> List.map (\o -> ( ( i, o ), shape, o )) octaves)
+                (\( i, shape ) -> List.map (\o -> ( ( i, o ), shape, o )) (diagonalOctaves shape))
                 (List.indexedMap Tuple.pair shapes)
 
         lit =
@@ -4085,6 +4494,26 @@ drawDiagonalRegions board =
         instances
 
 
+{-| The octaves a shape is drawn in. Five cover the neck for the shapes written
+out for the top three pairs; each pair further down sits further toward the
+nut (`diagonalPairOffset`), so its copies start further up the octaves. -}
+diagonalOctaves : DiagShape -> List Int
+diagonalOctaves shape =
+    let
+        pair =
+            (shape.upper - 1) // 2
+    in
+    List.range -2 (2 + (2 * max 0 (pair - 2) + 11) // 12)
+
+
+{-| The lowest and highest fret of a list of shape-relative frets, once shifted
+to where the shape sits; `Nothing` for a string the shape has no notes on (a
+half pair has none on its lower string). -}
+relsSpan : Int -> List Int -> Maybe ( Int, Int )
+relsSpan shift rels =
+    Maybe.map2 (\lo hi -> ( shift + lo, shift + hi )) (List.minimum rels) (List.maximum rels)
+
+
 {-| A climbing shape's reach, lowest fret on its lower string to highest on its
 upper — what the highlight window is compared against. These shapes are meant
 to be slid rather than played in one place, so the window only says which one
@@ -4095,65 +4524,47 @@ diagonalSpan tuning scale root shape octave =
         shift =
             diagonalAnchor tuning scale root + 12 * octave
 
-        ends rels boxIndex =
-            let
-                s2 =
-                    shift + boxShift tuning boxIndex
-            in
-            ( s2 + (List.minimum rels |> Maybe.withDefault 0)
-            , s2 + (List.maximum rels |> Maybe.withDefault 0)
-            )
+        ends rels string =
+            relsSpan (shift + boxShift tuning string) rels
 
-        ( loL, hiL ) =
-            ends shape.lowerRels shape.lower
-
-        ( loU, hiU ) =
-            ends shape.upperRels shape.upper
+        spans =
+            List.filterMap identity
+                [ ends shape.lowerRels shape.lower
+                , ends shape.upperRels shape.upper
+                ]
     in
-    ( min loL loU, max hiL hiU )
+    ( List.minimum (List.map Tuple.first spans) |> Maybe.withDefault 0
+    , List.maximum (List.map Tuple.second spans) |> Maybe.withDefault 0
+    )
 
 
 {-| One diagonal shape: a stepped polygon spanning two adjacent strings.
 Both edges are staircases that step at the midline between the strings; an
 edge where both strings share a fret (pattern 1's right, pattern 2's left)
 collapses to a vertical line. The shape repeats every 12 frets (one octave)
-to fill the neck. -}
+to fill the neck. A half pair, at the bottom of a neck with an odd number of
+strings, is just the upper string's half of it. -}
 drawDiagonalShape : Tuning -> ScaleType -> Int -> (List ( Float, Float ) -> Svg.Svg Msg) -> DiagShape -> Int -> Maybe (Svg.Svg Msg)
 drawDiagonalShape tuning scale root paint shape octave =
     let
         shift =
             diagonalAnchor tuning scale root + 12 * octave
 
-        shiftL =
-            shift + boxShift tuning shape.lower
+        lowerSpan =
+            relsSpan (shift + boxShift tuning shape.lower) shape.lowerRels
 
-        shiftU =
-            shift + boxShift tuning shape.upper
-
-        loL =
-            shiftL + (List.minimum shape.lowerRels |> Maybe.withDefault 0)
-
-        hiL =
-            shiftL + (List.maximum shape.lowerRels |> Maybe.withDefault 0)
-
-        loU =
-            shiftU + (List.minimum shape.upperRels |> Maybe.withDefault 0)
-
-        hiU =
-            shiftU + (List.maximum shape.upperRels |> Maybe.withDefault 0)
+        upperSpan =
+            relsSpan (shift + boxShift tuning shape.upper) shape.upperRels
 
         inRange =
             List.any
                 (\( lo, hi ) ->
                     (lo >= 0 && lo <= numFrets) || (hi >= 0 && hi <= numFrets)
                 )
-                [ ( loL, hiL ), ( loU, hiU ) ]
+                (List.filterMap identity [ lowerSpan, upperSpan ])
 
         pad =
             stringSpacing * 0.55
-
-        yLoBot =
-            stringY shape.lower + pad
 
         yMid =
             (stringY shape.lower + stringY shape.upper) / 2
@@ -4162,17 +4573,37 @@ drawDiagonalShape tuning scale root paint shape octave =
             stringY shape.upper - pad
 
         verts =
-            [ ( fretCenterX loL, yLoBot )
-            , ( fretCenterX hiL, yLoBot )
-            , ( fretCenterX hiL, yMid )
-            , ( fretCenterX hiU, yMid )
-            , ( fretCenterX hiU, yUpTop )
-            , ( fretCenterX loU, yUpTop )
-            , ( fretCenterX loU, yMid )
-            , ( fretCenterX loL, yMid )
-            ]
+            case ( lowerSpan, upperSpan ) of
+                ( Just ( loL, hiL ), Just ( loU, hiU ) ) ->
+                    let
+                        yLoBot =
+                            stringY shape.lower + pad
+                    in
+                    [ ( fretCenterX loL, yLoBot )
+                    , ( fretCenterX hiL, yLoBot )
+                    , ( fretCenterX hiL, yMid )
+                    , ( fretCenterX hiU, yMid )
+                    , ( fretCenterX hiU, yUpTop )
+                    , ( fretCenterX loU, yUpTop )
+                    , ( fretCenterX loU, yMid )
+                    , ( fretCenterX loL, yMid )
+                    ]
+
+                ( Nothing, Just ( loU, hiU ) ) ->
+                    let
+                        yUpBot =
+                            stringY shape.upper + pad
+                    in
+                    [ ( fretCenterX loU, yUpTop )
+                    , ( fretCenterX hiU, yUpTop )
+                    , ( fretCenterX hiU, yUpBot )
+                    , ( fretCenterX loU, yUpBot )
+                    ]
+
+                _ ->
+                    []
     in
-    if inRange then
+    if inRange && not (List.isEmpty verts) then
         Just (paint verts)
 
     else
@@ -4699,50 +5130,34 @@ polygonVerts positions =
         pad =
             stringSpacing * 0.55
 
-        byString s =
-            positions
-                |> List.filter (\( str, _, _ ) -> str == s)
-                |> List.head
-                |> Maybe.withDefault ( s, 0, 0 )
-
-        ( _, lo1, hi1 ) = byString 1
-        ( _, lo2, hi2 ) = byString 2
-        ( _, lo3, hi3 ) = byString 3
-        ( _, lo4, hi4 ) = byString 4
-        ( _, lo5, hi5 ) = byString 5
-        ( _, lo6, hi6 ) = byString 6
+        rows =
+            List.sortBy (\( str, _, _ ) -> str) positions
 
         yMid sa sb =
             (stringY sa + stringY sb) / 2
 
-        verts =
-            [ ( fretCenterX lo1, stringY 1 - pad )
-            , ( fretCenterX hi1, stringY 1 - pad )
-            , ( fretCenterX hi1, yMid 1 2 )
-            , ( fretCenterX hi2, yMid 1 2 )
-            , ( fretCenterX hi2, yMid 2 3 )
-            , ( fretCenterX hi3, yMid 2 3 )
-            , ( fretCenterX hi3, yMid 3 4 )
-            , ( fretCenterX hi4, yMid 3 4 )
-            , ( fretCenterX hi4, yMid 4 5 )
-            , ( fretCenterX hi5, yMid 4 5 )
-            , ( fretCenterX hi5, yMid 5 6 )
-            , ( fretCenterX hi6, yMid 5 6 )
-            , ( fretCenterX hi6, stringY 6 + pad )
-            , ( fretCenterX lo6, stringY 6 + pad )
-            , ( fretCenterX lo6, yMid 5 6 )
-            , ( fretCenterX lo5, yMid 5 6 )
-            , ( fretCenterX lo5, yMid 4 5 )
-            , ( fretCenterX lo4, yMid 4 5 )
-            , ( fretCenterX lo4, yMid 3 4 )
-            , ( fretCenterX lo3, yMid 3 4 )
-            , ( fretCenterX lo3, yMid 2 3 )
-            , ( fretCenterX lo2, yMid 2 3 )
-            , ( fretCenterX lo2, yMid 1 2 )
-            , ( fretCenterX lo1, yMid 1 2 )
-            ]
+        -- Each pair of neighboring strings is crossed at the midline between
+        -- them: down the right edge, which steps from one string's last fret
+        -- to the next's, and back up the left.
+        pairs =
+            List.map2 Tuple.pair rows (List.drop 1 rows)
+
+        down ( ( sa, _, hiA ), ( sb, _, hiB ) ) =
+            [ ( fretCenterX hiA, yMid sa sb ), ( fretCenterX hiB, yMid sa sb ) ]
+
+        up ( ( sa, loA, _ ), ( sb, loB, _ ) ) =
+            [ ( fretCenterX loB, yMid sa sb ), ( fretCenterX loA, yMid sa sb ) ]
     in
-    verts
+    case ( rows, List.reverse rows ) of
+        ( ( top, loTop, hiTop ) :: _, ( bottom, loBottom, hiBottom ) :: _ ) ->
+            [ ( fretCenterX loTop, stringY top - pad ), ( fretCenterX hiTop, stringY top - pad ) ]
+                ++ List.concatMap down pairs
+                ++ [ ( fretCenterX hiBottom, stringY bottom + pad ), ( fretCenterX loBottom, stringY bottom + pad ) ]
+                ++ List.concatMap up (List.reverse pairs)
+
+        _ ->
+            []
+
 
 
 fretCenterX : Int -> Float
@@ -4759,11 +5174,11 @@ fretCenterX f =
 -- FRETBOARD STRUCTURE
 
 
-drawFretLines : List (Svg.Svg Msg)
-drawFretLines =
+drawFretLines : Int -> List (Svg.Svg Msg)
+drawFretLines strings =
     let
         top = topMargin - 4
-        bot = topMargin + fretboardHeight + 4
+        bot = topMargin + fretboardHeight strings + 4
 
         nut =
             Svg.line
@@ -4791,7 +5206,7 @@ drawFretLines =
     nut :: List.map fretLine (List.range 1 numFrets)
 
 
-{-| The six strings. The highlighted one is drawn heavier and in the text
+{-| The strings. The highlighted one is drawn heavier and in the text
 color: the faded notes say which string is live, and this says it again on the
 stretches of neck that carry no notes. -}
 drawStrings : Board -> List (Svg.Svg Msg)
@@ -4829,15 +5244,19 @@ drawStrings board =
                 ]
                 []
     in
-    List.map drawLine (List.range 1 6)
+    List.map drawLine (List.range 1 (stringCount board.tuning))
 
 
-drawFretMarkers : List (Svg.Svg Msg)
-drawFretMarkers =
+drawFretMarkers : Int -> List (Svg.Svg Msg)
+drawFretMarkers strings =
     let
         singles = [ 3, 5, 7, 9, 15, 17, 19, 21 ]
         doubles = [ 12 ]
-        midY = topMargin + stringSpacing * 2.5
+        midY = topMargin + fretboardHeight strings / 2
+
+        -- The pair at the 12th fret straddles the middle a gap apart, or
+        -- closer where the neck is too narrow to hold them that far out.
+        gap = min stringSpacing (fretboardHeight strings / 4)
 
         dot f dy =
             Svg.circle
@@ -4849,7 +5268,7 @@ drawFretMarkers =
                 []
     in
     List.map (\f -> dot f 0) singles
-        ++ List.concatMap (\f -> [ dot f -stringSpacing, dot f stringSpacing ]) doubles
+        ++ List.concatMap (\f -> [ dot f -gap, dot f gap ]) doubles
 
 
 
@@ -4878,7 +5297,7 @@ fifthsStep tuning s =
 
 {-| Whether the ladders mean anything in this tuning: they read as "the circle
 of fifths, shifted a fret" only on a neck tuned in fourths. So every pair of
-the top five strings has to be a fourth apart or a semitone off one — a major
+strings but the lowest has to be a fourth apart or a semitone off one — a major
 third (standard's G–B) kinks the ladder toward the body, a tritone (E A D G C
 F#) toward the nut. The lowest pair may be anything, so the drop tunings
 qualify. DADGAD and the open tunings fail, and their ladders would jog back and
@@ -4886,7 +5305,7 @@ forth to no purpose.
 -}
 laddersFit : Tuning -> Bool
 laddersFit tuning =
-    List.all (\s -> abs (fifthsStep tuning s) <= 1) (List.range 1 4)
+    List.all (\s -> abs (fifthsStep tuning s) <= 1) (List.range 1 (stringCount tuning - 2))
 
 
 {-| The all-notes map's answer to "why are the top two strings off by one":
@@ -4914,7 +5333,7 @@ drawFifthsLadders board =
         rungs =
             List.concatMap
                 (\s -> List.filterMap (rung s) (List.range 0 numFrets))
-                (List.range 1 5)
+                (List.range 1 (stringCount board.tuning - 1))
 
         gradId ( s, f, _ ) =
             board.id ++ "ladder-" ++ String.fromInt s ++ "-" ++ String.fromInt f
@@ -4979,7 +5398,7 @@ drawNotes board =
         forString s =
             List.filterMap (drawNoteAt board s) (List.range 0 numFrets)
     in
-    List.concatMap forString (List.range 1 6)
+    List.concatMap forString (List.range 1 (stringCount board.tuning))
 
 
 drawNoteAt : Board -> Int -> Int -> Maybe (Svg.Svg Msg)
@@ -5329,11 +5748,11 @@ offString board s =
 -- FRET NUMBER LABELS
 
 
-drawFretNumbers : List (Svg.Svg Msg)
-drawFretNumbers =
+drawFretNumbers : Int -> List (Svg.Svg Msg)
+drawFretNumbers strings =
     let
         y =
-            topMargin + fretboardHeight + 38
+            topMargin + fretboardHeight strings + 38
 
         highlighted =
             [ 3, 5, 7, 9, 12, 15, 17, 19, 21 ]
@@ -5409,12 +5828,12 @@ drawFretNumbers =
 -- INLAY DOT ROW (below fret numbers)
 
 
-drawInlayDots : List (Svg.Svg Msg)
-drawInlayDots =
+drawInlayDots : Int -> List (Svg.Svg Msg)
+drawInlayDots strings =
     let
         singles = [ 3, 5, 7, 9, 15, 17, 19, 21 ]
         doubles = [ 12 ]
-        y = topMargin + fretboardHeight + 60
+        y = topMargin + fretboardHeight strings + 60
 
         dot f dx =
             Svg.circle

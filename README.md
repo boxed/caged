@@ -9,8 +9,16 @@ color — matching the style of `fretboard-reference.jpeg`.
 
 ## Features
 
-- **22-fret, 6-string** diagram with standard tuning (E A D G B E), high E on
-  top to match the reference image.
+- **22-fret** diagram, six strings in standard tuning (E A D G B E) to start
+  with, high E on top to match the reference image.
+- **Any number of strings.** The **Strings** stepper (in the display options,
+  behind the gear) adds and removes strings at the low end, from one string up.
+  A new string is tuned by continuing the pattern of the ones above it —
+  standard grows a low B and then an F♯, all fourths and major thirds carry on
+  in fourths and thirds — and there are presets for seven and eight strings
+  (standard, Drop A, A Standard, Russian, Drop E, E Standard) plus **All
+  Fourths** and **All Major Thirds** at any count. The boxes on the top six
+  strings stay exactly where they are on a six-string neck.
 - **12 root notes** (C, C♯, D, ..., B) selectable with one click.
 - **Major / Minor pentatonic** toggle. Major pentatonic uses the same shapes
   as its relative minor, so the five boxes slide together as you change scale.
@@ -42,8 +50,8 @@ color — matching the style of `fretboard-reference.jpeg`.
   instead of boxes each close-position voicing is lassoed: three chord tones on
   three adjacent strings, one per string, ringed in the color of whichever
   chord tone is in the bass (root position / 1st / 2nd inversion). The
-  **Strings** row picks a three-string set (1-2-3, 2-3-4, 3-4-5, 4-5-6) or
-  shows all four at once, and the chord tones outside the lassos stay on the
+  **Strings** row picks a three-string set (1-2-3, 2-3-4, 3-4-5, 4-5-6 on a
+  six-string neck, and so on down a longer one) or shows them all at once, and the chord tones outside the lassos stay on the
   neck for context.
 - **Build your own scale.** Click any spot on the neck to add that note to
   the scale or take it out, everywhere on the neck at once. The scale buttons

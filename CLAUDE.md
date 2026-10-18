@@ -1,7 +1,7 @@
 # caged — guitar fretboard visualizer
 
 Interactive Elm app that renders pentatonic and diatonic scales across a
-22-fret guitar neck with colored box shapes and overlap stripes.
+22-fret guitar neck of any number of strings, with colored box shapes and overlap stripes.
 Live site: https://boxed.github.io/caged/
 
 ## Stack
@@ -178,7 +178,7 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 - Voicings are read by **pitch**, not pitch class, via `openAbs` — a tuning
   stores only pitch classes, so the span between adjacent strings is taken as
   the smallest ascending interval that fits (a unison reads as an octave).
-  That keeps the six strings strictly ascending in any custom tuning. Strings
+  That keeps the strings strictly ascending in any custom tuning. Strings
   an exact octave apart (the pathological test tunings) have no close-position
   triad at all, which is correct.
 - **Inversion is the index of the bass note's degree** in the sorted intervals
@@ -188,15 +188,20 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 - **`StringSet`** (`AllStrings` or `StringTrio t`, `t` = the set's highest
   string) is model state, shown as the **Strings** row and carried in the URL
   as `?strings=2-3-4` — only in triad modes, so every other mode keeps the URL
-  it had.
+  it had. A neck with `n` strings has sets 1 to `n − 2` (`stringSetTops`);
+  `normalizeSet` turns a set the tuning no longer has into `AllStrings`, and a
+  neck with fewer than three strings has no triads at all.
 
 ## Music theory model
 
 - **Notes**: `Int` pitch classes 0–11 (C=0).
-- **String numbering**: S1 = high E (top), S6 = low E (bottom).
-- **Tuning**: `{ name, slug, strings }` where `strings` is the six open-string
-  pitch classes (S1→S6). `openString tuning s` indexes it; `noteAt tuning s f`
-  is the pitch class at a fret. Standard tuning = `[4,11,7,2,9,4]`.
+- **String numbering**: S1 = high E (top), counting down: S6 = low E on a
+  guitar, S7 and S8 below it on a seven- or eight-string. Strings are numbered
+  from the top, so a string keeps its number whatever is added below it.
+- **Tuning**: `{ name, slug, strings }` where `strings` is the open-string
+  pitch classes (S1 downward) — its length *is* the string count
+  (`stringCount`, at least 1). `openString tuning s` indexes it; `noteAt
+  tuning s f` is the pitch class at a fret. Standard tuning = `[4,11,7,2,9,4]`.
 - **rootFret** anchors boxes on the low-E string, following its open pitch:
   `(R − anchorOffset − openLowE) mod 12`. `anchorOffset` is 0 for minor scales
   (root on low E, `R − 4` in standard), 3 for major ones (relative minor,
@@ -227,13 +232,74 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 
 ## Tunings
 
-The selector offers preset tunings (Standard, Drop D, D♯/E♭ Standard, D Standard, Drop C,
-C♯/D♭ Standard, All Fourths (E A D G C F), DADGAD, Open G/D/E) **plus arbitrary custom tunings**
-via per-string ▲/▼ steppers (shown only after pressing **Custom**). A custom
-tuning round-trips through the URL as six dash-joined note slugs
+The selector offers the presets for the current string count **plus arbitrary
+custom tunings** via per-string ▲/▼ steppers (shown only after pressing
+**Custom**, one per string, wrapping on a long neck). At six strings: Standard,
+Drop D, D♯/E♭ Standard, D Standard, Drop C, C♯/D♭ Standard, All Fourths (E A D
+G C F), All Major Thirds (E G♯ C E G♯ C), DADGAD, Open G/D/E. A custom tuning
+round-trips through the URL as dash-joined note slugs, one per string
 (`?tuning=D-A-G-D-A-D`); presets use their slug. A note-encoded slug always
 stays "Custom" so `Nav.replaceUrl` re-firing `UrlChanged` can't collapse it
 back to a preset.
+
+### String count
+
+There is no string count on the model: it is the length of the tuning, so
+nothing can disagree with it. The **Strings** stepper (`stringCountControl`,
+`ChangeStringCount`, in the display options next to the tuning button) adds and
+removes strings **at the low end only**, so every string keeps its number and
+the six-string geometry is untouched. Minimum one string; `maxStrings` (1000)
+is only a guard against a hand-edited link, and the stepper stops at it too
+since the URL is re-read after every change.
+
+- **A new string continues the pattern** (`nextLowString`): the same step below
+  the lowest string as the step between the lowest two. Standard grows a low B
+  and then an F♯, all fourths and all major thirds carry on in fourths and
+  thirds. A step wider than a fourth (the fifth Drop D and the open tunings end
+  on) would drop the new string far below the rest, so those take a fourth.
+- **`resizeTuning`** lands on a named preset when the result is one (standard
+  plus a string is Standard at seven strings), and on Custom otherwise; a tuning
+  that was Custom stays Custom.
+- **Presets per count** (`tuningsFor`): `standardFor n` (the top `n` of
+  standard, continued below in fourths), `fourthsFor n` (from the high F) and
+  `thirdsFor n` (from the high C) exist for any `n`, plus the named ones in
+  `extendedTunings` — Drop A, A Standard and Russian (Open G) at seven, Drop E
+  and E Standard at eight. The generated ones carry the count in their slug
+  (`standard-7`, `all-fourths-8`); at six strings the slug is bare, so every
+  link made before there were other counts still means what it did.
+  `generatedFromSlug` reads them back.
+- **`referenceOpen`** is standard tuning continued below the low E in fourths
+  (B, F♯, C♯ …): what the Standard preset means at seven strings and up, the
+  reference for MIDI (`referenceMidi`) and for the diagonal shapes
+  (`stringDelta`), whose string pairs climb in fourths.
+- **`windowOpen`** is the reference the *box windows* are measured against
+  (`stringShift`): standard tuning **repeated every five strings** — E A D G B,
+  then E B G D A … down the neck — so below the sixth string a string is
+  measured against the one five above it. Standard's top and bottom strings are
+  both E, two octaves apart, and every box shows the same notes on both; this
+  carries that on, so **strings five apart show the same notes in every box,
+  in any tuning** (the `stringCounts` tests lock it in). It is the window that
+  moves, not the notes: a window is the pitches it would be in the reference,
+  refingered for the actual string. Measuring against fourths instead (25
+  semitones, not 24, five strings down) made the window slip a fret every five
+  strings — on an eight-string neck the F♯ string drew an extra D in box 4 that
+  the G string five above it does not have. The top six strings are the same in
+  both references, so a seven-string neck still draws the six-string boxes on
+  its top six strings.
+- **The anchor** (`anchorString`, `anchorOpen`) is the low E: string 6 with six
+  or more strings. With fewer there is no low E, so `anchorOpen` is the pitch it
+  would have, moved from the lowest string by where standard puts it relative
+  to that string. A five-string neck without its low E then draws its boxes in
+  the same places as the six-string one instead of sliding them to the A
+  string.
+- **Fewer than three strings** cannot hold a five-fret position that contains
+  the whole scale, so `deriveBox`'s completeness growth makes the boxes wider
+  (a single string's pentatonic box is eleven frets). That is the rule working,
+  not a bug; `edgeSanity` only holds the four-fret span from three strings up.
+- **Sound** (`midiAt`) puts the lowest string where standard tuning continued in
+  fourths would (`referenceMidi`): E2 at six strings, B1 at seven, F♯1 at eight.
+  `index.html` skips anything below MIDI 12, which a neck of a dozen strings
+  reaches.
 
 ## Box shapes — one derivation (`deriveBox`)
 
@@ -263,10 +329,11 @@ standard shape is the reference only for which pitches a box spans.
 - **Completeness growth**: the box's upper bound grows past the base window until
   every scale degree is present. For every ordinary tuning the base window is
   already complete, so nothing grows; only degenerate tunings (e.g. all six
-  strings the same pitch — where a compact box *cannot* hold all degrees) force
-  wider, heavily-overlapping boxes. Guarded by the `completeness` test.
+  strings the same pitch — where a compact box *cannot* hold all degrees) and
+  necks of one or two strings force wider, heavily-overlapping boxes. Guarded
+  by the `completeness` test.
 - **Membership** (`anchorScaleSet`): a note at relative fret `off` on string `s`
-  is in the box iff `(open s − open 6 + off) mod 12` is a scale degree. The intervals
+  is in the box iff `(open s − anchorOpen + off) mod 12` is a scale degree. The intervals
   are rotated up by `anchorOffset`, since box 1 anchors that far below the
   root. The root cancels, so shapes are
   root-independent.
@@ -288,6 +355,16 @@ standard shape is the reference only for which pitches a box spans.
   note: 3 + 2 for the pentatonics, 4 + 3 for the diatonic major/minor (minor
   starts on its root, so the shape is six frets wide; major is its relative
   minor's shape, like the pentatonics).
+  The strings are paired from the top — 2/1, 4/3, 6/5, then 8/7 and so on
+  (`diagonalShapesFor n scale`) — and each pair is the octave split of the one
+  below it, an octave up. Two strings up in fourths is ten semitones, so a pair
+  sits two frets nearer the nut than the one below, except across standard's
+  G–B major third, where it is three: the shapes are written out for the 6/5
+  pair and moved by `diagonalPairOffset`, which carries on in fourths below the
+  sixth string. A neck with an odd number of strings ends in a **half pair** —
+  its last string alone, with `lowerRels` empty — which draws as just that
+  string's strip. Pairs far down start their copies further up the octaves
+  (`diagonalOctaves`) so they still reach the neck.
 
 ## Rendering
 
@@ -316,12 +393,17 @@ fret lines, nut and strings — *before* the lassos in triad mode, so a pill
 reads as one solid shape rather than something with the fretboard grid ruled
 across it.
 
-**Every string set gets its own width** (`triadSizeStep`, radii 5px apart), so
-where sets pile onto the same note their lassos nest instead of coinciding. The
-sizes are interleaved, not handed out in string order: a set overlaps its
-neighbor on two strings but the set beyond that on only one, so 2-3-4 is
-smallest, then 4-5-6, then 1-2-3, then 3-4-5 — two steps between every pair
-sharing two strings, and at most three sets meet on any one string.
+**Every string set gets its own width** (`triadSetRadius`, stored on each
+`Triad` as `radius`; sizes 5px apart), so where sets pile onto the same note
+their lassos nest instead of coinciding. The sizes are interleaved, not handed
+out in string order: a set overlaps its neighbor on two strings but the set
+beyond that on only one, so on six strings 2-3-4 is smallest, then 4-5-6, then
+1-2-3, then 3-4-5 — two steps between every pair sharing two strings, and at
+most three sets meet on any one string. Four sizes only carry that to six
+strings; a longer neck needs a fifth, and the pattern repeats every five sets
+(2, 0, 3, 1, 4). The five are squeezed under the same ceiling (3.75px apart
+from seven strings up), since a wider lasso would stop being narrower than a
+string gap, which `pillOutline` relies on.
 
 The smallest size is the floor, and it is set by the **root markers**: a 28px
 square rounded 3 reaches 18.6px from the note center, not the 14px of the
@@ -464,7 +546,9 @@ box 1, box 1, box 3 and box 4, one per neck, and fades everything else.
 
 The **Highlight string** button picks one string — `String 6 (E)` — and every
 note *off* it is drawn faded. It is `stringFocus : Maybe Int` on the model, a
-string number 1–6, and like the fret window it belongs to the hand rather than
+string number from 1 to the string count (it opens on the lowest string, and
+`clampString n` pulls it back when strings are taken away), and like the fret
+window it belongs to the hand rather than
 to one neck: one string applies to every neck at once. The two are independent
 and compose — one box, one string — which is the pair you want when you are
 learning a position string by string.
@@ -666,24 +750,27 @@ address bar is always a link to exactly what is on screen.
 
 ## Tests (`tests/BoxShapeTests.elm`)
 
-Test suites (~7600 tests total):
+Test suites (~49,000 tests total, since the geometry suites run at every string
+count from 1 to 12):
 
 1. **`canonicalShapes`** — `deriveBox` in standard tuning reproduces the textbook
    pentatonic and Ionian/Aeolian CAGED shapes exactly. This is the spec: the
    clean algorithm must yield the known-good shapes.
 2. **`completeness`** — the hard requirement: every box contains the complete
-   scale (all degrees), for every tuning including pathological ones (all six
+   scale (all degrees), for every tuning including pathological ones (all
    strings the same pitch). Guards that no box is ever missing a scale degree.
 3. **`coverage`** — for every tuning and scale, every scale note on the neck
    sits inside some box, so every rendered note marker has a box behind it
    (guards that the boxes tile).
-4. **`edgeSanity`** — every box covers all 6 strings with lo ≤ hi, in every
-   tuning.
+4. **`edgeSanity`** — every box covers every string with lo ≤ hi, in every
+   tuning (and spans at most five frets from three strings up).
 5. **`overlapCoverage`** — for every non-diagonal scale, wherever 2+ boxes
    overlap an overlap stripe covers the same position, in every tuning.
 6. **`stripeEdges`** — stripe overlap edges land on scale notes.
 7. **`diagonalCells`** — the diagonal climbing shapes carry the right scale
-   degrees on each string.
+   degrees on each string, and every string of every neck carries the whole
+   scale across the two patterns, with no shape reaching for a string that
+   isn't there.
 8. **`triadShapes`** — every triad voicing sits on its set's three strings and
    inside the neck, carries all three chord tones with none doubled, is in
    close position (each note under an octave above the one below), and its
@@ -691,6 +778,14 @@ Test suites (~7600 tests total):
    four qualities. Plus `canonicalTriads`: C major on strings 2-3-4 in standard
    tuning is the textbook set (x x 2 0 1 x, x x 5 5 5 x, x x 10 9 8 x, then the
    octave repeat).
+9. **`stringCounts`** — the string-count machinery: standard continues in
+   fourths below the low E and drops from the low end; adding a string
+   continues the pattern (and lands on the named preset when it is one, Custom
+   otherwise); every preset's slug finds it again, typed-in tunings of any
+   length parse, nonsense does not; the top six strings of a seven-, eight- or
+   twelve-string neck draw the six-string boxes exactly, and strings five apart
+   show the same notes in every box, in every tuning; the anchor is the low E
+   or where it would be; and every open string sounds below the one above it.
 
 ## Deployment
 

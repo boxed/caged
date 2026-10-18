@@ -6,6 +6,7 @@ module BoxShapeTests exposing
     , edgeSanity
     , overlapCoverage
     , spelling
+    , stringCounts
     , stripeEdges
     , triadShapes
     )
@@ -15,7 +16,8 @@ a tuning's open strings and the scale intervals. These tests pin down that:
 
 1.  the canonical pentatonic and Ionian/Aeolian shapes fall out of the algorithm
     in standard tuning (the algorithm must reproduce the known-good shapes);
-2.  every box is well-formed (all six strings, lo ≤ hi) in every preset tuning;
+2.  every box is well-formed (every string, lo ≤ hi) in every preset tuning, at
+    any number of strings;
 3.  the boxes tile — every scale note on the neck sits inside some box, so every
     rendered note marker has a box behind it;
 4.  overlap stripes cover every multi-box region and end on scale notes.
@@ -24,7 +26,7 @@ a tuning's open strings and the scale intervals. These tests pin down that:
 
 import Dict
 import Expect
-import Main exposing (ScaleType(..), StringSet(..), Tuning, deriveBox, diagonalAnchor, diagonalShapesFor, noteAt, openAbs, openString, rootSpelling, scaleIntervals, spell, standardTuning, triadVoicingsFor, tunings)
+import Main exposing (ScaleType(..), StringSet(..), Tuning, anchorOpen, deriveBox, diagonalAnchor, diagonalShapesFor, fourthsFor, midiAt, nextLowString, noteAt, openAbs, openString, resizeTuning, rootSpelling, scaleIntervals, spell, standardFor, standardTuning, stringCount, thirdsFor, triadVoicingsFor, tuningFromSlug, tunings, tuningsFor)
 import Test exposing (Test, describe, test)
 
 
@@ -62,16 +64,41 @@ boxScales =
            ]
 
 
+{-| The string counts the geometry is exercised at: from one string to a dozen,
+past the seven and eight a guitar has, with the odd and even ones either side
+of each pair-of-strings boundary the diagonal shapes care about. -}
+stringCountsUnderTest : List Int
+stringCountsUnderTest =
+    [ 1, 2, 3, 4, 5, 7, 8, 9, 12 ]
+
+
+{-| Every preset on offer: the six-string ones, and what each other count
+offers (standard, the named seven- and eight-string tunings, all fourths and
+all major thirds). -}
+presetTunings : List Tuning
+presetTunings =
+    tunings ++ List.concatMap tuningsFor stringCountsUnderTest
+
+
 {-| Preset tunings plus a few pathological ones (all strings the same pitch),
 which stress the box derivation: the boxes must still contain every scale note. -}
 coverageTunings : List Tuning
 coverageTunings =
-    tunings
+    presetTunings
         ++ [ { name = "All-B", slug = "B-B-B-B-B-B", strings = [ 11, 11, 11, 11, 11, 11 ] }
            , { name = "All-C", slug = "C-C-C-C-C-C", strings = [ 0, 0, 0, 0, 0, 0 ] }
+           , { name = "All-E (1)", slug = "E", strings = [ 4 ] }
+           , { name = "All-E (8)", slug = "E-E-E-E-E-E-E-E", strings = [ 4, 4, 4, 4, 4, 4, 4, 4 ] }
            ]
 
 
+
+
+{-| A tuning's name and how many strings it has: "Standard" alone is ambiguous
+once there are tunings of every length. -}
+tuningLabel : Tuning -> String
+tuningLabel tuning =
+    tuning.name ++ " (" ++ String.fromInt (stringCount tuning) ++ ")"
 
 
 scaleNotes : ScaleType -> Int -> List Int
@@ -85,7 +112,7 @@ fRootFor : Tuning -> ScaleType -> Int -> Int
 fRootFor tuning scale root =
     let
         lowE =
-            openString tuning 6
+            anchorOpen tuning
     in
     case scale of
         DiagonalPent ->
@@ -249,11 +276,11 @@ canonicalShapes =
 
 edgeSanity : Test
 edgeSanity =
-    describe "Every box covers all six strings with lo <= hi, in every tuning"
-        (tunings
+    describe "Every box covers every string with lo <= hi, in every tuning"
+        (presetTunings
             |> List.map
                 (\tuning ->
-                    describe tuning.name
+                    describe (tuningLabel tuning)
                         (boxScales
                             |> List.concatMap
                                 (\scale ->
@@ -267,10 +294,18 @@ edgeSanity =
                                                                 deriveBox tuning scale b
 
                                                             okStrings =
-                                                                List.map (\( s, _, _ ) -> s) shape == [ 1, 2, 3, 4, 5, 6 ]
+                                                                List.map (\( s, _, _ ) -> s) shape == List.range 1 (stringCount tuning)
 
+                                                            -- A compact five-fret position is the goal, but a
+                                                            -- box must hold the whole scale, and one or two
+                                                            -- strings cannot do that in five frets: there the
+                                                            -- window grows (`deriveBox`).
                                                             okSpan =
-                                                                List.all (\( _, lo, hi ) -> lo <= hi && hi - lo <= 4) shape
+                                                                List.all
+                                                                    (\( _, lo, hi ) ->
+                                                                        lo <= hi && (stringCount tuning < 3 || hi - lo <= 4)
+                                                                    )
+                                                                    shape
                                                         in
                                                         if okStrings && okSpan then
                                                             Expect.pass
@@ -316,7 +351,7 @@ coveredBy tuning scale s f =
 
 coverageFor : Tuning -> ScaleType -> Test
 coverageFor tuning scale =
-    test (tuning.name ++ " " ++ scaleName scale) <|
+    test (tuningLabel tuning ++ " " ++ scaleName scale) <|
         \_ ->
             let
                 notes =
@@ -335,7 +370,7 @@ coverageFor tuning scale =
                                 )
                                 fretboardFrets
                         )
-                        (List.range 1 6)
+                        (List.range 1 (stringCount tuning))
             in
             if List.isEmpty violations then
                 Expect.pass
@@ -378,7 +413,7 @@ boxDegrees tuning scale b =
 
 completenessFor : Tuning -> ScaleType -> Test
 completenessFor tuning scale =
-    test (tuning.name ++ " " ++ scaleName scale) <|
+    test (tuningLabel tuning ++ " " ++ scaleName scale) <|
         \_ ->
             let
                 notes =
@@ -487,7 +522,7 @@ stripeCount tuning scale s f =
 
 overlapCoverageFor : Tuning -> ScaleType -> Test
 overlapCoverageFor tuning scale =
-    test (tuning.name ++ " " ++ scaleName scale) <|
+    test (tuningLabel tuning ++ " " ++ scaleName scale) <|
         \_ ->
             let
                 violations =
@@ -503,7 +538,7 @@ overlapCoverageFor tuning scale =
                                 )
                                 fretboardFrets
                         )
-                        (List.range 1 6)
+                        (List.range 1 (stringCount tuning))
             in
             if List.isEmpty violations then
                 Expect.pass
@@ -516,7 +551,7 @@ overlapCoverageFor tuning scale =
 overlapCoverage : Test
 overlapCoverage =
     describe "Where 2+ boxes overlap, an overlap stripe covers the same position"
-        (tunings
+        (presetTunings
             |> List.concatMap (\tuning -> List.map (overlapCoverageFor tuning) boxScales)
         )
 
@@ -555,7 +590,7 @@ stripeEdgesFor tuning scale =
                                     min hi1 hi2
 
                                 tag =
-                                    tuning.name ++ " " ++ scaleName scale ++ " stripe " ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ " S" ++ String.fromInt s
+                                    tuningLabel tuning ++ " " ++ scaleName scale ++ " stripe " ++ String.fromInt b1 ++ "-" ++ String.fromInt b2 ++ " S" ++ String.fromInt s
                             in
                             if hi >= lo then
                                 Just
@@ -569,7 +604,7 @@ stripeEdgesFor tuning scale =
                         _ ->
                             Nothing
                 )
-                (List.range 1 6)
+                (List.range 1 (stringCount tuning))
                 |> List.concat
     in
     List.concatMap adjacent [ ( 1, 2 ), ( 2, 3 ), ( 3, 4 ), ( 4, 5 ) ]
@@ -578,7 +613,7 @@ stripeEdgesFor tuning scale =
 stripeEdges : Test
 stripeEdges =
     describe "Stripe overlap edges land on scale notes"
-        (tunings
+        (presetTunings
             |> List.concatMap (\tuning -> List.concatMap (stripeEdgesFor tuning) boxScales)
         )
 
@@ -669,14 +704,17 @@ spelling =
 -- DIAGONAL PENTATONIC (unchanged): shapes carry the right degrees per string
 
 
-diagonalRootCells : ScaleType -> ( List Int, List Int ) -> Int -> List Test
-diagonalRootCells scale ( lowerDegrees, upperDegrees ) root =
+diagonalRootCells : Int -> ScaleType -> ( List Int, List Int ) -> Int -> List Test
+diagonalRootCells strings scale ( lowerDegrees, upperDegrees ) root =
     let
+        tuning =
+            standardFor strings
+
         a =
-            diagonalAnchor standardTuning scale root
+            diagonalAnchor tuning scale root
 
         noteOf s rel =
-            noteAt standardTuning s (a + rel)
+            noteAt tuning s (a + rel)
 
         expected degrees =
             List.map (\i -> modBy 12 (root + i)) degrees
@@ -685,7 +723,7 @@ diagonalRootCells scale ( lowerDegrees, upperDegrees ) root =
             test label <|
                 \_ -> Expect.equal (expected degrees) actual
     in
-    diagonalShapesFor scale
+    diagonalShapesFor strings scale
         |> List.concatMap
             (\shape ->
                 let
@@ -693,7 +731,9 @@ diagonalRootCells scale ( lowerDegrees, upperDegrees ) root =
                         scaleName scale
                             ++ " root "
                             ++ String.fromInt root
-                            ++ " pattern "
+                            ++ " ("
+                            ++ String.fromInt strings
+                            ++ " strings) pattern "
                             ++ String.fromInt shape.color
                             ++ " strings "
                             ++ String.fromInt shape.lower
@@ -707,24 +747,116 @@ diagonalRootCells scale ( lowerDegrees, upperDegrees ) root =
                         else
                             ( lowerDegrees, upperDegrees )
                 in
-                [ expect (tag ++ " lower")
-                    lowDeg
-                    (List.map (noteOf shape.lower) (List.sort shape.lowerRels))
-                , expect (tag ++ " upper")
-                    upDeg
-                    (List.map (noteOf shape.upper) (List.sort shape.upperRels))
-                ]
+                -- A half pair at the bottom of an odd-stringed neck has no
+                -- lower string, so there is nothing to say about it.
+                (if List.isEmpty shape.lowerRels then
+                    []
+
+                 else
+                    [ expect (tag ++ " lower")
+                        lowDeg
+                        (List.map (noteOf shape.lower) (List.sort shape.lowerRels))
+                    ]
+                )
+                    ++ [ expect (tag ++ " upper")
+                            upDeg
+                            (List.map (noteOf shape.upper) (List.sort shape.upperRels))
+                       ]
             )
+
+
+{-| Whatever the string count, every string that exists carries the whole scale
+across the two patterns, and no shape reaches for a string that does not. -}
+diagonalStrings : Int -> ScaleType -> Test
+diagonalStrings strings scale =
+    test (scaleName scale ++ " on " ++ String.fromInt strings ++ " strings") <|
+        \_ ->
+            let
+                tuning =
+                    standardFor strings
+
+                shapes =
+                    diagonalShapesFor strings scale
+
+                pitchClasses s =
+                    shapes
+                        |> List.concatMap
+                            (\shape ->
+                                (if shape.lower == s then
+                                    shape.lowerRels
+
+                                 else
+                                    []
+                                )
+                                    ++ (if shape.upper == s then
+                                            shape.upperRels
+
+                                        else
+                                            []
+                                       )
+                            )
+                        |> List.map (\rel -> modBy 12 (noteAt tuning s (diagonalAnchor tuning scale testRoot + rel) - testRoot))
+                        |> List.sort
+                        |> dedupe
+
+                reaching =
+                    shapes
+                        |> List.concatMap
+                            (\shape ->
+                                (if List.isEmpty shape.lowerRels then
+                                    []
+
+                                 else
+                                    [ shape.lower ]
+                                )
+                                    ++ [ shape.upper ]
+                            )
+                        |> List.filter (\s -> s < 1 || s > strings)
+            in
+            Expect.equal
+                ( [], List.repeat strings (List.sort (scaleIntervals scale)) )
+                ( reaching, List.map pitchClasses (List.range 1 strings) )
+
+
+dedupe : List Int -> List Int
+dedupe xs =
+    case xs of
+        a :: b :: rest ->
+            if a == b then
+                dedupe (b :: rest)
+
+            else
+                a :: dedupe (b :: rest)
+
+        _ ->
+            xs
 
 
 diagonalCells : Test
 diagonalCells =
-    describe "Diagonal pentatonic shapes carry the right scale degrees on each string"
-        (List.concatMap (diagonalRootCells DiagonalPent ( [ 3, 5, 7 ], [ 10, 0 ] )) (List.range 0 11)
-            ++ List.concatMap (diagonalRootCells DiagonalMajorPent ( [ 0, 2, 4 ], [ 7, 9 ] )) (List.range 0 11)
-            ++ List.concatMap (diagonalRootCells DiagonalBlues ( [ 3, 5, 6, 7 ], [ 10, 0 ] )) (List.range 0 11)
-            ++ List.concatMap (diagonalRootCells DiagonalMajor ( [ 9, 11, 0, 2 ], [ 4, 5, 7 ] )) (List.range 0 11)
-            ++ List.concatMap (diagonalRootCells DiagonalMinor ( [ 0, 2, 3, 5 ], [ 7, 8, 10 ] )) (List.range 0 11)
+    describe "Diagonal shapes carry the right scale degrees on each string"
+        (List.concatMap
+            (\strings ->
+                let
+                    roots =
+                        if strings == 6 then
+                            List.range 0 11
+
+                        else
+                            [ 0, 4, 9 ]
+                in
+                List.concatMap (diagonalRootCells strings DiagonalPent ( [ 3, 5, 7 ], [ 10, 0 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings DiagonalMajorPent ( [ 0, 2, 4 ], [ 7, 9 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings DiagonalBlues ( [ 3, 5, 6, 7 ], [ 10, 0 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings DiagonalMajor ( [ 9, 11, 0, 2 ], [ 4, 5, 7 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings DiagonalMinor ( [ 0, 2, 3, 5 ], [ 7, 8, 10 ] )) roots
+            )
+            (6 :: stringCountsUnderTest)
+            ++ List.concatMap
+                (\strings ->
+                    List.map (diagonalStrings strings) [ DiagonalPent, DiagonalMajorPent, DiagonalBlues, DiagonalMajor, DiagonalMinor ]
+                )
+                (6 :: stringCountsUnderTest)
         )
 
 
@@ -734,7 +866,7 @@ diagonalCells =
 
 {-| The defining property of a close-position voicing: the three notes ascend,
 each less than an octave above the one below it. -}
-closePosition : Tuning -> { notes : List ( Int, Int ), inversion : Int } -> Bool
+closePosition : Tuning -> { a | notes : List ( Int, Int ) } -> Bool
 closePosition tuning v =
     let
         pitches =
@@ -762,7 +894,7 @@ triadInvariants tuning scale top =
             triadVoicingsFor tuning scale testRoot (StringTrio top)
 
         tag =
-            scaleName scale ++ " / " ++ tuning.name ++ " / strings " ++ String.fromInt top
+            scaleName scale ++ " / " ++ tuningLabel tuning ++ " / strings " ++ String.fromInt top
 
         degreesOf v =
             v.notes
@@ -787,7 +919,7 @@ triadInvariants tuning scale top =
                 -- Only for real tunings: strings an exact octave apart (the
                 -- pathological ones) have no close-position triad at all,
                 -- since the next degree up always lands past the octave.
-                if List.member tuning tunings then
+                if List.member tuning presetTunings then
                     Expect.greaterThan 0 (List.length voicings)
 
                 else
@@ -849,8 +981,194 @@ triadShapes =
             :: List.concatMap
                 (\tuning ->
                     List.concatMap
-                        (\scale -> List.map (triadInvariants tuning scale) [ 1, 2, 3, 4 ])
+                        (\scale -> List.map (triadInvariants tuning scale) (List.range 1 (stringCount tuning - 2)))
                         triadQualities
                 )
                 coverageTunings
         )
+
+
+
+-- STRING COUNTS: any number of strings, from one up
+
+
+{-| The tuning a count change lands on, as its low-to-high note list (written
+the way a player reads a tuning), so the expectations below read like the
+tunings they describe. -}
+lowToHigh : Tuning -> List Int
+lowToHigh tuning =
+    List.reverse tuning.strings
+
+
+stringCounts : Test
+stringCounts =
+    let
+        dropD =
+            { name = "Drop D", slug = "drop-d", strings = [ 4, 11, 7, 2, 9, 2 ] }
+
+        custom =
+            resizeTuning 6 { name = "Custom", slug = "E-B-G-D-A-D", strings = [ 4, 11, 7, 2, 9, 2 ] }
+    in
+    describe "Any number of strings"
+        [ describe "standard tuning carries on in fourths below the low E"
+            [ test "six strings is the standard tuning it always was" <|
+                \_ -> Expect.equal standardTuning (standardFor 6)
+            , test "seven strings add a low B, eight a low F\u{266F}" <|
+                \_ ->
+                    Expect.equal
+                        [ [ 11, 4, 9, 2, 7, 11, 4 ], [ 6, 11, 4, 9, 2, 7, 11, 4 ] ]
+                        [ lowToHigh (standardFor 7), lowToHigh (standardFor 8) ]
+            , test "fewer than six drop strings from the low end, so the top strings stay put" <|
+                \_ ->
+                    Expect.equal
+                        [ [ 4 ], [ 11, 4 ], [ 7, 11, 4 ], [ 2, 7, 11, 4 ], [ 9, 2, 7, 11, 4 ] ]
+                        (List.map (standardFor >> lowToHigh) [ 1, 2, 3, 4, 5 ])
+            , test "the string count is the length of the tuning" <|
+                \_ ->
+                    Expect.equal (List.range 1 12) (List.map (standardFor >> stringCount) (List.range 1 12))
+            ]
+        , describe "adding and removing strings"
+            [ test "standard grows a B and then an F\u{266F}, and is Standard at every count" <|
+                \_ ->
+                    Expect.equal
+                        [ standardFor 7, standardFor 8 ]
+                        [ resizeTuning 7 standardTuning, resizeTuning 8 (resizeTuning 7 standardTuning) ]
+            , test "taking a string away from a longer standard lands back on standard, bare slug and all" <|
+                \_ ->
+                    Expect.equal standardTuning (resizeTuning 6 (standardFor 8))
+            , test "all fourths and all major thirds keep going in fourths and in thirds" <|
+                \_ ->
+                    Expect.equal
+                        [ fourthsFor 7, fourthsFor 9, thirdsFor 7, thirdsFor 10 ]
+                        [ resizeTuning 7 (fourthsFor 6)
+                        , resizeTuning 9 (fourthsFor 6)
+                        , resizeTuning 7 (thirdsFor 6)
+                        , resizeTuning 10 (thirdsFor 6)
+                        ]
+            , test "a fifth at the bottom (Drop D) grows a fourth, not a fifth, and is Custom" <|
+                \_ ->
+                    let
+                        grown =
+                            resizeTuning 7 dropD
+                    in
+                    Expect.equal ( [ 9, 2, 9, 2, 7, 11, 4 ], "Custom" ) ( lowToHigh grown, grown.name )
+            , test "a Custom tuning stays Custom, even when it grows into a preset's notes" <|
+                \_ ->
+                    Expect.equal "Custom" (resizeTuning 7 (resizeTuning 6 custom)).name
+            , test "the next string is a step further down" <|
+                \_ ->
+                    Expect.equal
+                        [ 11, 11, 11, 7 ]
+                        [ nextLowString [ 4, 11, 7, 2, 9, 4 ]
+                        , nextLowString [ 4 ]
+                        , nextLowString [ 11, 4 ]
+                        , nextLowString [ 4, 8, 0 ]
+                        ]
+            , test "never fewer than one string, and the top string is what is left" <|
+                \_ ->
+                    Expect.equal
+                        [ [ 4 ], [ 4 ], [ 4 ] ]
+                        (List.map (\n -> lowToHigh (resizeTuning n standardTuning)) [ 1, 0, -5 ])
+            ]
+        , describe "a tuning's link says how many strings it has"
+            [ test "every preset's slug finds that preset again" <|
+                \_ ->
+                    Expect.equalLists []
+                        (List.filter (\t -> tuningFromSlug t.slug /= Just t) presetTunings)
+            , test "a typed-in tuning of any length is Custom and round-trips" <|
+                \_ ->
+                    Expect.equal
+                        (Just [ 4, 11, 7, 2, 9, 4, 11, 6 ])
+                        (tuningFromSlug "E-B-G-D-A-E-B-Fs" |> Maybe.map .strings)
+            , test "a custom tuning's own slug finds it again" <|
+                \_ ->
+                    Expect.equal (Just custom) (tuningFromSlug custom.slug)
+            , test "nonsense is not a tuning" <|
+                \_ ->
+                    Expect.equal
+                        [ Nothing, Nothing, Nothing, Nothing, Nothing ]
+                        (List.map tuningFromSlug [ "", "nonsense", "E-x", "standard-0", "standard-99999" ])
+            ]
+        , describe "a longer neck keeps the six-string boxes on its top six strings"
+            (List.concatMap
+                (\strings ->
+                    List.map
+                        (\scale ->
+                            test (scaleName scale ++ " on " ++ String.fromInt strings ++ " strings") <|
+                                \_ ->
+                                    Expect.equal
+                                        (List.map (\b -> deriveBox standardTuning scale b) [ 1, 2, 3, 4, 5 ])
+                                        (List.map
+                                            (\b -> List.filter (\( s, _, _ ) -> s <= 6) (deriveBox (standardFor strings) scale b))
+                                            [ 1, 2, 3, 4, 5 ]
+                                        )
+                        )
+                        boxScales
+                )
+                [ 7, 8, 12 ]
+            )
+        , describe "strings five apart show the same notes in every box"
+            (List.concatMap
+                (\tuning ->
+                    List.map
+                        (\scale ->
+                            test (tuningLabel tuning ++ " " ++ scaleName scale) <|
+                                \_ ->
+                                    let
+                                        anchor =
+                                            fRootFor tuning scale testRoot
+
+                                        notesOn b s =
+                                            case rangeOnString (deriveBox tuning scale b) s of
+                                                Just ( lo, hi ) ->
+                                                    List.range lo hi
+                                                        |> List.map (\rel -> noteAt tuning s (anchor + rel))
+                                                        |> List.filter (\n -> List.member n (scaleNotes scale testRoot))
+                                                        |> List.sort
+
+                                                Nothing ->
+                                                    []
+
+                                        mismatches =
+                                            List.concatMap
+                                                (\b ->
+                                                    List.range 1 (stringCount tuning - 5)
+                                                        |> List.filter (\s -> notesOn b s /= notesOn b (s + 5))
+                                                        |> List.map (\s -> "box " ++ String.fromInt b ++ " strings " ++ String.fromInt s ++ " and " ++ String.fromInt (s + 5))
+                                                )
+                                                [ 1, 2, 3, 4, 5 ]
+                                    in
+                                    Expect.equalLists [] mismatches
+                        )
+                        boxScales
+                )
+                (List.filter (\t -> stringCount t >= 6) coverageTunings)
+            )
+        , describe "the anchor is the low E, or where it would be"
+            [ test "standard tuning of any length anchors on E" <|
+                \_ -> Expect.equal (List.repeat 12 4) (List.map (standardFor >> anchorOpen) (List.range 1 12))
+            , test "with six strings or more it is the sixth string itself" <|
+                \_ ->
+                    Expect.equalLists []
+                        (List.filter (\t -> stringCount t >= 6 && anchorOpen t /= openString t 6) presetTunings)
+            ]
+        , describe "every string sounds below the one above it"
+            [ test "the open strings of every preset descend from the high string" <|
+                \_ ->
+                    Expect.equalLists []
+                        (List.filter
+                            (\t ->
+                                let
+                                    pitches =
+                                        List.map (\s -> midiAt t s 0) (List.range 1 (stringCount t))
+                                in
+                                List.map2 (>) pitches (List.drop 1 pitches) |> List.all identity |> not
+                            )
+                            presetTunings)
+            , test "standard tuning sounds E4 B3 G3 D3 A2 E2, then B1 and F\u{266F}1" <|
+                \_ ->
+                    Expect.equal
+                        [ 64, 59, 55, 50, 45, 40, 35, 30 ]
+                        (List.map (\s -> midiAt (standardFor 8) s 0) (List.range 1 8))
+            ]
+        ]
