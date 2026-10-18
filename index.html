@@ -95,6 +95,20 @@
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: env(safe-area-inset-left);
         }
+        .app-title { font-size: 2em; }
+        /* On a phone the page title is just a label; the neck is what the
+           first screen is for. */
+        @media (max-width: 600px) {
+            .app-title { font-size: 16px; }
+            .wide-only { display: none; }
+        }
+        /* A neck heading opens the scale picker; the hover says it is live. */
+        .heading-button:hover { border-color: var(--btn-on-bg) !important; }
+        /* A neck's printed heading: on screen its heading button shows it,
+           so this copy only exists on paper. */
+        @media screen {
+            .print-only { display: none !important; }
+        }
         /* Printing is for sheets of necks (blank ones especially), so drop
            everything you click: the controls, the list furniture, the
            buttons. Elm styles inline, hence the !important on the neck rows. */
@@ -113,7 +127,7 @@
 <body>
     <script src="elm.js"></script>
     <script>
-        const app = Elm.Main.init();
+        const app = Elm.Main.init({ flags: window.innerWidth });
 
         let wakeLock = null;
         let wakeLockWanted = false;

@@ -23,7 +23,7 @@ import Browser
 import Browser.Events
 import Browser.Navigation as Nav
 import Html exposing (Html, button, div, h1, p, span, text)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (attribute, class, style)
 import Html.Events exposing (onClick)
 import Json.Decode as Decode
 import Svg
@@ -41,6 +41,18 @@ type alias Model =
     , drag : Maybe Drag
     , tuning : Tuning
     , tuningOpen : Bool
+
+    -- The two drawers the controls fold into: the scale picker (root and
+    -- scale), which opens under the active neck's heading, and the display
+    -- options behind the gear. Open by default on a big screen, shut on a
+    -- phone or tablet, where they would push the neck off the first screen.
+    -- Drawer state, so like `tuningOpen` not in the URL.
+    , scaleOpen : Bool
+    , viewOpen : Bool
+
+    -- A window too narrow to keep both drawers open. There the drawers act
+    -- like menus: one open at a time, and picking a scale shuts the picker.
+    , compact : Bool
     , focus : Maybe Focus
 
     -- The one string you are working on — the **Highlight string** button.
@@ -189,7 +201,7 @@ type Msg
     = SetRoot Int
     | SetScale ScaleType
     | SetTuning Tuning
-    | SetStringSet StringSet
+    | SetStringSet Int StringSet
     | TuneString Int Int
     | SetFocus (Maybe Focus)
     | SetStringFocus (Maybe Int)
@@ -197,7 +209,9 @@ type Msg
     | ToggleDegrees
     | ToggleColumns
     | ToggleTuningList
-    | Activate Int
+    | ToggleScalePicker Int
+    | ToggleViewPanel
+    | WindowResized Int
     | AddNeck
     | RemoveNeck Int
     | DragStart Int Float Float
@@ -210,17 +224,23 @@ type Msg
     | FretClicked Int Int Int Bool
 
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url key =
+init : Int -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init width url key =
     let
         state =
             parseUrl url
+
+        compact =
+            width < compactWidth
     in
     ( { necks = state.necks
       , active = state.active
       , drag = Nothing
       , tuning = state.tuning
       , tuningOpen = False
+      , scaleOpen = not compact
+      , viewOpen = not compact
+      , compact = compact
       , focus = state.focus
       , stringFocus = state.stringFocus
       , mono = state.mono
@@ -244,10 +264,29 @@ update msg model =
             sync { model | necks = mapActive (\neck -> { neck | root = modBy 12 n }) model }
 
         SetScale sc ->
-            sync { model | necks = mapActive (\neck -> { neck | scale = sc }) model }
+            -- On a small screen picking a scale is the end of the errand, so
+            -- the picker shuts. A root does not shut it: root and scale are
+            -- usually set together.
+            sync
+                { model
+                    | necks = mapActive (\neck -> { neck | scale = sc }) model
+                    , scaleOpen = model.scaleOpen && not model.compact
+                }
 
-        SetStringSet set ->
-            sync { model | necks = mapActive (\neck -> { neck | stringSet = set }) model }
+        SetStringSet i set ->
+            sync
+                { model
+                    | necks =
+                        List.indexedMap
+                            (\j neck ->
+                                if j == i then
+                                    { neck | stringSet = set }
+
+                                else
+                                    neck
+                            )
+                            model.necks
+                }
 
         SetTuning t ->
             -- Picking a preset is the end of the errand, so the list folds
@@ -257,6 +296,33 @@ update msg model =
 
         ToggleTuningList ->
             ( { model | tuningOpen = not model.tuningOpen }, Cmd.none )
+
+        ToggleScalePicker i ->
+            -- A neck's heading opens the picker under it. Pressing another
+            -- neck's heading moves the picker there, which is what makes that
+            -- neck the one the picker edits. On a small screen one drawer at
+            -- a time: two open push the neck off the screen again.
+            let
+                opening =
+                    i /= model.active || not model.scaleOpen
+            in
+            sync
+                { model
+                    | active = clampIndex model.necks i
+                    , scaleOpen = opening
+                    , viewOpen = model.viewOpen && not (model.compact && opening)
+                }
+
+        ToggleViewPanel ->
+            ( { model
+                | viewOpen = not model.viewOpen
+                , scaleOpen = model.scaleOpen && not (model.compact && not model.viewOpen)
+              }
+            , Cmd.none
+            )
+
+        WindowResized width ->
+            ( { model | compact = width < compactWidth }, Cmd.none )
 
         TuneString s delta ->
             let
@@ -287,9 +353,6 @@ update msg model =
 
         ToggleColumns ->
             sync { model | twoColumns = not model.twoColumns }
-
-        Activate i ->
-            sync { model | active = clampIndex model.necks i }
 
         AddNeck ->
             -- The copy lands right under the neck it came from and takes over
@@ -2714,17 +2777,15 @@ viewBody model =
             , style "gap" "12px"
             , style "flex-wrap" "wrap"
             ]
-            [ h1 [ style "margin" "0 0 6px" ] [ text "Guitar Fretboard Visualizer" ]
-            , wakeLockButton model
+            [ h1 [ class "app-title", style "margin" "0 0 6px" ] [ span [ class "wide-only" ] [ text "Guitar " ], text "Fretboard Visualizer" ]
+            , span [ style "display" "flex", style "gap" "6px" ]
+                [ gearButton model, wakeLockButton model ]
             ]
-        , if many then
-            -- Each neck carries its own title, so the single shared one above
-            -- the controls would have nothing left to name.
-            text ""
+        , if model.viewOpen then
+            viewOptions model
 
           else
-            viewScaleTitle (activeBoard model)
-        , viewControls model
+            text ""
         , div
             -- A drag is a press and a sweep, which is also how you select
             -- text; without this the sweep paints the page blue.
@@ -2758,9 +2819,9 @@ viewBody model =
         ]
 
 
-{-| One fretboard, in its slot. With a single neck this is bare — no handle,
-no title, no remove button — so the page looks exactly as it did before
-there was a list to reorder. -}
+{-| One fretboard, in its slot, under its heading. With a single neck there
+is no handle and no remove button, so the page looks as it did before there
+was a list to reorder. -}
 viewNeck : Model -> Bool -> Int -> Neck -> Html Msg
 viewNeck model many i neck =
     let
@@ -2774,9 +2835,6 @@ viewNeck model many i neck =
         board =
             boardAt model slot neck
 
-        isActive =
-            i == displayIndexOf model model.active
-
         beingDragged =
             case model.drag of
                 Just drag ->
@@ -2786,23 +2844,15 @@ viewNeck model many i neck =
                     False
     in
     if not many then
-        viewFretboard board
+        div [] [ neckHeading model slot board, viewFretboard board ]
 
     else
         div
-            [ onClick (Activate slot)
-            , class "neck-row"
+            [ class "neck-row"
             , style "display" "flex"
             , style "align-items" "flex-start"
             , style "gap" "8px"
             , style "padding" "6px 6px 18px"
-            , style "border-left"
-                (if isActive then
-                    "3px solid var(--btn-on-bg)"
-
-                 else
-                    "3px solid transparent"
-                )
             , style "background"
                 (if beingDragged then
                     "var(--btn-bg)"
@@ -2819,7 +2869,7 @@ viewNeck model many i neck =
                     , style "align-items" "flex-start"
                     , style "gap" "8px"
                     ]
-                    [ div [ style "flex" "1", style "min-width" "0" ] [ viewScaleTitle board ]
+                    [ div [ style "flex" "1", style "min-width" "0" ] [ neckHeading model slot board ]
                     , removeNeckButton slot
                     ]
                 , viewFretboard board
@@ -2983,6 +3033,33 @@ wakeLockButton model =
 
 viewScaleTitle : Board -> Html Msg
 viewScaleTitle board =
+    div
+        -- Centered, not baselined: the two blocks are built to the same height
+        -- (22 × 1.2 for the name, 13 + 10 at 1.15 for a note over its degree),
+        -- so centering lines their tops and bottoms up and the pair reads as
+        -- one band rather than as a title with something hanging off it.
+        [ -- A printed blank neck speaks for itself; "Blank neck" over each
+          -- one on the sheet would just be noise.
+          class
+            (if board.scale == Blank then
+                "no-print"
+
+             else
+                ""
+            )
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "flex-wrap" "wrap"
+        , style "gap" "2px 20px"
+        , style "margin-bottom" "6px"
+        ]
+        (scaleTitleParts board)
+
+
+{-| The scale's name and its notes, the two blocks of a neck heading. The
+scale picker's button wears them too, so the button reads as the heading. -}
+scaleTitleParts : Board -> List (Html Msg)
+scaleTitleParts board =
     let
         scaleName =
             (if board.scale == Blank then
@@ -3030,40 +3107,20 @@ viewScaleTitle board =
                             []
                        )
     in
-    div
-        -- Centered, not baselined: the two blocks are built to the same height
-        -- (22 × 1.2 for the name, 13 + 10 at 1.15 for a note over its degree),
-        -- so centering lines their tops and bottoms up and the pair reads as
-        -- one band rather than as a title with something hanging off it.
-        [ -- A printed blank neck speaks for itself; "Blank neck" over each
-          -- one on the sheet would just be noise.
-          class
-            (if board.scale == Blank then
-                "no-print"
-
-             else
-                ""
-            )
-        , style "display" "flex"
+    [ div
+        [ style "font-size" "22px"
+        , style "font-weight" "600"
+        , style "line-height" "1.2"
+        ]
+        [ text scaleName ]
+    , div
+        [ style "display" "flex"
         , style "align-items" "center"
         , style "flex-wrap" "wrap"
-        , style "gap" "2px 20px"
-        , style "margin-bottom" "6px"
+        , style "gap" "0 10px"
         ]
-        [ div
-            [ style "font-size" "22px"
-            , style "font-weight" "600"
-            , style "line-height" "1.2"
-            ]
-            [ text scaleName ]
-        , div
-            [ style "display" "flex"
-            , style "align-items" "center"
-            , style "flex-wrap" "wrap"
-            , style "gap" "0 10px"
-            ]
-            detail
-        ]
+        detail
+    ]
 
 
 {-| The name a scale goes by in its heading, after the root. An edited scale
@@ -3227,11 +3284,193 @@ aside s =
         [ text s ]
 
 
-viewControls : Model -> Html Msg
-viewControls model =
-    div [ class "no-print", style "margin-bottom" "18px" ]
+{-| The display options behind the gear: the settings you set once and then
+play, each folded down to a button that says where it stands. -}
+viewOptions : Model -> Html Msg
+viewOptions model =
+    div [ class "no-print", style "margin-bottom" "10px" ]
+        [ setupRow model
+        , if model.tuningOpen then
+            controlBlock
+                (List.map (tuningButton model) tunings ++ [ customButton model ])
+
+          else
+            text ""
+        , if model.tuningOpen && isCustom model.tuning then
+            div [ style "display" "flex", style "align-items" "center" ]
+                (List.map (stringStepper model) (List.range 1 6))
+
+          else
+            text ""
+        ]
+
+
+setupRow : Model -> Html Msg
+setupRow model =
+    div
+        [ style "margin-bottom" "8px"
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "flex-wrap" "wrap"
+        , style "gap" "6px 12px"
+        ]
+        (tuningToggle model
+            :: highlightToggle model
+            :: highlightFrets model
+            ++ (stringToggle model :: highlightString model)
+            ++ [ degreesToggle model, monoToggle model, columnsToggle model ]
+        )
+
+
+{-| Opens and shuts the display options. An icon rather than a label: it sits
+in the page header beside Keep screen on and should not compete with it. -}
+gearButton : Model -> Html Msg
+gearButton model =
+    button
+        ([ onClick ToggleViewPanel
+         , attribute "aria-label" "Display options"
+         , attribute "aria-expanded"
+            (if model.viewOpen then
+                "true"
+
+             else
+                "false"
+            )
+         , Html.Attributes.title "Display options"
+         , class "no-print"
+         ]
+            ++ buttonBaseStyle model.viewOpen
+            ++ [ style "padding" "5px 7px", style "line-height" "0" ]
+        )
+        [ Svg.svg
+            [ SA.viewBox "0 0 24 24"
+            , SA.width "18"
+            , SA.height "18"
+            , SA.fill "none"
+            , SA.stroke "currentColor"
+            , SA.strokeWidth "2"
+            , SA.strokeLinecap "round"
+            , SA.strokeLinejoin "round"
+            ]
+            [ Svg.circle [ SA.cx "12", SA.cy "12", SA.r "3" ] []
+            , Svg.path [ SA.d "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" ] []
+            ]
+        ]
+
+
+{-| A neck's heading, which is also its controls: pressing it opens the scale
+picker under it, and in a triad mode the string sets sit beneath it. There is
+no separate toolbar naming the scale a second time, and no selected neck to
+keep track of — the neck you are editing is the one the picker is under. -}
+neckHeading : Model -> Int -> Board -> Html Msg
+neckHeading model slot board =
+    let
+        open =
+            model.scaleOpen && slot == model.active
+    in
+    div []
+        [ scaleHeadingButton slot open board
+
+        -- The button does not print, so this copy is the printed heading.
+        , div [ class "print-only" ] [ viewScaleTitle board ]
+        , if open then
+            scalePicker model
+
+          else
+            text ""
+        , if isTriad board.scale then
+            div [ class "no-print" ]
+                [ controlBlock
+                    [ pickerGroup "Strings"
+                        (stringSetButton slot board AllStrings "All"
+                            :: List.map
+                                (\t -> stringSetButton slot board (StringTrio t) (stringSetSlug (StringTrio t)))
+                                [ 1, 2, 3, 4 ]
+                        )
+                    ]
+                ]
+
+          else
+            text ""
+        ]
+
+
+{-| The heading drawn as a button: the same name and notes as a printed
+heading, plus a chevron that says it opens. It wears a button's border and
+fill even while shut, since a heading that only looks like a heading gives no
+hint that pressing it does anything. -}
+scaleHeadingButton : Int -> Bool -> Board -> Html Msg
+scaleHeadingButton slot open board =
+    button
+        [ onClick (ToggleScalePicker slot)
+        , class "no-print heading-button"
+        , attribute "aria-expanded"
+            (if open then
+                "true"
+
+             else
+                "false"
+            )
+        , Html.Attributes.title "Change root and scale"
+        , style "display" "flex"
+        , style "align-items" "center"
+        , style "gap" "2px 20px"
+        , style "flex-wrap" "wrap"
+        , style "margin" "0 0 8px"
+        , style "padding" "4px 10px"
+        , style "border" "1px solid var(--btn-bd)"
+        , style "border-radius" "8px"
+
+        -- Open, the border thickens by an inset ring rather than a wider
+        -- border, so the heading does not shift when it opens.
+        , style "box-shadow"
+            (if open then
+                "inset 0 0 0 1px var(--btn-on-bg)"
+
+             else
+                "none"
+            )
+        , style "background" "var(--btn-bg)"
+        , style "color" "inherit"
+        , style "font-family" "inherit"
+        , style "text-align" "left"
+        , style "cursor" "pointer"
+        ]
+        (scaleTitleParts board ++ [ chevron open ])
+
+
+{-| A down chevron, flipped when open. Drawn rather than typed: the ▾ glyph
+is a speck at text size. -}
+chevron : Bool -> Html Msg
+chevron open =
+    Svg.svg
+        [ SA.viewBox "0 0 24 24"
+        , SA.width "20"
+        , SA.height "20"
+        , SA.fill "none"
+        , SA.stroke "currentColor"
+        , SA.strokeWidth "2.5"
+        , SA.strokeLinecap "round"
+        , SA.strokeLinejoin "round"
+        , SA.style
+            ("flex: 0 0 auto; color: var(--btn-text); transition: transform 0.15s"
+                ++ (if open then
+                        "; transform: rotate(180deg)"
+
+                    else
+                        ""
+                   )
+            )
+        ]
+        [ Svg.polyline [ SA.points "6 9 12 15 18 9" ] [] ]
+
+
+{-| The root and the scale: what you pick every time you set a neck up. -}
+scalePicker : Model -> Html Msg
+scalePicker model =
+    div [ class "no-print" ]
         [ controlBlock
-            -- One radio group of 23 options, broken into the families a player
+            -- One radio group of 25 options, broken into the families a player
             -- would look in. The family name carries the context, so the
             -- buttons inside it can just say "Major" — which is what makes the
             -- whole picker fit in two lines instead of four long rows.
@@ -3276,55 +3515,9 @@ viewControls model =
                 , scaleButton model Blank "None"
                 ]
             ]
-        , if isTriad (activeNeck model).scale then
-            controlBlock
-                [ pickerGroup "Strings"
-                    (stringSetButton model AllStrings "All"
-                        :: List.map
-                            (\t -> stringSetButton model (StringTrio t) (stringSetSlug (StringTrio t)))
-                            [ 1, 2, 3, 4 ]
-                    )
-                ]
-
-          else
-            text ""
         , controlBlock
             [ pickerGroup "Root" (List.map (rootButton model) (List.range 0 11)) ]
-        , setupRow model
-        , if model.tuningOpen then
-            controlBlock
-                (List.map (tuningButton model) tunings ++ [ customButton model ])
-
-          else
-            text ""
-        , if model.tuningOpen && isCustom model.tuning then
-            div [ style "display" "flex", style "align-items" "center" ]
-                (List.map (stringStepper model) (List.range 1 6))
-
-          else
-            text ""
         ]
-
-
-{-| The bottom row: the settings you reach for least, each folded down to a
-button that says where it stands. Everything above it is a list you pick from
-every time you set a neck up, so those stay open; these you set once and
-play, so they stay shut until you ask. -}
-setupRow : Model -> Html Msg
-setupRow model =
-    div
-        [ style "margin-bottom" "8px"
-        , style "display" "flex"
-        , style "align-items" "center"
-        , style "flex-wrap" "wrap"
-        , style "gap" "6px 12px"
-        ]
-        (tuningToggle model
-            :: highlightToggle model
-            :: highlightFrets model
-            ++ (stringToggle model :: highlightString model)
-            ++ [ degreesToggle model, monoToggle model, columnsToggle model ]
-        )
 
 
 {-| Names the tuning you are in, and opens the list of them when pressed. -}
@@ -3667,13 +3860,13 @@ scaleButton model st lbl =
         [ text lbl ]
 
 
-stringSetButton : Model -> StringSet -> String -> Html Msg
-stringSetButton model set lbl =
+stringSetButton : Int -> Board -> StringSet -> String -> Html Msg
+stringSetButton slot board set lbl =
     button
-        ([ onClick (SetStringSet set)
+        ([ onClick (SetStringSet slot set)
          , style "min-width" "80px"
          ]
-            ++ buttonBaseStyle ((activeNeck model).stringSet == set)
+            ++ buttonBaseStyle (board.stringSet == set)
         )
         [ text lbl ]
 
@@ -5661,6 +5854,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ wakeLockChanged WakeLockChanged
+        , Browser.Events.onResize (\w _ -> WindowResized w)
 
         -- Touch pointers are captured by the handle, so its own pointermove is
         -- enough there. A mouse is not captured and walks straight off the
@@ -5677,7 +5871,15 @@ subscriptions model =
         ]
 
 
-main : Program () Model Msg
+{-| The window width, in CSS pixels, below which the drawers start shut and
+act like menus: phones and tablets, where the open controls alone would fill
+the first screen. -}
+compactWidth : Int
+compactWidth =
+    1000
+
+
+main : Program Int Model Msg
 main =
     Browser.application
         { init = init

@@ -367,47 +367,66 @@ visually invisible — accepted trade-off for consistent edge alignment.
 
 ## Toolbar
 
-The control panel is ordered by **how often you reach for a thing**. The scale
-groups and the root are a list you pick from every time you set a neck up, so
-they stay open. Tuning and the highlight window you set once and then play, so
-each folds down to a single button that says where it stands and gets out of
-the way. That is most of the panel's height back, and on a phone it is the
-difference between the neck being on screen and not.
+There is no toolbar row any more. The controls fold into two drawers, and a
+neck's **heading is its controls**:
 
-- **The scale picker is one radio group of 25 options**, broken into the
-  families a player would look in: Pentatonic, Modes, Harmonic, Melodic,
-  Diagonal, Triads, All notes. Each is a `pickerGroup` — an uppercase caption
-  riding with its own buttons rather than sitting in a column — and the groups
-  flow and wrap between themselves inside a `controlBlock`. Since the caption
-  carries the context, the buttons inside it can just say "Major", which is
-  what gets the whole picker into two lines instead of four long rows.
+- **The heading is a button** (`neckHeading`, `scaleHeadingButton`): the
+  scale's name and notes (`scaleTitleParts`, shared with `viewScaleTitle`)
+  plus a drawn chevron (`chevron`, flipped when open). It keeps a button's
+  border and fill even while shut, and a darker ring when open or hovered:
+  an earlier flat version with a ▾ glyph read as a plain title, so nobody
+  found the picker. Pressing it opens the
+  **scale picker** (`scalePicker`) right under that heading, and pressing
+  another neck's heading moves the picker there (`ToggleScalePicker slot`).
+  So nothing names the scale twice, and there is no visible selected neck:
+  `active` is simply the neck the picker is under (it still feeds the legend
+  and Add neck, and rides in the URL).
+- **The scale picker** is the scale groups, then the Root row. The scale
+  picker is one radio group of 25 options broken into the families a player
+  would look in: Pentatonic, Modes, Harmonic, Melodic, Diagonal, Triads, All
+  notes. Each is a `pickerGroup`, an uppercase caption riding with its own
+  buttons, and the groups flow and wrap inside a `controlBlock`. The caption
+  carries the context, so the buttons can just say "Major".
+- **The Strings row** (triad modes) sits under each triad neck's heading,
+  outside the picker: you flip string sets while you play. `SetStringSet`
+  takes the neck's slot, so it edits that neck whether or not it is active.
+- **The gear** (`gearButton`, in the page header beside Keep screen on) opens
+  the **display options** (`viewOptions`): the row of buttons for tuning,
+  Highlight shapes, Highlight string, Degrees, Monochrome and Two columns.
+  An icon, not a label: it should not compete with Keep screen on.
+- **Open on a big screen, shut on a small one.** `index.html` passes
+  `window.innerWidth` as the init flag; below `compactWidth` (1000px: phones
+  and tablets) both drawers start shut and `compact` is set. Compact drawers
+  act like menus: one open at a time, and picking a scale shuts the picker (a
+  root does not — root and scale are usually set together). `onResize` keeps
+  `compact` current but never opens or shuts a drawer by itself.
 - **`controlBlock` is capped at `totalWidth`**, the neck's width. Without the
   cap the flex row would lay every group on one line and drag the page out to
-  match, because the body sizes itself to its widest row. With it, the neck is
-  what sets the page width — which the old 14-button scale row did not allow:
-  it was wider than the neck and every screen paid for it.
+  match, because the body sizes itself to its widest row.
 - **Tuning** is a disclosure: the button reads `Standard tuning ▾`, opens the
   list of presets when pressed, and closes again as soon as you pick one.
-  **Custom** is the exception — `SetTuning` leaves the list open for it, because
-  the per-string steppers it reveals are the thing you opened the list for. A
-  custom tuning has no name worth reading, so the button spells out its six
-  notes instead (`tuningLabel`), written low string to high the way a tuning is
-  normally written down.
+  **Custom** is the exception — `SetTuning` leaves the list open for it,
+  because the per-string steppers it reveals are the thing you opened the list
+  for. A custom tuning has no name worth reading, so the button spells out its
+  six notes instead (`tuningLabel`), written low string to high the way a
+  tuning is normally written down.
 - **Highlight shapes** and **Highlight string** are plain on/off toggles:
   pressing one switches it on at `defaultFocus` / `defaultStringFocus` and
   reveals its steppers; pressing it again puts them away. The caret on the
-  tuning button is what separates those from it — one opens a list, the others
-  are on or off. Both steppers are the same `stepper`, which takes its label
-  already rendered because a string reads as `6 (E)`, not as a bare number.
-- `tuningOpen` is on the model but deliberately **not** in the URL: it is the
-  state of a drawer, not of the diagram, and a shared link should not reopen
-  someone else's drawer.
-- There is no label column any more. Every caption rides with the buttons it
-  names, so rows start at the left edge and a row can hold several groups.
+  tuning button is what separates those from it. Both steppers are the same
+  `stepper`, which takes its label already rendered because a string reads as
+  `6 (E)`, not as a bare number.
+- `tuningOpen`, `scaleOpen` and `viewOpen` are on the model but deliberately
+  **not** in the URL: they are the state of a drawer, not of the diagram, and
+  a shared link should not reopen someone else's drawer.
+- The heading button does not print, so each heading also renders a
+  `print-only` copy (`viewScaleTitle`), hidden on screen.
+- Under 600px the page title (`app-title`) drops to 16px and loses "Guitar"
+  (`wide-only`) so it shares a line with the gear and Keep screen on.
 
 ## Highlight shapes
 
-The **Highlight shapes** button sets a fret window — `Frets 4 – 8` — and
+The **Highlight shapes** button (behind the gear) sets a fret window — `Frets 4 – 8` — and
 everything that does not fall in it is drawn gray. It is `focus : Maybe Focus` on the model,
 a pair of inclusive fret numbers, and like the tuning it belongs to the hand
 rather than to one neck: one window applies to every neck at once. That is the
@@ -471,9 +490,9 @@ learning a position string by string.
 ## Print
 
 `index.html` has a `@media print` block for printing sheets of necks. Anything
-you click carries the `no-print` class (the control panel, the drag handle, ×,
+you click carries the `no-print` class (the heading buttons, scale picker, display options, the drag handle, ×,
 Add neck, the page header with Keep screen on) and is hidden, as is the
-"Blank neck" heading — a printed blank neck needs no caption. `neck-row` drops the active accent and
+"Blank neck" heading — a printed blank neck needs no caption. `neck-row` drops the
 drag tint (with `!important`, since Elm styles inline) and keeps a neck from
 splitting across pages. Print forces the light scheme and a pure white page (`--bg`, `--surface`, and
 the `html`/`body` background).
@@ -560,7 +579,7 @@ for opaque rendering.
 
 The page draws a **list of necks**, not one fretboard. A `Neck` is a root, a
 scale and (triads only) a string set; `Model` holds `necks : List Neck` plus
-`active`, the index the control panel edits. Tuning is *not* per neck — it is a
+`active`, the index of the neck the scale picker is under. Tuning is *not* per neck — it is a
 property of the instrument, so it stays on the model and every neck shares it.
 
 This replaced an earlier "Multiple roots" checkbox that turned the root buttons
@@ -572,8 +591,7 @@ point of the list.
   `id`. Every render function reads its root/scale/stringSet/tuning off a
   `Board`, never off the model, which is what lets one page draw many necks.
   `boardAt` pairs neck `i` with the tuning; `activeBoard` is the one the
-  controls are pointed at, and it feeds the legend and (single-neck only) the
-  title above the controls.
+  scale picker is pointed at, and it feeds the legend.
 - **`board.id`** namespaces the SVG ids a neck mints — the `ovlp-*` stripe
   patterns and the `clip-*` texture clip paths. Ids are document-global, so without
   a prefix a `url(#…)` would resolve to whichever neck rendered first and every
@@ -585,9 +603,8 @@ point of the list.
   ordinary root and scale buttons. **×** removes one; `RemoveNeck` refuses the
   last one, so the list is never empty and the buttons always have something
   to edit.
-- With a single neck the list furniture disappears entirely — no handle, no ×,
-  no active accent, title above the controls — so the page looks exactly as it
-  did before there was a list.
+- With a single neck the list furniture disappears entirely — no handle, no
+  × — so the page looks as it did before there was a list.
 
 ### Reordering
 
