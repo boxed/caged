@@ -50,8 +50,9 @@ commit both files together.
 Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
 `HarmonicMajor`/`HarmonicMinor` (major with ♭6 / minor with a raised 7th),
 `MelodicMajor`/`MelodicMinor` (major with ♭6 ♭7 / minor with a raised 6th and
-7th), three diagonal climbing variants
-(`DiagonalPent`/`DiagonalMajorPent`/`DiagonalBlues`), the two all-notes
+7th), five diagonal climbing variants
+(`DiagonalMajorPent`/`DiagonalPent`/`DiagonalBlues` and the diatonic
+`DiagonalMajor`/`DiagonalMinor`), the two all-notes
 maps `ChromaticMinor`/`ChromaticMajor`, the empty `Blank` neck, and the four triads
 `TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`, plus `Custom`, a scale
 edited by clicking notes on the neck (see **Custom scales**).
@@ -282,7 +283,11 @@ standard shape is the reference only for which pitches a box spans.
   around it.
 - **Diagonal scales** are a separate climbing-shape system (`DiagShape`,
   `drawDiagonalShape`) and still use the pitch-preserving `boxShift` offset,
-  since those are fixed shapes meant to be slid.
+  since those are fixed shapes meant to be slid. Each is an octave split over
+  a string pair, in two interlocking patterns that together hold every scale
+  note: 3 + 2 for the pentatonics, 4 + 3 for the diatonic major/minor (minor
+  starts on its root, so the shape is six frets wide; major is its relative
+  minor's shape, like the pentatonics).
 
 ## Rendering
 
@@ -369,7 +374,7 @@ each folds down to a single button that says where it stands and gets out of
 the way. That is most of the panel's height back, and on a phone it is the
 difference between the neck being on screen and not.
 
-- **The scale picker is one radio group of 23 options**, broken into the
+- **The scale picker is one radio group of 25 options**, broken into the
   families a player would look in: Pentatonic, Modes, Harmonic, Melodic,
   Diagonal, Triads, All notes. Each is a `pickerGroup` — an uppercase caption
   riding with its own buttons rather than sitting in a column — and the groups

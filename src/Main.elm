@@ -170,6 +170,8 @@ type ScaleType
     | DiagonalMajorPent
     | DiagonalPent
     | DiagonalBlues
+    | DiagonalMajor
+    | DiagonalMinor
     | Custom ScaleType (List Int)
 
 
@@ -634,6 +636,8 @@ scaleSlug s =
         DiagonalMajorPent -> "diagonal-major-pent"
         DiagonalPent -> "diagonal-pent"
         DiagonalBlues -> "diagonal-blues"
+        DiagonalMajor -> "diagonal-major"
+        DiagonalMinor -> "diagonal-minor"
         Custom base intervals -> scaleSlug base ++ "_" ++ String.concat (List.map intervalDigit intervals)
 
 
@@ -690,6 +694,8 @@ presetFromSlug s =
         "diagonal-major-pent" -> Just DiagonalMajorPent
         "diagonal-pent" -> Just DiagonalPent
         "diagonal-blues" -> Just DiagonalBlues
+        "diagonal-major" -> Just DiagonalMajor
+        "diagonal-minor" -> Just DiagonalMinor
         _ -> Nothing
 
 
@@ -1256,6 +1262,8 @@ scaleDegrees st =
         DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
         DiagonalPent -> [ 1, 3, 4, 5, 7 ]
         DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
+        DiagonalMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        DiagonalMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Custom base intervals -> List.map (customDegree base) intervals
 
 
@@ -1469,6 +1477,12 @@ scaleIntervals st =
         DiagonalBlues ->
             [ 0, 3, 5, 6, 7, 10 ]
 
+        DiagonalMajor ->
+            [ 0, 2, 4, 5, 7, 9, 11 ]
+
+        DiagonalMinor ->
+            [ 0, 2, 3, 5, 7, 8, 10 ]
+
         Custom _ intervals ->
             intervals
 
@@ -1571,22 +1585,17 @@ rootFret board =
             openString board.tuning 6
     in
     case board.scale of
-        DiagonalMajorPent ->
-            diagonalAnchor board.tuning DiagonalMajorPent board.root
-
-        DiagonalPent ->
-            diagonalAnchor board.tuning DiagonalPent board.root
-
-        DiagonalBlues ->
-            diagonalAnchor board.tuning DiagonalBlues board.root
-
         _ ->
-            modBy 12 (board.root - anchorOffset board.scale - lowE)
+            if isDiagonal board.scale then
+                diagonalAnchor board.tuning board.scale board.root
+
+            else
+                modBy 12 (board.root - anchorOffset board.scale - lowE)
 
 
 isDiagonal : ScaleType -> Bool
 isDiagonal scale =
-    scale == DiagonalPent || scale == DiagonalMajorPent || scale == DiagonalBlues
+    List.member scale [ DiagonalMajorPent, DiagonalPent, DiagonalBlues, DiagonalMajor, DiagonalMinor ]
 
 
 {-| The two all-notes maps — every note on the neck, with the chord tones read
@@ -1644,6 +1653,7 @@ anchorOffset scale =
         ChromaticMajor -> 3
         TriadMajor -> 3
         TriadAug -> 3
+        DiagonalMajor -> 3
         Custom base intervals ->
             -- An edited scale goes by its third: while it still has the
             -- preset's third it keeps the preset's boxes, and once it has
@@ -1946,10 +1956,25 @@ diagonalShapes =
 same six shapes (only the anchor differs, handled by `diagonalAnchor`). Blues
 reuses the minor-pent shapes and inserts the ♭5 blue note on each shape's
 ♭3-4-5 string, where it sits between the 4 and the 5. Because the blue note is
-interior to a string's existing fret span, the shape polygons are unchanged. -}
+interior to a string's existing fret span, the shape polygons are unchanged.
+
+The diatonic major and minor follow the same plan with an octave of seven
+notes split 4 + 3 over the string pair: minor's lower string carries R, 2, ♭3,
+4 and its upper string 5, ♭6, ♭7, then the next pair climbs an octave. The split
+starts on the minor root because the step below it is a whole tone, which holds
+the shape to six frets; starting on the ♭3 would stretch it to seven. Major is
+its relative minor, like the pentatonics, so its lower string reads 6, 7, R, 2.
+Pattern 2 swaps the halves again, and the two patterns still partition the
+scale. -}
 diagonalShapesFor : ScaleType -> List DiagShape
 diagonalShapesFor scale =
     case scale of
+        DiagonalMajor ->
+            diatonicDiagonalShapes
+
+        DiagonalMinor ->
+            diatonicDiagonalShapes
+
         DiagonalBlues ->
             -- Pattern 1: ♭5 added between 4 and 5 on the lower string.
             [ { color = 1, lower = 6, lowerRels = [ 0, 2, 3, 4 ], upper = 5, upperRels = [ 2, 4 ] }
@@ -1976,8 +2001,24 @@ diagonalShapesFor scale =
             ]
 
 
-{-| Anchor fret on the low-E string (open = pitch 4). Minor anchors on the ♭3
-(root + 3 - 4 = root - 1); major anchors on the root (root - 4). -}
+diatonicDiagonalShapes : List DiagShape
+diatonicDiagonalShapes =
+    -- Pattern 1: four notes on the lower string, three on the upper.
+    [ { color = 1, lower = 6, lowerRels = [ 0, 2, 3, 5 ], upper = 5, upperRels = [ 2, 3, 5 ] }
+    , { color = 1, lower = 4, lowerRels = [ 2, 4, 5, 7 ], upper = 3, upperRels = [ 4, 5, 7 ] }
+    , { color = 1, lower = 2, lowerRels = [ 5, 7, 8, 10 ], upper = 1, upperRels = [ 7, 8, 10 ] }
+
+    -- Pattern 2: three notes on the lower string, four on the upper.
+    , { color = 2, lower = 6, lowerRels = [ -5, -4, -2 ], upper = 5, upperRels = [ -5, -3, -2, 0 ] }
+    , { color = 2, lower = 4, lowerRels = [ -3, -2, 0 ], upper = 3, upperRels = [ -3, -1, 0, 2 ] }
+    , { color = 2, lower = 2, lowerRels = [ 0, 1, 3 ], upper = 1, upperRels = [ 0, 2, 3, 5 ] }
+    ]
+
+
+{-| Anchor fret on the low-E string (open = pitch 4). Minor pentatonic anchors
+on the ♭3 (root + 3 - 4 = root - 1); major pentatonic on the root (root - 4).
+The diatonic minor anchors on its root and the major on its relative minor's
+root. -}
 diagonalAnchor : Tuning -> ScaleType -> Int -> Int
 diagonalAnchor tuning scale root =
     let
@@ -1986,6 +2027,12 @@ diagonalAnchor tuning scale root =
     in
     case scale of
         DiagonalMajorPent ->
+            modBy 12 (root - lowE)
+
+        DiagonalMajor ->
+            modBy 12 (root - 3 - lowE)
+
+        DiagonalMinor ->
             modBy 12 (root - lowE)
 
         _ ->
@@ -2106,6 +2153,8 @@ thirdOf scale =
         DiagonalMajorPent -> 4
         DiagonalPent -> 3
         DiagonalBlues -> 3
+        DiagonalMajor -> 4
+        DiagonalMinor -> 3
         Custom base intervals -> pickTone base intervals (thirdOf base) 3 4
 
 
@@ -2137,6 +2186,8 @@ seventhOf scale =
         DiagonalMajorPent -> -1
         DiagonalPent -> 10
         DiagonalBlues -> 10
+        DiagonalMajor -> 11
+        DiagonalMinor -> 10
         Custom base intervals -> pickTone base intervals (seventhOf base) 10 11
 
 
@@ -3045,6 +3096,8 @@ scaleTitle scale =
         DiagonalMajorPent -> "Diagonal Major Pentatonic"
         DiagonalPent -> "Diagonal Minor Pentatonic"
         DiagonalBlues -> "Diagonal Blues"
+        DiagonalMajor -> "Diagonal Major"
+        DiagonalMinor -> "Diagonal Minor"
         Custom base intervals ->
             let
                 baseIntervals =
@@ -3097,6 +3150,8 @@ intervalLabels st =
         DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
         DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
         DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
+        DiagonalMajor -> [ "R", "2", "3", "4", "5", "6", "7" ]
+        DiagonalMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
         Custom base intervals -> List.map (customLabel base) intervals
 
 
@@ -3203,9 +3258,11 @@ viewControls model =
                 , scaleButton model MelodicMinor "Minor"
                 ]
             , pickerGroup "Diagonal"
-                [ scaleButton model DiagonalMajorPent "Major"
-                , scaleButton model DiagonalPent "Minor"
+                [ scaleButton model DiagonalMajorPent "Major pent"
+                , scaleButton model DiagonalPent "Minor pent"
                 , scaleButton model DiagonalBlues "Blues"
+                , scaleButton model DiagonalMajor "Major"
+                , scaleButton model DiagonalMinor "Minor"
                 ]
             , pickerGroup "Triads"
                 [ scaleButton model TriadMajor "Major"

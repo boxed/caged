@@ -58,6 +58,7 @@ boxScales =
         ++ [ Custom MinorPent [ 0, 2, 3, 5, 7, 10 ]
            , Custom Ionian [ 0, 2, 4, 5, 7, 9 ]
            , Custom Blank [ 0, 4, 9 ]
+           , Custom DiagonalMajor [ 0, 2, 4, 5, 7, 9 ]
            ]
 
 
@@ -96,6 +97,12 @@ fRootFor tuning scale root =
         DiagonalMajorPent ->
             modBy 12 (root - lowE)
 
+        DiagonalMajor ->
+            modBy 12 (root - 3 - lowE)
+
+        DiagonalMinor ->
+            modBy 12 (root - lowE)
+
         _ ->
             modBy 12 (root - offsetFor scale - lowE)
 
@@ -114,6 +121,7 @@ offsetFor scale =
         Locrian -> 2
         HarmonicMajor -> 3
         MelodicMajor -> 3
+        DiagonalMajor -> 3
         Custom base intervals ->
             -- An edited scale keeps its preset's anchor while it keeps the
             -- preset's third, and anchors as plain minor or major once the
@@ -176,6 +184,8 @@ scaleName scale =
         DiagonalPent -> "DiagonalPent"
         DiagonalMajorPent -> "DiagonalMajorPent"
         DiagonalBlues -> "DiagonalBlues"
+        DiagonalMajor -> "DiagonalMajor"
+        DiagonalMinor -> "DiagonalMinor"
         Custom base intervals -> scaleName base ++ "+" ++ String.join "," (List.map String.fromInt intervals)
 
 
@@ -713,6 +723,8 @@ diagonalCells =
         (List.concatMap (diagonalRootCells DiagonalPent ( [ 3, 5, 7 ], [ 10, 0 ] )) (List.range 0 11)
             ++ List.concatMap (diagonalRootCells DiagonalMajorPent ( [ 0, 2, 4 ], [ 7, 9 ] )) (List.range 0 11)
             ++ List.concatMap (diagonalRootCells DiagonalBlues ( [ 3, 5, 6, 7 ], [ 10, 0 ] )) (List.range 0 11)
+            ++ List.concatMap (diagonalRootCells DiagonalMajor ( [ 9, 11, 0, 2 ], [ 4, 5, 7 ] )) (List.range 0 11)
+            ++ List.concatMap (diagonalRootCells DiagonalMinor ( [ 0, 2, 3, 5 ], [ 7, 8, 10 ] )) (List.range 0 11)
         )
 
 
