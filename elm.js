@@ -5370,7 +5370,7 @@ var $author$project$Main$rootFromSlug = function (s) {
 };
 var $author$project$Main$Custom = F2(
 	function (a, b) {
-		return {$: 26, a: a, b: b};
+		return {$: 29, a: a, b: b};
 	});
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
@@ -5447,36 +5447,45 @@ var $author$project$Main$scaleIntervals = function (st) {
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 9, 11]);
 		case 14:
-			return A2($elm$core$List$range, 0, 11);
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 10, 11]);
 		case 15:
-			return A2($elm$core$List$range, 0, 11);
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 8, 9, 11]);
 		case 16:
-			return _List_Nil;
+			return _List_fromArray(
+				[0, 2, 3, 4, 5, 7, 9, 10]);
 		case 17:
-			return _List_fromArray(
-				[0, 4, 7]);
+			return A2($elm$core$List$range, 0, 11);
 		case 18:
-			return _List_fromArray(
-				[0, 3, 7]);
+			return A2($elm$core$List$range, 0, 11);
 		case 19:
-			return _List_fromArray(
-				[0, 3, 6]);
+			return _List_Nil;
 		case 20:
 			return _List_fromArray(
-				[0, 4, 8]);
+				[0, 4, 7]);
 		case 21:
 			return _List_fromArray(
-				[0, 2, 4, 7, 9]);
+				[0, 3, 7]);
 		case 22:
 			return _List_fromArray(
-				[0, 3, 5, 7, 10]);
+				[0, 3, 6]);
 		case 23:
 			return _List_fromArray(
-				[0, 3, 5, 6, 7, 10]);
+				[0, 4, 8]);
 		case 24:
 			return _List_fromArray(
-				[0, 2, 4, 5, 7, 9, 11]);
+				[0, 2, 4, 7, 9]);
 		case 25:
+			return _List_fromArray(
+				[0, 3, 5, 7, 10]);
+		case 26:
+			return _List_fromArray(
+				[0, 3, 5, 6, 7, 10]);
+		case 27:
+			return _List_fromArray(
+				[0, 2, 4, 5, 7, 9, 11]);
+		case 28:
 			return _List_fromArray(
 				[0, 2, 3, 5, 7, 8, 10]);
 		default:
@@ -5509,15 +5518,18 @@ var $elm$core$String$fromChar = function (_char) {
 	return A2($elm$core$String$cons, _char, '');
 };
 var $author$project$Main$Aeolian = {$: 7};
-var $author$project$Main$Blank = {$: 16};
+var $author$project$Main$BebopDominant = {$: 14};
+var $author$project$Main$BebopMajor = {$: 15};
+var $author$project$Main$BebopMinor = {$: 16};
+var $author$project$Main$Blank = {$: 19};
 var $author$project$Main$Blues = {$: 9};
-var $author$project$Main$ChromaticMajor = {$: 14};
-var $author$project$Main$ChromaticMinor = {$: 15};
-var $author$project$Main$DiagonalBlues = {$: 23};
-var $author$project$Main$DiagonalMajor = {$: 24};
-var $author$project$Main$DiagonalMajorPent = {$: 21};
-var $author$project$Main$DiagonalMinor = {$: 25};
-var $author$project$Main$DiagonalPent = {$: 22};
+var $author$project$Main$ChromaticMajor = {$: 17};
+var $author$project$Main$ChromaticMinor = {$: 18};
+var $author$project$Main$DiagonalBlues = {$: 26};
+var $author$project$Main$DiagonalMajor = {$: 27};
+var $author$project$Main$DiagonalMajorPent = {$: 24};
+var $author$project$Main$DiagonalMinor = {$: 28};
+var $author$project$Main$DiagonalPent = {$: 25};
 var $author$project$Main$Dorian = {$: 3};
 var $author$project$Main$HarmonicMajor = {$: 10};
 var $author$project$Main$HarmonicMinor = {$: 11};
@@ -5529,10 +5541,10 @@ var $author$project$Main$MelodicMajor = {$: 12};
 var $author$project$Main$MelodicMinor = {$: 13};
 var $author$project$Main$Mixolydian = {$: 6};
 var $author$project$Main$Phrygian = {$: 4};
-var $author$project$Main$TriadAug = {$: 20};
-var $author$project$Main$TriadDim = {$: 19};
-var $author$project$Main$TriadMajor = {$: 17};
-var $author$project$Main$TriadMinor = {$: 18};
+var $author$project$Main$TriadAug = {$: 23};
+var $author$project$Main$TriadDim = {$: 22};
+var $author$project$Main$TriadMajor = {$: 20};
+var $author$project$Main$TriadMinor = {$: 21};
 var $author$project$Main$presetFromSlug = function (s) {
 	switch (s) {
 		case 'major-pent':
@@ -5563,6 +5575,12 @@ var $author$project$Main$presetFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$MelodicMajor);
 		case 'melodic-minor':
 			return $elm$core$Maybe$Just($author$project$Main$MelodicMinor);
+		case 'bebop-dominant':
+			return $elm$core$Maybe$Just($author$project$Main$BebopDominant);
+		case 'bebop-major':
+			return $elm$core$Maybe$Just($author$project$Main$BebopMajor);
+		case 'bebop-minor':
+			return $elm$core$Maybe$Just($author$project$Main$BebopMinor);
 		case 'all-notes-major':
 			return $elm$core$Maybe$Just($author$project$Main$ChromaticMajor);
 		case 'all-notes-minor':
@@ -6980,28 +6998,34 @@ var $author$project$Main$scaleSlug = function (s) {
 		case 13:
 			return 'melodic-minor';
 		case 14:
-			return 'all-notes-major';
+			return 'bebop-dominant';
 		case 15:
-			return 'all-notes-minor';
+			return 'bebop-major';
 		case 16:
-			return 'blank';
+			return 'bebop-minor';
 		case 17:
-			return 'triad-major';
+			return 'all-notes-major';
 		case 18:
-			return 'triad-minor';
+			return 'all-notes-minor';
 		case 19:
-			return 'triad-dim';
+			return 'blank';
 		case 20:
-			return 'triad-aug';
+			return 'triad-major';
 		case 21:
-			return 'diagonal-major-pent';
+			return 'triad-minor';
 		case 22:
-			return 'diagonal-pent';
+			return 'triad-dim';
 		case 23:
-			return 'diagonal-blues';
+			return 'triad-aug';
 		case 24:
-			return 'diagonal-major';
+			return 'diagonal-major-pent';
 		case 25:
+			return 'diagonal-pent';
+		case 26:
+			return 'diagonal-blues';
+		case 27:
+			return 'diagonal-major';
+		case 28:
 			return 'diagonal-minor';
 		default:
 			var base = s.a;
@@ -7124,7 +7148,7 @@ var $elm$url$Url$toString = function (url) {
 				url.bv)));
 };
 var $author$project$Main$baseScale = function (scale) {
-	if (scale.$ === 26) {
+	if (scale.$ === 29) {
 		var base = scale.a;
 		return base;
 	} else {
@@ -8804,36 +8828,45 @@ var $author$project$Main$intervalLabels = function (st) {
 			return _List_fromArray(
 				['R', '2', '♭3', '4', '5', '6', '7']);
 		case 14:
-			return A2($elm$core$List$repeat, 12, '');
+			return _List_fromArray(
+				['R', '2', '3', '4', '5', '6', '♭7', '7']);
 		case 15:
-			return A2($elm$core$List$repeat, 12, '');
+			return _List_fromArray(
+				['R', '2', '3', '4', '5', '♭6', '6', '7']);
 		case 16:
-			return _List_Nil;
+			return _List_fromArray(
+				['R', '2', '♭3', '3', '4', '5', '6', '♭7']);
 		case 17:
-			return _List_fromArray(
-				['R', '3', '5']);
+			return A2($elm$core$List$repeat, 12, '');
 		case 18:
-			return _List_fromArray(
-				['R', '♭3', '5']);
+			return A2($elm$core$List$repeat, 12, '');
 		case 19:
-			return _List_fromArray(
-				['R', '♭3', '♭5']);
+			return _List_Nil;
 		case 20:
 			return _List_fromArray(
-				['R', '3', '♯5']);
+				['R', '3', '5']);
 		case 21:
 			return _List_fromArray(
-				['R', '2', '3', '5', '6']);
+				['R', '♭3', '5']);
 		case 22:
 			return _List_fromArray(
-				['R', '♭3', '4', '5', '♭7']);
+				['R', '♭3', '♭5']);
 		case 23:
 			return _List_fromArray(
-				['R', '♭3', '4', '♭5', '5', '♭7']);
+				['R', '3', '♯5']);
 		case 24:
 			return _List_fromArray(
-				['R', '2', '3', '4', '5', '6', '7']);
+				['R', '2', '3', '5', '6']);
 		case 25:
+			return _List_fromArray(
+				['R', '♭3', '4', '5', '♭7']);
+		case 26:
+			return _List_fromArray(
+				['R', '♭3', '4', '♭5', '5', '♭7']);
+		case 27:
+			return _List_fromArray(
+				['R', '2', '3', '4', '5', '6', '7']);
+		case 28:
 			return _List_fromArray(
 				['R', '2', '♭3', '4', '5', '♭6', '♭7']);
 		default:
@@ -9000,37 +9033,46 @@ var $author$project$Main$scaleDegrees = function (st) {
 				[1, 2, 3, 4, 5, 6, 7]);
 		case 14:
 			return _List_fromArray(
-				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
+				[1, 2, 3, 4, 5, 6, 7, 7]);
 		case 15:
 			return _List_fromArray(
-				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
+				[1, 2, 3, 4, 5, 6, 6, 7]);
 		case 16:
-			return _List_Nil;
+			return _List_fromArray(
+				[1, 2, 3, 3, 4, 5, 6, 7]);
 		case 17:
 			return _List_fromArray(
-				[1, 3, 5]);
+				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
 		case 18:
 			return _List_fromArray(
-				[1, 3, 5]);
+				[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
 		case 19:
-			return _List_fromArray(
-				[1, 3, 5]);
+			return _List_Nil;
 		case 20:
 			return _List_fromArray(
 				[1, 3, 5]);
 		case 21:
 			return _List_fromArray(
-				[1, 2, 3, 5, 6]);
+				[1, 3, 5]);
 		case 22:
 			return _List_fromArray(
-				[1, 3, 4, 5, 7]);
+				[1, 3, 5]);
 		case 23:
 			return _List_fromArray(
-				[1, 3, 4, 5, 5, 7]);
+				[1, 3, 5]);
 		case 24:
 			return _List_fromArray(
-				[1, 2, 3, 4, 5, 6, 7]);
+				[1, 2, 3, 5, 6]);
 		case 25:
+			return _List_fromArray(
+				[1, 3, 4, 5, 7]);
+		case 26:
+			return _List_fromArray(
+				[1, 3, 4, 5, 5, 7]);
+		case 27:
+			return _List_fromArray(
+				[1, 2, 3, 4, 5, 6, 7]);
+		case 28:
 			return _List_fromArray(
 				[1, 2, 3, 4, 5, 6, 7]);
 		default:
@@ -9169,28 +9211,34 @@ var $author$project$Main$scaleTitle = function (scale) {
 		case 13:
 			return 'Melodic Minor';
 		case 14:
-			return '— All Notes (major)';
+			return 'Bebop Dominant';
 		case 15:
-			return '— All Notes (minor)';
+			return 'Bebop Major';
 		case 16:
-			return 'Blank neck';
+			return 'Bebop Minor';
 		case 17:
-			return 'Major Triad';
+			return '— All Notes (major)';
 		case 18:
-			return 'Minor Triad';
+			return '— All Notes (minor)';
 		case 19:
-			return 'Diminished Triad';
+			return 'Blank neck';
 		case 20:
-			return 'Augmented Triad';
+			return 'Major Triad';
 		case 21:
-			return 'Diagonal Major Pentatonic';
+			return 'Minor Triad';
 		case 22:
-			return 'Diagonal Minor Pentatonic';
+			return 'Diminished Triad';
 		case 23:
-			return 'Diagonal Blues';
+			return 'Augmented Triad';
 		case 24:
-			return 'Diagonal Major';
+			return 'Diagonal Major Pentatonic';
 		case 25:
+			return 'Diagonal Minor Pentatonic';
+		case 26:
+			return 'Diagonal Blues';
+		case 27:
+			return 'Diagonal Major';
+		case 28:
 			return 'Diagonal Minor';
 		default:
 			var base = scale.a;
@@ -9434,6 +9482,15 @@ var $author$project$Main$scalePicker = function (model) {
 							])),
 						A2(
 						$author$project$Main$pickerGroup,
+						'Bebop',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$BebopDominant, 'Dominant'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$BebopMajor, 'Major'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$BebopMinor, 'Minor')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
 						'Diagonal',
 						_List_fromArray(
 							[
@@ -9671,14 +9728,20 @@ var $author$project$Main$anchorOffset = function (scale) {
 			case 12:
 				return 3;
 			case 14:
+				return 10;
+			case 15:
 				return 3;
+			case 16:
+				return 5;
 			case 17:
 				return 3;
 			case 20:
 				return 3;
-			case 24:
+			case 23:
 				return 3;
-			case 26:
+			case 27:
+				return 3;
+			case 29:
 				var base = scale.a;
 				var intervals = scale.b;
 				var baseThird = A5(
@@ -9861,11 +9924,11 @@ var $author$project$Main$diagonalAnchor = F3(
 	function (tuning, scale, root) {
 		var lowE = $author$project$Main$anchorOpen(tuning);
 		switch (scale.$) {
-			case 21:
-				return A2($elm$core$Basics$modBy, 12, root - lowE);
 			case 24:
+				return A2($elm$core$Basics$modBy, 12, root - lowE);
+			case 27:
 				return A2($elm$core$Basics$modBy, 12, (root - 3) - lowE);
-			case 25:
+			case 28:
 				return A2($elm$core$Basics$modBy, 12, root - lowE);
 			default:
 				return A2($elm$core$Basics$modBy, 12, (root + 3) - lowE);
@@ -10414,11 +10477,11 @@ var $author$project$Main$diatonicDiagonalPatterns = _Utils_Tuple2(
 			[-5, -3, -2, 0])));
 var $author$project$Main$diagonalPatterns = function (scale) {
 	switch (scale.$) {
-		case 24:
+		case 27:
 			return $author$project$Main$diatonicDiagonalPatterns;
-		case 25:
+		case 28:
 			return $author$project$Main$diatonicDiagonalPatterns;
-		case 23:
+		case 26:
 			return _Utils_Tuple2(
 				_Utils_Tuple2(
 					_List_fromArray(
@@ -12026,11 +12089,11 @@ var $author$project$Main$fifthInterval = function (scale) {
 	fifthInterval:
 	while (true) {
 		switch (scale.$) {
-			case 19:
+			case 22:
 				return 6;
-			case 20:
+			case 23:
 				return 8;
-			case 26:
+			case 29:
 				var base = scale.a;
 				var intervals = scale.b;
 				if (A2(
@@ -12079,11 +12142,11 @@ var $author$project$Main$seventhOf = function (scale) {
 		case 13:
 			return 11;
 		case 14:
-			return -1;
+			return 10;
 		case 15:
-			return -1;
+			return 11;
 		case 16:
-			return -1;
+			return 10;
 		case 17:
 			return -1;
 		case 18:
@@ -12095,12 +12158,18 @@ var $author$project$Main$seventhOf = function (scale) {
 		case 21:
 			return -1;
 		case 22:
-			return 10;
+			return -1;
 		case 23:
-			return 10;
+			return -1;
 		case 24:
-			return 11;
+			return -1;
 		case 25:
+			return 10;
+		case 26:
+			return 10;
+		case 27:
+			return 11;
+		case 28:
 			return 10;
 		default:
 			var base = scale.a;
@@ -12145,28 +12214,34 @@ var $author$project$Main$thirdOf = function (scale) {
 		case 13:
 			return 3;
 		case 14:
-			return -1;
-		case 15:
-			return -1;
-		case 16:
-			return -1;
-		case 17:
 			return 4;
+		case 15:
+			return 4;
+		case 16:
+			return 3;
+		case 17:
+			return -1;
 		case 18:
-			return 3;
+			return -1;
 		case 19:
-			return 3;
+			return -1;
 		case 20:
 			return 4;
 		case 21:
-			return 4;
+			return 3;
 		case 22:
 			return 3;
 		case 23:
-			return 3;
+			return 4;
 		case 24:
 			return 4;
 		case 25:
+			return 3;
+		case 26:
+			return 3;
+		case 27:
+			return 4;
+		case 28:
 			return 3;
 		default:
 			var base = scale.a;

@@ -50,7 +50,9 @@ commit both files together.
 Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
 `HarmonicMajor`/`HarmonicMinor` (major with ♭6 / minor with a raised 7th),
 `MelodicMajor`/`MelodicMinor` (major with ♭6 ♭7 / minor with a raised 6th and
-7th), five diagonal climbing variants
+7th), the eight-note bebop scales `BebopDominant`/`BebopMajor`/`BebopMinor`
+(Mixolydian + 7, major + ♭6, Dorian + 3 — one chromatic passing tone each;
+they anchor like their parent scale and draw its boxes), five diagonal climbing variants
 (`DiagonalMajorPent`/`DiagonalPent`/`DiagonalBlues` and the diatonic
 `DiagonalMajor`/`DiagonalMinor`), the two all-notes
 maps `ChromaticMinor`/`ChromaticMajor`, the empty `Blank` neck, and the four triads
@@ -464,8 +466,8 @@ neck's **heading is its controls**:
   `active` is simply the neck the picker is under (it still feeds the legend
   and Add neck, and rides in the URL).
 - **The scale picker** is the scale groups, then the Root row. The scale
-  picker is one radio group of 25 options broken into the families a player
-  would look in: Pentatonic, Modes, Harmonic, Melodic, Diagonal, Triads, All
+  picker is one radio group of 28 options broken into the families a player
+  would look in: Pentatonic, Modes, Harmonic, Melodic, Bebop, Diagonal, Triads, All
   notes. Each is a `pickerGroup`, an uppercase caption riding with its own
   buttons, and the groups flow and wrap inside a `controlBlock`. The caption
   carries the context, so the buttons can just say "Major".

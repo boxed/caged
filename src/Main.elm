@@ -184,6 +184,9 @@ type ScaleType
     | HarmonicMinor
     | MelodicMajor
     | MelodicMinor
+    | BebopDominant
+    | BebopMajor
+    | BebopMinor
     | ChromaticMajor
     | ChromaticMinor
     | Blank
@@ -721,6 +724,9 @@ scaleSlug s =
         HarmonicMinor -> "harmonic-minor"
         MelodicMajor -> "melodic-major"
         MelodicMinor -> "melodic-minor"
+        BebopDominant -> "bebop-dominant"
+        BebopMajor -> "bebop-major"
+        BebopMinor -> "bebop-minor"
         ChromaticMajor -> "all-notes-major"
         ChromaticMinor -> "all-notes-minor"
         Blank -> "blank"
@@ -777,6 +783,9 @@ presetFromSlug s =
         "harmonic-minor" -> Just HarmonicMinor
         "melodic-major" -> Just MelodicMajor
         "melodic-minor" -> Just MelodicMinor
+        "bebop-dominant" -> Just BebopDominant
+        "bebop-major" -> Just BebopMajor
+        "bebop-minor" -> Just BebopMinor
         "all-notes-major" -> Just ChromaticMajor
         "all-notes-minor" -> Just ChromaticMinor
         "blank" -> Just Blank
@@ -1425,6 +1434,9 @@ scaleDegrees st =
         HarmonicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        BebopDominant -> [ 1, 2, 3, 4, 5, 6, 7, 7 ]
+        BebopMajor -> [ 1, 2, 3, 4, 5, 6, 6, 7 ]
+        BebopMinor -> [ 1, 2, 3, 3, 4, 5, 6, 7 ]
         ChromaticMajor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         Blank -> []
@@ -1831,6 +1843,18 @@ scaleIntervals st =
         MelodicMinor ->
             [ 0, 2, 3, 5, 7, 9, 11 ]
 
+        -- The bebop scales add one chromatic passing tone to a seven-note
+        -- scale, so a run of eighth notes lands its chord tones on the beat:
+        -- the major 7th in Mixolydian, the ♭6 in major, the 3rd in Dorian.
+        BebopDominant ->
+            [ 0, 2, 4, 5, 7, 9, 10, 11 ]
+
+        BebopMajor ->
+            [ 0, 2, 4, 5, 7, 8, 9, 11 ]
+
+        BebopMinor ->
+            [ 0, 2, 3, 4, 5, 7, 9, 10 ]
+
         ChromaticMajor ->
             List.range 0 11
 
@@ -2038,6 +2062,9 @@ anchorOffset scale =
         Locrian -> 2
         HarmonicMajor -> 3
         MelodicMajor -> 3
+        BebopDominant -> 10
+        BebopMajor -> 3
+        BebopMinor -> 5
         ChromaticMajor -> 3
         TriadMajor -> 3
         TriadAug -> 3
@@ -2585,6 +2612,9 @@ thirdOf scale =
         HarmonicMinor -> 3
         MelodicMajor -> 4
         MelodicMinor -> 3
+        BebopDominant -> 4
+        BebopMajor -> 4
+        BebopMinor -> 3
         ChromaticMajor -> -1
         ChromaticMinor -> -1
         Blank -> -1
@@ -2618,6 +2648,9 @@ seventhOf scale =
         HarmonicMinor -> 11
         MelodicMajor -> 10
         MelodicMinor -> 11
+        BebopDominant -> 10
+        BebopMajor -> 11
+        BebopMinor -> 10
         ChromaticMajor -> -1
         ChromaticMinor -> -1
         Blank -> -1
@@ -3532,6 +3565,9 @@ scaleTitle scale =
         HarmonicMinor -> "Harmonic Minor"
         MelodicMajor -> "Melodic Major"
         MelodicMinor -> "Melodic Minor"
+        BebopDominant -> "Bebop Dominant"
+        BebopMajor -> "Bebop Major"
+        BebopMinor -> "Bebop Minor"
         ChromaticMajor -> "— All Notes (major)"
         ChromaticMinor -> "— All Notes (minor)"
         Blank -> "Blank neck"
@@ -3586,6 +3622,9 @@ intervalLabels st =
         HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
         MelodicMajor -> [ "R", "2", "3", "4", "5", "♭6", "♭7" ]
         MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
+        BebopDominant -> [ "R", "2", "3", "4", "5", "6", "♭7", "7" ]
+        BebopMajor -> [ "R", "2", "3", "4", "5", "♭6", "6", "7" ]
+        BebopMinor -> [ "R", "2", "♭3", "3", "4", "5", "6", "♭7" ]
         ChromaticMajor -> List.repeat 12 ""
         ChromaticMinor -> List.repeat 12 ""
         Blank -> []
@@ -3860,7 +3899,7 @@ scalePicker : Model -> Html Msg
 scalePicker model =
     div [ class "no-print" ]
         [ controlBlock
-            -- One radio group of 25 options, broken into the families a player
+            -- One radio group of 28 options, broken into the families a player
             -- would look in. The family name carries the context, so the
             -- buttons inside it can just say "Major" — which is what makes the
             -- whole picker fit in two lines instead of four long rows.
@@ -3885,6 +3924,11 @@ scalePicker model =
             , pickerGroup "Melodic"
                 [ scaleButton model MelodicMajor "Major"
                 , scaleButton model MelodicMinor "Minor"
+                ]
+            , pickerGroup "Bebop"
+                [ scaleButton model BebopDominant "Dominant"
+                , scaleButton model BebopMajor "Major"
+                , scaleButton model BebopMinor "Minor"
                 ]
             , pickerGroup "Diagonal"
                 [ scaleButton model DiagonalMajorPent "Major pent"

@@ -54,7 +54,7 @@ fretboardFrets =
 climbing shapes). -}
 boxScales : List ScaleType
 boxScales =
-    [ MajorPent, MinorPent, Ionian, Aeolian, Dorian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMajor, HarmonicMinor, MelodicMajor, MelodicMinor ]
+    [ MajorPent, MinorPent, Ionian, Aeolian, Dorian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMajor, HarmonicMinor, MelodicMajor, MelodicMinor, BebopDominant, BebopMajor, BebopMinor ]
         -- Scales edited on the neck: one note added, one taken away, and a
         -- sparse one built up from a blank neck, whose third flips it major.
         ++ [ Custom MinorPent [ 0, 2, 3, 5, 7, 10 ]
@@ -148,6 +148,9 @@ offsetFor scale =
         Locrian -> 2
         HarmonicMajor -> 3
         MelodicMajor -> 3
+        BebopDominant -> 10
+        BebopMajor -> 3
+        BebopMinor -> 5
         DiagonalMajor -> 3
         Custom base intervals ->
             -- An edited scale keeps its preset's anchor while it keeps the
@@ -201,6 +204,9 @@ scaleName scale =
         HarmonicMinor -> "HarmonicMinor"
         MelodicMajor -> "MelodicMajor"
         MelodicMinor -> "MelodicMinor"
+        BebopDominant -> "BebopDominant"
+        BebopMajor -> "BebopMajor"
+        BebopMinor -> "BebopMinor"
         ChromaticMinor -> "ChromaticMinor"
         Blank -> "Blank"
         ChromaticMajor -> "ChromaticMajor"
