@@ -1464,7 +1464,7 @@ knownChords : List ( Tuning, ( Int, ScaleType, String ), List String )
 knownChords =
     [ ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMajor, "C" ), [ "x 3 2 0 1 0" ] )
     , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMajor, "A" ), [ "x 0 2 2 2 0" ] )
-    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordMajor, "G" ), [ "3 2 0 0 0 3" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordMajor, "G" ), [ "3 2 0 0 0 3", "3 2 0 0 3 3" ] )
     , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 4, ChordMajor, "E" ), [ "0 2 2 1 0 0" ] )
     , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 2, ChordMajor, "D" ), [ "x x 0 2 3 2" ] )
     , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 5, ChordMajor, "F" ), [ "1 3 3 2 1 1" ] )
