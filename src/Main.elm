@@ -29,6 +29,7 @@ port module Main exposing
     , thirdsFor
     , toggleInterval
     , triadVoicingsFor
+    , cagedVoicings
     , tuningFromSlug
     , tunings
     , tuningsFor
@@ -222,6 +223,11 @@ type ScaleType
     | TriadAug
     | TriadSus2
     | TriadSus4
+    | ChordMajor
+    | ChordMinor
+    | ChordDom7
+    | ChordMaj7
+    | ChordMin7
     | ArpMaj7
     | ArpDom7
     | ArpMin7
@@ -276,6 +282,7 @@ type Msg
 type PickerTab
     = ScalesTab
     | ChordsTab
+    | ChordTonesTab
     | NotesTab
 
 
@@ -286,8 +293,11 @@ tabOf scale =
         base =
             baseScale (boxedOf scale)
     in
-    if isTriad base || isArpeggio base then
+    if isCagedChord base then
         ChordsTab
+
+    else if isTriad base || isArpeggio base then
+        ChordTonesTab
 
     else if isChromatic base then
         NotesTab
@@ -827,6 +837,11 @@ scaleSlug s =
         TriadAug -> "triad-aug"
         TriadSus2 -> "triad-sus2"
         TriadSus4 -> "triad-sus4"
+        ChordMajor -> "chord-major"
+        ChordMinor -> "chord-minor"
+        ChordDom7 -> "chord-7"
+        ChordMaj7 -> "chord-maj7"
+        ChordMin7 -> "chord-m7"
         ArpMaj7 -> "arp-maj7"
         ArpDom7 -> "arp-7"
         ArpMin7 -> "arp-m7"
@@ -925,6 +940,11 @@ presetFromSlug s =
         "triad-aug" -> Just TriadAug
         "triad-sus2" -> Just TriadSus2
         "triad-sus4" -> Just TriadSus4
+        "chord-major" -> Just ChordMajor
+        "chord-minor" -> Just ChordMinor
+        "chord-7" -> Just ChordDom7
+        "chord-maj7" -> Just ChordMaj7
+        "chord-m7" -> Just ChordMin7
         "arp-maj7" -> Just ArpMaj7
         "arp-7" -> Just ArpDom7
         "arp-m7" -> Just ArpMin7
@@ -1614,6 +1634,11 @@ scaleDegrees st =
         TriadAug -> [ 1, 3, 5 ]
         TriadSus2 -> [ 1, 2, 5 ]
         TriadSus4 -> [ 1, 4, 5 ]
+        ChordMajor -> [ 1, 3, 5 ]
+        ChordMinor -> [ 1, 3, 5 ]
+        ChordDom7 -> [ 1, 3, 5, 7 ]
+        ChordMaj7 -> [ 1, 3, 5, 7 ]
+        ChordMin7 -> [ 1, 3, 5, 7 ]
         ArpMaj7 -> [ 1, 3, 5, 7 ]
         ArpDom7 -> [ 1, 3, 5, 7 ]
         ArpMin7 -> [ 1, 3, 5, 7 ]
@@ -2119,6 +2144,23 @@ scaleIntervals st =
         TriadSus4 ->
             [ 0, 5, 7 ]
 
+        -- Chords: full voicings in the five CAGED shapes (`cagedVoicings`).
+
+        ChordMajor ->
+            [ 0, 4, 7 ]
+
+        ChordMinor ->
+            [ 0, 3, 7 ]
+
+        ChordDom7 ->
+            [ 0, 4, 7, 10 ]
+
+        ChordMaj7 ->
+            [ 0, 4, 7, 11 ]
+
+        ChordMin7 ->
+            [ 0, 3, 7, 10 ]
+
         -- Seventh-chord arpeggios, always drawn as diagonal sweep shapes
         -- (`isArpeggio`).
         ArpMaj7 ->
@@ -2315,7 +2357,7 @@ plainOf scale =
         Diagonal _ -> Nothing
         Plain _ -> Nothing
         _ ->
-            if isChromatic scale || isTriad scale then
+            if isChromatic scale || isLassoed scale then
                 Nothing
 
             else
@@ -2356,6 +2398,20 @@ triadMiddle scale =
         TriadSus2 -> "2nd"
         TriadSus4 -> "4th"
         _ -> "3rd"
+
+
+{-| The CAGED chords: full voicings, one per CAGED shape, lassoed like the
+triads. -}
+isCagedChord : ScaleType -> Bool
+isCagedChord scale =
+    List.member scale [ ChordMajor, ChordMinor, ChordDom7, ChordMaj7, ChordMin7 ]
+
+
+{-| The modes drawn as lassos around voicings instead of as regions: the triads
+and the chords. The whole neck goes under their opaque pills. -}
+isLassoed : ScaleType -> Bool
+isLassoed scale =
+    isTriad scale || isCagedChord scale
 
 
 {-| The triad modes (major, minor, diminished, augmented, sus2, sus4): not scales either, but chords — three notes, drawn as
@@ -2420,6 +2476,9 @@ anchorOffset scale =
         ChromaticMajor -> 3
         TriadMajor -> 3
         TriadAug -> 3
+        ChordMajor -> 3
+        ChordDom7 -> 3
+        ChordMaj7 -> 3
         Diagonal base -> anchorOffset base
         Plain base -> anchorOffset base
         Custom base intervals ->
@@ -2601,6 +2660,131 @@ positionBox board s f =
 
     else
         Nothing
+
+
+{-| The five CAGED shapes in the order they climb the neck from a root at the
+nut: C, A, G, E, D. -}
+cagedShapeNames : List String
+cagedShapeNames =
+    [ "C", "A", "G", "E", "D" ]
+
+
+{-| The five CAGED voicings of a chord rooted on C, in standard tuning, as frets
+from the low E string up to the high e (`Nothing` is a string not played): the
+open C shape, then the A, G, E and D barre shapes up the neck. These are the
+textbook shapes, written out the way the canonical scale boxes are in the
+tests; `cagedVoicings` moves them to any root and refingers them for any
+tuning. -}
+cagedShapes : ScaleType -> List (List (Maybe Int))
+cagedShapes scale =
+    let
+        x =
+            Nothing
+
+        f =
+            Just
+    in
+    case scale of
+        ChordMinor ->
+            [ [ x, f 3, f 1, f 0, f 1, f 3 ]
+            , [ x, f 3, f 5, f 5, f 4, f 3 ]
+            , [ f 8, f 6, f 5, f 5, f 4, f 8 ]
+            , [ f 8, f 10, f 10, f 8, f 8, f 8 ]
+            , [ x, x, f 10, f 12, f 13, f 11 ]
+            ]
+
+        ChordDom7 ->
+            [ [ x, f 3, f 2, f 3, f 1, f 0 ]
+            , [ x, f 3, f 5, f 3, f 5, f 3 ]
+            , [ f 8, f 7, f 5, f 5, f 5, f 6 ]
+            , [ f 8, f 10, f 8, f 9, f 8, f 8 ]
+            , [ x, x, f 10, f 12, f 11, f 12 ]
+            ]
+
+        ChordMaj7 ->
+            [ [ x, f 3, f 2, f 0, f 0, f 0 ]
+            , [ x, f 3, f 5, f 4, f 5, f 3 ]
+            , [ f 8, f 7, f 5, f 5, f 5, f 7 ]
+            , [ f 8, f 10, f 9, f 9, f 8, f 8 ]
+            , [ x, x, f 10, f 12, f 12, f 12 ]
+            ]
+
+        ChordMin7 ->
+            [ [ x, f 3, f 1, f 3, f 1, f 3 ]
+            , [ x, f 3, f 5, f 3, f 4, f 3 ]
+            , [ f 8, f 6, f 5, f 5, f 4, f 6 ]
+            , [ f 8, f 10, f 8, f 8, f 8, f 8 ]
+            , [ x, x, f 10, f 12, f 11, f 11 ]
+            ]
+
+        _ ->
+            [ [ x, f 3, f 2, f 0, f 1, f 0 ]
+            , [ x, f 3, f 5, f 5, f 5, f 3 ]
+            , [ f 8, f 7, f 5, f 5, f 5, f 8 ]
+            , [ f 8, f 10, f 10, f 9, f 8, f 8 ]
+            , [ x, x, f 10, f 12, f 13, f 12 ]
+            ]
+
+
+{-| Every CAGED voicing of a chord on the neck. Each shape is moved from C to
+the root and repeated an octave up and down, and refingered for the tuning the
+way the box windows are: a note keeps the pitch it has in standard tuning, so
+on a string tuned down a tone it sits two frets higher (the short way round).
+The shapes are written for six strings, so they use the top six; a neck with
+fewer drops the lowest notes, and one with more leaves its extra strings
+unplayed. A voicing that does not fit on the neck is left out. `inversion` is
+the shape (0 C … 4 D), which picks the lasso's color, and every shape gets its
+own width so where neighboring shapes share notes their lassos nest. -}
+cagedVoicings : Tuning -> ScaleType -> Int -> List Triad
+cagedVoicings tuning scale root =
+    let
+        n =
+            stringCount tuning
+
+        shift s =
+            let
+                d =
+                    modBy 12 (openString standardTuning s - openString tuning s)
+            in
+            if d > 6 then
+                d - 12
+
+            else
+                d
+
+        -- Sizes interleaved so neighboring shapes, which share notes, are two
+        -- steps apart; C and D, which meet across the octave, three. From the
+        -- triads' floor (clear of the root squares) up to 30: wider runs past
+        -- the top string's margin and stops being narrower than a string gap,
+        -- which `pillOutline` relies on.
+        radius shape =
+            [ 0, 2, 4, 1, 3 ]
+                |> List.drop shape
+                |> List.head
+                |> Maybe.withDefault 0
+                |> (\size -> 20 + 2.5 * toFloat size)
+
+        voicing shape frets octave =
+            let
+                notes =
+                    frets
+                        -- Written low E first; strings count from the top.
+                        |> List.indexedMap (\i fret -> Maybe.map (\fr -> ( 6 - i, fr )) fret)
+                        |> List.filterMap identity
+                        |> List.filter (\( s, _ ) -> s <= n)
+                        |> List.map (\( s, fr ) -> ( s, fr + modBy 12 root + 12 * octave + shift s ))
+                        |> List.sortBy Tuple.first
+            in
+            if not (List.isEmpty notes) && List.all (\( _, fr ) -> fr >= 0 && fr <= numFrets) notes then
+                Just { notes = notes, inversion = shape, radius = radius shape }
+
+            else
+                Nothing
+    in
+    cagedShapes scale
+        |> List.indexedMap
+            (\shape frets -> List.filterMap (voicing shape frets) [ -1, 0, 1 ])
+        |> List.concat
 
 
 {-| One close-position triad: three chord tones on three adjacent strings, one
@@ -3034,6 +3218,11 @@ thirdOf scale =
         TriadAug -> 4
         TriadSus2 -> -1
         TriadSus4 -> -1
+        ChordMajor -> 4
+        ChordMinor -> 3
+        ChordDom7 -> 4
+        ChordMaj7 -> 4
+        ChordMin7 -> 3
         ArpMaj7 -> 4
         ArpDom7 -> 4
         ArpMin7 -> 3
@@ -3091,6 +3280,11 @@ seventhOf scale =
         TriadAug -> -1
         TriadSus2 -> -1
         TriadSus4 -> -1
+        ChordMajor -> -1
+        ChordMinor -> -1
+        ChordDom7 -> 10
+        ChordMaj7 -> 11
+        ChordMin7 -> 10
         ArpMaj7 -> 11
         ArpDom7 -> 10
         ArpMin7 -> 10
@@ -3463,7 +3657,9 @@ inversionColor muted inv =
         case inv of
             0 -> "var(--inv-1)"
             1 -> "var(--inv-2)"
-            _ -> "var(--inv-3)"
+            2 -> "var(--inv-3)"
+            3 -> "var(--inv-4)"
+            _ -> "var(--inv-5)"
 
 
 {-| A lasso's interior, pre-blended with the page instead of drawn translucent.
@@ -4041,6 +4237,11 @@ scaleTitle scale =
         TriadAug -> "Augmented Triad"
         TriadSus2 -> "Sus2 Triad"
         TriadSus4 -> "Sus4 Triad"
+        ChordMajor -> "Major Chord"
+        ChordMinor -> "Minor Chord"
+        ChordDom7 -> "Dominant 7th Chord"
+        ChordMaj7 -> "Major 7th Chord"
+        ChordMin7 -> "Minor 7th Chord"
         ArpMaj7 -> "Major 7th Arpeggio"
         ArpDom7 -> "Dominant 7th Arpeggio"
         ArpMin7 -> "Minor 7th Arpeggio"
@@ -4119,6 +4320,11 @@ intervalLabels st =
         TriadAug -> [ "R", "3", "♯5" ]
         TriadSus2 -> [ "R", "2", "5" ]
         TriadSus4 -> [ "R", "4", "5" ]
+        ChordMajor -> [ "R", "3", "5" ]
+        ChordMinor -> [ "R", "♭3", "5" ]
+        ChordDom7 -> [ "R", "3", "5", "♭7" ]
+        ChordMaj7 -> [ "R", "3", "5", "7" ]
+        ChordMin7 -> [ "R", "♭3", "5", "♭7" ]
         ArpMaj7 -> [ "R", "3", "5", "7" ]
         ArpDom7 -> [ "R", "3", "5", "♭7" ]
         ArpMin7 -> [ "R", "♭3", "5", "♭7" ]
@@ -4457,6 +4663,17 @@ scalePicker model =
 
                 ChordsTab ->
                     pickerCards
+                        [ scaleGroup "CAGED shapes"
+                            [ scaleButton model ChordMajor "Major"
+                            , scaleButton model ChordMinor "Minor"
+                            , scaleButton model ChordDom7 "7"
+                            , scaleButton model ChordMaj7 "maj7"
+                            , scaleButton model ChordMin7 "m7"
+                            ]
+                        ]
+
+                ChordTonesTab ->
+                    pickerCards
                         [ scaleGroup "Triads"
                             [ scaleButton model TriadMajor "Major"
                             , scaleButton model TriadMinor "Minor"
@@ -4499,7 +4716,7 @@ scalePicker model =
                 boxed =
                     boxedOf (activeNeck model).scale
               in
-              if isTriad boxed || isChromatic boxed then
+              if isLassoed boxed || isChromatic boxed then
                 text ""
 
               else
@@ -4508,7 +4725,8 @@ scalePicker model =
         ]
 
 
-{-| The tab bar along the top of the scale picker: Scales, Chord tones, All notes.
+{-| The tab bar along the top of the scale picker: Scales, Chords, Chord tones,
+All notes.
 Only one tab's families show at a time, so a picker of some fifty buttons
 reads as one short list. The tab that holds the neck's current scale carries a
 dot, so while you browse another tab you can still see where the selection
@@ -4581,7 +4799,8 @@ pickerTabs model =
         , style "margin-bottom" "10px"
         ]
         [ tab ScalesTab "Scales"
-        , tab ChordsTab "Chord tones"
+        , tab ChordsTab "Chords"
+        , tab ChordTonesTab "Chord tones"
         , tab NotesTab "All notes"
         ]
 
@@ -5120,7 +5339,7 @@ viewFretboard board =
         -- shapes, so there the whole neck — inlay dots, fret lines and strings
         -- alike — goes under the lassos.
         neckAndRegions =
-            if isTriad board.scale then
+            if isLassoed board.scale then
                 drawFretMarkers strings ++ drawFretLines strings ++ drawStrings board ++ drawBoxRegions board
 
             else
@@ -5189,6 +5408,9 @@ drawBoxRegions board =
         -- A triad is a chord, not a position: the grouping that matters is the
         -- three-note voicing, so each one gets its own lasso.
         drawTriadLassos board
+
+    else if isCagedChord board.scale then
+        drawLassos board (cagedVoicings board.tuning board.scale board.root)
 
     else if isDiagonal board.scale then
         drawDiagonalRegions board
@@ -5403,13 +5625,19 @@ a soft wash inside and a ring around it, colored by which chord tone is in the
 bass. -}
 drawTriadLassos : Board -> List (Svg.Svg Msg)
 drawTriadLassos board =
+    drawLassos board (triadVoicingsFor board.tuning board.scale board.root board.stringSet)
+
+
+{-| Lassos around voicings — the triads', or the CAGED chords'. -}
+drawLassos : Board -> List Triad -> List (Svg.Svg Msg)
+drawLassos board unsorted =
     let
         -- Largest pill first. The fills are opaque, so a pill hides whatever it
         -- covers; painting big to small leaves the small ones on top, where
         -- they would otherwise be swallowed by the sets around them. Every
         -- fill goes down before any ring, so no ring is ever painted over.
         voicings =
-            triadVoicingsFor board.tuning board.scale board.root board.stringSet
+            unsorted
                 |> List.sortBy (\triad -> -(triadLassoRadius triad))
 
         -- A voicing is in position when you can reach all three notes without
@@ -6646,6 +6874,10 @@ viewLegend board =
         boxes =
             if isChromatic board.scale || isPlain board.scale then
                 []
+
+            else if isCagedChord board.scale then
+                legendText "Shapes:"
+                    :: List.map (legendRing board) (List.indexedMap Tuple.pair cagedShapeNames)
 
             else if isTriad board.scale then
                 legendText "Bass note:"

@@ -406,6 +406,34 @@ standard shape is the reference only for which pitches a box spans.
   string's strip. Pairs far down start their copies further up the octaves
   (`diagonalOctaves`) so they still reach the neck.
 
+## CAGED chords
+
+The **Chords** tab (`ChordMajor`/`ChordMinor`/`ChordDom7`/`ChordMaj7`/
+`ChordMin7`, slugs `chord-major`, `chord-minor`, `chord-7`, `chord-maj7`,
+`chord-m7`) draws real, strummable voicings: the five CAGED shapes of the
+chord, each lassoed like a triad (`isLassoed` covers both, so the neck goes
+under the pills and the Shape card is hidden). The tab that used to be called
+Chords is **Chord tones** (triads and arpeggios): what chords are made of.
+
+- **`cagedShapes`** writes the shapes out for a C chord in standard tuning,
+  low E to high e, `Nothing` for a string not played — open C, then the A, G,
+  E and D barre shapes. These are the canon, like the canonical boxes, not
+  derived. **`cagedVoicings`** moves them to the root, repeats them an octave
+  either way, and refingers them for the tuning the way the box windows are:
+  each note keeps its standard-tuning pitch (the short way round), so the
+  chord is right in any tuning even where the fingering turns odd. They are
+  written for six strings: fewer drops the lowest notes, more leaves the extra
+  strings unplayed.
+- A voicing is a `Triad` record: `inversion` is the shape (0 C … 4 D), which
+  picks its color (`--inv-1` … `--inv-5`; 4 and 5 are boxes 4 and 5's hues
+  saturated), and `radius` is per shape, interleaved so neighbors — which
+  share notes — nest two steps apart. The widths stay between 20 and 30: wider
+  clips at the top string and breaks `pillOutline`, which needs a lasso
+  narrower than a string gap (36).
+- The `cagedChords` test checks every voicing in every tuning and root is all
+  chord tones, one per string, on the neck, with root, third (and seventh)
+  present on six strings, and pins open C and the E-shape barre.
+
 ## Rendering
 
 ### Triad lassos
@@ -505,8 +533,8 @@ neck's **heading is its controls**:
   and Add neck, and rides in the URL).
 - **The scale picker** is two parts: *what* to show, then *how*. What is one
   panel (`--surface`, bordered) behind a tab bar (`pickerTabs`): **Scales**
-  (Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric, Exotic), **Chord
-  tones** (Triads, Arpeggios — what chords are made of, not chords you strum,
+  (Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric, Exotic), **Chords**
+  (the CAGED chord shapes), **Chord tones** (Triads, Arpeggios — what chords are made of, not chords you strum,
   hence not "Chords") and **All notes**, one tab showing at a time.
   `pickerTab` is on the model but, like the other drawer state, not in the
   URL; opening the picker under a neck turns it to the tab that holds that

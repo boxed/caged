@@ -2721,7 +2721,7 @@ var _VirtualDom_mapEventRecord = F2(function(func, record)
 	return {
 		Z: func(record.Z),
 		a3: record.a3,
-		aY: record.aY
+		aZ: record.aZ
 	}
 });
 
@@ -2993,7 +2993,7 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.a3;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.aY) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value.aZ) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -5392,7 +5392,7 @@ var $author$project$Main$rootFromSlug = function (s) {
 };
 var $author$project$Main$Custom = F2(
 	function (a, b) {
-		return {$: 50, a: a, b: b};
+		return {$: 55, a: a, b: b};
 	});
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
@@ -5556,25 +5556,40 @@ var $author$project$Main$scaleIntervals = function (st) {
 					[0, 5, 7]);
 			case 43:
 				return _List_fromArray(
-					[0, 4, 7, 11]);
+					[0, 4, 7]);
 			case 44:
 				return _List_fromArray(
-					[0, 4, 7, 10]);
+					[0, 3, 7]);
 			case 45:
 				return _List_fromArray(
-					[0, 3, 7, 10]);
+					[0, 4, 7, 10]);
 			case 46:
 				return _List_fromArray(
-					[0, 3, 6, 10]);
+					[0, 4, 7, 11]);
 			case 47:
 				return _List_fromArray(
-					[0, 3, 6, 9]);
+					[0, 3, 7, 10]);
 			case 48:
+				return _List_fromArray(
+					[0, 4, 7, 11]);
+			case 49:
+				return _List_fromArray(
+					[0, 4, 7, 10]);
+			case 50:
+				return _List_fromArray(
+					[0, 3, 7, 10]);
+			case 51:
+				return _List_fromArray(
+					[0, 3, 6, 10]);
+			case 52:
+				return _List_fromArray(
+					[0, 3, 6, 9]);
+			case 53:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
 				continue scaleIntervals;
-			case 49:
+			case 54:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
@@ -5610,13 +5625,25 @@ var $elm$core$String$fromChar = function (_char) {
 	return A2($elm$core$String$cons, _char, '');
 };
 var $author$project$Main$Plain = function (a) {
-	return {$: 49, a: a};
+	return {$: 54, a: a};
 };
 var $author$project$Main$Blank = {$: 36};
 var $author$project$Main$ChromaticMajor = {$: 34};
 var $author$project$Main$ChromaticMinor = {$: 35};
 var $author$project$Main$isChromatic = function (scale) {
 	return _Utils_eq(scale, $author$project$Main$ChromaticMinor) || (_Utils_eq(scale, $author$project$Main$ChromaticMajor) || _Utils_eq(scale, $author$project$Main$Blank));
+};
+var $author$project$Main$ChordDom7 = {$: 45};
+var $author$project$Main$ChordMaj7 = {$: 46};
+var $author$project$Main$ChordMajor = {$: 43};
+var $author$project$Main$ChordMin7 = {$: 47};
+var $author$project$Main$ChordMinor = {$: 44};
+var $author$project$Main$isCagedChord = function (scale) {
+	return A2(
+		$elm$core$List$member,
+		scale,
+		_List_fromArray(
+			[$author$project$Main$ChordMajor, $author$project$Main$ChordMinor, $author$project$Main$ChordDom7, $author$project$Main$ChordMaj7, $author$project$Main$ChordMin7]));
 };
 var $author$project$Main$TriadAug = {$: 40};
 var $author$project$Main$TriadDim = {$: 39};
@@ -5631,30 +5658,33 @@ var $author$project$Main$isTriad = function (scale) {
 		_List_fromArray(
 			[$author$project$Main$TriadMajor, $author$project$Main$TriadMinor, $author$project$Main$TriadDim, $author$project$Main$TriadAug, $author$project$Main$TriadSus2, $author$project$Main$TriadSus4]));
 };
+var $author$project$Main$isLassoed = function (scale) {
+	return $author$project$Main$isTriad(scale) || $author$project$Main$isCagedChord(scale);
+};
 var $author$project$Main$plainOf = function (scale) {
 	switch (scale.$) {
-		case 48:
+		case 53:
 			return $elm$core$Maybe$Nothing;
-		case 49:
+		case 54:
 			return $elm$core$Maybe$Nothing;
 		default:
-			return ($author$project$Main$isChromatic(scale) || $author$project$Main$isTriad(scale)) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
+			return ($author$project$Main$isChromatic(scale) || $author$project$Main$isLassoed(scale)) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
 				$author$project$Main$Plain(scale));
 	}
 };
 var $author$project$Main$Aeolian = {$: 8};
 var $author$project$Main$Altered = {$: 23};
-var $author$project$Main$ArpDim7 = {$: 47};
-var $author$project$Main$ArpDom7 = {$: 44};
-var $author$project$Main$ArpHalfDim = {$: 46};
-var $author$project$Main$ArpMaj7 = {$: 43};
-var $author$project$Main$ArpMin7 = {$: 45};
+var $author$project$Main$ArpDim7 = {$: 52};
+var $author$project$Main$ArpDom7 = {$: 49};
+var $author$project$Main$ArpHalfDim = {$: 51};
+var $author$project$Main$ArpMaj7 = {$: 48};
+var $author$project$Main$ArpMin7 = {$: 50};
 var $author$project$Main$BebopDominant = {$: 24};
 var $author$project$Main$BebopMajor = {$: 25};
 var $author$project$Main$BebopMinor = {$: 26};
 var $author$project$Main$Blues = {$: 10};
 var $author$project$Main$Diagonal = function (a) {
-	return {$: 48, a: a};
+	return {$: 53, a: a};
 };
 var $author$project$Main$DimHalfWhole = {$: 27};
 var $author$project$Main$DimWholeHalf = {$: 28};
@@ -5701,9 +5731,9 @@ var $author$project$Main$diagonalOf = function (scale) {
 		case 10:
 			return $elm$core$Maybe$Just(
 				$author$project$Main$Diagonal(scale));
-		case 48:
+		case 53:
 			return $elm$core$Maybe$Nothing;
-		case 50:
+		case 55:
 			return $elm$core$Maybe$Nothing;
 		default:
 			return $author$project$Main$isArpeggio(scale) ? $elm$core$Maybe$Just(scale) : (A2(
@@ -5803,6 +5833,16 @@ var $author$project$Main$presetFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$TriadSus2);
 		case 'triad-sus4':
 			return $elm$core$Maybe$Just($author$project$Main$TriadSus4);
+		case 'chord-major':
+			return $elm$core$Maybe$Just($author$project$Main$ChordMajor);
+		case 'chord-minor':
+			return $elm$core$Maybe$Just($author$project$Main$ChordMinor);
+		case 'chord-7':
+			return $elm$core$Maybe$Just($author$project$Main$ChordDom7);
+		case 'chord-maj7':
+			return $elm$core$Maybe$Just($author$project$Main$ChordMaj7);
+		case 'chord-m7':
+			return $elm$core$Maybe$Just($author$project$Main$ChordMin7);
 		case 'arp-maj7':
 			return $elm$core$Maybe$Just($author$project$Main$ArpMaj7);
 		case 'arp-7':
@@ -6386,11 +6426,12 @@ var $author$project$Main$parseUrl = function (url) {
 			$elm$core$Maybe$Just('2'))
 	};
 };
+var $author$project$Main$ChordTonesTab = 2;
 var $author$project$Main$ChordsTab = 1;
-var $author$project$Main$NotesTab = 2;
+var $author$project$Main$NotesTab = 3;
 var $author$project$Main$ScalesTab = 0;
 var $author$project$Main$baseScale = function (scale) {
-	if (scale.$ === 50) {
+	if (scale.$ === 55) {
 		var base = scale.a;
 		return base;
 	} else {
@@ -6399,10 +6440,10 @@ var $author$project$Main$baseScale = function (scale) {
 };
 var $author$project$Main$boxedOf = function (scale) {
 	switch (scale.$) {
-		case 48:
+		case 53:
 			var base = scale.a;
 			return base;
-		case 49:
+		case 54:
 			var base = scale.a;
 			return base;
 		default:
@@ -6412,7 +6453,7 @@ var $author$project$Main$boxedOf = function (scale) {
 var $author$project$Main$tabOf = function (scale) {
 	var base = $author$project$Main$baseScale(
 		$author$project$Main$boxedOf(scale));
-	return ($author$project$Main$isTriad(base) || $author$project$Main$isArpeggio(base)) ? 1 : ($author$project$Main$isChromatic(base) ? 2 : 0);
+	return $author$project$Main$isCagedChord(base) ? 1 : (($author$project$Main$isTriad(base) || $author$project$Main$isArpeggio(base)) ? 2 : ($author$project$Main$isChromatic(base) ? 3 : 0));
 };
 var $author$project$Main$init = F3(
 	function (width, url, key) {
@@ -6431,7 +6472,7 @@ var $author$project$Main$init = F3(
 		return _Utils_Tuple2(
 			{
 				i: state.i,
-				an: compact,
+				ao: compact,
 				x: state.x,
 				G: $elm$core$Maybe$Nothing,
 				r: state.r,
@@ -6445,7 +6486,7 @@ var $author$project$Main$init = F3(
 				U: false,
 				F: state.F,
 				Q: !compact,
-				am: false
+				an: false
 			},
 			$elm$core$Platform$Cmd$none);
 	});
@@ -7343,19 +7384,29 @@ var $author$project$Main$scaleSlug = function (s) {
 		case 42:
 			return 'triad-sus4';
 		case 43:
-			return 'arp-maj7';
+			return 'chord-major';
 		case 44:
-			return 'arp-7';
+			return 'chord-minor';
 		case 45:
-			return 'arp-m7';
+			return 'chord-7';
 		case 46:
-			return 'arp-m7b5';
+			return 'chord-maj7';
 		case 47:
-			return 'arp-dim7';
+			return 'chord-m7';
 		case 48:
+			return 'arp-maj7';
+		case 49:
+			return 'arp-7';
+		case 50:
+			return 'arp-m7';
+		case 51:
+			return 'arp-m7b5';
+		case 52:
+			return 'arp-dim7';
+		case 53:
 			var base = s.a;
 			return $author$project$Main$diagonalSlug(base);
-		case 49:
+		case 54:
 			var base = s.a;
 			return 'plain-' + $author$project$Main$scaleSlug(base);
 		default:
@@ -7491,7 +7542,7 @@ var $author$project$Main$toggleIntervalShaped = F2(
 	});
 var $author$project$Main$toggleInterval = F2(
 	function (interval, scale) {
-		if (scale.$ === 49) {
+		if (scale.$ === 54) {
 			var inner = scale.a;
 			return $author$project$Main$Plain(
 				A2($author$project$Main$toggleInterval, interval, inner));
@@ -7533,7 +7584,7 @@ var $author$project$Main$update = F2(
 										{a: sc});
 								},
 								model),
-							T: model.T && (!model.an)
+							T: model.T && (!model.ao)
 						}));
 			case 3:
 				var i = msg.a;
@@ -7589,7 +7640,7 @@ var $author$project$Main$update = F2(
 									$elm$core$List$head(
 										A2($elm$core$List$drop, i, model.e)))) : model._,
 							T: opening,
-							Q: model.Q && (!(model.an && opening))
+							Q: model.Q && (!(model.ao && opening))
 						}));
 			case 13:
 				var tab = msg.a;
@@ -7602,7 +7653,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{T: model.T && (!(model.an && (!model.Q))), Q: !model.Q}),
+						{T: model.T && (!(model.ao && (!model.Q))), Q: !model.Q}),
 					$elm$core$Platform$Cmd$none);
 			case 15:
 				var width = msg.a;
@@ -7610,7 +7661,7 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							an: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
+							ao: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 4:
@@ -7727,7 +7778,7 @@ var $author$project$Main$update = F2(
 						{
 							i: A2($author$project$Main$clampIndex, model.e, i),
 							G: $elm$core$Maybe$Just(
-								{aq: i, a_: rowHeight, a2: y, ab: i})
+								{ar: i, a_: rowHeight, a2: y, ab: i})
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 19:
@@ -7748,7 +7799,7 @@ var $author$project$Main$update = F2(
 									_Utils_update(
 										drag,
 										{
-											ab: A2($author$project$Main$clampIndex, model.e, drag.aq + slots)
+											ab: A2($author$project$Main$clampIndex, model.e, drag.ar + slots)
 										}))
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -7765,7 +7816,7 @@ var $author$project$Main$update = F2(
 							{
 								i: drag.ab,
 								G: $elm$core$Maybe$Nothing,
-								e: A3($author$project$Main$moveItem, drag.aq, drag.ab, model.e)
+								e: A3($author$project$Main$moveItem, drag.ar, drag.ab, model.e)
 							}));
 				}
 			case 21:
@@ -7793,19 +7844,19 @@ var $author$project$Main$update = F2(
 						$elm$browser$Browser$Navigation$load(href));
 				}
 			case 23:
-				var next = !model.am;
+				var next = !model.an;
 				var cmd = next ? $author$project$Main$requestWakeLock(0) : $author$project$Main$releaseWakeLock(0);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{am: next}),
+						{an: next}),
 					cmd);
 			case 24:
 				var on = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{am: on}),
+						{an: on}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.d) {
@@ -8052,7 +8103,7 @@ var $author$project$Main$orderedNecks = function (model) {
 	var _v0 = model.G;
 	if (!_v0.$) {
 		var drag = _v0.a;
-		return A3($author$project$Main$moveItem, drag.aq, drag.ab, model.e);
+		return A3($author$project$Main$moveItem, drag.ar, drag.ab, model.e);
 	} else {
 		return model.e;
 	}
@@ -8063,13 +8114,15 @@ var $author$project$Main$leftMargin = 18;
 var $author$project$Main$nutWidth = 70;
 var $author$project$Main$rightMargin = 18;
 var $author$project$Main$totalWidth = (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets)) + $author$project$Main$rightMargin;
+var $author$project$Main$cagedShapeNames = _List_fromArray(
+	['C', 'A', 'G', 'E', 'D']);
 var $elm$core$Basics$composeL = F3(
 	function (g, f, x) {
 		return g(
 			f(x));
 	});
 var $author$project$Main$isDiagonal = function (scale) {
-	if (scale.$ === 48) {
+	if (scale.$ === 53) {
 		return true;
 	} else {
 		return $author$project$Main$isArpeggio(scale);
@@ -8083,7 +8136,7 @@ var $elm$core$List$isEmpty = function (xs) {
 	}
 };
 var $author$project$Main$isPlain = function (scale) {
-	if (scale.$ === 49) {
+	if (scale.$ === 54) {
 		return true;
 	} else {
 		return false;
@@ -8619,8 +8672,12 @@ var $author$project$Main$inversionColor = F2(
 					return 'var(--inv-1)';
 				case 1:
 					return 'var(--inv-2)';
-				default:
+				case 2:
 					return 'var(--inv-3)';
+				case 3:
+					return 'var(--inv-4)';
+				default:
+					return 'var(--inv-5)';
 			}
 		}
 	});
@@ -8694,6 +8751,10 @@ var $author$project$Main$legendText = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
 var $author$project$Main$noteName = function (n) {
 	var _v0 = A2($elm$core$Basics$modBy, 12, n);
 	switch (_v0) {
@@ -8842,19 +8903,29 @@ var $author$project$Main$thirdOf = function (scale) {
 			case 43:
 				return 4;
 			case 44:
-				return 4;
+				return 3;
 			case 45:
-				return 3;
+				return 4;
 			case 46:
-				return 3;
+				return 4;
 			case 47:
 				return 3;
 			case 48:
+				return 4;
+			case 49:
+				return 4;
+			case 50:
+				return 3;
+			case 51:
+				return 3;
+			case 52:
+				return 3;
+			case 53:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue thirdOf;
-			case 49:
+			case 54:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
@@ -8959,7 +9030,13 @@ var $author$project$Main$viewLegend = function (board) {
 				]);
 		}
 	}();
-	var boxes = ($author$project$Main$isChromatic(board.a) || $author$project$Main$isPlain(board.a)) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? A2(
+	var boxes = ($author$project$Main$isChromatic(board.a) || $author$project$Main$isPlain(board.a)) ? _List_Nil : ($author$project$Main$isCagedChord(board.a) ? A2(
+		$elm$core$List$cons,
+		$author$project$Main$legendText('Shapes:'),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$legendRing(board),
+			A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, $author$project$Main$cagedShapeNames))) : ($author$project$Main$isTriad(board.a) ? A2(
 		$elm$core$List$cons,
 		$author$project$Main$legendText('Bass note:'),
 		A2(
@@ -8995,7 +9072,7 @@ var $author$project$Main$viewLegend = function (board) {
 					_Utils_Tuple2(3, '3'),
 					_Utils_Tuple2(4, '4'),
 					_Utils_Tuple2(5, '5')
-				])))));
+				]))))));
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -9033,7 +9110,7 @@ var $author$project$Main$displayIndexOf = F2(
 			return i;
 		} else {
 			var drag = _v0.a;
-			return A3($author$project$Main$indexAfterMove, drag.aq, drag.ab, i);
+			return A3($author$project$Main$indexAfterMove, drag.ar, drag.ab, i);
 		}
 	});
 var $author$project$Main$committedIndexOf = F2(
@@ -9245,10 +9322,6 @@ var $author$project$Main$aside = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
-	});
 var $elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
 		repeatHelp:
@@ -9432,25 +9505,40 @@ var $author$project$Main$intervalLabels = function (st) {
 					['R', '4', '5']);
 			case 43:
 				return _List_fromArray(
-					['R', '3', '5', '7']);
+					['R', '3', '5']);
 			case 44:
 				return _List_fromArray(
-					['R', '3', '5', '♭7']);
+					['R', '♭3', '5']);
 			case 45:
 				return _List_fromArray(
-					['R', '♭3', '5', '♭7']);
+					['R', '3', '5', '♭7']);
 			case 46:
 				return _List_fromArray(
-					['R', '♭3', '♭5', '♭7']);
+					['R', '3', '5', '7']);
 			case 47:
 				return _List_fromArray(
-					['R', '♭3', '♭5', '♭♭7']);
+					['R', '♭3', '5', '♭7']);
 			case 48:
+				return _List_fromArray(
+					['R', '3', '5', '7']);
+			case 49:
+				return _List_fromArray(
+					['R', '3', '5', '♭7']);
+			case 50:
+				return _List_fromArray(
+					['R', '♭3', '5', '♭7']);
+			case 51:
+				return _List_fromArray(
+					['R', '♭3', '♭5', '♭7']);
+			case 52:
+				return _List_fromArray(
+					['R', '♭3', '♭5', '♭♭7']);
+			case 53:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
 				continue intervalLabels;
-			case 49:
+			case 54:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
@@ -9719,10 +9807,10 @@ var $author$project$Main$scaleDegrees = function (st) {
 					[1, 4, 5]);
 			case 43:
 				return _List_fromArray(
-					[1, 3, 5, 7]);
+					[1, 3, 5]);
 			case 44:
 				return _List_fromArray(
-					[1, 3, 5, 7]);
+					[1, 3, 5]);
 			case 45:
 				return _List_fromArray(
 					[1, 3, 5, 7]);
@@ -9733,11 +9821,26 @@ var $author$project$Main$scaleDegrees = function (st) {
 				return _List_fromArray(
 					[1, 3, 5, 7]);
 			case 48:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 49:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 50:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 51:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 52:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 53:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
 				continue scaleDegrees;
-			case 49:
+			case 54:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
@@ -9939,19 +10042,29 @@ var $author$project$Main$scaleTitle = function (scale) {
 			case 42:
 				return 'Sus4 Triad';
 			case 43:
-				return 'Major 7th Arpeggio';
+				return 'Major Chord';
 			case 44:
-				return 'Dominant 7th Arpeggio';
+				return 'Minor Chord';
 			case 45:
-				return 'Minor 7th Arpeggio';
+				return 'Dominant 7th Chord';
 			case 46:
-				return 'Half-Diminished Arpeggio';
+				return 'Major 7th Chord';
 			case 47:
-				return 'Diminished 7th Arpeggio';
+				return 'Minor 7th Chord';
 			case 48:
+				return 'Major 7th Arpeggio';
+			case 49:
+				return 'Dominant 7th Arpeggio';
+			case 50:
+				return 'Minor 7th Arpeggio';
+			case 51:
+				return 'Half-Diminished Arpeggio';
+			case 52:
+				return 'Diminished 7th Arpeggio';
+			case 53:
 				var base = scale.a;
 				return 'Diagonal ' + $author$project$Main$scaleTitle(base);
-			case 49:
+			case 54:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
@@ -10179,8 +10292,9 @@ var $author$project$Main$pickerTabs = function (model) {
 		_List_fromArray(
 			[
 				A2(tab, 0, 'Scales'),
-				A2(tab, 1, 'Chord tones'),
-				A2(tab, 2, 'All notes')
+				A2(tab, 1, 'Chords'),
+				A2(tab, 2, 'Chord tones'),
+				A2(tab, 3, 'All notes')
 			]));
 };
 var $author$project$Main$SetRoot = function (a) {
@@ -10214,12 +10328,12 @@ var $author$project$Main$scaleButton = F3(
 		var current = $author$project$Main$activeNeck(model).a;
 		var target = function () {
 			switch (current.$) {
-				case 48:
+				case 53:
 					return A2(
 						$elm$core$Maybe$withDefault,
 						st,
 						$author$project$Main$diagonalOf(st));
-				case 49:
+				case 54:
 					return A2(
 						$elm$core$Maybe$withDefault,
 						st,
@@ -10479,6 +10593,22 @@ var $author$project$Main$scalePicker = function (model) {
 										[
 											A2(
 											$author$project$Main$scaleGroup,
+											'CAGED shapes',
+											_List_fromArray(
+												[
+													A3($author$project$Main$scaleButton, model, $author$project$Main$ChordMajor, 'Major'),
+													A3($author$project$Main$scaleButton, model, $author$project$Main$ChordMinor, 'Minor'),
+													A3($author$project$Main$scaleButton, model, $author$project$Main$ChordDom7, '7'),
+													A3($author$project$Main$scaleButton, model, $author$project$Main$ChordMaj7, 'maj7'),
+													A3($author$project$Main$scaleButton, model, $author$project$Main$ChordMin7, 'm7')
+												]))
+										]));
+							case 2:
+								return $author$project$Main$pickerCards(
+									_List_fromArray(
+										[
+											A2(
+											$author$project$Main$scaleGroup,
 											'Triads',
 											_List_fromArray(
 												[
@@ -10543,7 +10673,7 @@ var $author$project$Main$scalePicker = function (model) {
 						function () {
 						var boxed = $author$project$Main$boxedOf(
 							$author$project$Main$activeNeck(model).a);
-						return ($author$project$Main$isTriad(boxed) || $author$project$Main$isChromatic(boxed)) ? $elm$html$Html$text('') : $author$project$Main$shapeGroup(model);
+						return ($author$project$Main$isLassoed(boxed) || $author$project$Main$isChromatic(boxed)) ? $elm$html$Html$text('') : $author$project$Main$shapeGroup(model);
 					}()
 					]))
 			]));
@@ -10684,6 +10814,349 @@ var $author$project$Main$removeNeckButton = function (i) {
 				$elm$html$Html$text('×')
 			]));
 };
+var $elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			$elm$core$List$any,
+			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
+			list);
+	});
+var $author$project$Main$cagedShapes = function (scale) {
+	var x = $elm$core$Maybe$Nothing;
+	var f = $elm$core$Maybe$Just;
+	switch (scale.$) {
+		case 44:
+			return _List_fromArray(
+				[
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(1),
+						f(0),
+						f(1),
+						f(3)
+					]),
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(5),
+						f(5),
+						f(4),
+						f(3)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(6),
+						f(5),
+						f(5),
+						f(4),
+						f(8)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(10),
+						f(10),
+						f(8),
+						f(8),
+						f(8)
+					]),
+					_List_fromArray(
+					[
+						x,
+						x,
+						f(10),
+						f(12),
+						f(13),
+						f(11)
+					])
+				]);
+		case 45:
+			return _List_fromArray(
+				[
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(2),
+						f(3),
+						f(1),
+						f(0)
+					]),
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(5),
+						f(3),
+						f(5),
+						f(3)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(7),
+						f(5),
+						f(5),
+						f(5),
+						f(6)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(10),
+						f(8),
+						f(9),
+						f(8),
+						f(8)
+					]),
+					_List_fromArray(
+					[
+						x,
+						x,
+						f(10),
+						f(12),
+						f(11),
+						f(12)
+					])
+				]);
+		case 46:
+			return _List_fromArray(
+				[
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(2),
+						f(0),
+						f(0),
+						f(0)
+					]),
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(5),
+						f(4),
+						f(5),
+						f(3)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(7),
+						f(5),
+						f(5),
+						f(5),
+						f(7)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(10),
+						f(9),
+						f(9),
+						f(8),
+						f(8)
+					]),
+					_List_fromArray(
+					[
+						x,
+						x,
+						f(10),
+						f(12),
+						f(12),
+						f(12)
+					])
+				]);
+		case 47:
+			return _List_fromArray(
+				[
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(1),
+						f(3),
+						f(1),
+						f(3)
+					]),
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(5),
+						f(3),
+						f(4),
+						f(3)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(6),
+						f(5),
+						f(5),
+						f(4),
+						f(6)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(10),
+						f(8),
+						f(8),
+						f(8),
+						f(8)
+					]),
+					_List_fromArray(
+					[
+						x,
+						x,
+						f(10),
+						f(12),
+						f(11),
+						f(11)
+					])
+				]);
+		default:
+			return _List_fromArray(
+				[
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(2),
+						f(0),
+						f(1),
+						f(0)
+					]),
+					_List_fromArray(
+					[
+						x,
+						f(3),
+						f(5),
+						f(5),
+						f(5),
+						f(3)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(7),
+						f(5),
+						f(5),
+						f(5),
+						f(8)
+					]),
+					_List_fromArray(
+					[
+						f(8),
+						f(10),
+						f(10),
+						f(9),
+						f(8),
+						f(8)
+					]),
+					_List_fromArray(
+					[
+						x,
+						x,
+						f(10),
+						f(12),
+						f(13),
+						f(12)
+					])
+				]);
+	}
+};
+var $author$project$Main$cagedVoicings = F3(
+	function (tuning, scale, root) {
+		var shift = function (s) {
+			var d = A2(
+				$elm$core$Basics$modBy,
+				12,
+				A2($author$project$Main$openString, $author$project$Main$standardTuning, s) - A2($author$project$Main$openString, tuning, s));
+			return (d > 6) ? (d - 12) : d;
+		};
+		var radius = function (shape) {
+			return function (size) {
+				return 20 + (2.5 * size);
+			}(
+				A2(
+					$elm$core$Maybe$withDefault,
+					0,
+					$elm$core$List$head(
+						A2(
+							$elm$core$List$drop,
+							shape,
+							_List_fromArray(
+								[0, 2, 4, 1, 3])))));
+		};
+		var n = $author$project$Main$stringCount(tuning);
+		var voicing = F3(
+			function (shape, frets, octave) {
+				var notes = A2(
+					$elm$core$List$sortBy,
+					$elm$core$Tuple$first,
+					A2(
+						$elm$core$List$map,
+						function (_v2) {
+							var s = _v2.a;
+							var fr = _v2.b;
+							return _Utils_Tuple2(
+								s,
+								((fr + A2($elm$core$Basics$modBy, 12, root)) + (12 * octave)) + shift(s));
+						},
+						A2(
+							$elm$core$List$filter,
+							function (_v1) {
+								var s = _v1.a;
+								return _Utils_cmp(s, n) < 1;
+							},
+							A2(
+								$elm$core$List$filterMap,
+								$elm$core$Basics$identity,
+								A2(
+									$elm$core$List$indexedMap,
+									F2(
+										function (i, fret) {
+											return A2(
+												$elm$core$Maybe$map,
+												function (fr) {
+													return _Utils_Tuple2(6 - i, fr);
+												},
+												fret);
+										}),
+									frets)))));
+				return ((!$elm$core$List$isEmpty(notes)) && A2(
+					$elm$core$List$all,
+					function (_v0) {
+						var fr = _v0.b;
+						return (fr >= 0) && (_Utils_cmp(fr, $author$project$Main$numFrets) < 1);
+					},
+					notes)) ? $elm$core$Maybe$Just(
+					{
+						as: shape,
+						ah: notes,
+						aN: radius(shape)
+					}) : $elm$core$Maybe$Nothing;
+			});
+		return $elm$core$List$concat(
+			A2(
+				$elm$core$List$indexedMap,
+				F2(
+					function (shape, frets) {
+						return A2(
+							$elm$core$List$filterMap,
+							A2(voicing, shape, frets),
+							_List_fromArray(
+								[-1, 0, 1]));
+					}),
+				$author$project$Main$cagedShapes(scale)));
+	});
 var $elm$core$Basics$min = F2(
 	function (x, y) {
 		return (_Utils_cmp(x, y) < 0) ? x : y;
@@ -10763,17 +11236,23 @@ var $author$project$Main$anchorOffset = function (scale) {
 				return 3;
 			case 40:
 				return 3;
-			case 48:
+			case 43:
+				return 3;
+			case 45:
+				return 3;
+			case 46:
+				return 3;
+			case 53:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue anchorOffset;
-			case 49:
+			case 54:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue anchorOffset;
-			case 50:
+			case 55:
 				var base = scale.a;
 				var intervals = scale.b;
 				var baseThird = A5(
@@ -11834,13 +12313,6 @@ var $author$project$Main$drawDiagonalRegions = function (board) {
 		},
 		instances);
 };
-var $elm$core$List$all = F2(
-	function (isOkay, list) {
-		return !A2(
-			$elm$core$List$any,
-			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
-			list);
-	});
 var $author$project$Main$ringColor = F3(
 	function (board, muted, inv) {
 		return (!board.d) ? A2($author$project$Main$inversionColor, muted, inv) : (muted ? 'var(--inv-off)' : 'var(--text-strong)');
@@ -11856,7 +12328,7 @@ var $author$project$Main$noteX = function (f) {
 var $elm$core$Basics$pow = _Basics_pow;
 var $elm$core$Basics$sqrt = _Basics_sqrt;
 var $author$project$Main$triadLassoRadius = function (triad) {
-	return triad.aZ;
+	return triad.aN;
 };
 var $elm$core$String$append = _String_append;
 var $author$project$Main$triadPath = function (triad) {
@@ -11875,7 +12347,7 @@ var $author$project$Main$triadPath = function (triad) {
 						$author$project$Main$noteX(f)) + (',' + $elm$core$String$fromFloat(
 						$author$project$Main$stringY(s)));
 				},
-				triad.ar)));
+				triad.ah)));
 };
 var $author$project$Main$triadCapsule = F3(
 	function (triad, inset, attrs) {
@@ -11915,7 +12387,7 @@ var $author$project$Main$triadFill = F4(
 						$author$project$Main$noteX(f),
 						$author$project$Main$stringY(s));
 				},
-				triad.ar);
+				triad.ah);
 			var num = $elm$core$String$fromFloat;
 			var disc = function (_v6) {
 				var x = _v6.a;
@@ -12006,7 +12478,7 @@ var $author$project$Main$triadFill = F4(
 							_Utils_Tuple2(
 								_Utils_Tuple2(xa - r, xb + r),
 								_Utils_Tuple2(ya - r, yb + r)),
-							triad.az + 1)
+							triad.as + 1)
 						])));
 		} else {
 			return A3(
@@ -12016,7 +12488,7 @@ var $author$project$Main$triadFill = F4(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$stroke(
-						A2($author$project$Main$inversionFill, muted, triad.az))
+						A2($author$project$Main$inversionFill, muted, triad.as))
 					]));
 		}
 	});
@@ -12212,7 +12684,7 @@ var $author$project$Main$triadRing = F4(
 					$author$project$Main$noteX(f),
 					$author$project$Main$stringY(s));
 			},
-			triad.ar);
+			triad.ah);
 		return _List_fromArray(
 			[
 				A2(
@@ -12228,6 +12700,62 @@ var $author$project$Main$triadRing = F4(
 					]),
 				_List_Nil)
 			]);
+	});
+var $author$project$Main$drawLassos = F2(
+	function (board, unsorted) {
+		var voicings = A2(
+			$elm$core$List$sortBy,
+			function (triad) {
+				return -$author$project$Main$triadLassoRadius(triad);
+			},
+			unsorted);
+		var muted = function (triad) {
+			var _v0 = board.r;
+			if (_v0.$ === 1) {
+				return false;
+			} else {
+				var _v1 = _v0.a;
+				var lo = _v1.a;
+				var hi = _v1.b;
+				return !A2(
+					$elm$core$List$all,
+					function (_v2) {
+						var f = _v2.b;
+						return (_Utils_cmp(f, lo) > -1) && (_Utils_cmp(f, hi) < 1);
+					},
+					triad.ah);
+			}
+		};
+		return _Utils_ap(
+			A2(
+				$elm$core$List$indexedMap,
+				F2(
+					function (i, triad) {
+						return A4(
+							$author$project$Main$triadFill,
+							board,
+							i,
+							muted(triad),
+							triad);
+					}),
+				voicings),
+			$elm$core$List$concat(
+				A2(
+					$elm$core$List$indexedMap,
+					F2(
+						function (i, triad) {
+							return A4(
+								$author$project$Main$triadRing,
+								board.R,
+								A3(
+									$author$project$Main$ringColor,
+									board,
+									muted(triad),
+									triad.as),
+								i,
+								triad);
+						}),
+					voicings)));
 	});
 var $author$project$Main$stringSetTops = F2(
 	function (n, set) {
@@ -12321,14 +12849,14 @@ var $author$project$Main$triadsOnStringSet = F4(
 							$elm$core$Maybe$map,
 							function (high) {
 								return {
-									az: inv,
-									ar: _List_fromArray(
+									as: inv,
+									ah: _List_fromArray(
 										[
 											_Utils_Tuple2(top, high),
 											_Utils_Tuple2(top + 1, mid),
 											_Utils_Tuple2(top + 2, low)
 										]),
-									aZ: A2(
+									aN: A2(
 										$author$project$Main$triadSetRadius,
 										$author$project$Main$stringCount(tuning),
 										top)
@@ -12369,62 +12897,16 @@ var $author$project$Main$triadVoicingsFor = F4(
 				set));
 	});
 var $author$project$Main$drawTriadLassos = function (board) {
-	var voicings = A2(
-		$elm$core$List$sortBy,
-		function (triad) {
-			return -$author$project$Main$triadLassoRadius(triad);
-		},
+	return A2(
+		$author$project$Main$drawLassos,
+		board,
 		A4($author$project$Main$triadVoicingsFor, board.b, board.a, board.g, board.t));
-	var muted = function (triad) {
-		var _v0 = board.r;
-		if (_v0.$ === 1) {
-			return false;
-		} else {
-			var _v1 = _v0.a;
-			var lo = _v1.a;
-			var hi = _v1.b;
-			return !A2(
-				$elm$core$List$all,
-				function (_v2) {
-					var f = _v2.b;
-					return (_Utils_cmp(f, lo) > -1) && (_Utils_cmp(f, hi) < 1);
-				},
-				triad.ar);
-		}
-	};
-	return _Utils_ap(
-		A2(
-			$elm$core$List$indexedMap,
-			F2(
-				function (i, triad) {
-					return A4(
-						$author$project$Main$triadFill,
-						board,
-						i,
-						muted(triad),
-						triad);
-				}),
-			voicings),
-		$elm$core$List$concat(
-			A2(
-				$elm$core$List$indexedMap,
-				F2(
-					function (i, triad) {
-						return A4(
-							$author$project$Main$triadRing,
-							board.R,
-							A3(
-								$author$project$Main$ringColor,
-								board,
-								muted(triad),
-								triad.az),
-							i,
-							triad);
-					}),
-				voicings)));
 };
 var $author$project$Main$drawBoxRegions = function (board) {
-	return $author$project$Main$isChromatic(board.a) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? $author$project$Main$drawTriadLassos(board) : ($author$project$Main$isDiagonal(board.a) ? $author$project$Main$drawDiagonalRegions(board) : ($author$project$Main$isPlain(board.a) ? _List_Nil : $author$project$Main$drawBoxRegionsBoxes(board))));
+	return $author$project$Main$isChromatic(board.a) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? $author$project$Main$drawTriadLassos(board) : ($author$project$Main$isCagedChord(board.a) ? A2(
+		$author$project$Main$drawLassos,
+		board,
+		A3($author$project$Main$cagedVoicings, board.b, board.a, board.g)) : ($author$project$Main$isDiagonal(board.a) ? $author$project$Main$drawDiagonalRegions(board) : ($author$project$Main$isPlain(board.a) ? _List_Nil : $author$project$Main$drawBoxRegionsBoxes(board)))));
 };
 var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
 var $author$project$Main$fifthsStep = F2(
@@ -13168,21 +13650,21 @@ var $author$project$Main$fifthInterval = function (scale) {
 				return 6;
 			case 40:
 				return 8;
-			case 46:
+			case 51:
 				return 6;
-			case 47:
+			case 52:
 				return 6;
-			case 48:
+			case 53:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue fifthInterval;
-			case 49:
+			case 54:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue fifthInterval;
-			case 50:
+			case 55:
 				var base = scale.a;
 				var intervals = scale.b;
 				if (A2(
@@ -13291,21 +13773,31 @@ var $author$project$Main$seventhOf = function (scale) {
 			case 42:
 				return -1;
 			case 43:
-				return 11;
+				return -1;
 			case 44:
-				return 10;
+				return -1;
 			case 45:
 				return 10;
 			case 46:
-				return 10;
+				return 11;
 			case 47:
-				return 9;
+				return 10;
 			case 48:
+				return 11;
+			case 49:
+				return 10;
+			case 50:
+				return 10;
+			case 51:
+				return 10;
+			case 52:
+				return 9;
+			case 53:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue seventhOf;
-			case 49:
+			case 54:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
@@ -13736,7 +14228,7 @@ var $author$project$Main$totalHeight = function (n) {
 };
 var $author$project$Main$viewFretboard = function (board) {
 	var strings = $author$project$Main$stringCount(board.b);
-	var neckAndRegions = $author$project$Main$isTriad(board.a) ? _Utils_ap(
+	var neckAndRegions = $author$project$Main$isLassoed(board.a) ? _Utils_ap(
 		$author$project$Main$drawFretMarkers(strings),
 		_Utils_ap(
 			$author$project$Main$drawFretLines(strings),
@@ -14299,11 +14791,11 @@ var $author$project$Main$wakeLockButton = function (model) {
 					$elm$html$Html$Attributes$class('no-print'),
 					A2($elm$html$Html$Attributes$style, 'min-width', '120px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.am)),
+			$author$project$Main$buttonBaseStyle(model.an)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				model.am ? 'Screen on' : 'Keep screen on')
+				model.an ? 'Screen on' : 'Keep screen on')
 			]));
 };
 var $author$project$Main$viewBody = function (model) {

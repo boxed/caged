@@ -6,6 +6,7 @@ module BoxShapeTests exposing
     , edgeSanity
     , overlapCoverage
     , shapeSlugs
+    , cagedChords
     , spelling
     , stringCounts
     , stripeEdges
@@ -27,7 +28,7 @@ a tuning's open strings and the scale intervals. These tests pin down that:
 
 import Dict
 import Expect
-import Main exposing (ScaleType(..), StringSet(..), Tuning, anchorOpen, deriveBox, diagonalAnchor, diagonalOf, diagonalShapesFor, plainOf, fourthsFor, midiAt, nextLowString, noteAt, openAbs, openString, resizeTuning, rootSpelling, scaleFromSlug, scaleIntervals, scaleSlug, spell, standardFor, standardTuning, stringCount, thirdsFor, toggleInterval, triadVoicingsFor, tuningFromSlug, tunings, tuningsFor)
+import Main exposing (ScaleType(..), StringSet(..), Tuning, anchorOpen, deriveBox, cagedVoicings, diagonalAnchor, diagonalOf, diagonalShapesFor, plainOf, fourthsFor, midiAt, nextLowString, noteAt, openAbs, openString, resizeTuning, rootSpelling, scaleFromSlug, scaleIntervals, scaleSlug, spell, standardFor, standardTuning, stringCount, thirdsFor, toggleInterval, triadVoicingsFor, tuningFromSlug, tunings, tuningsFor)
 import Test exposing (Test, describe, test)
 
 
@@ -253,6 +254,11 @@ scaleName scale =
         TriadAug -> "TriadAug"
         TriadSus2 -> "TriadSus2"
         TriadSus4 -> "TriadSus4"
+        ChordMajor -> "ChordMajor"
+        ChordMinor -> "ChordMinor"
+        ChordDom7 -> "ChordDom7"
+        ChordMaj7 -> "ChordMaj7"
+        ChordMin7 -> "ChordMin7"
         Diagonal base -> "Diagonal" ++ scaleName base
         Plain base -> "Plain" ++ scaleName base
         Custom base intervals -> scaleName base ++ "+" ++ String.join "," (List.map String.fromInt intervals)
@@ -1253,7 +1259,7 @@ shapeSlugs : Test
 shapeSlugs =
     let
         everyScale =
-            boxScales ++ arpeggios ++ [ TriadMajor, TriadMinor, TriadDim, TriadAug, TriadSus2, TriadSus4, ChromaticMajor, ChromaticMinor, Blank ]
+            boxScales ++ arpeggios ++ cagedChordTypes ++ [ TriadMajor, TriadMinor, TriadDim, TriadAug, TriadSus2, TriadSus4, ChromaticMajor, ChromaticMinor, Blank ]
 
         drawn =
             everyScale
@@ -1288,3 +1294,102 @@ shapeSlugs =
                     ( Just edited, Plain MinorPent )
                     ( scaleFromSlug (scaleSlug edited), toggleInterval 2 edited )
         ]
+
+
+
+-- CAGED CHORDS: full voicings in the five shapes
+
+
+cagedChordTypes : List ScaleType
+cagedChordTypes =
+    [ ChordMajor, ChordMinor, ChordDom7, ChordMaj7, ChordMin7 ]
+
+
+{-| What a voicing cannot do without: root and third, and the seventh of a
+seventh chord. The fifth may go. -}
+essentialTones : ScaleType -> List Int
+essentialTones scale =
+    case scale of
+        ChordMinor -> [ 0, 3 ]
+        ChordDom7 -> [ 0, 4, 10 ]
+        ChordMaj7 -> [ 0, 4, 11 ]
+        ChordMin7 -> [ 0, 3, 10 ]
+        _ -> [ 0, 4 ]
+
+
+{-| Every CAGED voicing, in every tuning and from every root, is all chord
+tones, one note per string, on the neck — and on a full six strings it has
+everything the chord needs. Plus the canon: C major in standard tuning has the
+open C shape and the E-shape barre at the 8th fret. -}
+cagedChords : Test
+cagedChords =
+    describe "CAGED chord voicings"
+        (List.concatMap
+            (\tuning ->
+                List.concatMap
+                    (\scale ->
+                        List.map
+                            (\root ->
+                                test (scaleName scale ++ " root " ++ String.fromInt root ++ " in " ++ tuningLabel tuning) <|
+                                    \_ ->
+                                        let
+                                            voicings =
+                                                cagedVoicings tuning scale root
+
+                                            tone ( s, f ) =
+                                                modBy 12 (noteAt tuning s f - root)
+
+                                            problems v =
+                                                List.filterMap identity
+                                                    [ if List.all (\note -> List.member (tone note) (scaleIntervals scale)) v.notes then
+                                                        Nothing
+
+                                                      else
+                                                        Just "a note outside the chord"
+                                                    , if List.all (\( _, f ) -> f >= 0 && f <= 22) v.notes then
+                                                        Nothing
+
+                                                      else
+                                                        Just "a note off the neck"
+                                                    , if List.length (dedupe (List.sort (List.map Tuple.first v.notes))) == List.length v.notes then
+                                                        Nothing
+
+                                                      else
+                                                        Just "two notes on one string"
+                                                    , if stringCount tuning < 6 || List.all (\t -> List.member t (List.map tone v.notes)) (essentialTones scale) then
+                                                        Nothing
+
+                                                      else
+                                                        Just "a missing chord tone"
+                                                    ]
+                                        in
+                                        Expect.equal [] (List.concatMap problems voicings)
+                            )
+                            (List.range 0 11)
+                    )
+                    cagedChordTypes
+            )
+            presetTunings
+            ++ [ test "C major in standard tuning has the open C shape and the E-shape barre" <|
+                    \_ ->
+                        let
+                            notes =
+                                List.map .notes (cagedVoicings standardTuning ChordMajor 0)
+                        in
+                        Expect.equal ( True, True )
+                            ( List.member [ ( 1, 0 ), ( 2, 1 ), ( 3, 0 ), ( 4, 2 ), ( 5, 3 ) ] notes
+                            , List.member [ ( 1, 8 ), ( 2, 8 ), ( 3, 9 ), ( 4, 10 ), ( 5, 10 ), ( 6, 8 ) ] notes
+                            )
+               , test "every shape appears somewhere for every root in standard tuning" <|
+                    \_ ->
+                        Expect.equal []
+                            (List.range 0 11
+                                |> List.concatMap
+                                    (\root ->
+                                        List.filter
+                                            (\shape -> not (List.any (\v -> v.inversion == shape) (cagedVoicings standardTuning ChordMajor root)))
+                                            [ 0, 1, 2, 3, 4 ]
+                                    )
+                            )
+               ]
+        )
