@@ -1380,6 +1380,27 @@ cagedChords =
                             ( List.member [ ( 1, 0 ), ( 2, 1 ), ( 3, 0 ), ( 4, 2 ), ( 5, 3 ) ] notes
                             , List.member [ ( 1, 8 ), ( 2, 8 ), ( 3, 9 ), ( 4, 10 ), ( 5, 10 ), ( 6, 8 ) ] notes
                             )
+               , test "every voicing in standard tuning fits under one hand: four frets, open strings aside" <|
+                    \_ ->
+                        Expect.equal []
+                            (cagedChordTypes
+                                |> List.concatMap
+                                    (\scale ->
+                                        List.range 0 11
+                                            |> List.concatMap (\root -> cagedVoicings standardTuning scale root)
+                                            |> List.filter
+                                                (\v ->
+                                                    let
+                                                        fretted =
+                                                            List.filter ((<) 0) (List.map Tuple.second v.notes)
+                                                    in
+                                                    Maybe.map2 (-) (List.maximum fretted) (List.minimum fretted)
+                                                        |> Maybe.map (\span -> span > 3)
+                                                        |> Maybe.withDefault False
+                                                )
+                                            |> List.map (\v -> ( scaleName scale, v.notes ))
+                                    )
+                            )
                , test "every shape appears somewhere for every root in standard tuning" <|
                     \_ ->
                         Expect.equal []

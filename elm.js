@@ -10848,12 +10848,12 @@ var $author$project$Main$cagedShapes = function (scale) {
 					]),
 					_List_fromArray(
 					[
-						f(8),
+						x,
 						f(6),
 						f(5),
 						f(5),
 						f(4),
-						f(8)
+						x
 					]),
 					_List_fromArray(
 					[
@@ -10995,7 +10995,7 @@ var $author$project$Main$cagedShapes = function (scale) {
 					]),
 					_List_fromArray(
 					[
-						f(8),
+						x,
 						f(6),
 						f(5),
 						f(5),

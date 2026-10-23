@@ -418,7 +418,9 @@ Chords is **Chord tones** (triads and arpeggios): what chords are made of.
 - **`cagedShapes`** writes the shapes out for a C chord in standard tuning,
   low E to high e, `Nothing` for a string not played — open C, then the A, G,
   E and D barre shapes. These are the canon, like the canonical boxes, not
-  derived. **`cagedVoicings`** moves them to the root, repeats them an octave
+  derived — but cut to what a hand reaches: every voicing fits in four frets
+  (the test holds standard tuning to it), so the minor and m7 G shapes leave
+  off the strings that would make them a five-fret stretch. **`cagedVoicings`** moves them to the root, repeats them an octave
   either way, and refingers them for the tuning the way the box windows are:
   each note keeps its standard-tuning pitch (the short way round), so the
   chord is right in any tuning even where the fingering turns odd. They are

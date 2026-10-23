@@ -2673,7 +2673,9 @@ cagedShapeNames =
 from the low E string up to the high e (`Nothing` is a string not played): the
 open C shape, then the A, G, E and D barre shapes up the neck. These are the
 textbook shapes, written out the way the canonical scale boxes are in the
-tests; `cagedVoicings` moves them to any root and refingers them for any
+tests, cut to what a hand can reach: every one fits in four frets (one finger
+per fret), so the minor G shapes leave off the strings that would stretch it
+to five; `cagedVoicings` moves them to any root and refingers them for any
 tuning. -}
 cagedShapes : ScaleType -> List (List (Maybe Int))
 cagedShapes scale =
@@ -2688,7 +2690,9 @@ cagedShapes scale =
         ChordMinor ->
             [ [ x, f 3, f 1, f 0, f 1, f 3 ]
             , [ x, f 3, f 5, f 5, f 4, f 3 ]
-            , [ f 8, f 6, f 5, f 5, f 4, f 8 ]
+            -- The full G shape (8 6 5 5 4 8) is a five-fret stretch; this is
+            -- how it is played, both outer strings left off.
+            , [ x, f 6, f 5, f 5, f 4, x ]
             , [ f 8, f 10, f 10, f 8, f 8, f 8 ]
             , [ x, x, f 10, f 12, f 13, f 11 ]
             ]
@@ -2712,7 +2716,7 @@ cagedShapes scale =
         ChordMin7 ->
             [ [ x, f 3, f 1, f 3, f 1, f 3 ]
             , [ x, f 3, f 5, f 3, f 4, f 3 ]
-            , [ f 8, f 6, f 5, f 5, f 4, f 6 ]
+            , [ x, f 6, f 5, f 5, f 4, f 6 ]
             , [ f 8, f 10, f 8, f 8, f 8, f 8 ]
             , [ x, x, f 10, f 12, f 11, f 11 ]
             ]
