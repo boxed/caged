@@ -505,8 +505,9 @@ neck's **heading is its controls**:
   and Add neck, and rides in the URL).
 - **The scale picker** is two parts: *what* to show, then *how*. What is one
   panel (`--surface`, bordered) behind a tab bar (`pickerTabs`): **Scales**
-  (Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric, Exotic), **Chords**
-  (Triads, Arpeggios) and **All notes**, one tab showing at a time.
+  (Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric, Exotic), **Chord
+  tones** (Triads, Arpeggios — what chords are made of, not chords you strum,
+  hence not "Chords") and **All notes**, one tab showing at a time.
   `pickerTab` is on the model but, like the other drawer state, not in the
   URL; opening the picker under a neck turns it to the tab that holds that
   neck's scale (`tabOf`), and switching tabs only browses. The tab holding the

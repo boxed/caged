@@ -10179,7 +10179,7 @@ var $author$project$Main$pickerTabs = function (model) {
 		_List_fromArray(
 			[
 				A2(tab, 0, 'Scales'),
-				A2(tab, 1, 'Chords'),
+				A2(tab, 1, 'Chord tones'),
 				A2(tab, 2, 'All notes')
 			]));
 };

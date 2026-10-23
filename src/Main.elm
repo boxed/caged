@@ -4508,7 +4508,7 @@ scalePicker model =
         ]
 
 
-{-| The tab bar along the top of the scale picker: Scales, Chords, All notes.
+{-| The tab bar along the top of the scale picker: Scales, Chord tones, All notes.
 Only one tab's families show at a time, so a picker of some fifty buttons
 reads as one short list. The tab that holds the neck's current scale carries a
 dot, so while you browse another tab you can still see where the selection
@@ -4581,7 +4581,7 @@ pickerTabs model =
         , style "margin-bottom" "10px"
         ]
         [ tab ScalesTab "Scales"
-        , tab ChordsTab "Chords"
+        , tab ChordsTab "Chord tones"
         , tab NotesTab "All notes"
         ]
 
