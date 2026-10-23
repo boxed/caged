@@ -2673,9 +2673,12 @@ cagedShapeNames =
 from the low E string up to the high e (`Nothing` is a string not played): the
 open C shape, then the A, G, E and D barre shapes up the neck. These are the
 textbook shapes, written out the way the canonical scale boxes are in the
-tests, cut to what a hand can reach: every one fits in four frets (one finger
-per fret), so the minor G shapes leave off the strings that would stretch it
-to five; `cagedVoicings` moves them to any root and refingers them for any
+tests, cut to what a hand can play: every one fits in four frets and takes at
+most four fingers, a barre counting as one (`barreOf`), wherever on the neck it
+is moved — which is why some leave off a string the full shape has. The minor
+G shapes would be a five-fret stretch with their outer strings; minor and 7's C
+shapes, and minor 7's G shape, would need a fifth finger once the open strings
+are fretted; `cagedVoicings` moves them to any root and refingers them for any
 tuning. -}
 cagedShapes : ScaleType -> List (List (Maybe Int))
 cagedShapes scale =
@@ -2688,7 +2691,7 @@ cagedShapes scale =
     in
     case scale of
         ChordMinor ->
-            [ [ x, f 3, f 1, f 0, f 1, f 3 ]
+            [ [ x, f 3, f 1, f 0, f 1, x ]
             , [ x, f 3, f 5, f 5, f 4, f 3 ]
             -- The full G shape (8 6 5 5 4 8) is a five-fret stretch; this is
             -- how it is played, both outer strings left off.
@@ -2698,7 +2701,7 @@ cagedShapes scale =
             ]
 
         ChordDom7 ->
-            [ [ x, f 3, f 2, f 3, f 1, f 0 ]
+            [ [ x, f 3, f 2, f 3, f 1, x ]
             , [ x, f 3, f 5, f 3, f 5, f 3 ]
             , [ f 8, f 7, f 5, f 5, f 5, f 6 ]
             , [ f 8, f 10, f 8, f 9, f 8, f 8 ]
@@ -2716,7 +2719,7 @@ cagedShapes scale =
         ChordMin7 ->
             [ [ x, f 3, f 1, f 3, f 1, f 3 ]
             , [ x, f 3, f 5, f 3, f 4, f 3 ]
-            , [ x, f 6, f 5, f 5, f 4, f 6 ]
+            , [ x, x, f 5, f 5, f 4, f 6 ]
             , [ f 8, f 10, f 8, f 8, f 8, f 8 ]
             , [ x, x, f 10, f 12, f 11, f 11 ]
             ]
@@ -2789,6 +2792,50 @@ cagedVoicings tuning scale root =
         |> List.indexedMap
             (\shape frets -> List.filterMap (voicing shape frets) [ -1, 0, 1 ])
         |> List.concat
+
+
+{-| The barre a voicing is played with, if any: the index finger laid across
+the strings at its lowest fretted fret, as `( fret, top string, bottom string )`.
+It is there when two or more strings are stopped at that fret and every string
+between them is stopped at it or higher — a barre cannot leave an open or
+unplayed string inside it sounding or silent. -}
+barreOf : Triad -> Maybe ( Int, Int, Int )
+barreOf voicing =
+    let
+        fretted =
+            List.filter (\( _, f ) -> f > 0) voicing.notes
+    in
+    case List.minimum (List.map Tuple.second fretted) of
+        Nothing ->
+            Nothing
+
+        Just low ->
+            let
+                at =
+                    List.filterMap
+                        (\( s, f ) ->
+                            if f == low then
+                                Just s
+
+                            else
+                                Nothing
+                        )
+                        fretted
+
+                top =
+                    List.minimum at |> Maybe.withDefault 0
+
+                bottom =
+                    List.maximum at |> Maybe.withDefault 0
+
+                stopped s =
+                    List.any (\( s2, f ) -> s2 == s && f >= low) fretted
+            in
+            if List.length at >= 2 && List.all stopped (List.range top bottom) then
+                Just ( low, top, bottom )
+
+            else
+                Nothing
 
 
 {-| One close-position triad: three chord tones on three adjacent strings, one
@@ -5414,7 +5461,7 @@ drawBoxRegions board =
         drawTriadLassos board
 
     else if isCagedChord board.scale then
-        drawLassos board (cagedVoicings board.tuning board.scale board.root)
+        drawLassos board True (cagedVoicings board.tuning board.scale board.root)
 
     else if isDiagonal board.scale then
         drawDiagonalRegions board
@@ -5629,12 +5676,14 @@ a soft wash inside and a ring around it, colored by which chord tone is in the
 bass. -}
 drawTriadLassos : Board -> List (Svg.Svg Msg)
 drawTriadLassos board =
-    drawLassos board (triadVoicingsFor board.tuning board.scale board.root board.stringSet)
+    drawLassos board False (triadVoicingsFor board.tuning board.scale board.root board.stringSet)
 
 
-{-| Lassos around voicings — the triads', or the CAGED chords'. -}
-drawLassos : Board -> List Triad -> List (Svg.Svg Msg)
-drawLassos board unsorted =
+{-| Lassos around voicings — the triads', or the CAGED chords', which also
+show their barres (`withBarres`): a triad is a fragment to see, a chord a grip
+to play. -}
+drawLassos : Board -> Bool -> List Triad -> List (Svg.Svg Msg)
+drawLassos board withBarres unsorted =
     let
         -- Largest pill first. The fills are opaque, so a pill hides whatever it
         -- covers; painting big to small leaves the small ones on top, where
@@ -5661,6 +5710,33 @@ drawLassos board unsorted =
             (List.indexedMap
                 (\i triad -> triadRing board.id (ringColor board (muted triad) triad.inversion) i triad)
                 voicings
+            )
+        ++ (if withBarres then
+                List.filterMap (\triad -> drawBarre (ringColor board (muted triad) triad.inversion) triad) voicings
+
+            else
+                []
+           )
+
+
+{-| A voicing's barre, as the finger lies: a bar across its strings at the
+barre fret, in the lasso's color. It goes over the lassos and under the note
+markers, so it shows between the notes it holds down. -}
+drawBarre : String -> Triad -> Maybe (Svg.Svg Msg)
+drawBarre color voicing =
+    barreOf voicing
+        |> Maybe.map
+            (\( fret, top, bottom ) ->
+                Svg.line
+                    [ SA.x1 (String.fromFloat (noteX fret))
+                    , SA.x2 (String.fromFloat (noteX fret))
+                    , SA.y1 (String.fromFloat (stringY top))
+                    , SA.y2 (String.fromFloat (stringY bottom))
+                    , SA.stroke color
+                    , SA.strokeWidth "12"
+                    , SA.strokeLinecap "round"
+                    ]
+                    []
             )
 
 

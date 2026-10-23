@@ -418,9 +418,16 @@ Chords is **Chord tones** (triads and arpeggios): what chords are made of.
 - **`cagedShapes`** writes the shapes out for a C chord in standard tuning,
   low E to high e, `Nothing` for a string not played — open C, then the A, G,
   E and D barre shapes. These are the canon, like the canonical boxes, not
-  derived — but cut to what a hand reaches: every voicing fits in four frets
-  (the test holds standard tuning to it), so the minor and m7 G shapes leave
-  off the strings that would make them a five-fret stretch. **`cagedVoicings`** moves them to the root, repeats them an octave
+  derived — but cut to what a hand plays: every voicing fits in four frets and
+  takes at most four fingers, a barre counting as one, at every root (the
+  tests hold standard tuning to both). Moving a shape up the neck frets its
+  open strings, which is what pushes a shape to five fingers, so the minor and
+  7 C shapes leave off the high e, and the minor G shapes their outer strings.
+- **Barres** (`barreOf`): a voicing is barred when two or more strings are
+  stopped at its lowest fret and nothing between them is open or unplayed.
+  `drawBarre` draws it as a thick bar in the lasso's color at that fret, over
+  the lassos and under the notes. Triads share `drawLassos` but draw no
+  barres: a triad is a fragment to see, a chord a grip to play. **`cagedVoicings`** moves them to the root, repeats them an octave
   either way, and refingers them for the tuning the way the box windows are:
   each note keeps its standard-tuning pitch (the short way round), so the
   chord is right in any tuning even where the fingering turns odd. They are

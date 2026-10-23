@@ -1401,6 +1401,18 @@ cagedChords =
                                             |> List.map (\v -> ( scaleName scale, v.notes ))
                                     )
                             )
+               , test "every voicing in standard tuning takes four fingers at most, a barre counting as one" <|
+                    \_ ->
+                        Expect.equal []
+                            (cagedChordTypes
+                                |> List.concatMap
+                                    (\scale ->
+                                        List.range 0 11
+                                            |> List.concatMap (\root -> cagedVoicings standardTuning scale root)
+                                            |> List.filter (\v -> fingersFor v.notes > 4)
+                                            |> List.map (\v -> ( scaleName scale, v.notes ))
+                                    )
+                            )
                , test "every shape appears somewhere for every root in standard tuning" <|
                     \_ ->
                         Expect.equal []
@@ -1414,3 +1426,35 @@ cagedChords =
                             )
                ]
         )
+
+
+
+{-| Fingers a grip takes: one per fretted note, except that a barre — the
+lowest fret, held on two or more strings with nothing open or unplayed between
+them — is one finger for all the notes it covers. -}
+fingersFor : List ( Int, Int ) -> Int
+fingersFor notes =
+    let
+        fretted =
+            List.filter (\( _, f ) -> f > 0) notes
+    in
+    case List.minimum (List.map Tuple.second fretted) of
+        Nothing ->
+            0
+
+        Just low ->
+            let
+                at =
+                    List.map Tuple.first (List.filter (\( _, f ) -> f == low) fretted)
+
+                between =
+                    List.range (List.minimum at |> Maybe.withDefault 0) (List.maximum at |> Maybe.withDefault 0)
+
+                barre =
+                    List.length at >= 2 && List.all (\s -> List.any (\( s2, f ) -> s2 == s && f >= low) fretted) between
+            in
+            if barre then
+                1 + List.length (List.filter (\( _, f ) -> f > low) fretted)
+
+            else
+                List.length fretted

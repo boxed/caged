@@ -6472,21 +6472,21 @@ var $author$project$Main$init = F3(
 		return _Utils_Tuple2(
 			{
 				i: state.i,
-				ao: compact,
+				ap: compact,
 				x: state.x,
 				G: $elm$core$Maybe$Nothing,
 				r: state.r,
 				aL: key,
 				d: state.d,
 				e: state.e,
-				_: $author$project$Main$tabOf(activeScale),
+				aa: $author$project$Main$tabOf(activeScale),
 				T: !compact,
 				q: state.q,
 				b: state.b,
 				U: false,
 				F: state.F,
 				Q: !compact,
-				an: false
+				ao: false
 			},
 			$elm$core$Platform$Cmd$none);
 	});
@@ -7584,7 +7584,7 @@ var $author$project$Main$update = F2(
 										{a: sc});
 								},
 								model),
-							T: model.T && (!model.ao)
+							T: model.T && (!model.ap)
 						}));
 			case 3:
 				var i = msg.a;
@@ -7626,9 +7626,9 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							i: A2($author$project$Main$clampIndex, model.e, i),
-							_: opening ? A2(
+							aa: opening ? A2(
 								$elm$core$Maybe$withDefault,
-								model._,
+								model.aa,
 								A2(
 									$elm$core$Maybe$map,
 									A2(
@@ -7638,22 +7638,22 @@ var $author$project$Main$update = F2(
 										},
 										$author$project$Main$tabOf),
 									$elm$core$List$head(
-										A2($elm$core$List$drop, i, model.e)))) : model._,
+										A2($elm$core$List$drop, i, model.e)))) : model.aa,
 							T: opening,
-							Q: model.Q && (!(model.ao && opening))
+							Q: model.Q && (!(model.ap && opening))
 						}));
 			case 13:
 				var tab = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{_: tab}),
+						{aa: tab}),
 					$elm$core$Platform$Cmd$none);
 			case 14:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{T: model.T && (!(model.ao && (!model.Q))), Q: !model.Q}),
+						{T: model.T && (!(model.ap && (!model.Q))), Q: !model.Q}),
 					$elm$core$Platform$Cmd$none);
 			case 15:
 				var width = msg.a;
@@ -7661,7 +7661,7 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							ao: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
+							ap: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 4:
@@ -7778,7 +7778,7 @@ var $author$project$Main$update = F2(
 						{
 							i: A2($author$project$Main$clampIndex, model.e, i),
 							G: $elm$core$Maybe$Just(
-								{ar: i, a_: rowHeight, a2: y, ab: i})
+								{as: i, a_: rowHeight, a2: y, ac: i})
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 19:
@@ -7799,7 +7799,7 @@ var $author$project$Main$update = F2(
 									_Utils_update(
 										drag,
 										{
-											ab: A2($author$project$Main$clampIndex, model.e, drag.ar + slots)
+											ac: A2($author$project$Main$clampIndex, model.e, drag.as + slots)
 										}))
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -7814,9 +7814,9 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								i: drag.ab,
+								i: drag.ac,
 								G: $elm$core$Maybe$Nothing,
-								e: A3($author$project$Main$moveItem, drag.ar, drag.ab, model.e)
+								e: A3($author$project$Main$moveItem, drag.as, drag.ac, model.e)
 							}));
 				}
 			case 21:
@@ -7844,19 +7844,19 @@ var $author$project$Main$update = F2(
 						$elm$browser$Browser$Navigation$load(href));
 				}
 			case 23:
-				var next = !model.an;
+				var next = !model.ao;
 				var cmd = next ? $author$project$Main$requestWakeLock(0) : $author$project$Main$releaseWakeLock(0);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{an: next}),
+						{ao: next}),
 					cmd);
 			case 24:
 				var on = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{an: on}),
+						{ao: on}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.d) {
@@ -8103,7 +8103,7 @@ var $author$project$Main$orderedNecks = function (model) {
 	var _v0 = model.G;
 	if (!_v0.$) {
 		var drag = _v0.a;
-		return A3($author$project$Main$moveItem, drag.ar, drag.ab, model.e);
+		return A3($author$project$Main$moveItem, drag.as, drag.ac, model.e);
 	} else {
 		return model.e;
 	}
@@ -9110,7 +9110,7 @@ var $author$project$Main$displayIndexOf = F2(
 			return i;
 		} else {
 			var drag = _v0.a;
-			return A3($author$project$Main$indexAfterMove, drag.ar, drag.ab, i);
+			return A3($author$project$Main$indexAfterMove, drag.as, drag.ac, i);
 		}
 	});
 var $author$project$Main$committedIndexOf = F2(
@@ -10233,7 +10233,7 @@ var $author$project$Main$pickerTabs = function (model) {
 		$author$project$Main$activeNeck(model).a);
 	var tab = F2(
 		function (t, lbl) {
-			var on = _Utils_eq(model._, t);
+			var on = _Utils_eq(model.aa, t);
 			return A2(
 				$elm$html$Html$button,
 				_List_fromArray(
@@ -10504,7 +10504,7 @@ var $author$project$Main$scalePicker = function (model) {
 					[
 						$author$project$Main$pickerTabs(model),
 						function () {
-						var _v0 = model._;
+						var _v0 = model.aa;
 						switch (_v0) {
 							case 0:
 								return $author$project$Main$pickerCards(
@@ -10835,7 +10835,7 @@ var $author$project$Main$cagedShapes = function (scale) {
 						f(1),
 						f(0),
 						f(1),
-						f(3)
+						x
 					]),
 					_List_fromArray(
 					[
@@ -10884,7 +10884,7 @@ var $author$project$Main$cagedShapes = function (scale) {
 						f(2),
 						f(3),
 						f(1),
-						f(0)
+						x
 					]),
 					_List_fromArray(
 					[
@@ -10996,7 +10996,7 @@ var $author$project$Main$cagedShapes = function (scale) {
 					_List_fromArray(
 					[
 						x,
-						f(6),
+						x,
 						f(5),
 						f(5),
 						f(4),
@@ -11139,8 +11139,8 @@ var $author$project$Main$cagedVoicings = F3(
 					},
 					notes)) ? $elm$core$Maybe$Just(
 					{
-						as: shape,
-						ah: notes,
+						ah: shape,
+						_: notes,
 						aN: radius(shape)
 					}) : $elm$core$Maybe$Nothing;
 			});
@@ -12071,7 +12071,7 @@ var $author$project$Main$diagonalShapesFor = F2(
 				var lower = (2 * k) + 2;
 				return {
 					aJ: color,
-					ag: lower,
+					ai: lower,
 					aC: (_Utils_cmp(lower, n) < 1) ? A2(
 						$elm$core$List$map,
 						$elm$core$Basics$add(offset),
@@ -12139,7 +12139,7 @@ var $author$project$Main$diagonalSpan = F5(
 			$elm$core$Basics$identity,
 			_List_fromArray(
 				[
-					A2(ends, shape.aC, shape.ag),
+					A2(ends, shape.aC, shape.ai),
 					A2(ends, shape.aI, shape.V)
 				]));
 		return _Utils_Tuple2(
@@ -12156,7 +12156,7 @@ var $author$project$Main$diagonalSpan = F5(
 	});
 var $author$project$Main$drawDiagonalShape = F6(
 	function (tuning, scale, root, paint, shape, octave) {
-		var yMid = ($author$project$Main$stringY(shape.ag) + $author$project$Main$stringY(shape.V)) / 2;
+		var yMid = ($author$project$Main$stringY(shape.ai) + $author$project$Main$stringY(shape.V)) / 2;
 		var shift = A3($author$project$Main$diagonalAnchor, tuning, scale, root) + (12 * octave);
 		var upperSpan = A2(
 			$author$project$Main$relsSpan,
@@ -12166,7 +12166,7 @@ var $author$project$Main$drawDiagonalShape = F6(
 		var yUpTop = $author$project$Main$stringY(shape.V) - pad;
 		var lowerSpan = A2(
 			$author$project$Main$relsSpan,
-			shift + A2($author$project$Main$boxShift, tuning, shape.ag),
+			shift + A2($author$project$Main$boxShift, tuning, shape.ai),
 			shape.aC);
 		var verts = function () {
 			var _v1 = _Utils_Tuple2(lowerSpan, upperSpan);
@@ -12180,7 +12180,7 @@ var $author$project$Main$drawDiagonalShape = F6(
 						var _v3 = _v1.b.a;
 						var loU = _v3.a;
 						var hiU = _v3.b;
-						var yLoBot = $author$project$Main$stringY(shape.ag) + pad;
+						var yLoBot = $author$project$Main$stringY(shape.ai) + pad;
 						return _List_fromArray(
 							[
 								_Utils_Tuple2(
@@ -12313,6 +12313,93 @@ var $author$project$Main$drawDiagonalRegions = function (board) {
 		},
 		instances);
 };
+var $author$project$Main$barreOf = function (voicing) {
+	var fretted = A2(
+		$elm$core$List$filter,
+		function (_v3) {
+			var f = _v3.b;
+			return f > 0;
+		},
+		voicing._);
+	var _v0 = $elm$core$List$minimum(
+		A2($elm$core$List$map, $elm$core$Tuple$second, fretted));
+	if (_v0.$ === 1) {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var low = _v0.a;
+		var stopped = function (s) {
+			return A2(
+				$elm$core$List$any,
+				function (_v2) {
+					var s2 = _v2.a;
+					var f = _v2.b;
+					return _Utils_eq(s2, s) && (_Utils_cmp(f, low) > -1);
+				},
+				fretted);
+		};
+		var at = A2(
+			$elm$core$List$filterMap,
+			function (_v1) {
+				var s = _v1.a;
+				var f = _v1.b;
+				return _Utils_eq(f, low) ? $elm$core$Maybe$Just(s) : $elm$core$Maybe$Nothing;
+			},
+			fretted);
+		var bottom = A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$maximum(at));
+		var top = A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$minimum(at));
+		return (($elm$core$List$length(at) >= 2) && A2(
+			$elm$core$List$all,
+			stopped,
+			A2($elm$core$List$range, top, bottom))) ? $elm$core$Maybe$Just(
+			_Utils_Tuple3(low, top, bottom)) : $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
+var $author$project$Main$noteX = function (f) {
+	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
+};
+var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
+var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
+var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
+var $elm$svg$Svg$Attributes$y2 = _VirtualDom_attribute('y2');
+var $author$project$Main$drawBarre = F2(
+	function (color, voicing) {
+		return A2(
+			$elm$core$Maybe$map,
+			function (_v0) {
+				var fret = _v0.a;
+				var top = _v0.b;
+				var bottom = _v0.c;
+				return A2(
+					$elm$svg$Svg$line,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$x1(
+							$elm$core$String$fromFloat(
+								$author$project$Main$noteX(fret))),
+							$elm$svg$Svg$Attributes$x2(
+							$elm$core$String$fromFloat(
+								$author$project$Main$noteX(fret))),
+							$elm$svg$Svg$Attributes$y1(
+							$elm$core$String$fromFloat(
+								$author$project$Main$stringY(top))),
+							$elm$svg$Svg$Attributes$y2(
+							$elm$core$String$fromFloat(
+								$author$project$Main$stringY(bottom))),
+							$elm$svg$Svg$Attributes$stroke(color),
+							$elm$svg$Svg$Attributes$strokeWidth('12'),
+							$elm$svg$Svg$Attributes$strokeLinecap('round')
+						]),
+					_List_Nil);
+			},
+			$author$project$Main$barreOf(voicing));
+	});
 var $author$project$Main$ringColor = F3(
 	function (board, muted, inv) {
 		return (!board.d) ? A2($author$project$Main$inversionColor, muted, inv) : (muted ? 'var(--inv-off)' : 'var(--text-strong)');
@@ -12322,9 +12409,6 @@ var $author$project$Main$inversionFill = F2(
 	function (muted, inv) {
 		return 'color-mix(in srgb, ' + (A2($author$project$Main$inversionColor, muted, inv) + (' ' + ($author$project$Main$triadFillPct + ', var(--bg))')));
 	});
-var $author$project$Main$noteX = function (f) {
-	return (!f) ? ($author$project$Main$leftMargin + ($author$project$Main$nutWidth * 0.5)) : (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * (f - 0.5)));
-};
 var $elm$core$Basics$pow = _Basics_pow;
 var $elm$core$Basics$sqrt = _Basics_sqrt;
 var $author$project$Main$triadLassoRadius = function (triad) {
@@ -12347,7 +12431,7 @@ var $author$project$Main$triadPath = function (triad) {
 						$author$project$Main$noteX(f)) + (',' + $elm$core$String$fromFloat(
 						$author$project$Main$stringY(s)));
 				},
-				triad.ah)));
+				triad._)));
 };
 var $author$project$Main$triadCapsule = F3(
 	function (triad, inset, attrs) {
@@ -12387,7 +12471,7 @@ var $author$project$Main$triadFill = F4(
 						$author$project$Main$noteX(f),
 						$author$project$Main$stringY(s));
 				},
-				triad.ah);
+				triad._);
 			var num = $elm$core$String$fromFloat;
 			var disc = function (_v6) {
 				var x = _v6.a;
@@ -12478,7 +12562,7 @@ var $author$project$Main$triadFill = F4(
 							_Utils_Tuple2(
 								_Utils_Tuple2(xa - r, xb + r),
 								_Utils_Tuple2(ya - r, yb + r)),
-							triad.as + 1)
+							triad.ah + 1)
 						])));
 		} else {
 			return A3(
@@ -12488,7 +12572,7 @@ var $author$project$Main$triadFill = F4(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$stroke(
-						A2($author$project$Main$inversionFill, muted, triad.as))
+						A2($author$project$Main$inversionFill, muted, triad.ah))
 					]));
 		}
 	});
@@ -12684,7 +12768,7 @@ var $author$project$Main$triadRing = F4(
 					$author$project$Main$noteX(f),
 					$author$project$Main$stringY(s));
 			},
-			triad.ah);
+			triad._);
 		return _List_fromArray(
 			[
 				A2(
@@ -12701,8 +12785,8 @@ var $author$project$Main$triadRing = F4(
 				_List_Nil)
 			]);
 	});
-var $author$project$Main$drawLassos = F2(
-	function (board, unsorted) {
+var $author$project$Main$drawLassos = F3(
+	function (board, withBarres, unsorted) {
 		var voicings = A2(
 			$elm$core$List$sortBy,
 			function (triad) {
@@ -12723,7 +12807,7 @@ var $author$project$Main$drawLassos = F2(
 						var f = _v2.b;
 						return (_Utils_cmp(f, lo) > -1) && (_Utils_cmp(f, hi) < 1);
 					},
-					triad.ah);
+					triad._);
 			}
 		};
 		return _Utils_ap(
@@ -12739,23 +12823,37 @@ var $author$project$Main$drawLassos = F2(
 							triad);
 					}),
 				voicings),
-			$elm$core$List$concat(
-				A2(
-					$elm$core$List$indexedMap,
-					F2(
-						function (i, triad) {
-							return A4(
-								$author$project$Main$triadRing,
-								board.R,
-								A3(
-									$author$project$Main$ringColor,
-									board,
-									muted(triad),
-									triad.as),
-								i,
-								triad);
-						}),
-					voicings)));
+			_Utils_ap(
+				$elm$core$List$concat(
+					A2(
+						$elm$core$List$indexedMap,
+						F2(
+							function (i, triad) {
+								return A4(
+									$author$project$Main$triadRing,
+									board.R,
+									A3(
+										$author$project$Main$ringColor,
+										board,
+										muted(triad),
+										triad.ah),
+									i,
+									triad);
+							}),
+						voicings)),
+				withBarres ? A2(
+					$elm$core$List$filterMap,
+					function (triad) {
+						return A2(
+							$author$project$Main$drawBarre,
+							A3(
+								$author$project$Main$ringColor,
+								board,
+								muted(triad),
+								triad.ah),
+							triad);
+					},
+					voicings) : _List_Nil));
 	});
 var $author$project$Main$stringSetTops = F2(
 	function (n, set) {
@@ -12849,8 +12947,8 @@ var $author$project$Main$triadsOnStringSet = F4(
 							$elm$core$Maybe$map,
 							function (high) {
 								return {
-									as: inv,
-									ah: _List_fromArray(
+									ah: inv,
+									_: _List_fromArray(
 										[
 											_Utils_Tuple2(top, high),
 											_Utils_Tuple2(top + 1, mid),
@@ -12897,15 +12995,17 @@ var $author$project$Main$triadVoicingsFor = F4(
 				set));
 	});
 var $author$project$Main$drawTriadLassos = function (board) {
-	return A2(
+	return A3(
 		$author$project$Main$drawLassos,
 		board,
+		false,
 		A4($author$project$Main$triadVoicingsFor, board.b, board.a, board.g, board.t));
 };
 var $author$project$Main$drawBoxRegions = function (board) {
-	return $author$project$Main$isChromatic(board.a) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? $author$project$Main$drawTriadLassos(board) : ($author$project$Main$isCagedChord(board.a) ? A2(
+	return $author$project$Main$isChromatic(board.a) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? $author$project$Main$drawTriadLassos(board) : ($author$project$Main$isCagedChord(board.a) ? A3(
 		$author$project$Main$drawLassos,
 		board,
+		true,
 		A3($author$project$Main$cagedVoicings, board.b, board.a, board.g)) : ($author$project$Main$isDiagonal(board.a) ? $author$project$Main$drawDiagonalRegions(board) : ($author$project$Main$isPlain(board.a) ? _List_Nil : $author$project$Main$drawBoxRegionsBoxes(board)))));
 };
 var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
@@ -12930,7 +13030,6 @@ var $author$project$Main$laddersFit = function (tuning) {
 			1,
 			$author$project$Main$stringCount(tuning) - 2));
 };
-var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
 var $elm$svg$Svg$linearGradient = $elm$svg$Svg$trustedNode('linearGradient');
 var $elm$svg$Svg$Attributes$offset = _VirtualDom_attribute('offset');
 var $author$project$Main$pitchColor = function (n) {
@@ -12938,10 +13037,6 @@ var $author$project$Main$pitchColor = function (n) {
 		A2($elm$core$Basics$modBy, 12, n)) + ')');
 };
 var $elm$svg$Svg$stop = $elm$svg$Svg$trustedNode('stop');
-var $elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
-var $elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
-var $elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
-var $elm$svg$Svg$Attributes$y2 = _VirtualDom_attribute('y2');
 var $author$project$Main$drawFifthsLadders = function (board) {
 	var stop = F2(
 		function (offset, n) {
@@ -13864,7 +13959,7 @@ var $author$project$Main$diagonalBoxOf = F5(
 						$elm$core$Basics$modBy(12),
 						rels));
 			};
-			return ((_Utils_eq(s, shape.ag) && memberMod(shape.aC)) || (_Utils_eq(s, shape.V) && memberMod(shape.aI))) ? $elm$core$Maybe$Just(shape.aJ) : $elm$core$Maybe$Nothing;
+			return ((_Utils_eq(s, shape.ai) && memberMod(shape.aC)) || (_Utils_eq(s, shape.V) && memberMod(shape.aI))) ? $elm$core$Maybe$Just(shape.aJ) : $elm$core$Maybe$Nothing;
 		};
 		return $elm$core$List$head(
 			A2(
@@ -14275,7 +14370,7 @@ var $author$project$Main$viewNeck = F4(
 			var _v0 = model.G;
 			if (!_v0.$) {
 				var drag = _v0.a;
-				return _Utils_eq(drag.ab, i);
+				return _Utils_eq(drag.ac, i);
 			} else {
 				return false;
 			}
@@ -14791,11 +14886,11 @@ var $author$project$Main$wakeLockButton = function (model) {
 					$elm$html$Html$Attributes$class('no-print'),
 					A2($elm$html$Html$Attributes$style, 'min-width', '120px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.an)),
+			$author$project$Main$buttonBaseStyle(model.ao)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				model.an ? 'Screen on' : 'Keep screen on')
+				model.ao ? 'Screen on' : 'Keep screen on')
 			]));
 };
 var $author$project$Main$viewBody = function (model) {
