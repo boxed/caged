@@ -47,13 +47,18 @@ commit both files together.
 
 ## Scales and modes
 
-Scale types: the two pentatonics, the seven diatonic modes,
-`MajorBlues`/`Blues`, `HarmonicMajor`/`HarmonicMinor` (major with ♭6 / minor
-with a raised 7th) plus harmonic minor's fifth mode `PhrygianDominant`,
-`MelodicMajor`/`MelodicMinor` (major with ♭6 ♭7 / minor with a raised 6th and
-7th) plus melodic minor's `LydianDominant` and `Altered` (modes 4 and 7, which
-anchor 5 and 11 above the melodic minor root and so draw its boxes), the
-symmetric `DimHalfWhole`/`DimWholeHalf`/`WholeTone`, the seventh-chord
+Scale types: the two pentatonics plus `DominantPent`/`MinorSixPent`, the
+seven diatonic modes, `MajorBlues`/`Blues`, `HarmonicMajor`/`HarmonicMinor`
+(major with ♭6 / minor with a raised 7th) plus harmonic minor's modes 4 and 5
+`UkrainianDorian`/`PhrygianDominant`, `MelodicMajor`/`MelodicMinor` (major
+with ♭6 ♭7 / minor with a raised 6th and 7th) plus melodic minor's modes
+`DorianFlat2`, `LydianAugmented`, `LydianDominant`, `LocrianNat2`, `Altered`
+(2, 3, 4, 6, 7 — each anchors as far above the melodic minor root as it sits,
+so it draws that scale's boxes, like the church modes), the symmetric
+`DimHalfWhole`/`DimWholeHalf`/`WholeTone`, the **Exotic** group
+`DoubleHarmonic`/`HungarianMinor` (one scale a fifth apart; Double harmonic
+anchors 7 above Hungarian minor's root) and the Japanese pentatonics
+`Hirajoshi`/`InSen`, the seventh-chord
 arpeggios `ArpMaj7`/`ArpDom7`/`ArpMin7`/`ArpHalfDim`/`ArpDim7` (always drawn
 diagonally, `isArpeggio`, the way triads are always lassoed: an arpeggio is
 learned as a two-notes-per-string sweep shape, not a position, so Boxes is
@@ -61,15 +66,17 @@ disabled for them; boxes cut to four chord tones held one note or none per
 string and lurched), the eight-note bebop scales `BebopDominant`/`BebopMajor`/`BebopMinor`
 (Mixolydian + 7, major + ♭6, Dorian + 3 — one chromatic passing tone each;
 they anchor like their parent scale and draw its boxes), the two all-notes
-maps `ChromaticMinor`/`ChromaticMajor`, the empty `Blank` neck, and the four triads
-`TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`, plus `Custom`, a scale
+maps `ChromaticMinor`/`ChromaticMajor`, the empty `Blank` neck, and the triads
+`TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug` plus the suspended
+`TriadSus2`/`TriadSus4` (whose middle tone, `triadMiddle`, is a 2nd or 4th,
+marked as an ordinary note), plus `Custom`, a scale
 edited by clicking notes on the neck (see **Custom scales**).
 
 Two wrappers say how a scale is drawn rather than which notes it has:
 `Diagonal base` (the climbing shapes, see **Box shapes**) and `Plain base` (no
 shapes at all, just the notes). Every per-scale `case` delegates both to
 `base`; `boxedOf` unwraps them. `diagonalOf` / `plainOf` say which scales have
-each form: diagonal for the pentatonics, the blues and every seven-note scale;
+each form: diagonal for the blues and every five- and seven-note scale;
 plain for everything but the triads and the all-notes maps. The arpeggios
 are diagonal without the wrapper (`isDiagonal` is true for them, and
 `diagonalOf` returns them unchanged). Slugs are
@@ -377,10 +384,13 @@ standard shape is the reference only for which pitches a box spans.
   `drawDiagonalShape`) and still use the pitch-preserving `boxShift` offset,
   since those are fixed shapes meant to be slid. Each is an octave split over
   a string pair, in two interlocking patterns that together hold every scale
-  note: 3 + 2 for the pentatonics (written out), and for every seven-note scale
-  (4 + 3) and arpeggio (2 + 2) read off its intervals (`splitDiagonalPatterns`):
-  rotated to the box anchor (`anchorScaleSet`), the first half of the notes go
-  on the lower string and the rest on the upper. An arpeggio anchors on its
+  note, read off the intervals (`splitDiagonalPatterns`): 3 + 2 for a
+  pentatonic, 4 + 3 for a seven-note scale, 2 + 2 for an arpeggio. Rotated to
+  the box anchor (`anchorScaleSet`), the first half of the notes go on the
+  lower string and the rest on the upper — except a pentatonic, which starts
+  where its three notes sit closest (`compactStart`); that reproduces the
+  classic minor/major pentatonic shapes (♭3 4 5 on one string), which the
+  `diagonalCells` tests pin. Blues alone is written out. An arpeggio anchors on its
   root, so it sweeps R 3 on one string, 5 7 on the next. So natural minor starts on its
   root (six frets wide), major is its relative minor's shape, and every mode
   draws its parent's shapes — D Dorian draws C major's, the way its boxes are
@@ -495,12 +505,13 @@ neck's **heading is its controls**:
   and Add neck, and rides in the URL).
 - **The scale picker** is the scale groups, then the Root row. The scale
   picker is one radio group broken into the families a player
-  would look in: Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric,
+  would look in: Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric, Exotic,
   Triads, Arpeggios, All notes. Below them the **Shape** row (`shapeGroup`)
   switches Boxes / Diagonal / None — the `Diagonal` and `Plain` wrappers, so
   ways of drawing a scale rather than scales, and they have no scale buttons.
   A scale button lights for its scale in any shape and keeps the neck's shape
-  when the new scale has that form; a shape the scale lacks is disabled. Each is a `pickerGroup`, an uppercase caption riding with its own
+  when the new scale has that form; a shape the scale lacks is disabled. The row is hidden for the triads
+  and the all-notes maps, which have only one way of being drawn. Each is a `pickerGroup`, an uppercase caption riding with its own
   buttons, and the groups flow and wrap inside a `controlBlock`. The caption
   carries the context, so the buttons can just say "Major".
 - **The Strings row** (triad modes) sits under each triad neck's heading,
@@ -812,7 +823,7 @@ count from 1 to 12):
    inside the neck, carries all three chord tones with none doubled, is in
    close position (each note under an octave above the one below), and its
    `inversion` names the degree actually in the bass — for every tuning and all
-   four qualities. Plus `canonicalTriads`: C major on strings 2-3-4 in standard
+   six qualities. Plus `canonicalTriads`: C major on strings 2-3-4 in standard
    tuning is the textbook set (x x 2 0 1 x, x x 5 5 5 x, x x 10 9 8 x, then the
    octave repeat).
 9. **`stringCounts`** — the string-count machinery: standard continues in

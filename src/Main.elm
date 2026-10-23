@@ -186,12 +186,18 @@ type ScaleType
     | Aeolian
     | Locrian
     | Blues
+    | DominantPent
+    | MinorSixPent
     | HarmonicMajor
     | HarmonicMinor
+    | UkrainianDorian
     | PhrygianDominant
     | MelodicMajor
     | MelodicMinor
+    | DorianFlat2
+    | LydianAugmented
     | LydianDominant
+    | LocrianNat2
     | Altered
     | BebopDominant
     | BebopMajor
@@ -199,6 +205,10 @@ type ScaleType
     | DimHalfWhole
     | DimWholeHalf
     | WholeTone
+    | DoubleHarmonic
+    | HungarianMinor
+    | Hirajoshi
+    | InSen
     | ChromaticMajor
     | ChromaticMinor
     | Blank
@@ -206,6 +216,8 @@ type ScaleType
     | TriadMinor
     | TriadDim
     | TriadAug
+    | TriadSus2
+    | TriadSus4
     | ArpMaj7
     | ArpDom7
     | ArpMin7
@@ -735,12 +747,18 @@ scaleSlug s =
         Lydian -> "lydian"
         Locrian -> "locrian"
         Blues -> "blues"
+        DominantPent -> "dominant-pent"
+        MinorSixPent -> "minor-6-pent"
         HarmonicMajor -> "harmonic-major"
         HarmonicMinor -> "harmonic-minor"
+        UkrainianDorian -> "ukrainian-dorian"
         PhrygianDominant -> "phrygian-dominant"
         MelodicMajor -> "melodic-major"
         MelodicMinor -> "melodic-minor"
+        DorianFlat2 -> "dorian-b2"
+        LydianAugmented -> "lydian-augmented"
         LydianDominant -> "lydian-dominant"
+        LocrianNat2 -> "locrian-nat2"
         Altered -> "altered"
         BebopDominant -> "bebop-dominant"
         BebopMajor -> "bebop-major"
@@ -748,6 +766,10 @@ scaleSlug s =
         DimHalfWhole -> "dim-half-whole"
         DimWholeHalf -> "dim-whole-half"
         WholeTone -> "whole-tone"
+        DoubleHarmonic -> "double-harmonic"
+        HungarianMinor -> "hungarian-minor"
+        Hirajoshi -> "hirajoshi"
+        InSen -> "in-sen"
         ChromaticMajor -> "all-notes-major"
         ChromaticMinor -> "all-notes-minor"
         Blank -> "blank"
@@ -755,6 +777,8 @@ scaleSlug s =
         TriadMinor -> "triad-minor"
         TriadDim -> "triad-dim"
         TriadAug -> "triad-aug"
+        TriadSus2 -> "triad-sus2"
+        TriadSus4 -> "triad-sus4"
         ArpMaj7 -> "arp-maj7"
         ArpDom7 -> "arp-7"
         ArpMin7 -> "arp-m7"
@@ -821,12 +845,18 @@ presetFromSlug s =
         "lydian" -> Just Lydian
         "locrian" -> Just Locrian
         "blues" -> Just Blues
+        "dominant-pent" -> Just DominantPent
+        "minor-6-pent" -> Just MinorSixPent
         "harmonic-major" -> Just HarmonicMajor
         "harmonic-minor" -> Just HarmonicMinor
+        "ukrainian-dorian" -> Just UkrainianDorian
         "phrygian-dominant" -> Just PhrygianDominant
         "melodic-major" -> Just MelodicMajor
         "melodic-minor" -> Just MelodicMinor
+        "dorian-b2" -> Just DorianFlat2
+        "lydian-augmented" -> Just LydianAugmented
         "lydian-dominant" -> Just LydianDominant
+        "locrian-nat2" -> Just LocrianNat2
         "altered" -> Just Altered
         "bebop-dominant" -> Just BebopDominant
         "bebop-major" -> Just BebopMajor
@@ -834,6 +864,10 @@ presetFromSlug s =
         "dim-half-whole" -> Just DimHalfWhole
         "dim-whole-half" -> Just DimWholeHalf
         "whole-tone" -> Just WholeTone
+        "double-harmonic" -> Just DoubleHarmonic
+        "hungarian-minor" -> Just HungarianMinor
+        "hirajoshi" -> Just Hirajoshi
+        "in-sen" -> Just InSen
         "all-notes-major" -> Just ChromaticMajor
         "all-notes-minor" -> Just ChromaticMinor
         "blank" -> Just Blank
@@ -841,6 +875,8 @@ presetFromSlug s =
         "triad-minor" -> Just TriadMinor
         "triad-dim" -> Just TriadDim
         "triad-aug" -> Just TriadAug
+        "triad-sus2" -> Just TriadSus2
+        "triad-sus4" -> Just TriadSus4
         "arp-maj7" -> Just ArpMaj7
         "arp-7" -> Just ArpDom7
         "arp-m7" -> Just ArpMin7
@@ -1498,12 +1534,18 @@ scaleDegrees st =
         Lydian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Locrian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Blues -> [ 1, 3, 4, 5, 5, 7 ]
+        DominantPent -> [ 1, 2, 3, 5, 7 ]
+        MinorSixPent -> [ 1, 3, 4, 5, 6 ]
         HarmonicMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         HarmonicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        UkrainianDorian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         PhrygianDominant -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        DorianFlat2 -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        LydianAugmented -> [ 1, 2, 3, 4, 5, 6, 7 ]
         LydianDominant -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        LocrianNat2 -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Altered -> [ 1, 2, 2, 3, 5, 5, 7 ]
         BebopDominant -> [ 1, 2, 3, 4, 5, 6, 7, 7 ]
         BebopMajor -> [ 1, 2, 3, 4, 5, 6, 6, 7 ]
@@ -1511,6 +1553,10 @@ scaleDegrees st =
         DimHalfWhole -> [ 1, 2, 2, 3, 4, 5, 6, 7 ]
         DimWholeHalf -> [ 1, 2, 3, 4, 5, 6, 6, 7 ]
         WholeTone -> [ 1, 2, 3, 4, 5, 7 ]
+        DoubleHarmonic -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        HungarianMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Hirajoshi -> [ 1, 2, 3, 5, 6 ]
+        InSen -> [ 1, 2, 4, 5, 7 ]
         ChromaticMajor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         Blank -> []
@@ -1518,6 +1564,8 @@ scaleDegrees st =
         TriadMinor -> [ 1, 3, 5 ]
         TriadDim -> [ 1, 3, 5 ]
         TriadAug -> [ 1, 3, 5 ]
+        TriadSus2 -> [ 1, 2, 5 ]
+        TriadSus4 -> [ 1, 4, 5 ]
         ArpMaj7 -> [ 1, 3, 5, 7 ]
         ArpDom7 -> [ 1, 3, 5, 7 ]
         ArpMin7 -> [ 1, 3, 5, 7 ]
@@ -1908,12 +1956,24 @@ scaleIntervals st =
         Blues ->
             [ 0, 3, 5, 6, 7, 10 ]
 
+        -- Mixolydian and Dorian cut to five notes: the major pentatonic with
+        -- a ♭7 for the 6, the minor pentatonic with a 6 for the ♭7.
+        DominantPent ->
+            [ 0, 2, 4, 7, 10 ]
+
+        MinorSixPent ->
+            [ 0, 3, 5, 7, 9 ]
+
         -- Major with a ♭6, the mirror of harmonic minor's raised 7th.
         HarmonicMajor ->
             [ 0, 2, 4, 5, 7, 8, 11 ]
 
         HarmonicMinor ->
             [ 0, 2, 3, 5, 7, 8, 11 ]
+
+        -- Harmonic minor's fourth mode.
+        UkrainianDorian ->
+            [ 0, 2, 3, 6, 7, 9, 10 ]
 
         -- Harmonic minor's fifth mode: the dominant of a minor key.
         PhrygianDominant ->
@@ -1927,10 +1987,20 @@ scaleIntervals st =
         MelodicMinor ->
             [ 0, 2, 3, 5, 7, 9, 11 ]
 
-        -- Melodic minor's fourth and seventh modes, the two dominant
-        -- scales of jazz: 7♯11 and the altered dominant.
+        -- Melodic minor's modes, in mode order (mode 5 is melodic major):
+        -- the two dominant scales of jazz are 4, Lydian dominant (7♯11), and
+        -- 7, the altered dominant; Locrian ♮2 (6) is the half-diminished one.
+        DorianFlat2 ->
+            [ 0, 1, 3, 5, 7, 9, 10 ]
+
+        LydianAugmented ->
+            [ 0, 2, 4, 6, 8, 9, 11 ]
+
         LydianDominant ->
             [ 0, 2, 4, 6, 7, 9, 10 ]
+
+        LocrianNat2 ->
+            [ 0, 2, 3, 5, 6, 8, 10 ]
 
         Altered ->
             [ 0, 1, 3, 4, 6, 8, 10 ]
@@ -1958,6 +2028,21 @@ scaleIntervals st =
         WholeTone ->
             [ 0, 2, 4, 6, 8, 10 ]
 
+        -- Double harmonic major and Hungarian minor are one scale a fifth
+        -- apart (Hungarian minor is the fourth mode), two augmented 2nds each.
+        -- Hirajoshi and In Sen are Japanese pentatonics.
+        DoubleHarmonic ->
+            [ 0, 1, 4, 5, 7, 8, 11 ]
+
+        HungarianMinor ->
+            [ 0, 2, 3, 6, 7, 8, 11 ]
+
+        Hirajoshi ->
+            [ 0, 2, 3, 7, 8 ]
+
+        InSen ->
+            [ 0, 1, 5, 7, 10 ]
+
         ChromaticMajor ->
             List.range 0 11
 
@@ -1979,8 +2064,15 @@ scaleIntervals st =
         TriadAug ->
             [ 0, 4, 8 ]
 
-        -- Seventh-chord arpeggios. Unlike the triads they are drawn as
-        -- CAGED boxes: an arpeggio is played by position, like a scale.
+        -- The suspended triads put a 2nd or a 4th where the third would be.
+        TriadSus2 ->
+            [ 0, 2, 7 ]
+
+        TriadSus4 ->
+            [ 0, 5, 7 ]
+
+        -- Seventh-chord arpeggios, always drawn as diagonal sweep shapes
+        -- (`isArpeggio`).
         ArpMaj7 ->
             [ 0, 4, 7, 11 ]
 
@@ -2144,9 +2236,8 @@ isArpeggio scale =
 
 
 {-| The diagonal climbing shapes of a scale, for the scales that have them:
-the pentatonics and the blues, which have shapes of their own, every
-seven-note scale, whose shapes `splitDiagonalPatterns` reads off its
-intervals, and the arpeggios, which are diagonal already. An edited scale has
+the blues, which has shapes of its own, every five- and seven-note scale,
+whose shapes `splitDiagonalPatterns` reads off its intervals, and the arpeggios, which are diagonal already. An edited scale has
 none: it is drawn in boxes. -}
 diagonalOf : ScaleType -> Maybe ScaleType
 diagonalOf scale =
@@ -2160,7 +2251,7 @@ diagonalOf scale =
             if isArpeggio scale then
                 Just scale
 
-            else if List.length (scaleIntervals scale) == 7 then
+            else if List.member (List.length (scaleIntervals scale)) [ 5, 7 ] then
                 Just (Diagonal scale)
 
             else
@@ -2209,11 +2300,21 @@ isChromatic scale =
     scale == ChromaticMinor || scale == ChromaticMajor || scale == Blank
 
 
-{-| The four triad modes: not scales either, but chords — three notes, drawn as
+{-| What a triad's middle tone is called: the 3rd, or the 2nd or 4th that a
+suspended chord has in its place. -}
+triadMiddle : ScaleType -> String
+triadMiddle scale =
+    case scale of
+        TriadSus2 -> "2nd"
+        TriadSus4 -> "4th"
+        _ -> "3rd"
+
+
+{-| The triad modes (major, minor, diminished, augmented, sus2, sus4): not scales either, but chords — three notes, drawn as
 lassos around each close-position voicing instead of CAGED boxes. -}
 isTriad : ScaleType -> Bool
 isTriad scale =
-    scale == TriadMajor || scale == TriadMinor || scale == TriadDim || scale == TriadAug
+    List.member scale [ TriadMajor, TriadMinor, TriadDim, TriadAug, TriadSus2, TriadSus4 ]
 
 
 {-| The five box anchors are the minor-pentatonic degrees on the lowest string,
@@ -2249,6 +2350,14 @@ anchorOffset scale =
         Phrygian -> 7
         Lydian -> 8
         Mixolydian -> 10
+        DominantPent -> 10
+        MinorSixPent -> 5
+        UkrainianDorian -> 5
+        DorianFlat2 -> 2
+        LydianAugmented -> 3
+        LocrianNat2 -> 9
+        DoubleHarmonic -> 7
+        InSen -> 7
         Locrian -> 2
         HarmonicMajor -> 3
         PhrygianDominant -> 7
@@ -2656,30 +2765,17 @@ diagonalPatterns scale =
             , ( [ -5, -3 ], [ -5, -3, -2, -1 ] )
             )
 
-        MinorPent ->
-            pentatonicDiagonalPatterns
-
-        MajorPent ->
-            pentatonicDiagonalPatterns
-
         base ->
             splitDiagonalPatterns base
 
 
-pentatonicDiagonalPatterns : ( ( List Int, List Int ), ( List Int, List Int ) )
-pentatonicDiagonalPatterns =
-    -- Pattern 1: three notes on the lower string, two right-aligned on the upper.
-    -- Pattern 2: each pattern-1 shape rotated 180° and offset 5 frets left —
-    -- two notes on the lower string, three left-aligned on the upper.
-    ( ( [ 0, 2, 4 ], [ 2, 4 ] )
-    , ( [ -5, -3 ], [ -5, -3, -1 ] )
-    )
-
-
 {-| An octave split over a string pair, read off the intervals: 4 + 3 for a
-seven-note scale, 2 + 2 for an arpeggio. Rotated to start on the box anchor
-(`anchorOffset`), the lower string carries the first half of the notes and the
-upper string, a fourth up, the rest. Pattern 2 is the same octave the other way
+seven-note scale, 3 + 2 for a pentatonic, 2 + 2 for an arpeggio. Rotated to
+start on the box anchor (`anchorOffset`), the lower string carries the first
+half of the notes and the upper string, a fourth up, the rest. A pentatonic
+starts instead wherever its three notes sit closest (`compactStart`): that is
+the classic shape — the minor pentatonic's string holds ♭3 4 5, two whole steps,
+not R ♭3 4 — and it gives every other pentatonic the same kind of shape. Pattern 2 is the same octave the other way
 round: the second half on the lower string, an octave down, and the first half
 on the upper. Natural minor gives the classic diagonal minor shape, and every
 mode draws its parent scale's shapes, the way its boxes are its parent's boxes
@@ -2688,11 +2784,18 @@ the two-notes-per-string sweep shape: R 3 on one string, 5 7 on the next. -}
 splitDiagonalPatterns : ScaleType -> ( ( List Int, List Int ), ( List Int, List Int ) )
 splitDiagonalPatterns scale =
     let
-        rotated =
+        sorted =
             List.sort (anchorScaleSet scale)
 
         half =
-            (List.length rotated + 1) // 2
+            (List.length sorted + 1) // 2
+
+        rotated =
+            if List.length sorted == 5 then
+                rotateFrom (compactStart half sorted) sorted
+
+            else
+                sorted
 
         low =
             List.take half rotated
@@ -2706,10 +2809,36 @@ splitDiagonalPatterns scale =
     ( ( low, down 5 high ), ( down 12 high, down 5 low ) )
 
 
-{-| Anchor fret on the low-E string (open = pitch 4, see `anchorOpen`). Minor pentatonic anchors
-on the ♭3 (root + 3 - 4 = root - 1); major pentatonic on the root (root - 4).
-The diatonic minor anchors on its root and the major on its relative minor's
-root. -}
+{-| The notes from index `i` on, the ones before it moved up an octave. -}
+rotateFrom : Int -> List Int -> List Int
+rotateFrom i notes =
+    List.drop i notes ++ List.map ((+) 12) (List.take i notes)
+
+
+{-| Where a run of `count` consecutive notes spans the fewest frets; the first
+such place if several tie. -}
+compactStart : Int -> List Int -> Int
+compactStart count notes =
+    List.range 0 (List.length notes - 1)
+        |> List.map
+            (\i ->
+                let
+                    run =
+                        List.take count (rotateFrom i notes)
+                in
+                ( List.maximum run |> Maybe.withDefault 0
+                    |> (\hi -> hi - (List.minimum run |> Maybe.withDefault 0))
+                , i
+                )
+            )
+        |> List.minimum
+        |> Maybe.map Tuple.second
+        |> Maybe.withDefault 0
+
+
+{-| Anchor fret on the low-E string (open = pitch 4, see `anchorOpen`): the box
+anchor, which the split shapes are measured from. Blues keeps its hand-written
+shapes, which are measured from the ♭3. -}
 diagonalAnchor : Tuning -> ScaleType -> Int -> Int
 diagonalAnchor tuning scale root =
     let
@@ -2717,12 +2846,6 @@ diagonalAnchor tuning scale root =
             anchorOpen tuning
     in
     case boxedOf scale of
-        MajorPent ->
-            modBy 12 (root - lowE)
-
-        MinorPent ->
-            modBy 12 (root + 3 - lowE)
-
         Blues ->
             modBy 12 (root + 3 - lowE)
 
@@ -2831,12 +2954,18 @@ thirdOf scale =
         Lydian -> 4
         Locrian -> 3
         Blues -> 3
+        DominantPent -> 4
+        MinorSixPent -> 3
         HarmonicMajor -> 4
         HarmonicMinor -> 3
+        UkrainianDorian -> 3
         PhrygianDominant -> 4
         MelodicMajor -> 4
         MelodicMinor -> 3
+        DorianFlat2 -> 3
+        LydianAugmented -> 4
         LydianDominant -> 4
+        LocrianNat2 -> 3
         Altered -> 4
         BebopDominant -> 4
         BebopMajor -> 4
@@ -2844,6 +2973,10 @@ thirdOf scale =
         DimHalfWhole -> 4
         DimWholeHalf -> 3
         WholeTone -> 4
+        DoubleHarmonic -> 4
+        HungarianMinor -> 3
+        Hirajoshi -> 3
+        InSen -> -1
         ChromaticMajor -> -1
         ChromaticMinor -> -1
         Blank -> -1
@@ -2851,6 +2984,8 @@ thirdOf scale =
         TriadMinor -> 3
         TriadDim -> 3
         TriadAug -> 4
+        TriadSus2 -> -1
+        TriadSus4 -> -1
         ArpMaj7 -> 4
         ArpDom7 -> 4
         ArpMin7 -> 3
@@ -2876,12 +3011,18 @@ seventhOf scale =
         Lydian -> 11
         Locrian -> 10
         Blues -> 10
+        DominantPent -> 10
+        MinorSixPent -> -1
         HarmonicMajor -> 11
         HarmonicMinor -> 11
+        UkrainianDorian -> 10
         PhrygianDominant -> 10
         MelodicMajor -> 10
         MelodicMinor -> 11
+        DorianFlat2 -> 10
+        LydianAugmented -> 11
         LydianDominant -> 10
+        LocrianNat2 -> 10
         Altered -> 10
         BebopDominant -> 10
         BebopMajor -> 11
@@ -2889,6 +3030,10 @@ seventhOf scale =
         DimHalfWhole -> 10
         DimWholeHalf -> 11
         WholeTone -> 10
+        DoubleHarmonic -> 11
+        HungarianMinor -> 11
+        Hirajoshi -> -1
+        InSen -> 10
         ChromaticMajor -> -1
         ChromaticMinor -> -1
         Blank -> -1
@@ -2896,6 +3041,8 @@ seventhOf scale =
         TriadMinor -> -1
         TriadDim -> -1
         TriadAug -> -1
+        TriadSus2 -> -1
+        TriadSus4 -> -1
         ArpMaj7 -> 11
         ArpDom7 -> 10
         ArpMin7 -> 10
@@ -3814,12 +3961,18 @@ scaleTitle scale =
         Lydian -> "Lydian"
         Locrian -> "Locrian"
         Blues -> "Blues"
+        DominantPent -> "Dominant Pentatonic"
+        MinorSixPent -> "Minor 6 Pentatonic"
         HarmonicMajor -> "Harmonic Major"
         HarmonicMinor -> "Harmonic Minor"
+        UkrainianDorian -> "Ukrainian Dorian"
         PhrygianDominant -> "Phrygian Dominant"
         MelodicMajor -> "Melodic Major"
         MelodicMinor -> "Melodic Minor"
+        DorianFlat2 -> "Dorian ♭2"
+        LydianAugmented -> "Lydian Augmented"
         LydianDominant -> "Lydian Dominant"
+        LocrianNat2 -> "Locrian ♮2"
         Altered -> "Altered"
         BebopDominant -> "Bebop Dominant"
         BebopMajor -> "Bebop Major"
@@ -3827,6 +3980,10 @@ scaleTitle scale =
         DimHalfWhole -> "Half-Whole Diminished"
         DimWholeHalf -> "Whole-Half Diminished"
         WholeTone -> "Whole Tone"
+        DoubleHarmonic -> "Double Harmonic Major"
+        HungarianMinor -> "Hungarian Minor"
+        Hirajoshi -> "Hirajoshi"
+        InSen -> "In Sen"
         ChromaticMajor -> "— All Notes (major)"
         ChromaticMinor -> "— All Notes (minor)"
         Blank -> "Blank neck"
@@ -3834,6 +3991,8 @@ scaleTitle scale =
         TriadMinor -> "Minor Triad"
         TriadDim -> "Diminished Triad"
         TriadAug -> "Augmented Triad"
+        TriadSus2 -> "Sus2 Triad"
+        TriadSus4 -> "Sus4 Triad"
         ArpMaj7 -> "Major 7th Arpeggio"
         ArpDom7 -> "Dominant 7th Arpeggio"
         ArpMin7 -> "Minor 7th Arpeggio"
@@ -3880,12 +4039,18 @@ intervalLabels st =
         Lydian -> [ "R", "2", "3", "♯4", "5", "6", "7" ]
         Locrian -> [ "R", "♭2", "♭3", "4", "♭5", "♭6", "♭7" ]
         Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
+        DominantPent -> [ "R", "2", "3", "5", "♭7" ]
+        MinorSixPent -> [ "R", "♭3", "4", "5", "6" ]
         HarmonicMajor -> [ "R", "2", "3", "4", "5", "♭6", "7" ]
         HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
+        UkrainianDorian -> [ "R", "2", "♭3", "♯4", "5", "6", "♭7" ]
         PhrygianDominant -> [ "R", "♭2", "3", "4", "5", "♭6", "♭7" ]
         MelodicMajor -> [ "R", "2", "3", "4", "5", "♭6", "♭7" ]
         MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
+        DorianFlat2 -> [ "R", "♭2", "♭3", "4", "5", "6", "♭7" ]
+        LydianAugmented -> [ "R", "2", "3", "♯4", "♯5", "6", "7" ]
         LydianDominant -> [ "R", "2", "3", "♯4", "5", "6", "♭7" ]
+        LocrianNat2 -> [ "R", "2", "♭3", "4", "♭5", "♭6", "♭7" ]
         Altered -> [ "R", "♭2", "♯2", "3", "♭5", "♯5", "♭7" ]
         BebopDominant -> [ "R", "2", "3", "4", "5", "6", "♭7", "7" ]
         BebopMajor -> [ "R", "2", "3", "4", "5", "♭6", "6", "7" ]
@@ -3893,6 +4058,10 @@ intervalLabels st =
         DimHalfWhole -> [ "R", "♭2", "♯2", "3", "♯4", "5", "6", "♭7" ]
         DimWholeHalf -> [ "R", "2", "♭3", "4", "♭5", "♭6", "6", "7" ]
         WholeTone -> [ "R", "2", "3", "♯4", "♯5", "♭7" ]
+        DoubleHarmonic -> [ "R", "♭2", "3", "4", "5", "♭6", "7" ]
+        HungarianMinor -> [ "R", "2", "♭3", "♯4", "5", "♭6", "7" ]
+        Hirajoshi -> [ "R", "2", "♭3", "5", "♭6" ]
+        InSen -> [ "R", "♭2", "4", "5", "♭7" ]
         ChromaticMajor -> List.repeat 12 ""
         ChromaticMinor -> List.repeat 12 ""
         Blank -> []
@@ -3900,6 +4069,8 @@ intervalLabels st =
         TriadMinor -> [ "R", "♭3", "5" ]
         TriadDim -> [ "R", "♭3", "♭5" ]
         TriadAug -> [ "R", "3", "♯5" ]
+        TriadSus2 -> [ "R", "2", "5" ]
+        TriadSus4 -> [ "R", "4", "5" ]
         ArpMaj7 -> [ "R", "3", "5", "7" ]
         ArpDom7 -> [ "R", "3", "5", "♭7" ]
         ArpMin7 -> [ "R", "♭3", "5", "♭7" ]
@@ -4186,16 +4357,22 @@ scalePicker model =
                 , scaleButton model MinorPent "Minor"
                 , scaleButton model MajorBlues "Major blues"
                 , scaleButton model Blues "Minor blues"
+                , scaleButton model DominantPent "Dominant"
+                , scaleButton model MinorSixPent "Minor 6"
                 ]
             , pickerGroup "Harmonic"
                 [ scaleButton model HarmonicMajor "Major"
                 , scaleButton model HarmonicMinor "Minor"
+                , scaleButton model UkrainianDorian "Ukrainian Dorian"
                 , scaleButton model PhrygianDominant "Phrygian dominant"
                 ]
             , pickerGroup "Melodic"
                 [ scaleButton model MelodicMajor "Major"
                 , scaleButton model MelodicMinor "Minor"
+                , scaleButton model DorianFlat2 "Dorian ♭2"
+                , scaleButton model LydianAugmented "Lydian augmented"
                 , scaleButton model LydianDominant "Lydian dominant"
+                , scaleButton model LocrianNat2 "Locrian ♮2"
                 , scaleButton model Altered "Altered"
                 ]
             , pickerGroup "Bebop"
@@ -4208,11 +4385,19 @@ scalePicker model =
                 , scaleButton model DimWholeHalf "Dim whole-half"
                 , scaleButton model WholeTone "Whole tone"
                 ]
+            , pickerGroup "Exotic"
+                [ scaleButton model DoubleHarmonic "Double harmonic"
+                , scaleButton model HungarianMinor "Hungarian minor"
+                , scaleButton model Hirajoshi "Hirajoshi"
+                , scaleButton model InSen "In Sen"
+                ]
             , pickerGroup "Triads"
                 [ scaleButton model TriadMajor "Major"
                 , scaleButton model TriadMinor "Minor"
                 , scaleButton model TriadDim "Diminished"
                 , scaleButton model TriadAug "Augmented"
+                , scaleButton model TriadSus2 "Sus2"
+                , scaleButton model TriadSus4 "Sus4"
                 ]
             , pickerGroup "Arpeggios"
                 [ scaleButton model ArpMaj7 "maj7"
@@ -4227,7 +4412,17 @@ scalePicker model =
                 , scaleButton model Blank "None"
                 ]
             ]
-        , controlBlock [ shapeGroup model ]
+        , let
+            -- Triads are always lassoed and the all-notes maps have no shapes,
+            -- so there is no way of drawing them to pick.
+            boxed =
+                boxedOf (activeNeck model).scale
+          in
+          if isTriad boxed || isChromatic boxed then
+            text ""
+
+          else
+            controlBlock [ shapeGroup model ]
         , controlBlock
             [ pickerGroup "Root" (List.map (rootButton model) (List.range 0 11)) ]
         ]
@@ -4277,7 +4472,7 @@ shapeGroup model =
             )
             (boxed == scale && not (isDiagonal scale))
             "Arpeggios are learned as diagonal sweep shapes, not positions"
-        , shapeButton "Diagonal" (diagonalOf boxed) (isDiagonal scale) "Diagonal shapes exist for the pentatonics, the blues, the seven-note scales and the arpeggios"
+        , shapeButton "Diagonal" (diagonalOf boxed) (isDiagonal scale) "Diagonal shapes exist for the five- and seven-note scales, the blues and the arpeggios"
         , shapeButton "None" (plainOf boxed) (isPlain scale) "The triads and the all-notes maps have no boxes to hide"
         ]
 
@@ -6253,7 +6448,7 @@ viewLegend board =
 
             else if isTriad board.scale then
                 legendText "Bass note:"
-                    :: List.map (legendRing board) [ ( 0, "root" ), ( 1, "3rd (1st inv)" ), ( 2, "5th (2nd inv)" ) ]
+                    :: List.map (legendRing board) [ ( 0, "root" ), ( 1, triadMiddle board.scale ++ " (1st inv)" ), ( 2, "5th (2nd inv)" ) ]
 
             else if isDiagonal board.scale then
                 legendText "Patterns:"
@@ -6324,7 +6519,13 @@ viewLegend board =
                 -- no "other" to explain.
                 [ legendText "Tones:"
                 , legendMarker board.mono "square-dark" "Root"
-                , legendMarker board.mono "circle-dashed" "3rd"
+                , if thirdOf board.scale == -1 then
+                    -- A sus chord's 2nd or 4th is not a third, so it wears the
+                    -- plain marker of any other note.
+                    legendMarker board.mono "circle-plain" (triadMiddle board.scale)
+
+                  else
+                    legendMarker board.mono "circle-dashed" "3rd"
                 , legendMarker board.mono "circle-dotted" "5th"
                 ]
 

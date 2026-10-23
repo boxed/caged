@@ -63,6 +63,7 @@ boxScales : List ScaleType
 boxScales =
     [ MajorPent, MinorPent, Ionian, Aeolian, Dorian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMajor, HarmonicMinor, MelodicMajor, MelodicMinor, BebopDominant, BebopMajor, BebopMinor ]
         ++ [ MajorBlues, PhrygianDominant, LydianDominant, Altered, DimHalfWhole, DimWholeHalf, WholeTone ]
+        ++ [ DominantPent, MinorSixPent, UkrainianDorian, DorianFlat2, LydianAugmented, LocrianNat2, DoubleHarmonic, HungarianMinor, Hirajoshi, InSen ]
         -- Scales edited on the neck: one note added, one taken away, and a
         -- sparse one built up from a blank neck, whose third flips it major.
         ++ [ Custom MinorPent [ 0, 2, 3, 5, 7, 10 ]
@@ -124,14 +125,8 @@ fRootFor tuning scale root =
             anchorOpen tuning
     in
     case scale of
-        Diagonal MinorPent ->
-            modBy 12 (root + 3 - lowE)
-
         Diagonal Blues ->
             modBy 12 (root + 3 - lowE)
-
-        Diagonal MajorPent ->
-            modBy 12 (root - lowE)
 
         Diagonal base ->
             modBy 12 (root - offsetFor base - lowE)
@@ -152,6 +147,14 @@ offsetFor scale =
         Phrygian -> 7
         Lydian -> 8
         Mixolydian -> 10
+        DominantPent -> 10
+        MinorSixPent -> 5
+        UkrainianDorian -> 5
+        DorianFlat2 -> 2
+        LydianAugmented -> 3
+        LocrianNat2 -> 9
+        DoubleHarmonic -> 7
+        InSen -> 7
         Locrian -> 2
         HarmonicMajor -> 3
         PhrygianDominant -> 7
@@ -216,6 +219,16 @@ scaleName scale =
         HarmonicMinor -> "HarmonicMinor"
         MelodicMajor -> "MelodicMajor"
         MelodicMinor -> "MelodicMinor"
+        DominantPent -> "DominantPent"
+        MinorSixPent -> "MinorSixPent"
+        UkrainianDorian -> "UkrainianDorian"
+        DorianFlat2 -> "DorianFlat2"
+        LydianAugmented -> "LydianAugmented"
+        LocrianNat2 -> "LocrianNat2"
+        DoubleHarmonic -> "DoubleHarmonic"
+        HungarianMinor -> "HungarianMinor"
+        Hirajoshi -> "Hirajoshi"
+        InSen -> "InSen"
         MajorBlues -> "MajorBlues"
         PhrygianDominant -> "PhrygianDominant"
         LydianDominant -> "LydianDominant"
@@ -238,6 +251,8 @@ scaleName scale =
         TriadMinor -> "TriadMinor"
         TriadDim -> "TriadDim"
         TriadAug -> "TriadAug"
+        TriadSus2 -> "TriadSus2"
+        TriadSus4 -> "TriadSus4"
         Diagonal base -> "Diagonal" ++ scaleName base
         Plain base -> "Plain" ++ scaleName base
         Custom base intervals -> scaleName base ++ "+" ++ String.join "," (List.map String.fromInt intervals)
@@ -668,6 +683,7 @@ accidentalCount =
 diatonicModes : List ScaleType
 diatonicModes =
     [ Ionian, Dorian, Aeolian, Mixolydian, Phrygian, Lydian, Locrian, HarmonicMinor, MelodicMinor ]
+        ++ [ UkrainianDorian, DorianFlat2, LydianAugmented, LocrianNat2, DoubleHarmonic, HungarianMinor ]
 
 
 spelling : Test
@@ -896,6 +912,9 @@ diagonalCells =
                     -- the way A minor does, A B C D | E F G.
                     ++ List.concatMap (diagonalRootCells strings (Diagonal Dorian) ( [ 7, 9, 10, 0 ], [ 2, 3, 5 ] )) roots
                     ++ List.concatMap (diagonalRootCells strings (Diagonal HarmonicMinor) ( [ 0, 2, 3, 5 ], [ 7, 8, 11 ] )) roots
+                    -- Any other pentatonic gets the same kind of shape: three
+                    -- notes where they sit closest, then two.
+                    ++ List.concatMap (diagonalRootCells strings (Diagonal Hirajoshi) ( [ 0, 2, 3 ], [ 7, 8 ] )) roots
                     -- The arpeggios sweep two notes per string from the root.
                     ++ List.concatMap (diagonalRootCells strings ArpMaj7 ( [ 0, 4 ], [ 7, 11 ] )) roots
                     ++ List.concatMap (diagonalRootCells strings ArpDim7 ( [ 0, 3 ], [ 6, 9 ] )) roots
@@ -929,7 +948,7 @@ closePosition tuning v =
 
 triadQualities : List ScaleType
 triadQualities =
-    [ TriadMajor, TriadMinor, TriadDim, TriadAug ]
+    [ TriadMajor, TriadMinor, TriadDim, TriadAug, TriadSus2, TriadSus4 ]
 
 
 {-| Every invariant a close-position voicing must satisfy, for one tuning and
@@ -1234,7 +1253,7 @@ shapeSlugs : Test
 shapeSlugs =
     let
         everyScale =
-            boxScales ++ arpeggios ++ [ TriadMajor, TriadMinor, TriadDim, TriadAug, ChromaticMajor, ChromaticMinor, Blank ]
+            boxScales ++ arpeggios ++ [ TriadMajor, TriadMinor, TriadDim, TriadAug, TriadSus2, TriadSus4, ChromaticMajor, ChromaticMinor, Blank ]
 
         drawn =
             everyScale

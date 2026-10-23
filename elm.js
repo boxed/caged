@@ -5371,7 +5371,7 @@ var $author$project$Main$rootFromSlug = function (s) {
 };
 var $author$project$Main$Custom = F2(
 	function (a, b) {
-		return {$: 38, a: a, b: b};
+		return {$: 50, a: a, b: b};
 	});
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
@@ -5442,82 +5442,118 @@ var $author$project$Main$scaleIntervals = function (st) {
 					[0, 3, 5, 6, 7, 10]);
 			case 11:
 				return _List_fromArray(
-					[0, 2, 4, 5, 7, 8, 11]);
+					[0, 2, 4, 7, 10]);
 			case 12:
 				return _List_fromArray(
-					[0, 2, 3, 5, 7, 8, 11]);
+					[0, 3, 5, 7, 9]);
 			case 13:
 				return _List_fromArray(
-					[0, 1, 4, 5, 7, 8, 10]);
+					[0, 2, 4, 5, 7, 8, 11]);
 			case 14:
 				return _List_fromArray(
-					[0, 2, 4, 5, 7, 8, 10]);
+					[0, 2, 3, 5, 7, 8, 11]);
 			case 15:
 				return _List_fromArray(
-					[0, 2, 3, 5, 7, 9, 11]);
+					[0, 2, 3, 6, 7, 9, 10]);
 			case 16:
 				return _List_fromArray(
-					[0, 2, 4, 6, 7, 9, 10]);
+					[0, 1, 4, 5, 7, 8, 10]);
 			case 17:
 				return _List_fromArray(
-					[0, 1, 3, 4, 6, 8, 10]);
+					[0, 2, 4, 5, 7, 8, 10]);
 			case 18:
 				return _List_fromArray(
-					[0, 2, 4, 5, 7, 9, 10, 11]);
+					[0, 2, 3, 5, 7, 9, 11]);
 			case 19:
 				return _List_fromArray(
-					[0, 2, 4, 5, 7, 8, 9, 11]);
+					[0, 1, 3, 5, 7, 9, 10]);
 			case 20:
 				return _List_fromArray(
-					[0, 2, 3, 4, 5, 7, 9, 10]);
+					[0, 2, 4, 6, 8, 9, 11]);
 			case 21:
 				return _List_fromArray(
-					[0, 1, 3, 4, 6, 7, 9, 10]);
+					[0, 2, 4, 6, 7, 9, 10]);
 			case 22:
 				return _List_fromArray(
-					[0, 2, 3, 5, 6, 8, 9, 11]);
+					[0, 2, 3, 5, 6, 8, 10]);
 			case 23:
 				return _List_fromArray(
-					[0, 2, 4, 6, 8, 10]);
+					[0, 1, 3, 4, 6, 8, 10]);
 			case 24:
-				return A2($elm$core$List$range, 0, 11);
+				return _List_fromArray(
+					[0, 2, 4, 5, 7, 9, 10, 11]);
 			case 25:
-				return A2($elm$core$List$range, 0, 11);
+				return _List_fromArray(
+					[0, 2, 4, 5, 7, 8, 9, 11]);
 			case 26:
-				return _List_Nil;
+				return _List_fromArray(
+					[0, 2, 3, 4, 5, 7, 9, 10]);
 			case 27:
 				return _List_fromArray(
-					[0, 4, 7]);
+					[0, 1, 3, 4, 6, 7, 9, 10]);
 			case 28:
 				return _List_fromArray(
-					[0, 3, 7]);
+					[0, 2, 3, 5, 6, 8, 9, 11]);
 			case 29:
 				return _List_fromArray(
-					[0, 3, 6]);
+					[0, 2, 4, 6, 8, 10]);
 			case 30:
 				return _List_fromArray(
-					[0, 4, 8]);
+					[0, 1, 4, 5, 7, 8, 11]);
 			case 31:
 				return _List_fromArray(
-					[0, 4, 7, 11]);
+					[0, 2, 3, 6, 7, 8, 11]);
 			case 32:
 				return _List_fromArray(
-					[0, 4, 7, 10]);
+					[0, 2, 3, 7, 8]);
 			case 33:
 				return _List_fromArray(
-					[0, 3, 7, 10]);
+					[0, 1, 5, 7, 10]);
 			case 34:
+				return A2($elm$core$List$range, 0, 11);
+			case 35:
+				return A2($elm$core$List$range, 0, 11);
+			case 36:
+				return _List_Nil;
+			case 37:
+				return _List_fromArray(
+					[0, 4, 7]);
+			case 38:
+				return _List_fromArray(
+					[0, 3, 7]);
+			case 39:
+				return _List_fromArray(
+					[0, 3, 6]);
+			case 40:
+				return _List_fromArray(
+					[0, 4, 8]);
+			case 41:
+				return _List_fromArray(
+					[0, 2, 7]);
+			case 42:
+				return _List_fromArray(
+					[0, 5, 7]);
+			case 43:
+				return _List_fromArray(
+					[0, 4, 7, 11]);
+			case 44:
+				return _List_fromArray(
+					[0, 4, 7, 10]);
+			case 45:
+				return _List_fromArray(
+					[0, 3, 7, 10]);
+			case 46:
 				return _List_fromArray(
 					[0, 3, 6, 10]);
-			case 35:
+			case 47:
 				return _List_fromArray(
 					[0, 3, 6, 9]);
-			case 36:
+			case 48:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
 				continue scaleIntervals;
-			case 37:
+			case 49:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
@@ -5553,26 +5589,32 @@ var $elm$core$String$fromChar = function (_char) {
 	return A2($elm$core$String$cons, _char, '');
 };
 var $author$project$Main$Plain = function (a) {
-	return {$: 37, a: a};
+	return {$: 49, a: a};
 };
-var $author$project$Main$Blank = {$: 26};
-var $author$project$Main$ChromaticMajor = {$: 24};
-var $author$project$Main$ChromaticMinor = {$: 25};
+var $author$project$Main$Blank = {$: 36};
+var $author$project$Main$ChromaticMajor = {$: 34};
+var $author$project$Main$ChromaticMinor = {$: 35};
 var $author$project$Main$isChromatic = function (scale) {
 	return _Utils_eq(scale, $author$project$Main$ChromaticMinor) || (_Utils_eq(scale, $author$project$Main$ChromaticMajor) || _Utils_eq(scale, $author$project$Main$Blank));
 };
-var $author$project$Main$TriadAug = {$: 30};
-var $author$project$Main$TriadDim = {$: 29};
-var $author$project$Main$TriadMajor = {$: 27};
-var $author$project$Main$TriadMinor = {$: 28};
+var $author$project$Main$TriadAug = {$: 40};
+var $author$project$Main$TriadDim = {$: 39};
+var $author$project$Main$TriadMajor = {$: 37};
+var $author$project$Main$TriadMinor = {$: 38};
+var $author$project$Main$TriadSus2 = {$: 41};
+var $author$project$Main$TriadSus4 = {$: 42};
 var $author$project$Main$isTriad = function (scale) {
-	return _Utils_eq(scale, $author$project$Main$TriadMajor) || (_Utils_eq(scale, $author$project$Main$TriadMinor) || (_Utils_eq(scale, $author$project$Main$TriadDim) || _Utils_eq(scale, $author$project$Main$TriadAug)));
+	return A2(
+		$elm$core$List$member,
+		scale,
+		_List_fromArray(
+			[$author$project$Main$TriadMajor, $author$project$Main$TriadMinor, $author$project$Main$TriadDim, $author$project$Main$TriadAug, $author$project$Main$TriadSus2, $author$project$Main$TriadSus4]));
 };
 var $author$project$Main$plainOf = function (scale) {
 	switch (scale.$) {
-		case 36:
+		case 48:
 			return $elm$core$Maybe$Nothing;
-		case 37:
+		case 49:
 			return $elm$core$Maybe$Nothing;
 		default:
 			return ($author$project$Main$isChromatic(scale) || $author$project$Main$isTriad(scale)) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
@@ -5580,36 +5622,46 @@ var $author$project$Main$plainOf = function (scale) {
 	}
 };
 var $author$project$Main$Aeolian = {$: 8};
-var $author$project$Main$Altered = {$: 17};
-var $author$project$Main$ArpDim7 = {$: 35};
-var $author$project$Main$ArpDom7 = {$: 32};
-var $author$project$Main$ArpHalfDim = {$: 34};
-var $author$project$Main$ArpMaj7 = {$: 31};
-var $author$project$Main$ArpMin7 = {$: 33};
-var $author$project$Main$BebopDominant = {$: 18};
-var $author$project$Main$BebopMajor = {$: 19};
-var $author$project$Main$BebopMinor = {$: 20};
+var $author$project$Main$Altered = {$: 23};
+var $author$project$Main$ArpDim7 = {$: 47};
+var $author$project$Main$ArpDom7 = {$: 44};
+var $author$project$Main$ArpHalfDim = {$: 46};
+var $author$project$Main$ArpMaj7 = {$: 43};
+var $author$project$Main$ArpMin7 = {$: 45};
+var $author$project$Main$BebopDominant = {$: 24};
+var $author$project$Main$BebopMajor = {$: 25};
+var $author$project$Main$BebopMinor = {$: 26};
 var $author$project$Main$Blues = {$: 10};
 var $author$project$Main$Diagonal = function (a) {
-	return {$: 36, a: a};
+	return {$: 48, a: a};
 };
-var $author$project$Main$DimHalfWhole = {$: 21};
-var $author$project$Main$DimWholeHalf = {$: 22};
+var $author$project$Main$DimHalfWhole = {$: 27};
+var $author$project$Main$DimWholeHalf = {$: 28};
+var $author$project$Main$DominantPent = {$: 11};
 var $author$project$Main$Dorian = {$: 4};
-var $author$project$Main$HarmonicMajor = {$: 11};
-var $author$project$Main$HarmonicMinor = {$: 12};
+var $author$project$Main$DorianFlat2 = {$: 19};
+var $author$project$Main$DoubleHarmonic = {$: 30};
+var $author$project$Main$HarmonicMajor = {$: 13};
+var $author$project$Main$HarmonicMinor = {$: 14};
+var $author$project$Main$Hirajoshi = {$: 32};
+var $author$project$Main$HungarianMinor = {$: 31};
+var $author$project$Main$InSen = {$: 33};
 var $author$project$Main$Locrian = {$: 9};
+var $author$project$Main$LocrianNat2 = {$: 22};
 var $author$project$Main$Lydian = {$: 6};
-var $author$project$Main$LydianDominant = {$: 16};
+var $author$project$Main$LydianAugmented = {$: 20};
+var $author$project$Main$LydianDominant = {$: 21};
 var $author$project$Main$MajorBlues = {$: 2};
 var $author$project$Main$MajorPent = {$: 0};
-var $author$project$Main$MelodicMajor = {$: 14};
-var $author$project$Main$MelodicMinor = {$: 15};
+var $author$project$Main$MelodicMajor = {$: 17};
+var $author$project$Main$MelodicMinor = {$: 18};
 var $author$project$Main$MinorPent = {$: 1};
+var $author$project$Main$MinorSixPent = {$: 12};
 var $author$project$Main$Mixolydian = {$: 7};
 var $author$project$Main$Phrygian = {$: 5};
-var $author$project$Main$PhrygianDominant = {$: 13};
-var $author$project$Main$WholeTone = {$: 23};
+var $author$project$Main$PhrygianDominant = {$: 16};
+var $author$project$Main$UkrainianDorian = {$: 15};
+var $author$project$Main$WholeTone = {$: 29};
 var $author$project$Main$isArpeggio = function (scale) {
 	return A2(
 		$elm$core$List$member,
@@ -5628,13 +5680,17 @@ var $author$project$Main$diagonalOf = function (scale) {
 		case 10:
 			return $elm$core$Maybe$Just(
 				$author$project$Main$Diagonal(scale));
-		case 36:
+		case 48:
 			return $elm$core$Maybe$Nothing;
-		case 38:
+		case 50:
 			return $elm$core$Maybe$Nothing;
 		default:
-			return $author$project$Main$isArpeggio(scale) ? $elm$core$Maybe$Just(scale) : (($elm$core$List$length(
-				$author$project$Main$scaleIntervals(scale)) === 7) ? $elm$core$Maybe$Just(
+			return $author$project$Main$isArpeggio(scale) ? $elm$core$Maybe$Just(scale) : (A2(
+				$elm$core$List$member,
+				$elm$core$List$length(
+					$author$project$Main$scaleIntervals(scale)),
+				_List_fromArray(
+					[5, 7])) ? $elm$core$Maybe$Just(
 				$author$project$Main$Diagonal(scale)) : $elm$core$Maybe$Nothing);
 	}
 };
@@ -5662,18 +5718,30 @@ var $author$project$Main$presetFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$Locrian);
 		case 'blues':
 			return $elm$core$Maybe$Just($author$project$Main$Blues);
+		case 'dominant-pent':
+			return $elm$core$Maybe$Just($author$project$Main$DominantPent);
+		case 'minor-6-pent':
+			return $elm$core$Maybe$Just($author$project$Main$MinorSixPent);
 		case 'harmonic-major':
 			return $elm$core$Maybe$Just($author$project$Main$HarmonicMajor);
 		case 'harmonic-minor':
 			return $elm$core$Maybe$Just($author$project$Main$HarmonicMinor);
+		case 'ukrainian-dorian':
+			return $elm$core$Maybe$Just($author$project$Main$UkrainianDorian);
 		case 'phrygian-dominant':
 			return $elm$core$Maybe$Just($author$project$Main$PhrygianDominant);
 		case 'melodic-major':
 			return $elm$core$Maybe$Just($author$project$Main$MelodicMajor);
 		case 'melodic-minor':
 			return $elm$core$Maybe$Just($author$project$Main$MelodicMinor);
+		case 'dorian-b2':
+			return $elm$core$Maybe$Just($author$project$Main$DorianFlat2);
+		case 'lydian-augmented':
+			return $elm$core$Maybe$Just($author$project$Main$LydianAugmented);
 		case 'lydian-dominant':
 			return $elm$core$Maybe$Just($author$project$Main$LydianDominant);
+		case 'locrian-nat2':
+			return $elm$core$Maybe$Just($author$project$Main$LocrianNat2);
 		case 'altered':
 			return $elm$core$Maybe$Just($author$project$Main$Altered);
 		case 'bebop-dominant':
@@ -5688,6 +5756,14 @@ var $author$project$Main$presetFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$DimWholeHalf);
 		case 'whole-tone':
 			return $elm$core$Maybe$Just($author$project$Main$WholeTone);
+		case 'double-harmonic':
+			return $elm$core$Maybe$Just($author$project$Main$DoubleHarmonic);
+		case 'hungarian-minor':
+			return $elm$core$Maybe$Just($author$project$Main$HungarianMinor);
+		case 'hirajoshi':
+			return $elm$core$Maybe$Just($author$project$Main$Hirajoshi);
+		case 'in-sen':
+			return $elm$core$Maybe$Just($author$project$Main$InSen);
 		case 'all-notes-major':
 			return $elm$core$Maybe$Just($author$project$Main$ChromaticMajor);
 		case 'all-notes-minor':
@@ -5702,6 +5778,10 @@ var $author$project$Main$presetFromSlug = function (s) {
 			return $elm$core$Maybe$Just($author$project$Main$TriadDim);
 		case 'triad-aug':
 			return $elm$core$Maybe$Just($author$project$Main$TriadAug);
+		case 'triad-sus2':
+			return $elm$core$Maybe$Just($author$project$Main$TriadSus2);
+		case 'triad-sus4':
+			return $elm$core$Maybe$Just($author$project$Main$TriadSus4);
 		case 'arp-maj7':
 			return $elm$core$Maybe$Just($author$project$Main$ArpMaj7);
 		case 'arp-7':
@@ -7144,59 +7224,83 @@ var $author$project$Main$scaleSlug = function (s) {
 		case 10:
 			return 'blues';
 		case 11:
-			return 'harmonic-major';
+			return 'dominant-pent';
 		case 12:
-			return 'harmonic-minor';
+			return 'minor-6-pent';
 		case 13:
-			return 'phrygian-dominant';
+			return 'harmonic-major';
 		case 14:
-			return 'melodic-major';
+			return 'harmonic-minor';
 		case 15:
-			return 'melodic-minor';
+			return 'ukrainian-dorian';
 		case 16:
-			return 'lydian-dominant';
+			return 'phrygian-dominant';
 		case 17:
-			return 'altered';
+			return 'melodic-major';
 		case 18:
-			return 'bebop-dominant';
+			return 'melodic-minor';
 		case 19:
-			return 'bebop-major';
+			return 'dorian-b2';
 		case 20:
-			return 'bebop-minor';
+			return 'lydian-augmented';
 		case 21:
-			return 'dim-half-whole';
+			return 'lydian-dominant';
 		case 22:
-			return 'dim-whole-half';
+			return 'locrian-nat2';
 		case 23:
-			return 'whole-tone';
+			return 'altered';
 		case 24:
-			return 'all-notes-major';
+			return 'bebop-dominant';
 		case 25:
-			return 'all-notes-minor';
+			return 'bebop-major';
 		case 26:
-			return 'blank';
+			return 'bebop-minor';
 		case 27:
-			return 'triad-major';
+			return 'dim-half-whole';
 		case 28:
-			return 'triad-minor';
+			return 'dim-whole-half';
 		case 29:
-			return 'triad-dim';
+			return 'whole-tone';
 		case 30:
-			return 'triad-aug';
+			return 'double-harmonic';
 		case 31:
-			return 'arp-maj7';
+			return 'hungarian-minor';
 		case 32:
-			return 'arp-7';
+			return 'hirajoshi';
 		case 33:
-			return 'arp-m7';
+			return 'in-sen';
 		case 34:
-			return 'arp-m7b5';
+			return 'all-notes-major';
 		case 35:
-			return 'arp-dim7';
+			return 'all-notes-minor';
 		case 36:
+			return 'blank';
+		case 37:
+			return 'triad-major';
+		case 38:
+			return 'triad-minor';
+		case 39:
+			return 'triad-dim';
+		case 40:
+			return 'triad-aug';
+		case 41:
+			return 'triad-sus2';
+		case 42:
+			return 'triad-sus4';
+		case 43:
+			return 'arp-maj7';
+		case 44:
+			return 'arp-7';
+		case 45:
+			return 'arp-m7';
+		case 46:
+			return 'arp-m7b5';
+		case 47:
+			return 'arp-dim7';
+		case 48:
 			var base = s.a;
 			return $author$project$Main$diagonalSlug(base);
-		case 37:
+		case 49:
 			var base = s.a;
 			return 'plain-' + $author$project$Main$scaleSlug(base);
 		default:
@@ -7320,7 +7424,7 @@ var $elm$url$Url$toString = function (url) {
 				url.bv)));
 };
 var $author$project$Main$baseScale = function (scale) {
-	if (scale.$ === 38) {
+	if (scale.$ === 50) {
 		var base = scale.a;
 		return base;
 	} else {
@@ -7340,7 +7444,7 @@ var $author$project$Main$toggleIntervalShaped = F2(
 	});
 var $author$project$Main$toggleInterval = F2(
 	function (interval, scale) {
-		if (scale.$ === 37) {
+		if (scale.$ === 49) {
 			var inner = scale.a;
 			return $author$project$Main$Plain(
 				A2($author$project$Main$toggleInterval, interval, inner));
@@ -7898,7 +8002,7 @@ var $elm$core$Basics$composeL = F3(
 			f(x));
 	});
 var $author$project$Main$isDiagonal = function (scale) {
-	if (scale.$ === 36) {
+	if (scale.$ === 48) {
 		return true;
 	} else {
 		return $author$project$Main$isArpeggio(scale);
@@ -7912,7 +8016,7 @@ var $elm$core$List$isEmpty = function (xs) {
 	}
 };
 var $author$project$Main$isPlain = function (scale) {
-	if (scale.$ === 37) {
+	if (scale.$ === 49) {
 		return true;
 	} else {
 		return false;
@@ -8559,6 +8663,158 @@ var $author$project$Main$stringLabel = F2(
 		return $elm$core$String$fromInt(s) + (' (' + ($author$project$Main$noteName(
 			A2($author$project$Main$openString, tuning, s)) + ')'));
 	});
+var $author$project$Main$pickTone = F5(
+	function (base, intervals, fromBase, a, b) {
+		var _v0 = _Utils_Tuple2(
+			A2($elm$core$List$member, a, intervals),
+			A2($elm$core$List$member, b, intervals));
+		if (_v0.a) {
+			if (!_v0.b) {
+				return a;
+			} else {
+				return fromBase;
+			}
+		} else {
+			if (_v0.b) {
+				return b;
+			} else {
+				return -1;
+			}
+		}
+	});
+var $author$project$Main$thirdOf = function (scale) {
+	thirdOf:
+	while (true) {
+		switch (scale.$) {
+			case 0:
+				return 4;
+			case 1:
+				return 3;
+			case 2:
+				return 4;
+			case 3:
+				return 4;
+			case 8:
+				return 3;
+			case 4:
+				return 3;
+			case 7:
+				return 4;
+			case 5:
+				return 3;
+			case 6:
+				return 4;
+			case 9:
+				return 3;
+			case 10:
+				return 3;
+			case 11:
+				return 4;
+			case 12:
+				return 3;
+			case 13:
+				return 4;
+			case 14:
+				return 3;
+			case 15:
+				return 3;
+			case 16:
+				return 4;
+			case 17:
+				return 4;
+			case 18:
+				return 3;
+			case 19:
+				return 3;
+			case 20:
+				return 4;
+			case 21:
+				return 4;
+			case 22:
+				return 3;
+			case 23:
+				return 4;
+			case 24:
+				return 4;
+			case 25:
+				return 4;
+			case 26:
+				return 3;
+			case 27:
+				return 4;
+			case 28:
+				return 3;
+			case 29:
+				return 4;
+			case 30:
+				return 4;
+			case 31:
+				return 3;
+			case 32:
+				return 3;
+			case 33:
+				return -1;
+			case 34:
+				return -1;
+			case 35:
+				return -1;
+			case 36:
+				return -1;
+			case 37:
+				return 4;
+			case 38:
+				return 3;
+			case 39:
+				return 3;
+			case 40:
+				return 4;
+			case 41:
+				return -1;
+			case 42:
+				return -1;
+			case 43:
+				return 4;
+			case 44:
+				return 4;
+			case 45:
+				return 3;
+			case 46:
+				return 3;
+			case 47:
+				return 3;
+			case 48:
+				var base = scale.a;
+				var $temp$scale = base;
+				scale = $temp$scale;
+				continue thirdOf;
+			case 49:
+				var base = scale.a;
+				var $temp$scale = base;
+				scale = $temp$scale;
+				continue thirdOf;
+			default:
+				var base = scale.a;
+				var intervals = scale.b;
+				return A5(
+					$author$project$Main$pickTone,
+					base,
+					intervals,
+					$author$project$Main$thirdOf(base),
+					3,
+					4);
+		}
+	}
+};
+var $author$project$Main$triadMiddle = function (scale) {
+	switch (scale.$) {
+		case 41:
+			return '2nd';
+		case 42:
+			return '4th';
+		default:
+			return '3rd';
+	}
+};
 var $author$project$Main$viewLegend = function (board) {
 	var tones = _Utils_eq(board.a, $author$project$Main$Blank) ? _List_Nil : ($author$project$Main$isChromatic(board.a) ? _Utils_ap(
 		_List_fromArray(
@@ -8585,7 +8841,13 @@ var $author$project$Main$viewLegend = function (board) {
 		[
 			$author$project$Main$legendText('Tones:'),
 			A3($author$project$Main$legendMarker, board.d, 'square-dark', 'Root'),
-			A3($author$project$Main$legendMarker, board.d, 'circle-dashed', '3rd'),
+			_Utils_eq(
+			$author$project$Main$thirdOf(board.a),
+			-1) ? A3(
+			$author$project$Main$legendMarker,
+			board.d,
+			'circle-plain',
+			$author$project$Main$triadMiddle(board.a)) : A3($author$project$Main$legendMarker, board.d, 'circle-dashed', '3rd'),
 			A3($author$project$Main$legendMarker, board.d, 'circle-dotted', '5th')
 		]) : _List_fromArray(
 		[
@@ -8639,7 +8901,9 @@ var $author$project$Main$viewLegend = function (board) {
 			_List_fromArray(
 				[
 					_Utils_Tuple2(0, 'root'),
-					_Utils_Tuple2(1, '3rd (1st inv)'),
+					_Utils_Tuple2(
+					1,
+					$author$project$Main$triadMiddle(board.a) + ' (1st inv)'),
 					_Utils_Tuple2(2, '5th (2nd inv)')
 				]))) : ($author$project$Main$isDiagonal(board.a) ? A2(
 		$elm$core$List$cons,
@@ -9008,82 +9272,118 @@ var $author$project$Main$intervalLabels = function (st) {
 					['R', '♭3', '4', '♭5', '5', '♭7']);
 			case 11:
 				return _List_fromArray(
-					['R', '2', '3', '4', '5', '♭6', '7']);
+					['R', '2', '3', '5', '♭7']);
 			case 12:
 				return _List_fromArray(
-					['R', '2', '♭3', '4', '5', '♭6', '7']);
+					['R', '♭3', '4', '5', '6']);
 			case 13:
 				return _List_fromArray(
-					['R', '♭2', '3', '4', '5', '♭6', '♭7']);
+					['R', '2', '3', '4', '5', '♭6', '7']);
 			case 14:
 				return _List_fromArray(
-					['R', '2', '3', '4', '5', '♭6', '♭7']);
+					['R', '2', '♭3', '4', '5', '♭6', '7']);
 			case 15:
 				return _List_fromArray(
-					['R', '2', '♭3', '4', '5', '6', '7']);
+					['R', '2', '♭3', '♯4', '5', '6', '♭7']);
 			case 16:
 				return _List_fromArray(
-					['R', '2', '3', '♯4', '5', '6', '♭7']);
+					['R', '♭2', '3', '4', '5', '♭6', '♭7']);
 			case 17:
 				return _List_fromArray(
-					['R', '♭2', '♯2', '3', '♭5', '♯5', '♭7']);
+					['R', '2', '3', '4', '5', '♭6', '♭7']);
 			case 18:
 				return _List_fromArray(
-					['R', '2', '3', '4', '5', '6', '♭7', '7']);
+					['R', '2', '♭3', '4', '5', '6', '7']);
 			case 19:
 				return _List_fromArray(
-					['R', '2', '3', '4', '5', '♭6', '6', '7']);
+					['R', '♭2', '♭3', '4', '5', '6', '♭7']);
 			case 20:
 				return _List_fromArray(
-					['R', '2', '♭3', '3', '4', '5', '6', '♭7']);
+					['R', '2', '3', '♯4', '♯5', '6', '7']);
 			case 21:
 				return _List_fromArray(
-					['R', '♭2', '♯2', '3', '♯4', '5', '6', '♭7']);
+					['R', '2', '3', '♯4', '5', '6', '♭7']);
 			case 22:
 				return _List_fromArray(
-					['R', '2', '♭3', '4', '♭5', '♭6', '6', '7']);
+					['R', '2', '♭3', '4', '♭5', '♭6', '♭7']);
 			case 23:
 				return _List_fromArray(
-					['R', '2', '3', '♯4', '♯5', '♭7']);
+					['R', '♭2', '♯2', '3', '♭5', '♯5', '♭7']);
 			case 24:
-				return A2($elm$core$List$repeat, 12, '');
+				return _List_fromArray(
+					['R', '2', '3', '4', '5', '6', '♭7', '7']);
 			case 25:
-				return A2($elm$core$List$repeat, 12, '');
+				return _List_fromArray(
+					['R', '2', '3', '4', '5', '♭6', '6', '7']);
 			case 26:
-				return _List_Nil;
+				return _List_fromArray(
+					['R', '2', '♭3', '3', '4', '5', '6', '♭7']);
 			case 27:
 				return _List_fromArray(
-					['R', '3', '5']);
+					['R', '♭2', '♯2', '3', '♯4', '5', '6', '♭7']);
 			case 28:
 				return _List_fromArray(
-					['R', '♭3', '5']);
+					['R', '2', '♭3', '4', '♭5', '♭6', '6', '7']);
 			case 29:
 				return _List_fromArray(
-					['R', '♭3', '♭5']);
+					['R', '2', '3', '♯4', '♯5', '♭7']);
 			case 30:
 				return _List_fromArray(
-					['R', '3', '♯5']);
+					['R', '♭2', '3', '4', '5', '♭6', '7']);
 			case 31:
 				return _List_fromArray(
-					['R', '3', '5', '7']);
+					['R', '2', '♭3', '♯4', '5', '♭6', '7']);
 			case 32:
 				return _List_fromArray(
-					['R', '3', '5', '♭7']);
+					['R', '2', '♭3', '5', '♭6']);
 			case 33:
 				return _List_fromArray(
-					['R', '♭3', '5', '♭7']);
+					['R', '♭2', '4', '5', '♭7']);
 			case 34:
+				return A2($elm$core$List$repeat, 12, '');
+			case 35:
+				return A2($elm$core$List$repeat, 12, '');
+			case 36:
+				return _List_Nil;
+			case 37:
+				return _List_fromArray(
+					['R', '3', '5']);
+			case 38:
+				return _List_fromArray(
+					['R', '♭3', '5']);
+			case 39:
+				return _List_fromArray(
+					['R', '♭3', '♭5']);
+			case 40:
+				return _List_fromArray(
+					['R', '3', '♯5']);
+			case 41:
+				return _List_fromArray(
+					['R', '2', '5']);
+			case 42:
+				return _List_fromArray(
+					['R', '4', '5']);
+			case 43:
+				return _List_fromArray(
+					['R', '3', '5', '7']);
+			case 44:
+				return _List_fromArray(
+					['R', '3', '5', '♭7']);
+			case 45:
+				return _List_fromArray(
+					['R', '♭3', '5', '♭7']);
+			case 46:
 				return _List_fromArray(
 					['R', '♭3', '♭5', '♭7']);
-			case 35:
+			case 47:
 				return _List_fromArray(
 					['R', '♭3', '♭5', '♭♭7']);
-			case 36:
+			case 48:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
 				continue intervalLabels;
-			case 37:
+			case 49:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
@@ -9257,10 +9557,10 @@ var $author$project$Main$scaleDegrees = function (st) {
 					[1, 3, 4, 5, 5, 7]);
 			case 11:
 				return _List_fromArray(
-					[1, 2, 3, 4, 5, 6, 7]);
+					[1, 2, 3, 5, 7]);
 			case 12:
 				return _List_fromArray(
-					[1, 2, 3, 4, 5, 6, 7]);
+					[1, 3, 4, 5, 6]);
 			case 13:
 				return _List_fromArray(
 					[1, 2, 3, 4, 5, 6, 7]);
@@ -9275,66 +9575,102 @@ var $author$project$Main$scaleDegrees = function (st) {
 					[1, 2, 3, 4, 5, 6, 7]);
 			case 17:
 				return _List_fromArray(
-					[1, 2, 2, 3, 5, 5, 7]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 18:
 				return _List_fromArray(
-					[1, 2, 3, 4, 5, 6, 7, 7]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 19:
 				return _List_fromArray(
-					[1, 2, 3, 4, 5, 6, 6, 7]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 20:
 				return _List_fromArray(
-					[1, 2, 3, 3, 4, 5, 6, 7]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 21:
 				return _List_fromArray(
-					[1, 2, 2, 3, 4, 5, 6, 7]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 22:
 				return _List_fromArray(
-					[1, 2, 3, 4, 5, 6, 6, 7]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 23:
 				return _List_fromArray(
-					[1, 2, 3, 4, 5, 7]);
+					[1, 2, 2, 3, 5, 5, 7]);
 			case 24:
 				return _List_fromArray(
-					[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
+					[1, 2, 3, 4, 5, 6, 7, 7]);
 			case 25:
 				return _List_fromArray(
-					[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
+					[1, 2, 3, 4, 5, 6, 6, 7]);
 			case 26:
-				return _List_Nil;
+				return _List_fromArray(
+					[1, 2, 3, 3, 4, 5, 6, 7]);
 			case 27:
 				return _List_fromArray(
-					[1, 3, 5]);
+					[1, 2, 2, 3, 4, 5, 6, 7]);
 			case 28:
 				return _List_fromArray(
-					[1, 3, 5]);
+					[1, 2, 3, 4, 5, 6, 6, 7]);
 			case 29:
 				return _List_fromArray(
-					[1, 3, 5]);
+					[1, 2, 3, 4, 5, 7]);
 			case 30:
 				return _List_fromArray(
-					[1, 3, 5]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 31:
 				return _List_fromArray(
-					[1, 3, 5, 7]);
+					[1, 2, 3, 4, 5, 6, 7]);
 			case 32:
 				return _List_fromArray(
-					[1, 3, 5, 7]);
+					[1, 2, 3, 5, 6]);
 			case 33:
 				return _List_fromArray(
-					[1, 3, 5, 7]);
+					[1, 2, 4, 5, 7]);
 			case 34:
 				return _List_fromArray(
-					[1, 3, 5, 7]);
+					[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
 			case 35:
 				return _List_fromArray(
-					[1, 3, 5, 7]);
+					[1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]);
 			case 36:
+				return _List_Nil;
+			case 37:
+				return _List_fromArray(
+					[1, 3, 5]);
+			case 38:
+				return _List_fromArray(
+					[1, 3, 5]);
+			case 39:
+				return _List_fromArray(
+					[1, 3, 5]);
+			case 40:
+				return _List_fromArray(
+					[1, 3, 5]);
+			case 41:
+				return _List_fromArray(
+					[1, 2, 5]);
+			case 42:
+				return _List_fromArray(
+					[1, 4, 5]);
+			case 43:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 44:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 45:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 46:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 47:
+				return _List_fromArray(
+					[1, 3, 5, 7]);
+			case 48:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
 				continue scaleDegrees;
-			case 37:
+			case 49:
 				var base = st.a;
 				var $temp$st = base;
 				st = $temp$st;
@@ -9472,59 +9808,83 @@ var $author$project$Main$scaleTitle = function (scale) {
 			case 10:
 				return 'Blues';
 			case 11:
-				return 'Harmonic Major';
+				return 'Dominant Pentatonic';
 			case 12:
-				return 'Harmonic Minor';
+				return 'Minor 6 Pentatonic';
 			case 13:
-				return 'Phrygian Dominant';
+				return 'Harmonic Major';
 			case 14:
-				return 'Melodic Major';
+				return 'Harmonic Minor';
 			case 15:
-				return 'Melodic Minor';
+				return 'Ukrainian Dorian';
 			case 16:
-				return 'Lydian Dominant';
+				return 'Phrygian Dominant';
 			case 17:
-				return 'Altered';
+				return 'Melodic Major';
 			case 18:
-				return 'Bebop Dominant';
+				return 'Melodic Minor';
 			case 19:
-				return 'Bebop Major';
+				return 'Dorian ♭2';
 			case 20:
-				return 'Bebop Minor';
+				return 'Lydian Augmented';
 			case 21:
-				return 'Half-Whole Diminished';
+				return 'Lydian Dominant';
 			case 22:
-				return 'Whole-Half Diminished';
+				return 'Locrian ♮2';
 			case 23:
-				return 'Whole Tone';
+				return 'Altered';
 			case 24:
-				return '— All Notes (major)';
+				return 'Bebop Dominant';
 			case 25:
-				return '— All Notes (minor)';
+				return 'Bebop Major';
 			case 26:
-				return 'Blank neck';
+				return 'Bebop Minor';
 			case 27:
-				return 'Major Triad';
+				return 'Half-Whole Diminished';
 			case 28:
-				return 'Minor Triad';
+				return 'Whole-Half Diminished';
 			case 29:
-				return 'Diminished Triad';
+				return 'Whole Tone';
 			case 30:
-				return 'Augmented Triad';
+				return 'Double Harmonic Major';
 			case 31:
-				return 'Major 7th Arpeggio';
+				return 'Hungarian Minor';
 			case 32:
-				return 'Dominant 7th Arpeggio';
+				return 'Hirajoshi';
 			case 33:
-				return 'Minor 7th Arpeggio';
+				return 'In Sen';
 			case 34:
-				return 'Half-Diminished Arpeggio';
+				return '— All Notes (major)';
 			case 35:
-				return 'Diminished 7th Arpeggio';
+				return '— All Notes (minor)';
 			case 36:
+				return 'Blank neck';
+			case 37:
+				return 'Major Triad';
+			case 38:
+				return 'Minor Triad';
+			case 39:
+				return 'Diminished Triad';
+			case 40:
+				return 'Augmented Triad';
+			case 41:
+				return 'Sus2 Triad';
+			case 42:
+				return 'Sus4 Triad';
+			case 43:
+				return 'Major 7th Arpeggio';
+			case 44:
+				return 'Dominant 7th Arpeggio';
+			case 45:
+				return 'Minor 7th Arpeggio';
+			case 46:
+				return 'Half-Diminished Arpeggio';
+			case 47:
+				return 'Diminished 7th Arpeggio';
+			case 48:
 				var base = scale.a;
 				return 'Diagonal ' + $author$project$Main$scaleTitle(base);
-			case 37:
+			case 49:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
@@ -9674,6 +10034,18 @@ var $author$project$Main$scaleHeadingButton = F3(
 						$author$project$Main$chevron(open)
 					])));
 	});
+var $author$project$Main$boxedOf = function (scale) {
+	switch (scale.$) {
+		case 48:
+			var base = scale.a;
+			return base;
+		case 49:
+			var base = scale.a;
+			return base;
+		default:
+			return scale;
+	}
+};
 var $author$project$Main$SetRoot = function (a) {
 	return {$: 0, a: a};
 };
@@ -9700,29 +10072,17 @@ var $author$project$Main$rootButton = F2(
 var $author$project$Main$SetScale = function (a) {
 	return {$: 1, a: a};
 };
-var $author$project$Main$boxedOf = function (scale) {
-	switch (scale.$) {
-		case 36:
-			var base = scale.a;
-			return base;
-		case 37:
-			var base = scale.a;
-			return base;
-		default:
-			return scale;
-	}
-};
 var $author$project$Main$scaleButton = F3(
 	function (model, st, lbl) {
 		var current = $author$project$Main$activeNeck(model).a;
 		var target = function () {
 			switch (current.$) {
-				case 36:
+				case 48:
 					return A2(
 						$elm$core$Maybe$withDefault,
 						st,
 						$author$project$Main$diagonalOf(st));
-				case 37:
+				case 49:
 					return A2(
 						$elm$core$Maybe$withDefault,
 						st,
@@ -9818,7 +10178,7 @@ var $author$project$Main$shapeGroup = function (model) {
 				'Diagonal',
 				$author$project$Main$diagonalOf(boxed),
 				$author$project$Main$isDiagonal(scale),
-				'Diagonal shapes exist for the pentatonics, the blues, the seven-note scales and the arpeggios'),
+				'Diagonal shapes exist for the five- and seven-note scales, the blues and the arpeggios'),
 				A4(
 				shapeButton,
 				'None',
@@ -9860,7 +10220,9 @@ var $author$project$Main$scalePicker = function (model) {
 								A3($author$project$Main$scaleButton, model, $author$project$Main$MajorPent, 'Major'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$MinorPent, 'Minor'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$MajorBlues, 'Major blues'),
-								A3($author$project$Main$scaleButton, model, $author$project$Main$Blues, 'Minor blues')
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Blues, 'Minor blues'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$DominantPent, 'Dominant'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$MinorSixPent, 'Minor 6')
 							])),
 						A2(
 						$author$project$Main$pickerGroup,
@@ -9869,6 +10231,7 @@ var $author$project$Main$scalePicker = function (model) {
 							[
 								A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMajor, 'Major'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$HarmonicMinor, 'Minor'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$UkrainianDorian, 'Ukrainian Dorian'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$PhrygianDominant, 'Phrygian dominant')
 							])),
 						A2(
@@ -9878,7 +10241,10 @@ var $author$project$Main$scalePicker = function (model) {
 							[
 								A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMajor, 'Major'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$MelodicMinor, 'Minor'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$DorianFlat2, 'Dorian ♭2'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$LydianAugmented, 'Lydian augmented'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$LydianDominant, 'Lydian dominant'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$LocrianNat2, 'Locrian ♮2'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$Altered, 'Altered')
 							])),
 						A2(
@@ -9901,13 +10267,25 @@ var $author$project$Main$scalePicker = function (model) {
 							])),
 						A2(
 						$author$project$Main$pickerGroup,
+						'Exotic',
+						_List_fromArray(
+							[
+								A3($author$project$Main$scaleButton, model, $author$project$Main$DoubleHarmonic, 'Double harmonic'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$HungarianMinor, 'Hungarian minor'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$Hirajoshi, 'Hirajoshi'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$InSen, 'In Sen')
+							])),
+						A2(
+						$author$project$Main$pickerGroup,
 						'Triads',
 						_List_fromArray(
 							[
 								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMajor, 'Major'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadMinor, 'Minor'),
 								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadDim, 'Diminished'),
-								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadAug, 'Augmented')
+								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadAug, 'Augmented'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadSus2, 'Sus2'),
+								A3($author$project$Main$scaleButton, model, $author$project$Main$TriadSus4, 'Sus4')
 							])),
 						A2(
 						$author$project$Main$pickerGroup,
@@ -9930,11 +10308,15 @@ var $author$project$Main$scalePicker = function (model) {
 								A3($author$project$Main$scaleButton, model, $author$project$Main$Blank, 'None')
 							]))
 					])),
-				$author$project$Main$controlBlock(
-				_List_fromArray(
-					[
-						$author$project$Main$shapeGroup(model)
-					])),
+				function () {
+				var boxed = $author$project$Main$boxedOf(
+					$author$project$Main$activeNeck(model).a);
+				return ($author$project$Main$isTriad(boxed) || $author$project$Main$isChromatic(boxed)) ? $elm$html$Html$text('') : $author$project$Main$controlBlock(
+					_List_fromArray(
+						[
+							$author$project$Main$shapeGroup(model)
+						]));
+			}(),
 				$author$project$Main$controlBlock(
 				_List_fromArray(
 					[
@@ -10101,25 +10483,6 @@ var $author$project$Main$anchorOpen = function (t) {
 		12,
 		(A2($author$project$Main$openString, t, a) + $author$project$Main$referenceOpen(6)) - $author$project$Main$referenceOpen(a));
 };
-var $author$project$Main$pickTone = F5(
-	function (base, intervals, fromBase, a, b) {
-		var _v0 = _Utils_Tuple2(
-			A2($elm$core$List$member, a, intervals),
-			A2($elm$core$List$member, b, intervals));
-		if (_v0.a) {
-			if (!_v0.b) {
-				return a;
-			} else {
-				return fromBase;
-			}
-		} else {
-			if (_v0.b) {
-				return b;
-			} else {
-				return -1;
-			}
-		}
-	});
 var $author$project$Main$anchorOffset = function (scale) {
 	anchorOffset:
 	while (true) {
@@ -10138,45 +10501,61 @@ var $author$project$Main$anchorOffset = function (scale) {
 				return 8;
 			case 7:
 				return 10;
+			case 11:
+				return 10;
+			case 12:
+				return 5;
+			case 15:
+				return 5;
+			case 19:
+				return 2;
+			case 20:
+				return 3;
+			case 22:
+				return 9;
+			case 30:
+				return 7;
+			case 33:
+				return 7;
 			case 9:
 				return 2;
-			case 11:
-				return 3;
 			case 13:
-				return 7;
-			case 14:
 				return 3;
 			case 16:
-				return 5;
+				return 7;
 			case 17:
-				return 11;
-			case 18:
-				return 10;
-			case 19:
 				return 3;
-			case 20:
-				return 5;
 			case 21:
-				return 3;
+				return 5;
 			case 23:
-				return 3;
+				return 11;
 			case 24:
+				return 10;
+			case 25:
 				return 3;
+			case 26:
+				return 5;
 			case 27:
 				return 3;
-			case 30:
+			case 29:
 				return 3;
-			case 36:
-				var base = scale.a;
-				var $temp$scale = base;
-				scale = $temp$scale;
-				continue anchorOffset;
+			case 34:
+				return 3;
 			case 37:
+				return 3;
+			case 40:
+				return 3;
+			case 48:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue anchorOffset;
-			case 38:
+			case 49:
+				var base = scale.a;
+				var $temp$scale = base;
+				scale = $temp$scale;
+				continue anchorOffset;
+			case 50:
 				var base = scale.a;
 				var intervals = scale.b;
 				var baseThird = A5(
@@ -10359,19 +10738,14 @@ var $author$project$Main$diagonalAnchor = F3(
 	function (tuning, scale, root) {
 		var lowE = $author$project$Main$anchorOpen(tuning);
 		var _v0 = $author$project$Main$boxedOf(scale);
-		switch (_v0.$) {
-			case 0:
-				return A2($elm$core$Basics$modBy, 12, root - lowE);
-			case 1:
-				return A2($elm$core$Basics$modBy, 12, (root + 3) - lowE);
-			case 10:
-				return A2($elm$core$Basics$modBy, 12, (root + 3) - lowE);
-			default:
-				var base = _v0;
-				return A2(
-					$elm$core$Basics$modBy,
-					12,
-					(root - $author$project$Main$anchorOffset(base)) - lowE);
+		if (_v0.$ === 10) {
+			return A2($elm$core$Basics$modBy, 12, (root + 3) - lowE);
+		} else {
+			var base = _v0;
+			return A2(
+				$elm$core$Basics$modBy,
+				12,
+				(root - $author$project$Main$anchorOffset(base)) - lowE);
 		}
 	});
 var $author$project$Main$rootFret = function (board) {
@@ -10904,21 +11278,57 @@ var $author$project$Main$diagonalOctaves = function (shape) {
 var $author$project$Main$diagonalPairOffset = function (k) {
 	return (k >= 2) ? ((-2) * (k - 2)) : ((k === 1) ? 2 : 5);
 };
-var $author$project$Main$pentatonicDiagonalPatterns = _Utils_Tuple2(
-	_Utils_Tuple2(
-		_List_fromArray(
-			[0, 2, 4]),
-		_List_fromArray(
-			[2, 4])),
-	_Utils_Tuple2(
-		_List_fromArray(
-			[-5, -3]),
-		_List_fromArray(
-			[-5, -3, -1])));
+var $author$project$Main$rotateFrom = F2(
+	function (i, notes) {
+		return _Utils_ap(
+			A2($elm$core$List$drop, i, notes),
+			A2(
+				$elm$core$List$map,
+				$elm$core$Basics$add(12),
+				A2($elm$core$List$take, i, notes)));
+	});
+var $author$project$Main$compactStart = F2(
+	function (count, notes) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			A2(
+				$elm$core$Maybe$map,
+				$elm$core$Tuple$second,
+				$elm$core$List$minimum(
+					A2(
+						$elm$core$List$map,
+						function (i) {
+							var run = A2(
+								$elm$core$List$take,
+								count,
+								A2($author$project$Main$rotateFrom, i, notes));
+							return _Utils_Tuple2(
+								function (hi) {
+									return hi - A2(
+										$elm$core$Maybe$withDefault,
+										0,
+										$elm$core$List$minimum(run));
+								}(
+									A2(
+										$elm$core$Maybe$withDefault,
+										0,
+										$elm$core$List$maximum(run))),
+								i);
+						},
+						A2(
+							$elm$core$List$range,
+							0,
+							$elm$core$List$length(notes) - 1)))));
+	});
 var $author$project$Main$splitDiagonalPatterns = function (scale) {
-	var rotated = $elm$core$List$sort(
+	var sorted = $elm$core$List$sort(
 		$author$project$Main$anchorScaleSet(scale));
-	var half = (($elm$core$List$length(rotated) + 1) / 2) | 0;
+	var half = (($elm$core$List$length(sorted) + 1) / 2) | 0;
+	var rotated = ($elm$core$List$length(sorted) === 5) ? A2(
+		$author$project$Main$rotateFrom,
+		A2($author$project$Main$compactStart, half, sorted),
+		sorted) : sorted;
 	var high = A2($elm$core$List$drop, half, rotated);
 	var low = A2($elm$core$List$take, half, rotated);
 	var down = function (n) {
@@ -10937,26 +11347,21 @@ var $author$project$Main$splitDiagonalPatterns = function (scale) {
 };
 var $author$project$Main$diagonalPatterns = function (scale) {
 	var _v0 = $author$project$Main$boxedOf(scale);
-	switch (_v0.$) {
-		case 10:
-			return _Utils_Tuple2(
-				_Utils_Tuple2(
-					_List_fromArray(
-						[0, 2, 3, 4]),
-					_List_fromArray(
-						[2, 4])),
-				_Utils_Tuple2(
-					_List_fromArray(
-						[-5, -3]),
-					_List_fromArray(
-						[-5, -3, -2, -1])));
-		case 1:
-			return $author$project$Main$pentatonicDiagonalPatterns;
-		case 0:
-			return $author$project$Main$pentatonicDiagonalPatterns;
-		default:
-			var base = _v0;
-			return $author$project$Main$splitDiagonalPatterns(base);
+	if (_v0.$ === 10) {
+		return _Utils_Tuple2(
+			_Utils_Tuple2(
+				_List_fromArray(
+					[0, 2, 3, 4]),
+				_List_fromArray(
+					[2, 4])),
+			_Utils_Tuple2(
+				_List_fromArray(
+					[-5, -3]),
+				_List_fromArray(
+					[-5, -3, -2, -1])));
+	} else {
+		var base = _v0;
+		return $author$project$Main$splitDiagonalPatterns(base);
 	}
 };
 var $author$project$Main$diagonalShapesFor = F2(
@@ -12541,25 +12946,25 @@ var $author$project$Main$fifthInterval = function (scale) {
 	fifthInterval:
 	while (true) {
 		switch (scale.$) {
-			case 29:
+			case 39:
 				return 6;
-			case 30:
+			case 40:
 				return 8;
-			case 34:
+			case 46:
 				return 6;
-			case 35:
+			case 47:
 				return 6;
-			case 36:
+			case 48:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue fifthInterval;
-			case 37:
+			case 49:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue fifthInterval;
-			case 38:
+			case 50:
 				var base = scale.a;
 				var intervals = scale.b;
 				if (A2(
@@ -12604,61 +13009,85 @@ var $author$project$Main$seventhOf = function (scale) {
 			case 10:
 				return 10;
 			case 11:
-				return 11;
+				return 10;
 			case 12:
-				return 11;
+				return -1;
 			case 13:
-				return 10;
-			case 14:
-				return 10;
-			case 15:
 				return 11;
+			case 14:
+				return 11;
+			case 15:
+				return 10;
 			case 16:
 				return 10;
 			case 17:
 				return 10;
 			case 18:
-				return 10;
-			case 19:
 				return 11;
-			case 20:
+			case 19:
 				return 10;
+			case 20:
+				return 11;
 			case 21:
 				return 10;
 			case 22:
-				return 11;
+				return 10;
 			case 23:
 				return 10;
 			case 24:
-				return -1;
+				return 10;
 			case 25:
-				return -1;
+				return 11;
 			case 26:
-				return -1;
+				return 10;
 			case 27:
-				return -1;
+				return 10;
 			case 28:
-				return -1;
+				return 11;
 			case 29:
-				return -1;
+				return 10;
 			case 30:
-				return -1;
+				return 11;
 			case 31:
 				return 11;
 			case 32:
-				return 10;
+				return -1;
 			case 33:
 				return 10;
 			case 34:
-				return 10;
+				return -1;
 			case 35:
-				return 9;
+				return -1;
 			case 36:
+				return -1;
+			case 37:
+				return -1;
+			case 38:
+				return -1;
+			case 39:
+				return -1;
+			case 40:
+				return -1;
+			case 41:
+				return -1;
+			case 42:
+				return -1;
+			case 43:
+				return 11;
+			case 44:
+				return 10;
+			case 45:
+				return 10;
+			case 46:
+				return 10;
+			case 47:
+				return 9;
+			case 48:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
 				continue seventhOf;
-			case 37:
+			case 49:
 				var base = scale.a;
 				var $temp$scale = base;
 				scale = $temp$scale;
@@ -12673,105 +13102,6 @@ var $author$project$Main$seventhOf = function (scale) {
 					$author$project$Main$seventhOf(base),
 					10,
 					11);
-		}
-	}
-};
-var $author$project$Main$thirdOf = function (scale) {
-	thirdOf:
-	while (true) {
-		switch (scale.$) {
-			case 0:
-				return 4;
-			case 1:
-				return 3;
-			case 2:
-				return 4;
-			case 3:
-				return 4;
-			case 8:
-				return 3;
-			case 4:
-				return 3;
-			case 7:
-				return 4;
-			case 5:
-				return 3;
-			case 6:
-				return 4;
-			case 9:
-				return 3;
-			case 10:
-				return 3;
-			case 11:
-				return 4;
-			case 12:
-				return 3;
-			case 13:
-				return 4;
-			case 14:
-				return 4;
-			case 15:
-				return 3;
-			case 16:
-				return 4;
-			case 17:
-				return 4;
-			case 18:
-				return 4;
-			case 19:
-				return 4;
-			case 20:
-				return 3;
-			case 21:
-				return 4;
-			case 22:
-				return 3;
-			case 23:
-				return 4;
-			case 24:
-				return -1;
-			case 25:
-				return -1;
-			case 26:
-				return -1;
-			case 27:
-				return 4;
-			case 28:
-				return 3;
-			case 29:
-				return 3;
-			case 30:
-				return 4;
-			case 31:
-				return 4;
-			case 32:
-				return 4;
-			case 33:
-				return 3;
-			case 34:
-				return 3;
-			case 35:
-				return 3;
-			case 36:
-				var base = scale.a;
-				var $temp$scale = base;
-				scale = $temp$scale;
-				continue thirdOf;
-			case 37:
-				var base = scale.a;
-				var $temp$scale = base;
-				scale = $temp$scale;
-				continue thirdOf;
-			default:
-				var base = scale.a;
-				var intervals = scale.b;
-				return A5(
-					$author$project$Main$pickTone,
-					base,
-					intervals,
-					$author$project$Main$thirdOf(base),
-					3,
-					4);
 		}
 	}
 };
