@@ -2669,97 +2669,32 @@ cagedShapeNames =
     [ "C", "A", "G", "E", "D" ]
 
 
-{-| The five CAGED voicings of a chord rooted on C, in standard tuning, as frets
-from the low E string up to the high e (`Nothing` is a string not played): the
-open C shape, then the A, G, E and D barre shapes up the neck. These are the
-textbook shapes, written out the way the canonical scale boxes are in the
-tests, cut to what a hand can play: every one fits in four frets and takes at
-most four fingers, a barre counting as one (`barreOf`), wherever on the neck it
-is moved — which is why some leave off a string the full shape has. The minor
-G shapes would be a five-fret stretch with their outer strings; minor and 7's C
-shapes, and minor 7's G shape, would need a fifth finger once the open strings
-are fretted; `cagedVoicings` moves them to any root and refingers them for any
-tuning. -}
-cagedShapes : ScaleType -> List (List (Maybe Int))
-cagedShapes scale =
-    let
-        x =
-            Nothing
+{-| Every CAGED voicing of a chord on the neck, found rather than written out:
+the same search runs for any tuning, and in standard tuning it lands on the
+textbook shapes (the `knownChordTests` hold it to a list of well-known
+chords, standard and otherwise).
 
-        f =
-            Just
-    in
-    case scale of
-        ChordMinor ->
-            [ [ x, f 3, f 1, f 0, f 1, x ]
-            , [ x, f 3, f 5, f 5, f 4, f 3 ]
-            -- The full G shape (8 6 5 5 4 8) is a five-fret stretch; this is
-            -- how it is played, both outer strings left off.
-            , [ x, f 6, f 5, f 5, f 4, x ]
-            , [ f 8, f 10, f 10, f 8, f 8, f 8 ]
-            , [ x, x, f 10, f 12, f 13, f 11 ]
-            ]
+A CAGED chord shape sits inside one of the five scale boxes, so the boxes are
+where it looks: for each box (`boxWindow`, anchored like the chord's scale) it
+takes the fret range the box covers on any string — a hand position, not the
+box's pitch frame, so a string tuned down still offers its new open note, which
+is what an altered tuning is for — and searches it for voicings: one chord tone
+per string on a run of adjacent strings, four strings at least (fewer on a
+smaller neck), that a hand can play (`playable`) and that hold the root, the
+third and any seventh. Of those it keeps the best (`voicingRank`). Every box
+repeats an octave either way; a voicing two boxes both pick is drawn once.
 
-        ChordDom7 ->
-            [ [ x, f 3, f 2, f 3, f 1, x ]
-            , [ x, f 3, f 5, f 3, f 5, f 3 ]
-            , [ f 8, f 7, f 5, f 5, f 5, f 6 ]
-            , [ f 8, f 10, f 8, f 9, f 8, f 8 ]
-            , [ x, x, f 10, f 12, f 11, f 12 ]
-            ]
-
-        ChordMaj7 ->
-            [ [ x, f 3, f 2, f 0, f 0, f 0 ]
-            , [ x, f 3, f 5, f 4, f 5, f 3 ]
-            , [ f 8, f 7, f 5, f 5, f 5, f 7 ]
-            , [ f 8, f 10, f 9, f 9, f 8, f 8 ]
-            , [ x, x, f 10, f 12, f 12, f 12 ]
-            ]
-
-        ChordMin7 ->
-            [ [ x, f 3, f 1, f 3, f 1, f 3 ]
-            , [ x, f 3, f 5, f 3, f 4, f 3 ]
-            , [ x, x, f 5, f 5, f 4, f 6 ]
-            , [ f 8, f 10, f 8, f 8, f 8, f 8 ]
-            , [ x, x, f 10, f 12, f 11, f 11 ]
-            ]
-
-        _ ->
-            [ [ x, f 3, f 2, f 0, f 1, f 0 ]
-            , [ x, f 3, f 5, f 5, f 5, f 3 ]
-            , [ f 8, f 7, f 5, f 5, f 5, f 8 ]
-            , [ f 8, f 10, f 10, f 9, f 8, f 8 ]
-            , [ x, x, f 10, f 12, f 13, f 12 ]
-            ]
-
-
-{-| Every CAGED voicing of a chord on the neck. Each shape is moved from C to
-the root and repeated an octave up and down, and refingered for the tuning the
-way the box windows are: a note keeps the pitch it has in standard tuning, so
-on a string tuned down a tone it sits two frets higher (the short way round).
-The shapes are written for six strings, so they use the top six; a neck with
-fewer drops the lowest notes, and one with more leaves its extra strings
-unplayed. A voicing that does not fit on the neck is left out, and one that
-refingering has made unplayable is cut down to what a hand can play
-(`fitHand`). `inversion` is
-the shape (0 C … 4 D), which picks the lasso's color, and every shape gets its
-own width so where neighboring shapes share notes their lassos nest. -}
+`inversion` is the CAGED shape (0 C, 1 A, 2 G, 3 E, 4 D), which picks the
+lasso's color, and every shape gets its own width so where neighboring shapes
+share notes their lassos nest. -}
 cagedVoicings : Tuning -> ScaleType -> Int -> List Triad
 cagedVoicings tuning scale root =
     let
         n =
             stringCount tuning
 
-        shift s =
-            let
-                d =
-                    modBy 12 (openString standardTuning s - openString tuning s)
-            in
-            if d > 6 then
-                d - 12
-
-            else
-                d
+        anchor =
+            modBy 12 (root - anchorOffset scale - anchorOpen tuning)
 
         -- Sizes interleaved so neighboring shapes, which share notes, are two
         -- steps apart; C and D, which meet across the octave, three. From the
@@ -2773,71 +2708,167 @@ cagedVoicings tuning scale root =
                 |> Maybe.withDefault 0
                 |> (\size -> 20 + 2.5 * toFloat size)
 
-        voicing shape frets octave =
+        -- Which CAGED shape a box holds. Box 1 anchors on the relative minor
+        -- for a major chord, where the G shape sits; on the root for a minor
+        -- one, where the E shape does.
+        shapeOf b =
+            modBy 5
+                (b
+                    + (if anchorOffset scale == 0 then
+                        3
+
+                       else
+                        2
+                      )
+                )
+
+        inBox b octave =
             let
-                notes =
-                    frets
-                        -- Written low E first; strings count from the top.
-                        |> List.indexedMap (\i fret -> Maybe.map (\fr -> ( 6 - i, fr )) fret)
-                        |> List.filterMap identity
-                        |> List.filter (\( s, _ ) -> s <= n)
-                        |> List.map (\( s, fr ) -> ( s, fr + modBy 12 root + 12 * octave + shift s ))
-                        |> List.sortBy Tuple.first
+                a =
+                    anchor + pentAnchor (b + 1) + 12 * octave
+
+                ( loOff, hiOff ) =
+                    boxWindow
+
+                shifts =
+                    List.map (stringShift tuning) (List.range 1 n)
+
+                lo =
+                    a + loOff + (List.minimum shifts |> Maybe.withDefault 0)
+
+                hi =
+                    a + hiOff + (List.maximum shifts |> Maybe.withDefault 0)
             in
-            if not (List.isEmpty notes) && List.all (\( _, fr ) -> fr >= 0 && fr <= numFrets) notes then
-                fitHand tuning scale root notes
-                    |> Maybe.map (\fitted -> { notes = fitted, inversion = shape, radius = radius shape })
+            chordSearch tuning scale root ( lo, hi )
+                |> Maybe.map (\notes -> { notes = notes, inversion = shapeOf b, radius = radius (shapeOf b) })
+
+        dedupe found voicing =
+            if List.any (\v -> v.notes == voicing.notes) found then
+                found
 
             else
-                Nothing
+                found ++ [ voicing ]
     in
-    cagedShapes scale
-        |> List.indexedMap
-            (\shape frets -> List.filterMap (voicing shape frets) [ -1, 0, 1 ])
-        |> List.concat
+    List.concatMap (\octave -> List.filterMap (\b -> inBox b octave) (List.range 0 4)) [ -1, 0, 1 ]
+        |> List.foldl (\v found -> dedupe found v) []
 
 
-{-| A voicing a hand can play, or the largest part of it that one can: the
-written shapes all fit in four frets and four fingers in standard tuning, but
-refingered for another tuning a shape can spread — in all fourths the B and e
-strings move up a fret, and the G shape of A7 wants six fingers. Then the run
-of adjacent strings kept is the longest that is playable and still has every
-chord tone the full voicing had of root, third and seventh (the fifth can go),
-keeping the bass where two runs tie. `Nothing` if no run of three strings or
-more will do. -}
-fitHand : Tuning -> ScaleType -> Int -> List ( Int, Int ) -> Maybe (List ( Int, Int ))
-fitHand tuning scale root notes =
+{-| The best voicing of a chord within a fret range, as `( string, fret )` from
+the top string down, or `Nothing` if no playable one holds the chord.
+
+It builds voicings a string at a time, top to bottom, abandoning one as soon
+as its fretted notes spread wider than a hand (`playable`'s four frets), so the
+search stays small: on each string only the chord tones in the range, and an
+open string wherever the range reaches the nut. -}
+chordSearch : Tuning -> ScaleType -> Int -> ( Int, Int ) -> Maybe (List ( Int, Int ))
+chordSearch tuning scale root ( lo, hi ) =
     let
+        n =
+            stringCount tuning
+
+        tones =
+            scaleIntervals scale
+
         tone ( s, f ) =
             modBy 12 (noteAt tuning s f - root)
 
         essential =
-            [ 0, thirdOf scale, seventhOf scale ]
-                |> List.filter (\t -> List.member t (List.map tone notes))
+            [ 0, thirdOf scale, seventhOf scale ] |> List.filter (\t -> t >= 0)
 
-        count =
-            List.length notes
+        shortest =
+            min 4 n
+
+        fretsOn s =
+            List.range (max 0 lo) (min numFrets hi)
+                |> List.filter (\f -> List.member (tone ( s, f )) tones)
+
+        fits notes =
+            let
+                fretted =
+                    List.filter ((<) 0) (List.map Tuple.second notes)
+            in
+            case ( List.maximum fretted, List.minimum fretted ) of
+                ( Just top, Just bottom ) ->
+                    top - bottom <= 3
+
+                _ ->
+                    True
+
+        -- Every voicing on strings top..bottom, built downward.
+        build s bottom acc =
+            if s > bottom then
+                [ List.reverse acc ]
+
+            else
+                fretsOn s
+                    |> List.concatMap
+                        (\f ->
+                            let
+                                next =
+                                    ( s, f ) :: acc
+                            in
+                            if fits next then
+                                build (s + 1) bottom next
+
+                            else
+                                []
+                        )
 
         runs =
-            List.range 0 (count - 1)
+            List.range 1 n
                 |> List.concatMap
-                    (\i -> List.map (\len -> List.take len (List.drop i notes)) (List.range 3 (count - i)))
+                    (\top ->
+                        List.range (top + shortest - 1) (min n (top + 5))
+                            |> List.concatMap (\bottom -> build top bottom [])
+                    )
 
-        ok run =
-            playable run && List.all (\t -> List.member t (List.map tone run)) essential
-
-        -- Longest first, then the one reaching the lowest string.
-        rank run =
-            ( negate (List.length run), negate (List.maximum (List.map Tuple.first run) |> Maybe.withDefault 0) )
+        holds notes =
+            List.all (\t -> List.member t (List.map tone notes)) essential
     in
-    if playable notes then
-        Just notes
+    runs
+        |> List.filter (\notes -> holds notes && playable notes)
+        |> List.sortBy (voicingRank tuning root)
+        |> List.head
 
-    else
-        runs
-            |> List.filter ok
-            |> List.sortBy rank
-            |> List.head
+
+{-| How a guitarist would choose between voicings in one position, best first:
+the root in the bass, then as many strings as possible, then as few fingers,
+then not doubling the third (the classic voicing rule, and what makes the A
+shape's barre beat an open string mixed into it), then as many open strings,
+then the narrowest stretch. Each rule is the tie-break for the ones before. -}
+voicingRank : Tuning -> Int -> List ( Int, Int ) -> List Int
+voicingRank tuning root notes =
+    let
+        tone ( s, f ) =
+            modBy 12 (noteAt tuning s f - root)
+
+        bass =
+            List.reverse notes |> List.head |> Maybe.map tone |> Maybe.withDefault 0
+
+        fretted =
+            List.filter ((<) 0) (List.map Tuple.second notes)
+
+        span =
+            Maybe.map2 (-) (List.maximum fretted) (List.minimum fretted) |> Maybe.withDefault 0
+
+        thirds =
+            List.length (List.filter (\t -> t == 3 || t == 4) (List.map tone notes))
+    in
+    [ if bass == 0 then
+        0
+
+      else
+        1
+    , negate (List.length notes)
+    , fingers notes
+    , if thirds > 1 then
+        1
+
+      else
+        0
+    , negate (List.length (List.filter ((==) 0) (List.map Tuple.second notes)))
+    , span
+    ]
 
 
 {-| Whether a hand can play a voicing: its fretted notes within four frets

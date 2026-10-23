@@ -7,6 +7,7 @@ module BoxShapeTests exposing
     , overlapCoverage
     , shapeSlugs
     , cagedChords
+    , knownChordTests
     , spelling
     , stringCounts
     , stripeEdges
@@ -1319,8 +1320,8 @@ essentialTones scale =
 
 {-| Every CAGED voicing, in every tuning and from every root, is all chord
 tones, one note per string, on the neck — and on a full six strings it has
-everything the chord needs. Plus the canon: C major in standard tuning has the
-open C shape and the E-shape barre at the 8th fret. -}
+everything the chord needs, fits in four frets and takes four fingers at most.
+Which voicings they are is `knownChordTests`' business. -}
 cagedChords : Test
 cagedChords =
     describe "CAGED chord voicings"
@@ -1370,17 +1371,7 @@ cagedChords =
                     cagedChordTypes
             )
             presetTunings
-            ++ [ test "C major in standard tuning has the open C shape and the E-shape barre" <|
-                    \_ ->
-                        let
-                            notes =
-                                List.map .notes (cagedVoicings standardTuning ChordMajor 0)
-                        in
-                        Expect.equal ( True, True )
-                            ( List.member [ ( 1, 0 ), ( 2, 1 ), ( 3, 0 ), ( 4, 2 ), ( 5, 3 ) ] notes
-                            , List.member [ ( 1, 8 ), ( 2, 8 ), ( 3, 9 ), ( 4, 10 ), ( 5, 10 ), ( 6, 8 ) ] notes
-                            )
-               , test "every voicing, in every tuning, fits under one hand: four frets, open strings aside" <|
+            ++ [ test "every voicing, in every tuning, fits under one hand: four frets, open strings aside" <|
                     \_ ->
                         Expect.equal []
                             (cagedChordTypes
@@ -1460,3 +1451,101 @@ fingersFor notes =
 
             else
                 List.length fretted
+
+
+
+{-| Chords a guitarist knows, as charts written low string first, and the
+tuning they are known in — the open chords and the CAGED barre shapes in
+standard tuning, and the open chords of drop D, DADGAD and the open tunings.
+`cagedVoicings` finds its voicings by search, with nothing written out per
+tuning; this is what it has to land on. Where a chord is commonly played two
+ways, either will do. -}
+knownChords : List ( Tuning, ( Int, ScaleType, String ), List String )
+knownChords =
+    [ ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMajor, "C" ), [ "x 3 2 0 1 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMajor, "A" ), [ "x 0 2 2 2 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordMajor, "G" ), [ "3 2 0 0 0 3" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 4, ChordMajor, "E" ), [ "0 2 2 1 0 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 2, ChordMajor, "D" ), [ "x x 0 2 3 2" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 5, ChordMajor, "F" ), [ "1 3 3 2 1 1" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 10, ChordMajor, "Bb" ), [ "x 1 3 3 3 1" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMinor, "Am" ), [ "x 0 2 2 1 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 4, ChordMinor, "Em" ), [ "0 2 2 0 0 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 2, ChordMinor, "Dm" ), [ "x x 0 2 3 1" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 5, ChordMinor, "Fm" ), [ "1 3 3 1 1 1" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 11, ChordMinor, "Bm" ), [ "x 2 4 4 3 2" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMinor, "Cm" ), [ "x 3 5 5 4 3" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordDom7, "A7" ), [ "x 0 2 0 2 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 4, ChordDom7, "E7" ), [ "0 2 0 1 0 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 2, ChordDom7, "D7" ), [ "x x 0 2 1 2" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordDom7, "G7" ), [ "3 2 0 0 0 1" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordDom7, "C7" ), [ "x 3 2 3 1 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 11, ChordDom7, "B7" ), [ "x 2 1 2 0 2" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMaj7, "Cmaj7" ), [ "x 3 2 0 0 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMaj7, "Amaj7" ), [ "x 0 2 1 2 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 2, ChordMaj7, "Dmaj7" ), [ "x x 0 2 2 2" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 4, ChordMaj7, "Emaj7" ), [ "0 2 1 1 0 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMajor, "C" ), [ "x 3 5 5 5 3" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMajor, "C" ), [ "8 7 5 5 5 8" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMajor, "C" ), [ "8 10 10 9 8 8" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 0, ChordMajor, "C" ), [ "x x 10 12 13 12" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordMajor, "G" ), [ "3 5 5 4 3 3" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordMajor, "G" ), [ "x x 5 7 8 7" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordMajor, "G" ), [ "x 10 9 7 8 7" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 7, ChordMajor, "G" ), [ "x 10 12 12 12 10" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMinor, "Am" ), [ "5 7 7 5 5 5" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMinor, "Am" ), [ "x x 7 9 10 8" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMinor, "Am" ), [ "x 12 14 14 13 12" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 9, ChordMin7, "Am7" ), [ "x 0 2 0 1 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 4, ChordMin7, "Em7" ), [ "0 2 0 0 0 0", "0 2 2 0 3 0" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 2, ChordMin7, "Dm7" ), [ "x x 0 2 1 1" ] )
+    , ( { name = "E A D G B E", slug = "E A D G B E", strings = [ 4, 11, 7, 2, 9, 4 ] }, ( 11, ChordMin7, "Bm7" ), [ "x 2 0 2 0 2" ] )
+    , ( { name = "D A D G B E", slug = "D A D G B E", strings = [ 4, 11, 7, 2, 9, 2 ] }, ( 2, ChordMajor, "D" ), [ "0 0 0 2 3 2" ] )
+    , ( { name = "D A D G B E", slug = "D A D G B E", strings = [ 4, 11, 7, 2, 9, 2 ] }, ( 2, ChordMinor, "Dm" ), [ "0 0 0 2 3 1" ] )
+    , ( { name = "D A D G B E", slug = "D A D G B E", strings = [ 4, 11, 7, 2, 9, 2 ] }, ( 2, ChordDom7, "D7" ), [ "0 0 0 2 1 2" ] )
+    , ( { name = "D A D G A D", slug = "D A D G A D", strings = [ 2, 9, 7, 2, 9, 2 ] }, ( 2, ChordMajor, "D" ), [ "0 0 4 2 0 0" ] )
+    , ( { name = "D G D G B D", slug = "D G D G B D", strings = [ 2, 11, 7, 2, 7, 2 ] }, ( 7, ChordMajor, "G" ), [ "0 0 0 0 0 0", "x 0 0 0 0 0" ] )
+    , ( { name = "D G D G B D", slug = "D G D G B D", strings = [ 2, 11, 7, 2, 7, 2 ] }, ( 0, ChordMajor, "C" ), [ "5 5 5 5 5 5", "x 5 5 5 5 5" ] )
+    , ( { name = "D G D G B D", slug = "D G D G B D", strings = [ 2, 11, 7, 2, 7, 2 ] }, ( 2, ChordMajor, "D" ), [ "7 7 7 7 7 7", "x 7 7 7 7 7" ] )
+    , ( { name = "D A D F# A D", slug = "D A D F# A D", strings = [ 2, 9, 6, 2, 9, 2 ] }, ( 2, ChordMajor, "D" ), [ "0 0 0 0 0 0" ] )
+    , ( { name = "D A D F# A D", slug = "D A D F# A D", strings = [ 2, 9, 6, 2, 9, 2 ] }, ( 7, ChordMajor, "G" ), [ "5 5 5 5 5 5", "x 5 5 5 5 5" ] )
+    , ( { name = "D A D F# A D", slug = "D A D F# A D", strings = [ 2, 9, 6, 2, 9, 2 ] }, ( 9, ChordMajor, "A" ), [ "7 7 7 7 7 7", "x 7 7 7 7 7" ] )
+    , ( { name = "E B E G# B E", slug = "E B E G# B E", strings = [ 4, 11, 8, 4, 11, 4 ] }, ( 4, ChordMajor, "E" ), [ "0 0 0 0 0 0" ] )
+    , ( { name = "E B E G# B E", slug = "E B E G# B E", strings = [ 4, 11, 8, 4, 11, 4 ] }, ( 9, ChordMajor, "A" ), [ "5 5 5 5 5 5", "x 5 5 5 5 5" ] )
+    ]
+
+
+{-| A voicing as a chord chart: low string first, `x` for a string not played. -}
+chart : Tuning -> List ( Int, Int ) -> String
+chart tuning notes =
+    List.range 1 (stringCount tuning)
+        |> List.reverse
+        |> List.map
+            (\s ->
+                List.filter (\( s2, _ ) -> s2 == s) notes
+                    |> List.head
+                    |> Maybe.map (Tuple.second >> String.fromInt)
+                    |> Maybe.withDefault "x"
+            )
+        |> String.join " "
+
+
+knownChordTests : Test
+knownChordTests =
+    describe "the search finds the chords guitarists know"
+        (List.map
+            (\( tuning, ( root, scale, name ), wanted ) ->
+                test (name ++ " in " ++ tuning.name ++ ": " ++ String.join " or " wanted) <|
+                    \_ ->
+                        let
+                            found =
+                                List.map (.notes >> chart tuning) (cagedVoicings tuning scale root)
+                        in
+                        if List.any (\w -> List.member w found) wanted then
+                            Expect.pass
+
+                        else
+                            Expect.fail ("found only: " ++ String.join ", " found)
+            )
+            knownChords
+        )

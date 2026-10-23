@@ -415,42 +415,39 @@ chord, each lassoed like a triad (`isLassoed` covers both, so the neck goes
 under the pills and the Shape card is hidden). The tab that used to be called
 Chords is **Chord tones** (triads and arpeggios): what chords are made of.
 
-- **`cagedShapes`** writes the shapes out for a C chord in standard tuning,
-  low E to high e, `Nothing` for a string not played — open C, then the A, G,
-  E and D barre shapes. These are the canon, like the canonical boxes, not
-  derived — but cut to what a hand plays: every voicing fits in four frets and
-  takes at most four fingers, a barre counting as one, at every root (the
-  tests hold standard tuning to both). Moving a shape up the neck frets its
-  open strings, which is what pushes a shape to five fingers, so the minor and
-  7 C shapes leave off the high e, and the minor G shapes their outer strings.
-  Other tunings refinger the shapes, which can spread them again, so
-  `fitHand` cuts a voicing that `playable` rejects down to the longest run of
-  adjacent strings that is playable and keeps the root, third and seventh it
-  had (bass kept on a tie), or drops it. The tests hold every preset tuning to
-  four frets and four fingers.
-- **Barres** (`barreOf`): a voicing is barred when two or more strings are
-  stopped at its lowest fret. The barre always runs from the high e (string
-  1) to the last string held at that fret — a finger lies across from the
-  bottom of the guitar, whatever strings the voicing plays — so nothing it
-  crosses, the high e included, may be open or unplayed; a voicing without
-  the high e cannot be barred.
-  `drawBarre` draws it as a thick bar in the lasso's color at that fret, over
-  the lassos and under the notes. Triads share `drawLassos` but draw no
-  barres: a triad is a fragment to see, a chord a grip to play. **`cagedVoicings`** moves them to the root, repeats them an octave
-  either way, and refingers them for the tuning the way the box windows are:
-  each note keeps its standard-tuning pitch (the short way round), so the
-  chord is right in any tuning even where the fingering turns odd. They are
-  written for six strings: fewer drops the lowest notes, more leaves the extra
-  strings unplayed.
-- A voicing is a `Triad` record: `inversion` is the shape (0 C … 4 D), which
+- **The voicings are found, not written out** (`cagedVoicings`), by one search
+  that runs for any tuning — the chord equivalent of `deriveBox`. A CAGED chord
+  shape sits inside one of the five scale boxes, so for each box (anchored by
+  the chord's `anchorOffset`, like its scale) it takes the fret range the box
+  covers on any string: a *hand position*, not the box's pitch frame, so a
+  string tuned down still offers its new open note — the pitch frame hid drop
+  D's open low D. In that range `chordSearch` builds every voicing of one
+  chord tone per string on a run of adjacent strings (four at least, or every
+  string on a smaller neck; fewer is a fragment the neck's end cut off),
+  pruning as soon as the fretted notes spread past four frets, and keeps those
+  that are `playable` and hold the root, third and any seventh. The best one
+  wins by `voicingRank`: root in the bass, most strings, fewest fingers, third
+  not doubled (what makes the A-shape barre beat an open string mixed into
+  it), most open strings, narrowest stretch. Each box repeats an octave either
+  way; a voicing two boxes pick is drawn once (in an open tuning the boxes
+  overlap and often agree).
+- **Validated, not trusted**: `knownChordTests` holds the search to a list of
+  chords a guitarist knows (`knownChords`) — the standard open chords in all
+  five qualities, the full CAGED barre sets of C, G and Am, and the open
+  chords of drop D, DADGAD, open G, open D and open E. Nothing in the search
+  is per-tuning; those come out of it. The rules were tuned against that list
+  in a Python prototype first, so a new rule should be checked against it the
+  same way: add the chords it should find before changing the ranking.
+- A voicing is a `Triad` record: `inversion` is the shape (0 C … 4 D, read off
+  the box: a major chord's box 1 is its G shape, a minor's its E shape), which
   picks its color (`--inv-1` … `--inv-5`; 4 and 5 are boxes 4 and 5's hues
   saturated), and `radius` is per shape, interleaved so neighbors — which
   share notes — nest two steps apart. The widths stay between 20 and 30: wider
   clips at the top string and breaks `pillOutline`, which needs a lasso
   narrower than a string gap (36).
 - The `cagedChords` test checks every voicing in every tuning and root is all
-  chord tones, one per string, on the neck, with root, third (and seventh)
-  present on six strings, and pins open C and the E-shape barre.
+  chord tones, one per string, on the neck, playable, with root, third (and
+  seventh) present on six strings.
 
 ## Rendering
 
