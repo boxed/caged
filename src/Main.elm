@@ -65,6 +65,10 @@ type alias Model =
     , scaleOpen : Bool
     , viewOpen : Bool
 
+    -- Which tab of the scale picker is showing. Opening the picker turns it to
+    -- the tab that holds the neck's scale; switching tabs only browses.
+    , pickerTab : PickerTab
+
     -- A window too narrow to keep both drawers open. There the drawers act
     -- like menus: one open at a time, and picking a scale shuts the picker.
     , compact : Bool
@@ -253,6 +257,7 @@ type Msg
     | ToggleColumns
     | ToggleTuningList
     | ToggleScalePicker Int
+    | SetPickerTab PickerTab
     | ToggleViewPanel
     | WindowResized Int
     | AddNeck
@@ -267,11 +272,41 @@ type Msg
     | FretClicked Int Int Int Bool
 
 
+{-| The scale picker's tabs: what kind of thing the neck shows. -}
+type PickerTab
+    = ScalesTab
+    | ChordsTab
+    | NotesTab
+
+
+{-| The tab a scale's button is on. -}
+tabOf : ScaleType -> PickerTab
+tabOf scale =
+    let
+        base =
+            baseScale (boxedOf scale)
+    in
+    if isTriad base || isArpeggio base then
+        ChordsTab
+
+    else if isChromatic base then
+        NotesTab
+
+    else
+        ScalesTab
+
+
 init : Int -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init width url key =
     let
         state =
             parseUrl url
+
+        activeScale =
+            List.drop state.active state.necks
+                |> List.head
+                |> Maybe.map .scale
+                |> Maybe.withDefault defaultNeck.scale
 
         compact =
             width < compactWidth
@@ -283,6 +318,7 @@ init width url key =
       , tuningOpen = False
       , scaleOpen = not compact
       , viewOpen = not compact
+      , pickerTab = tabOf activeScale
       , compact = compact
       , focus = state.focus
       , stringFocus = state.stringFocus
@@ -354,7 +390,19 @@ update msg model =
                     | active = clampIndex model.necks i
                     , scaleOpen = opening
                     , viewOpen = model.viewOpen && not (model.compact && opening)
+                    , pickerTab =
+                        if opening then
+                            List.drop i model.necks
+                                |> List.head
+                                |> Maybe.map (.scale >> tabOf)
+                                |> Maybe.withDefault model.pickerTab
+
+                        else
+                            model.pickerTab
                 }
+
+        SetPickerTab tab ->
+            ( { model | pickerTab = tab }, Cmd.none )
 
         ToggleViewPanel ->
             ( { model
@@ -4339,92 +4387,245 @@ chevron open =
 scalePicker : Model -> Html Msg
 scalePicker model =
     div [ class "no-print" ]
-        [ controlBlock
-            -- One radio group, broken into the families a player would look
-            -- in. The family name carries the context, so the buttons inside
-            -- it can just say "Major" — which is what keeps the picker short.
-            [ pickerGroup "Modes"
-                [ scaleButton model Ionian "Major (Ionian)"
-                , scaleButton model Dorian "Dorian"
-                , scaleButton model Phrygian "Phrygian"
-                , scaleButton model Lydian "Lydian"
-                , scaleButton model Mixolydian "Mixolydian"
-                , scaleButton model Aeolian "Minor (Aeolian)"
-                , scaleButton model Locrian "Locrian"
-                ]
-            , pickerGroup "Pentatonic"
-                [ scaleButton model MajorPent "Major"
-                , scaleButton model MinorPent "Minor"
-                , scaleButton model MajorBlues "Major blues"
-                , scaleButton model Blues "Minor blues"
-                , scaleButton model DominantPent "Dominant"
-                , scaleButton model MinorSixPent "Minor 6"
-                ]
-            , pickerGroup "Harmonic"
-                [ scaleButton model HarmonicMajor "Major"
-                , scaleButton model HarmonicMinor "Minor"
-                , scaleButton model UkrainianDorian "Ukrainian Dorian"
-                , scaleButton model PhrygianDominant "Phrygian dominant"
-                ]
-            , pickerGroup "Melodic"
-                [ scaleButton model MelodicMajor "Major"
-                , scaleButton model MelodicMinor "Minor"
-                , scaleButton model DorianFlat2 "Dorian ♭2"
-                , scaleButton model LydianAugmented "Lydian augmented"
-                , scaleButton model LydianDominant "Lydian dominant"
-                , scaleButton model LocrianNat2 "Locrian ♮2"
-                , scaleButton model Altered "Altered"
-                ]
-            , pickerGroup "Bebop"
-                [ scaleButton model BebopDominant "Dominant"
-                , scaleButton model BebopMajor "Major"
-                , scaleButton model BebopMinor "Minor"
-                ]
-            , pickerGroup "Symmetric"
-                [ scaleButton model DimHalfWhole "Dim half-whole"
-                , scaleButton model DimWholeHalf "Dim whole-half"
-                , scaleButton model WholeTone "Whole tone"
-                ]
-            , pickerGroup "Exotic"
-                [ scaleButton model DoubleHarmonic "Double harmonic"
-                , scaleButton model HungarianMinor "Hungarian minor"
-                , scaleButton model Hirajoshi "Hirajoshi"
-                , scaleButton model InSen "In Sen"
-                ]
-            , pickerGroup "Triads"
-                [ scaleButton model TriadMajor "Major"
-                , scaleButton model TriadMinor "Minor"
-                , scaleButton model TriadDim "Diminished"
-                , scaleButton model TriadAug "Augmented"
-                , scaleButton model TriadSus2 "Sus2"
-                , scaleButton model TriadSus4 "Sus4"
-                ]
-            , pickerGroup "Arpeggios"
-                [ scaleButton model ArpMaj7 "maj7"
-                , scaleButton model ArpDom7 "7"
-                , scaleButton model ArpMin7 "m7"
-                , scaleButton model ArpHalfDim "m7♭5"
-                , scaleButton model ArpDim7 "dim7"
-                ]
-            , pickerGroup "All notes"
-                [ scaleButton model ChromaticMajor "Major"
-                , scaleButton model ChromaticMinor "Minor"
-                , scaleButton model Blank "None"
-                ]
+        [ -- What to show, in one panel tabbed into the scales, the chords and
+          -- the all-notes maps. A family is a tinted card with its name on
+          -- top, so its buttons read as one unit even where the families flow
+          -- several to a line; the card's name carries the context, so the
+          -- buttons inside can just say "Major".
+          div
+            [ style "background" "var(--surface)"
+            , style "border" "1px solid var(--surface-bd)"
+            , style "border-radius" "10px"
+            , style "padding" "10px 12px 12px"
+            , style "margin-bottom" "10px"
+            , style "max-width" (String.fromFloat totalWidth ++ "px")
+            , style "box-sizing" "border-box"
             ]
-        , let
-            -- Triads are always lassoed and the all-notes maps have no shapes,
-            -- so there is no way of drawing them to pick.
-            boxed =
-                boxedOf (activeNeck model).scale
-          in
-          if isTriad boxed || isChromatic boxed then
+            [ pickerTabs model
+            , case model.pickerTab of
+                ScalesTab ->
+                    pickerCards
+                        [ scaleGroup "Modes"
+                            [ scaleButton model Ionian "Major (Ionian)"
+                            , scaleButton model Dorian "Dorian"
+                            , scaleButton model Phrygian "Phrygian"
+                            , scaleButton model Lydian "Lydian"
+                            , scaleButton model Mixolydian "Mixolydian"
+                            , scaleButton model Aeolian "Minor (Aeolian)"
+                            , scaleButton model Locrian "Locrian"
+                            ]
+                        , scaleGroup "Pentatonic"
+                            [ scaleButton model MajorPent "Major"
+                            , scaleButton model MinorPent "Minor"
+                            , scaleButton model MajorBlues "Major blues"
+                            , scaleButton model Blues "Minor blues"
+                            , scaleButton model DominantPent "Dominant"
+                            , scaleButton model MinorSixPent "Minor 6"
+                            ]
+                        , scaleGroup "Harmonic"
+                            [ scaleButton model HarmonicMajor "Major"
+                            , scaleButton model HarmonicMinor "Minor"
+                            , scaleButton model UkrainianDorian "Ukrainian Dorian"
+                            , scaleButton model PhrygianDominant "Phrygian dominant"
+                            ]
+                        , scaleGroup "Melodic"
+                            [ scaleButton model MelodicMajor "Major"
+                            , scaleButton model MelodicMinor "Minor"
+                            , scaleButton model DorianFlat2 "Dorian ♭2"
+                            , scaleButton model LydianAugmented "Lydian augmented"
+                            , scaleButton model LydianDominant "Lydian dominant"
+                            , scaleButton model LocrianNat2 "Locrian ♮2"
+                            , scaleButton model Altered "Altered"
+                            ]
+                        , scaleGroup "Bebop"
+                            [ scaleButton model BebopDominant "Dominant"
+                            , scaleButton model BebopMajor "Major"
+                            , scaleButton model BebopMinor "Minor"
+                            ]
+                        , scaleGroup "Symmetric"
+                            [ scaleButton model DimHalfWhole "Dim half-whole"
+                            , scaleButton model DimWholeHalf "Dim whole-half"
+                            , scaleButton model WholeTone "Whole tone"
+                            ]
+                        , scaleGroup "Exotic"
+                            [ scaleButton model DoubleHarmonic "Double harmonic"
+                            , scaleButton model HungarianMinor "Hungarian minor"
+                            , scaleButton model Hirajoshi "Hirajoshi"
+                            , scaleButton model InSen "In Sen"
+                            ]
+                        ]
+
+                ChordsTab ->
+                    pickerCards
+                        [ scaleGroup "Triads"
+                            [ scaleButton model TriadMajor "Major"
+                            , scaleButton model TriadMinor "Minor"
+                            , scaleButton model TriadDim "Diminished"
+                            , scaleButton model TriadAug "Augmented"
+                            , scaleButton model TriadSus2 "Sus2"
+                            , scaleButton model TriadSus4 "Sus4"
+                            ]
+                        , scaleGroup "Arpeggios"
+                            [ scaleButton model ArpMaj7 "maj7"
+                            , scaleButton model ArpDom7 "7"
+                            , scaleButton model ArpMin7 "m7"
+                            , scaleButton model ArpHalfDim "m7♭5"
+                            , scaleButton model ArpDim7 "dim7"
+                            ]
+                        ]
+
+                NotesTab ->
+                    pickerCards
+                        [ scaleGroup ""
+                            [ scaleButton model ChromaticMajor "Major"
+                            , scaleButton model ChromaticMinor "Minor"
+                            , scaleButton model Blank "None"
+                            ]
+                        ]
+            ]
+        , -- How to show it, apart from what: the neck's key and how its
+          -- scale is drawn.
+          div
+            [ style "display" "flex"
+            , style "flex-wrap" "wrap"
+            , style "gap" "8px"
+            , style "margin-bottom" "10px"
+            , style "max-width" (String.fromFloat totalWidth ++ "px")
+            ]
+            [ scaleGroup "Root" (List.map (rootButton model) (List.range 0 11))
+            , let
+                -- Triads are always lassoed and the all-notes maps have no
+                -- shapes, so there is no way of drawing them to pick.
+                boxed =
+                    boxedOf (activeNeck model).scale
+              in
+              if isTriad boxed || isChromatic boxed then
+                text ""
+
+              else
+                shapeGroup model
+            ]
+        ]
+
+
+{-| The tab bar along the top of the scale picker: Scales, Chords, All notes.
+Only one tab's families show at a time, so a picker of some fifty buttons
+reads as one short list. The tab that holds the neck's current scale carries a
+dot, so while you browse another tab you can still see where the selection
+is. -}
+pickerTabs : Model -> Html Msg
+pickerTabs model =
+    let
+        current =
+            tabOf (activeNeck model).scale
+
+        tab t lbl =
+            let
+                on =
+                    model.pickerTab == t
+            in
+            button
+                [ onClick (SetPickerTab t)
+                , style "background" "none"
+                , style "border" "none"
+                , style "border-bottom"
+                    (if on then
+                        "2px solid var(--text-strong)"
+
+                     else
+                        "2px solid transparent"
+                    )
+                , style "margin" "0 14px -1px 0"
+                , style "padding" "4px 2px 7px"
+                , style "cursor" "pointer"
+                , style "font-family" "inherit"
+                , style "font-size" "14px"
+                , style "font-weight"
+                    (if on then
+                        "600"
+
+                     else
+                        "500"
+                    )
+                , style "color"
+                    (if on then
+                        "var(--text-strong)"
+
+                     else
+                        "var(--text-2)"
+                    )
+                , style "display" "inline-flex"
+                , style "align-items" "center"
+                , style "gap" "6px"
+                ]
+                (text lbl
+                    :: (if current == t && not on then
+                            [ span
+                                [ style "width" "6px"
+                                , style "height" "6px"
+                                , style "border-radius" "50%"
+                                , style "background" "var(--text-2)"
+                                , Html.Attributes.title "The current scale is on this tab"
+                                ]
+                                []
+                            ]
+
+                        else
+                            []
+                       )
+                )
+    in
+    div
+        [ style "display" "flex"
+        , style "border-bottom" "1px solid var(--surface-bd)"
+        , style "margin-bottom" "10px"
+        ]
+        [ tab ScalesTab "Scales"
+        , tab ChordsTab "Chords"
+        , tab NotesTab "All notes"
+        ]
+
+
+{-| One tab's families, flowing and wrapping. -}
+pickerCards : List (Html Msg) -> Html Msg
+pickerCards groups =
+    div
+        [ style "display" "flex"
+        , style "flex-wrap" "wrap"
+        , style "gap" "8px"
+        ]
+        groups
+
+
+{-| A family of buttons as a tinted card, its name (if it has one) above the
+buttons. The card is what holds the family together; the buttons inside it
+wrap when they have to, under the name rather than beside it. -}
+scaleGroup : String -> List (Html Msg) -> Html Msg
+scaleGroup caption buttons =
+    div
+        [ style "background" "var(--group-bg)"
+        , style "border-radius" "8px"
+        , style "padding" "6px 6px 6px 8px"
+        ]
+        [ if String.isEmpty caption then
             text ""
 
           else
-            controlBlock [ shapeGroup model ]
-        , controlBlock
-            [ pickerGroup "Root" (List.map (rootButton model) (List.range 0 11)) ]
+            div
+                [ style "font-size" "11px"
+                , style "color" "var(--text-2)"
+                , style "font-weight" "600"
+                , style "text-transform" "uppercase"
+                , style "letter-spacing" "0.06em"
+                , style "margin" "0 0 5px 1px"
+                ]
+                [ text caption ]
+        , div
+            [ style "display" "flex"
+            , style "flex-wrap" "wrap"
+            , style "row-gap" "4px"
+            ]
+            buttons
         ]
 
 
@@ -4462,7 +4663,7 @@ shapeGroup model =
                         )
                         [ text lbl ]
     in
-    pickerGroup "Shape"
+    scaleGroup "Shape"
         [ shapeButton "Boxes"
             (if isArpeggio boxed then
                 Nothing

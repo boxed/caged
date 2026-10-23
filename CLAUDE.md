@@ -503,17 +503,29 @@ neck's **heading is its controls**:
   So nothing names the scale twice, and there is no visible selected neck:
   `active` is simply the neck the picker is under (it still feeds the legend
   and Add neck, and rides in the URL).
-- **The scale picker** is the scale groups, then the Root row. The scale
-  picker is one radio group broken into the families a player
-  would look in: Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric, Exotic,
-  Triads, Arpeggios, All notes. Below them the **Shape** row (`shapeGroup`)
-  switches Boxes / Diagonal / None — the `Diagonal` and `Plain` wrappers, so
-  ways of drawing a scale rather than scales, and they have no scale buttons.
-  A scale button lights for its scale in any shape and keeps the neck's shape
-  when the new scale has that form; a shape the scale lacks is disabled. The row is hidden for the triads
-  and the all-notes maps, which have only one way of being drawn. Each is a `pickerGroup`, an uppercase caption riding with its own
-  buttons, and the groups flow and wrap inside a `controlBlock`. The caption
-  carries the context, so the buttons can just say "Major".
+- **The scale picker** is two parts: *what* to show, then *how*. What is one
+  panel (`--surface`, bordered) behind a tab bar (`pickerTabs`): **Scales**
+  (Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric, Exotic), **Chords**
+  (Triads, Arpeggios) and **All notes**, one tab showing at a time.
+  `pickerTab` is on the model but, like the other drawer state, not in the
+  URL; opening the picker under a neck turns it to the tab that holds that
+  neck's scale (`tabOf`), and switching tabs only browses. The tab holding the
+  current scale carries a dot while another tab is showing.
+  Inside a tab each family is a tinted card (`scaleGroup`, `--group-bg`)
+  with its uppercase name on top; the cards flow and wrap (`pickerCards`). The
+  flat version this replaced — inline captions riding with their buttons, every
+  family on view, Shape and Root in the same style underneath — ran every
+  family into the next, so nothing read as a group. The card's name carries
+  the context, so the buttons can just say "Major". It is all one radio group
+  of scales.
+- Below the panel, outside it, are the **Root** and **Shape** cards: the
+  neck's key and how its scale is drawn. Shape (`shapeGroup`) switches Boxes /
+  Diagonal / None — the `Diagonal` and `Plain` wrappers, so ways of drawing a
+  scale rather than scales, and they have no scale buttons. A scale button
+  lights for its scale in any shape and keeps the neck's shape when the new
+  scale has that form; a shape the scale lacks is disabled. The Shape card is
+  hidden for the triads and the all-notes maps, which have only one way of
+  being drawn.
 - **The Strings row** (triad modes) sits under each triad neck's heading,
   outside the picker: you flip string sets while you play. `SetStringSet`
   takes the neck's slot, so it edits that neck whether or not it is active.
@@ -527,7 +539,8 @@ neck's **heading is its controls**:
   act like menus: one open at a time, and picking a scale shuts the picker (a
   root does not — root and scale are usually set together). `onResize` keeps
   `compact` current but never opens or shuts a drawer by itself.
-- **`controlBlock` is capped at `totalWidth`**, the neck's width. Without the
+- **`controlBlock`, the picker panel and the Root/Shape row are capped at
+  `totalWidth`**, the neck's width. Without the
   cap the flex row would lay every group on one line and drag the page out to
   match, because the body sizes itself to its widest row.
 - **Tuning** is a disclosure: the button reads `Standard tuning ▾`, opens the
