@@ -22,6 +22,14 @@ color — matching the style of `fretboard-reference.jpeg`.
 - **12 root notes** (C, C♯, D, ..., B) selectable with one click.
 - **Major / Minor pentatonic** toggle. Major pentatonic uses the same shapes
   as its relative minor, so the five boxes slide together as you change scale.
+- **Many more scales**, grouped the way a player looks for them: major and
+  minor blues, the seven modes, harmonic and melodic (with Phrygian dominant,
+  Lydian dominant and Altered), bebop, the symmetric diminished and whole-tone
+  scales, and maj7 / 7 / m7 / m7♭5 / dim7 arpeggios, drawn as the
+  two-notes-per-string sweep shapes they are played as. The **Shape** switch draws
+  a scale in CAGED boxes, as diagonal climbing shapes (the pentatonics, the
+  blues and every seven-note scale — a mode climbs its parent scale's shapes),
+  or with no shapes at all, just the notes.
 - **Five colored box regions** drawn as translucent polygons, matching the
   reference:
   - Box 1 — purple

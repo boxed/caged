@@ -5,6 +5,8 @@ port module Main exposing
     , anchorOpen
     , deriveBox
     , diagonalAnchor
+    , diagonalOf
+    , plainOf
     , diagonalShapes
     , diagonalShapesFor
     , fourthsFor
@@ -17,12 +19,15 @@ port module Main exposing
     , resizeTuning
     , rootSpelling
     , scaleDegrees
+    , scaleFromSlug
     , scaleIntervals
+    , scaleSlug
     , spell
     , standardFor
     , standardTuning
     , stringCount
     , thirdsFor
+    , toggleInterval
     , triadVoicingsFor
     , tuningFromSlug
     , tunings
@@ -172,6 +177,7 @@ port playNote : Int -> Cmd msg
 type ScaleType
     = MajorPent
     | MinorPent
+    | MajorBlues
     | Ionian
     | Dorian
     | Phrygian
@@ -182,11 +188,17 @@ type ScaleType
     | Blues
     | HarmonicMajor
     | HarmonicMinor
+    | PhrygianDominant
     | MelodicMajor
     | MelodicMinor
+    | LydianDominant
+    | Altered
     | BebopDominant
     | BebopMajor
     | BebopMinor
+    | DimHalfWhole
+    | DimWholeHalf
+    | WholeTone
     | ChromaticMajor
     | ChromaticMinor
     | Blank
@@ -194,11 +206,13 @@ type ScaleType
     | TriadMinor
     | TriadDim
     | TriadAug
-    | DiagonalMajorPent
-    | DiagonalPent
-    | DiagonalBlues
-    | DiagonalMajor
-    | DiagonalMinor
+    | ArpMaj7
+    | ArpDom7
+    | ArpMin7
+    | ArpHalfDim
+    | ArpDim7
+    | Diagonal ScaleType
+    | Plain ScaleType
     | Custom ScaleType (List Int)
 
 
@@ -712,6 +726,7 @@ scaleSlug s =
     case s of
         MajorPent -> "major-pent"
         MinorPent -> "minor-pent"
+        MajorBlues -> "major-blues"
         Ionian -> "ionian"
         Aeolian -> "aeolian"
         Dorian -> "dorian"
@@ -722,11 +737,17 @@ scaleSlug s =
         Blues -> "blues"
         HarmonicMajor -> "harmonic-major"
         HarmonicMinor -> "harmonic-minor"
+        PhrygianDominant -> "phrygian-dominant"
         MelodicMajor -> "melodic-major"
         MelodicMinor -> "melodic-minor"
+        LydianDominant -> "lydian-dominant"
+        Altered -> "altered"
         BebopDominant -> "bebop-dominant"
         BebopMajor -> "bebop-major"
         BebopMinor -> "bebop-minor"
+        DimHalfWhole -> "dim-half-whole"
+        DimWholeHalf -> "dim-whole-half"
+        WholeTone -> "whole-tone"
         ChromaticMajor -> "all-notes-major"
         ChromaticMinor -> "all-notes-minor"
         Blank -> "blank"
@@ -734,12 +755,27 @@ scaleSlug s =
         TriadMinor -> "triad-minor"
         TriadDim -> "triad-dim"
         TriadAug -> "triad-aug"
-        DiagonalMajorPent -> "diagonal-major-pent"
-        DiagonalPent -> "diagonal-pent"
-        DiagonalBlues -> "diagonal-blues"
-        DiagonalMajor -> "diagonal-major"
-        DiagonalMinor -> "diagonal-minor"
+        ArpMaj7 -> "arp-maj7"
+        ArpDom7 -> "arp-7"
+        ArpMin7 -> "arp-m7"
+        ArpHalfDim -> "arp-m7b5"
+        ArpDim7 -> "arp-dim7"
+        Diagonal base -> diagonalSlug base
+        Plain base -> "plain-" ++ scaleSlug base
         Custom base intervals -> scaleSlug base ++ "_" ++ String.concat (List.map intervalDigit intervals)
+
+
+{-| A diagonal scale's slug. The five that existed before every seven-note scale
+could be drawn diagonally keep the slugs they had, so old links still open. -}
+diagonalSlug : ScaleType -> String
+diagonalSlug base =
+    case base of
+        MajorPent -> "diagonal-major-pent"
+        MinorPent -> "diagonal-pent"
+        Blues -> "diagonal-blues"
+        Ionian -> "diagonal-major"
+        Aeolian -> "diagonal-minor"
+        _ -> "diagonal-" ++ scaleSlug base
 
 
 {-| One interval as a single hex digit, so a custom scale's notes pack into
@@ -751,6 +787,11 @@ intervalDigit i =
 
 scaleFromSlug : String -> Maybe ScaleType
 scaleFromSlug str =
+    if String.startsWith "plain-" str then
+        scaleFromSlug (String.dropLeft (String.length "plain-") str)
+            |> Maybe.andThen plainOf
+
+    else
     case String.split "_" str of
         [ base, digits ] ->
             presetFromSlug base
@@ -771,6 +812,7 @@ presetFromSlug s =
     case s of
         "major-pent" -> Just MajorPent
         "minor-pent" -> Just MinorPent
+        "major-blues" -> Just MajorBlues
         "ionian" -> Just Ionian
         "aeolian" -> Just Aeolian
         "dorian" -> Just Dorian
@@ -781,11 +823,17 @@ presetFromSlug s =
         "blues" -> Just Blues
         "harmonic-major" -> Just HarmonicMajor
         "harmonic-minor" -> Just HarmonicMinor
+        "phrygian-dominant" -> Just PhrygianDominant
         "melodic-major" -> Just MelodicMajor
         "melodic-minor" -> Just MelodicMinor
+        "lydian-dominant" -> Just LydianDominant
+        "altered" -> Just Altered
         "bebop-dominant" -> Just BebopDominant
         "bebop-major" -> Just BebopMajor
         "bebop-minor" -> Just BebopMinor
+        "dim-half-whole" -> Just DimHalfWhole
+        "dim-whole-half" -> Just DimWholeHalf
+        "whole-tone" -> Just WholeTone
         "all-notes-major" -> Just ChromaticMajor
         "all-notes-minor" -> Just ChromaticMinor
         "blank" -> Just Blank
@@ -793,14 +841,25 @@ presetFromSlug s =
         "triad-minor" -> Just TriadMinor
         "triad-dim" -> Just TriadDim
         "triad-aug" -> Just TriadAug
+        "arp-maj7" -> Just ArpMaj7
+        "arp-7" -> Just ArpDom7
+        "arp-m7" -> Just ArpMin7
+        "arp-m7b5" -> Just ArpHalfDim
+        "arp-dim7" -> Just ArpDim7
         -- The all-notes map used to be a single mode; keep old links working.
         "all-notes" -> Just ChromaticMinor
-        "diagonal-major-pent" -> Just DiagonalMajorPent
-        "diagonal-pent" -> Just DiagonalPent
-        "diagonal-blues" -> Just DiagonalBlues
-        "diagonal-major" -> Just DiagonalMajor
-        "diagonal-minor" -> Just DiagonalMinor
-        _ -> Nothing
+        "diagonal-major-pent" -> Just (Diagonal MajorPent)
+        "diagonal-pent" -> Just (Diagonal MinorPent)
+        "diagonal-blues" -> Just (Diagonal Blues)
+        "diagonal-major" -> Just (Diagonal Ionian)
+        "diagonal-minor" -> Just (Diagonal Aeolian)
+        _ ->
+            if String.startsWith "diagonal-" s then
+                presetFromSlug (String.dropLeft (String.length "diagonal-") s)
+                    |> Maybe.andThen diagonalOf
+
+            else
+                Nothing
 
 
 stringSetSlug : StringSet -> String
@@ -890,7 +949,7 @@ parseUrl url =
         scale =
             lookup "scale"
                 |> Maybe.andThen scaleFromSlug
-                |> Maybe.withDefault MinorPent
+                |> Maybe.withDefault defaultNeck.scale
 
         stringSet =
             lookup "strings"
@@ -901,7 +960,7 @@ parseUrl url =
             { root =
                 lookup "root"
                     |> Maybe.andThen rootFromSlug
-                    |> Maybe.withDefault 9
+                    |> Maybe.withDefault defaultNeck.root
             , scale = scale
             , stringSet = stringSet
             }
@@ -976,9 +1035,10 @@ activeNeck model =
         |> Maybe.withDefault defaultNeck
 
 
+{-| What a bare page opens on: C major, the first scale in the picker. -}
 defaultNeck : Neck
 defaultNeck =
-    { root = 9, scale = MinorPent, stringSet = AllStrings }
+    { root = 0, scale = Ionian, stringSet = AllStrings }
 
 
 {-| Applies an edit to the active neck and leaves the rest alone — every
@@ -1311,11 +1371,18 @@ accidentalFor li pc =
         raw - 12
 
 
-{-| Candidate letters for spelling a root: those needing at most a double
-accidental (|acc| ≤ 2). -}
+{-| Candidate letters for spelling a root. A natural note is always its own
+letter — the root you picked as C is never shown as B♯, even where that would
+save accidentals (C diminished 7th would otherwise come out B♯ D♯ F♯ A). A black
+key is either of its two names. -}
 rootLetterCandidates : Int -> List Int
 rootLetterCandidates pc =
-    List.filter (\li -> abs (accidentalFor li pc) <= 2) (List.range 0 6)
+    case List.filter (\li -> accidentalFor li pc == 0) (List.range 0 6) of
+        [] ->
+            List.filter (\li -> abs (accidentalFor li pc) == 1) (List.range 0 6)
+
+        natural ->
+            natural
 
 
 {-| Cost of spelling a scale with a given root letter: the sum of squared
@@ -1422,6 +1489,7 @@ scaleDegrees st =
     case st of
         MajorPent -> [ 1, 2, 3, 5, 6 ]
         MinorPent -> [ 1, 3, 4, 5, 7 ]
+        MajorBlues -> [ 1, 2, 3, 3, 5, 6 ]
         Ionian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Aeolian -> [ 1, 2, 3, 4, 5, 6, 7 ]
         Dorian -> [ 1, 2, 3, 4, 5, 6, 7 ]
@@ -1432,11 +1500,17 @@ scaleDegrees st =
         Blues -> [ 1, 3, 4, 5, 5, 7 ]
         HarmonicMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         HarmonicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        PhrygianDominant -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
         MelodicMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        LydianDominant -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        Altered -> [ 1, 2, 2, 3, 5, 5, 7 ]
         BebopDominant -> [ 1, 2, 3, 4, 5, 6, 7, 7 ]
         BebopMajor -> [ 1, 2, 3, 4, 5, 6, 6, 7 ]
         BebopMinor -> [ 1, 2, 3, 3, 4, 5, 6, 7 ]
+        DimHalfWhole -> [ 1, 2, 2, 3, 4, 5, 6, 7 ]
+        DimWholeHalf -> [ 1, 2, 3, 4, 5, 6, 6, 7 ]
+        WholeTone -> [ 1, 2, 3, 4, 5, 7 ]
         ChromaticMajor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         ChromaticMinor -> [ 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7 ]
         Blank -> []
@@ -1444,11 +1518,13 @@ scaleDegrees st =
         TriadMinor -> [ 1, 3, 5 ]
         TriadDim -> [ 1, 3, 5 ]
         TriadAug -> [ 1, 3, 5 ]
-        DiagonalMajorPent -> [ 1, 2, 3, 5, 6 ]
-        DiagonalPent -> [ 1, 3, 4, 5, 7 ]
-        DiagonalBlues -> [ 1, 3, 4, 5, 5, 7 ]
-        DiagonalMajor -> [ 1, 2, 3, 4, 5, 6, 7 ]
-        DiagonalMinor -> [ 1, 2, 3, 4, 5, 6, 7 ]
+        ArpMaj7 -> [ 1, 3, 5, 7 ]
+        ArpDom7 -> [ 1, 3, 5, 7 ]
+        ArpMin7 -> [ 1, 3, 5, 7 ]
+        ArpHalfDim -> [ 1, 3, 5, 7 ]
+        ArpDim7 -> [ 1, 3, 5, 7 ]
+        Diagonal base -> scaleDegrees base
+        Plain base -> scaleDegrees base
         Custom base intervals -> List.map (customDegree base) intervals
 
 
@@ -1825,6 +1901,10 @@ scaleIntervals st =
         Locrian ->
             [ 0, 1, 3, 5, 6, 8, 10 ]
 
+        -- The major pentatonic with the minor third as a passing tone.
+        MajorBlues ->
+            [ 0, 2, 3, 4, 7, 9 ]
+
         Blues ->
             [ 0, 3, 5, 6, 7, 10 ]
 
@@ -1835,6 +1915,10 @@ scaleIntervals st =
         HarmonicMinor ->
             [ 0, 2, 3, 5, 7, 8, 11 ]
 
+        -- Harmonic minor's fifth mode: the dominant of a minor key.
+        PhrygianDominant ->
+            [ 0, 1, 4, 5, 7, 8, 10 ]
+
         -- Major with ♭6 and ♭7 (Mixolydian ♭6), the mirror of melodic minor's
         -- raised 6th and 7th.
         MelodicMajor ->
@@ -1842,6 +1926,14 @@ scaleIntervals st =
 
         MelodicMinor ->
             [ 0, 2, 3, 5, 7, 9, 11 ]
+
+        -- Melodic minor's fourth and seventh modes, the two dominant
+        -- scales of jazz: 7♯11 and the altered dominant.
+        LydianDominant ->
+            [ 0, 2, 4, 6, 7, 9, 10 ]
+
+        Altered ->
+            [ 0, 1, 3, 4, 6, 8, 10 ]
 
         -- The bebop scales add one chromatic passing tone to a seven-note
         -- scale, so a run of eighth notes lands its chord tones on the beat:
@@ -1854,6 +1946,17 @@ scaleIntervals st =
 
         BebopMinor ->
             [ 0, 2, 3, 4, 5, 7, 9, 10 ]
+
+        -- The symmetric scales: the diminished ones repeat every minor
+        -- third, the whole-tone scale every whole step.
+        DimHalfWhole ->
+            [ 0, 1, 3, 4, 6, 7, 9, 10 ]
+
+        DimWholeHalf ->
+            [ 0, 2, 3, 5, 6, 8, 9, 11 ]
+
+        WholeTone ->
+            [ 0, 2, 4, 6, 8, 10 ]
 
         ChromaticMajor ->
             List.range 0 11
@@ -1876,20 +1979,28 @@ scaleIntervals st =
         TriadAug ->
             [ 0, 4, 8 ]
 
-        DiagonalMajorPent ->
-            [ 0, 2, 4, 7, 9 ]
+        -- Seventh-chord arpeggios. Unlike the triads they are drawn as
+        -- CAGED boxes: an arpeggio is played by position, like a scale.
+        ArpMaj7 ->
+            [ 0, 4, 7, 11 ]
 
-        DiagonalPent ->
-            [ 0, 3, 5, 7, 10 ]
+        ArpDom7 ->
+            [ 0, 4, 7, 10 ]
 
-        DiagonalBlues ->
-            [ 0, 3, 5, 6, 7, 10 ]
+        ArpMin7 ->
+            [ 0, 3, 7, 10 ]
 
-        DiagonalMajor ->
-            [ 0, 2, 4, 5, 7, 9, 11 ]
+        ArpHalfDim ->
+            [ 0, 3, 6, 10 ]
 
-        DiagonalMinor ->
-            [ 0, 2, 3, 5, 7, 8, 10 ]
+        ArpDim7 ->
+            [ 0, 3, 6, 9 ]
+
+        Diagonal base ->
+            scaleIntervals base
+
+        Plain base ->
+            scaleIntervals base
 
         Custom _ intervals ->
             intervals
@@ -1927,6 +2038,17 @@ baseScale scale =
 {-| Adds the interval to the scale, or takes it out if it is already there. -}
 toggleInterval : Int -> ScaleType -> ScaleType
 toggleInterval interval scale =
+    case scale of
+        Plain inner ->
+            -- Building a scale on a neck with no shapes keeps it that way.
+            Plain (toggleInterval interval inner)
+
+        _ ->
+            toggleIntervalShaped interval scale
+
+
+toggleIntervalShaped : Int -> ScaleType -> ScaleType
+toggleIntervalShaped interval scale =
     let
         intervals =
             scaleIntervals scale
@@ -2007,7 +2129,74 @@ rootFret board =
 
 isDiagonal : ScaleType -> Bool
 isDiagonal scale =
-    List.member scale [ DiagonalMajorPent, DiagonalPent, DiagonalBlues, DiagonalMajor, DiagonalMinor ]
+    case scale of
+        Diagonal _ -> True
+        _ -> isArpeggio scale
+
+
+{-| The seventh-chord arpeggios. They are always drawn diagonally, the way a
+triad is always lassoed: an arpeggio is learned as a sweep shape climbing
+across the neck, two notes per string, not as a position, so there are no
+boxes for it. -}
+isArpeggio : ScaleType -> Bool
+isArpeggio scale =
+    List.member scale [ ArpMaj7, ArpDom7, ArpMin7, ArpHalfDim, ArpDim7 ]
+
+
+{-| The diagonal climbing shapes of a scale, for the scales that have them:
+the pentatonics and the blues, which have shapes of their own, every
+seven-note scale, whose shapes `splitDiagonalPatterns` reads off its
+intervals, and the arpeggios, which are diagonal already. An edited scale has
+none: it is drawn in boxes. -}
+diagonalOf : ScaleType -> Maybe ScaleType
+diagonalOf scale =
+    case scale of
+        MajorPent -> Just (Diagonal scale)
+        MinorPent -> Just (Diagonal scale)
+        Blues -> Just (Diagonal scale)
+        Diagonal _ -> Nothing
+        Custom _ _ -> Nothing
+        _ ->
+            if isArpeggio scale then
+                Just scale
+
+            else if List.length (scaleIntervals scale) == 7 then
+                Just (Diagonal scale)
+
+            else
+                Nothing
+
+
+{-| A scale drawn with no shapes at all, just its notes: for every scale that
+has shapes to leave off, which is all but the all-notes maps (no shapes to
+begin with) and the triads (whose lassos are the point). -}
+plainOf : ScaleType -> Maybe ScaleType
+plainOf scale =
+    case scale of
+        Diagonal _ -> Nothing
+        Plain _ -> Nothing
+        _ ->
+            if isChromatic scale || isTriad scale then
+                Nothing
+
+            else
+                Just (Plain scale)
+
+
+isPlain : ScaleType -> Bool
+isPlain scale =
+    case scale of
+        Plain _ -> True
+        _ -> False
+
+
+{-| The scale a diagonal or plain one draws, in boxes; every other scale is itself. -}
+boxedOf : ScaleType -> ScaleType
+boxedOf scale =
+    case scale of
+        Diagonal base -> base
+        Plain base -> base
+        _ -> scale
 
 
 {-| The two all-notes maps — every note on the neck, with the chord tones read
@@ -2054,6 +2243,7 @@ anchorOffset : ScaleType -> Int
 anchorOffset scale =
     case scale of
         MajorPent -> 3
+        MajorBlues -> 3
         Ionian -> 3
         Dorian -> 5
         Phrygian -> 7
@@ -2061,14 +2251,20 @@ anchorOffset scale =
         Mixolydian -> 10
         Locrian -> 2
         HarmonicMajor -> 3
+        PhrygianDominant -> 7
         MelodicMajor -> 3
+        LydianDominant -> 5
+        Altered -> 11
         BebopDominant -> 10
         BebopMajor -> 3
         BebopMinor -> 5
+        DimHalfWhole -> 3
+        WholeTone -> 3
         ChromaticMajor -> 3
         TriadMajor -> 3
         TriadAug -> 3
-        DiagonalMajor -> 3
+        Diagonal base -> anchorOffset base
+        Plain base -> anchorOffset base
         Custom base intervals ->
             -- An edited scale goes by its third: while it still has the
             -- preset's third it keeps the preset's boxes, and once it has
@@ -2381,7 +2577,7 @@ type alias DiagShape =
 
 diagonalShapes : List DiagShape
 diagonalShapes =
-    diagonalShapesFor 6 DiagonalPent
+    diagonalShapesFor 6 (Diagonal MinorPent)
 
 
 {-| The diagonal shapes for a given scale on a neck of `n` strings. Minor and
@@ -2452,36 +2648,62 @@ Pattern 1 is the one that starts on the lower string; pattern 2 is it rotated
 180° and offset 5 frets left, so the strings swap note content. -}
 diagonalPatterns : ScaleType -> ( ( List Int, List Int ), ( List Int, List Int ) )
 diagonalPatterns scale =
-    case scale of
-        DiagonalMajor ->
-            diatonicDiagonalPatterns
-
-        DiagonalMinor ->
-            diatonicDiagonalPatterns
-
-        DiagonalBlues ->
+    case boxedOf scale of
+        Blues ->
             -- Pattern 1: ♭5 added between 4 and 5 on the lower string.
             -- Pattern 2: ♭5 added between 4 and 5 on the upper string.
             ( ( [ 0, 2, 3, 4 ], [ 2, 4 ] )
             , ( [ -5, -3 ], [ -5, -3, -2, -1 ] )
             )
 
-        _ ->
-            -- Pattern 1: three notes on the lower string, two right-aligned on the upper.
-            -- Pattern 2: each pattern-1 shape rotated 180° and offset 5 frets left —
-            -- two notes on the lower string, three left-aligned on the upper.
-            ( ( [ 0, 2, 4 ], [ 2, 4 ] )
-            , ( [ -5, -3 ], [ -5, -3, -1 ] )
-            )
+        MinorPent ->
+            pentatonicDiagonalPatterns
+
+        MajorPent ->
+            pentatonicDiagonalPatterns
+
+        base ->
+            splitDiagonalPatterns base
 
 
-diatonicDiagonalPatterns : ( ( List Int, List Int ), ( List Int, List Int ) )
-diatonicDiagonalPatterns =
-    -- Pattern 1: four notes on the lower string, three on the upper.
-    -- Pattern 2: three notes on the lower string, four on the upper.
-    ( ( [ 0, 2, 3, 5 ], [ 2, 3, 5 ] )
-    , ( [ -5, -4, -2 ], [ -5, -3, -2, 0 ] )
+pentatonicDiagonalPatterns : ( ( List Int, List Int ), ( List Int, List Int ) )
+pentatonicDiagonalPatterns =
+    -- Pattern 1: three notes on the lower string, two right-aligned on the upper.
+    -- Pattern 2: each pattern-1 shape rotated 180° and offset 5 frets left —
+    -- two notes on the lower string, three left-aligned on the upper.
+    ( ( [ 0, 2, 4 ], [ 2, 4 ] )
+    , ( [ -5, -3 ], [ -5, -3, -1 ] )
     )
+
+
+{-| An octave split over a string pair, read off the intervals: 4 + 3 for a
+seven-note scale, 2 + 2 for an arpeggio. Rotated to start on the box anchor
+(`anchorOffset`), the lower string carries the first half of the notes and the
+upper string, a fourth up, the rest. Pattern 2 is the same octave the other way
+round: the second half on the lower string, an octave down, and the first half
+on the upper. Natural minor gives the classic diagonal minor shape, and every
+mode draws its parent scale's shapes, the way its boxes are its parent's boxes
+— D Dorian draws C major's. An arpeggio anchors on its root, so it climbs as
+the two-notes-per-string sweep shape: R 3 on one string, 5 7 on the next. -}
+splitDiagonalPatterns : ScaleType -> ( ( List Int, List Int ), ( List Int, List Int ) )
+splitDiagonalPatterns scale =
+    let
+        rotated =
+            List.sort (anchorScaleSet scale)
+
+        half =
+            (List.length rotated + 1) // 2
+
+        low =
+            List.take half rotated
+
+        high =
+            List.drop half rotated
+
+        down n =
+            List.map (\i -> i - n)
+    in
+    ( ( low, down 5 high ), ( down 12 high, down 5 low ) )
 
 
 {-| Anchor fret on the low-E string (open = pitch 4, see `anchorOpen`). Minor pentatonic anchors
@@ -2494,18 +2716,18 @@ diagonalAnchor tuning scale root =
         lowE =
             anchorOpen tuning
     in
-    case scale of
-        DiagonalMajorPent ->
+    case boxedOf scale of
+        MajorPent ->
             modBy 12 (root - lowE)
 
-        DiagonalMajor ->
-            modBy 12 (root - 3 - lowE)
-
-        DiagonalMinor ->
-            modBy 12 (root - lowE)
-
-        _ ->
+        MinorPent ->
             modBy 12 (root + 3 - lowE)
+
+        Blues ->
+            modBy 12 (root + 3 - lowE)
+
+        base ->
+            modBy 12 (root - anchorOffset base - lowE)
 
 
 diagonalBoxOf : Tuning -> ScaleType -> Int -> Int -> Int -> Maybe Int
@@ -2600,6 +2822,7 @@ thirdOf scale =
     case scale of
         MajorPent -> 4
         MinorPent -> 3
+        MajorBlues -> 4
         Ionian -> 4
         Aeolian -> 3
         Dorian -> 3
@@ -2610,11 +2833,17 @@ thirdOf scale =
         Blues -> 3
         HarmonicMajor -> 4
         HarmonicMinor -> 3
+        PhrygianDominant -> 4
         MelodicMajor -> 4
         MelodicMinor -> 3
+        LydianDominant -> 4
+        Altered -> 4
         BebopDominant -> 4
         BebopMajor -> 4
         BebopMinor -> 3
+        DimHalfWhole -> 4
+        DimWholeHalf -> 3
+        WholeTone -> 4
         ChromaticMajor -> -1
         ChromaticMinor -> -1
         Blank -> -1
@@ -2622,11 +2851,13 @@ thirdOf scale =
         TriadMinor -> 3
         TriadDim -> 3
         TriadAug -> 4
-        DiagonalMajorPent -> 4
-        DiagonalPent -> 3
-        DiagonalBlues -> 3
-        DiagonalMajor -> 4
-        DiagonalMinor -> 3
+        ArpMaj7 -> 4
+        ArpDom7 -> 4
+        ArpMin7 -> 3
+        ArpHalfDim -> 3
+        ArpDim7 -> 3
+        Diagonal base -> thirdOf base
+        Plain base -> thirdOf base
         Custom base intervals -> pickTone base intervals (thirdOf base) 3 4
 
 
@@ -2636,6 +2867,7 @@ seventhOf scale =
     case scale of
         MajorPent -> -1
         MinorPent -> 10
+        MajorBlues -> -1
         Ionian -> 11
         Aeolian -> 10
         Dorian -> 10
@@ -2646,11 +2878,17 @@ seventhOf scale =
         Blues -> 10
         HarmonicMajor -> 11
         HarmonicMinor -> 11
+        PhrygianDominant -> 10
         MelodicMajor -> 10
         MelodicMinor -> 11
+        LydianDominant -> 10
+        Altered -> 10
         BebopDominant -> 10
         BebopMajor -> 11
         BebopMinor -> 10
+        DimHalfWhole -> 10
+        DimWholeHalf -> 11
+        WholeTone -> 10
         ChromaticMajor -> -1
         ChromaticMinor -> -1
         Blank -> -1
@@ -2658,11 +2896,13 @@ seventhOf scale =
         TriadMinor -> -1
         TriadDim -> -1
         TriadAug -> -1
-        DiagonalMajorPent -> -1
-        DiagonalPent -> 10
-        DiagonalBlues -> 10
-        DiagonalMajor -> 11
-        DiagonalMinor -> 10
+        ArpMaj7 -> 11
+        ArpDom7 -> 10
+        ArpMin7 -> 10
+        ArpHalfDim -> 10
+        ArpDim7 -> 9
+        Diagonal base -> seventhOf base
+        Plain base -> seventhOf base
         Custom base intervals -> pickTone base intervals (seventhOf base) 10 11
 
 
@@ -2677,6 +2917,18 @@ fifthInterval scale =
 
         TriadAug ->
             8
+
+        ArpHalfDim ->
+            6
+
+        ArpDim7 ->
+            6
+
+        Diagonal base ->
+            fifthInterval base
+
+        Plain base ->
+            fifthInterval base
 
         Custom base intervals ->
             if List.member (fifthInterval base) intervals then
@@ -3553,6 +3805,7 @@ scaleTitle scale =
     case scale of
         MajorPent -> "Major Pentatonic"
         MinorPent -> "Minor Pentatonic"
+        MajorBlues -> "Major Blues"
         Ionian -> "Major (Ionian)"
         Aeolian -> "Minor (Aeolian)"
         Dorian -> "Dorian"
@@ -3563,11 +3816,17 @@ scaleTitle scale =
         Blues -> "Blues"
         HarmonicMajor -> "Harmonic Major"
         HarmonicMinor -> "Harmonic Minor"
+        PhrygianDominant -> "Phrygian Dominant"
         MelodicMajor -> "Melodic Major"
         MelodicMinor -> "Melodic Minor"
+        LydianDominant -> "Lydian Dominant"
+        Altered -> "Altered"
         BebopDominant -> "Bebop Dominant"
         BebopMajor -> "Bebop Major"
         BebopMinor -> "Bebop Minor"
+        DimHalfWhole -> "Half-Whole Diminished"
+        DimWholeHalf -> "Whole-Half Diminished"
+        WholeTone -> "Whole Tone"
         ChromaticMajor -> "— All Notes (major)"
         ChromaticMinor -> "— All Notes (minor)"
         Blank -> "Blank neck"
@@ -3575,11 +3834,13 @@ scaleTitle scale =
         TriadMinor -> "Minor Triad"
         TriadDim -> "Diminished Triad"
         TriadAug -> "Augmented Triad"
-        DiagonalMajorPent -> "Diagonal Major Pentatonic"
-        DiagonalPent -> "Diagonal Minor Pentatonic"
-        DiagonalBlues -> "Diagonal Blues"
-        DiagonalMajor -> "Diagonal Major"
-        DiagonalMinor -> "Diagonal Minor"
+        ArpMaj7 -> "Major 7th Arpeggio"
+        ArpDom7 -> "Dominant 7th Arpeggio"
+        ArpMin7 -> "Minor 7th Arpeggio"
+        ArpHalfDim -> "Half-Diminished Arpeggio"
+        ArpDim7 -> "Diminished 7th Arpeggio"
+        Diagonal base -> "Diagonal " ++ scaleTitle base
+        Plain base -> scaleTitle base
         Custom base intervals ->
             let
                 baseIntervals =
@@ -3610,6 +3871,7 @@ intervalLabels st =
     case st of
         MajorPent -> [ "R", "2", "3", "5", "6" ]
         MinorPent -> [ "R", "♭3", "4", "5", "♭7" ]
+        MajorBlues -> [ "R", "2", "♭3", "3", "5", "6" ]
         Ionian -> [ "R", "2", "3", "4", "5", "6", "7" ]
         Aeolian -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
         Dorian -> [ "R", "2", "♭3", "4", "5", "6", "♭7" ]
@@ -3620,11 +3882,17 @@ intervalLabels st =
         Blues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
         HarmonicMajor -> [ "R", "2", "3", "4", "5", "♭6", "7" ]
         HarmonicMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "7" ]
+        PhrygianDominant -> [ "R", "♭2", "3", "4", "5", "♭6", "♭7" ]
         MelodicMajor -> [ "R", "2", "3", "4", "5", "♭6", "♭7" ]
         MelodicMinor -> [ "R", "2", "♭3", "4", "5", "6", "7" ]
+        LydianDominant -> [ "R", "2", "3", "♯4", "5", "6", "♭7" ]
+        Altered -> [ "R", "♭2", "♯2", "3", "♭5", "♯5", "♭7" ]
         BebopDominant -> [ "R", "2", "3", "4", "5", "6", "♭7", "7" ]
         BebopMajor -> [ "R", "2", "3", "4", "5", "♭6", "6", "7" ]
         BebopMinor -> [ "R", "2", "♭3", "3", "4", "5", "6", "♭7" ]
+        DimHalfWhole -> [ "R", "♭2", "♯2", "3", "♯4", "5", "6", "♭7" ]
+        DimWholeHalf -> [ "R", "2", "♭3", "4", "♭5", "♭6", "6", "7" ]
+        WholeTone -> [ "R", "2", "3", "♯4", "♯5", "♭7" ]
         ChromaticMajor -> List.repeat 12 ""
         ChromaticMinor -> List.repeat 12 ""
         Blank -> []
@@ -3632,11 +3900,13 @@ intervalLabels st =
         TriadMinor -> [ "R", "♭3", "5" ]
         TriadDim -> [ "R", "♭3", "♭5" ]
         TriadAug -> [ "R", "3", "♯5" ]
-        DiagonalMajorPent -> [ "R", "2", "3", "5", "6" ]
-        DiagonalPent -> [ "R", "♭3", "4", "5", "♭7" ]
-        DiagonalBlues -> [ "R", "♭3", "4", "♭5", "5", "♭7" ]
-        DiagonalMajor -> [ "R", "2", "3", "4", "5", "6", "7" ]
-        DiagonalMinor -> [ "R", "2", "♭3", "4", "5", "♭6", "♭7" ]
+        ArpMaj7 -> [ "R", "3", "5", "7" ]
+        ArpDom7 -> [ "R", "3", "5", "♭7" ]
+        ArpMin7 -> [ "R", "♭3", "5", "♭7" ]
+        ArpHalfDim -> [ "R", "♭3", "♭5", "♭7" ]
+        ArpDim7 -> [ "R", "♭3", "♭5", "♭♭7" ]
+        Diagonal base -> intervalLabels base
+        Plain base -> intervalLabels base
         Custom base intervals -> List.map (customLabel base) intervals
 
 
@@ -3899,16 +4169,10 @@ scalePicker : Model -> Html Msg
 scalePicker model =
     div [ class "no-print" ]
         [ controlBlock
-            -- One radio group of 28 options, broken into the families a player
-            -- would look in. The family name carries the context, so the
-            -- buttons inside it can just say "Major" — which is what makes the
-            -- whole picker fit in two lines instead of four long rows.
-            [ pickerGroup "Pentatonic"
-                [ scaleButton model MajorPent "Major"
-                , scaleButton model MinorPent "Minor"
-                , scaleButton model Blues "Blues"
-                ]
-            , pickerGroup "Modes"
+            -- One radio group, broken into the families a player would look
+            -- in. The family name carries the context, so the buttons inside
+            -- it can just say "Major" — which is what keeps the picker short.
+            [ pickerGroup "Modes"
                 [ scaleButton model Ionian "Major (Ionian)"
                 , scaleButton model Dorian "Dorian"
                 , scaleButton model Phrygian "Phrygian"
@@ -3917,25 +4181,32 @@ scalePicker model =
                 , scaleButton model Aeolian "Minor (Aeolian)"
                 , scaleButton model Locrian "Locrian"
                 ]
+            , pickerGroup "Pentatonic"
+                [ scaleButton model MajorPent "Major"
+                , scaleButton model MinorPent "Minor"
+                , scaleButton model MajorBlues "Major blues"
+                , scaleButton model Blues "Minor blues"
+                ]
             , pickerGroup "Harmonic"
                 [ scaleButton model HarmonicMajor "Major"
                 , scaleButton model HarmonicMinor "Minor"
+                , scaleButton model PhrygianDominant "Phrygian dominant"
                 ]
             , pickerGroup "Melodic"
                 [ scaleButton model MelodicMajor "Major"
                 , scaleButton model MelodicMinor "Minor"
+                , scaleButton model LydianDominant "Lydian dominant"
+                , scaleButton model Altered "Altered"
                 ]
             , pickerGroup "Bebop"
                 [ scaleButton model BebopDominant "Dominant"
                 , scaleButton model BebopMajor "Major"
                 , scaleButton model BebopMinor "Minor"
                 ]
-            , pickerGroup "Diagonal"
-                [ scaleButton model DiagonalMajorPent "Major pent"
-                , scaleButton model DiagonalPent "Minor pent"
-                , scaleButton model DiagonalBlues "Blues"
-                , scaleButton model DiagonalMajor "Major"
-                , scaleButton model DiagonalMinor "Minor"
+            , pickerGroup "Symmetric"
+                [ scaleButton model DimHalfWhole "Dim half-whole"
+                , scaleButton model DimWholeHalf "Dim whole-half"
+                , scaleButton model WholeTone "Whole tone"
                 ]
             , pickerGroup "Triads"
                 [ scaleButton model TriadMajor "Major"
@@ -3943,14 +4214,71 @@ scalePicker model =
                 , scaleButton model TriadDim "Diminished"
                 , scaleButton model TriadAug "Augmented"
                 ]
+            , pickerGroup "Arpeggios"
+                [ scaleButton model ArpMaj7 "maj7"
+                , scaleButton model ArpDom7 "7"
+                , scaleButton model ArpMin7 "m7"
+                , scaleButton model ArpHalfDim "m7♭5"
+                , scaleButton model ArpDim7 "dim7"
+                ]
             , pickerGroup "All notes"
                 [ scaleButton model ChromaticMajor "Major"
                 , scaleButton model ChromaticMinor "Minor"
                 , scaleButton model Blank "None"
                 ]
             ]
+        , controlBlock [ shapeGroup model ]
         , controlBlock
             [ pickerGroup "Root" (List.map (rootButton model) (List.range 0 11)) ]
+        ]
+
+
+{-| How the scale is drawn: CAGED boxes, the diagonal climbing shapes, or no
+shapes at all, just the notes. These are ways of drawing a scale rather than
+scales of their own, so they are a switch beside the scale buttons instead of
+a copy of every scale button. Each choice is there for every scale and is
+disabled where the scale has no such form (`diagonalOf`, `plainOf`). -}
+shapeGroup : Model -> Html Msg
+shapeGroup model =
+    let
+        scale =
+            (activeNeck model).scale
+
+        boxed =
+            boxedOf scale
+
+        shapeButton lbl target on why =
+            case target of
+                Just t ->
+                    button
+                        ([ onClick (SetScale t), style "min-width" "80px" ]
+                            ++ buttonBaseStyle on
+                        )
+                        [ text lbl ]
+
+                Nothing ->
+                    button
+                        ([ Html.Attributes.disabled True
+                         , Html.Attributes.title why
+                         , style "min-width" "80px"
+                         ]
+                            ++ buttonBaseStyle False
+                            ++ [ style "opacity" "0.4", style "cursor" "default" ]
+                        )
+                        [ text lbl ]
+    in
+    pickerGroup "Shape"
+        [ shapeButton "Boxes"
+            (if isArpeggio boxed then
+                Nothing
+
+             else
+                Just boxed
+            )
+            (boxed == scale && not (isDiagonal scale))
+            "Arpeggios are learned as diagonal sweep shapes, not positions"
+        , shapeButton "Diagonal" (diagonalOf boxed) (isDiagonal scale) "Diagonal shapes exist for the pentatonics, the blues, the seven-note scales and the arpeggios"
+        , shapeButton "None" (plainOf boxed) (isPlain scale) "The triads and the all-notes maps have no boxes to hide"
         ]
 
 
@@ -4302,13 +4630,30 @@ rootButton model n =
         [ text (rootSpelling neck.scale n) ]
 
 
+{-| A scale's button. It lights for the scale however it is drawn (boxes,
+diagonal or none), and keeps the neck drawn that way when the new scale can be. -}
 scaleButton : Model -> ScaleType -> String -> Html Msg
 scaleButton model st lbl =
+    let
+        current =
+            (activeNeck model).scale
+
+        target =
+            case current of
+                Diagonal _ ->
+                    Maybe.withDefault st (diagonalOf st)
+
+                Plain _ ->
+                    Maybe.withDefault st (plainOf st)
+
+                _ ->
+                    st
+    in
     button
-        ([ onClick (SetScale st)
+        ([ onClick (SetScale target)
          , style "min-width" "80px"
          ]
-            ++ buttonBaseStyle ((activeNeck model).scale == st)
+            ++ buttonBaseStyle (boxedOf current == st)
         )
         [ text lbl ]
 
@@ -4451,6 +4796,9 @@ drawBoxRegions board =
 
     else if isDiagonal board.scale then
         drawDiagonalRegions board
+
+    else if isPlain board.scale then
+        []
 
     else
         drawBoxRegionsBoxes board
@@ -5900,7 +6248,7 @@ viewLegend : Board -> Html Msg
 viewLegend board =
     let
         boxes =
-            if isChromatic board.scale then
+            if isChromatic board.scale || isPlain board.scale then
                 []
 
             else if isTriad board.scale then

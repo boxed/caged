@@ -47,17 +47,37 @@ commit both files together.
 
 ## Scales and modes
 
-Scale types: the two pentatonics, the seven diatonic modes, `Blues`,
-`HarmonicMajor`/`HarmonicMinor` (major with ♭6 / minor with a raised 7th),
+Scale types: the two pentatonics, the seven diatonic modes,
+`MajorBlues`/`Blues`, `HarmonicMajor`/`HarmonicMinor` (major with ♭6 / minor
+with a raised 7th) plus harmonic minor's fifth mode `PhrygianDominant`,
 `MelodicMajor`/`MelodicMinor` (major with ♭6 ♭7 / minor with a raised 6th and
-7th), the eight-note bebop scales `BebopDominant`/`BebopMajor`/`BebopMinor`
+7th) plus melodic minor's `LydianDominant` and `Altered` (modes 4 and 7, which
+anchor 5 and 11 above the melodic minor root and so draw its boxes), the
+symmetric `DimHalfWhole`/`DimWholeHalf`/`WholeTone`, the seventh-chord
+arpeggios `ArpMaj7`/`ArpDom7`/`ArpMin7`/`ArpHalfDim`/`ArpDim7` (always drawn
+diagonally, `isArpeggio`, the way triads are always lassoed: an arpeggio is
+learned as a two-notes-per-string sweep shape, not a position, so Boxes is
+disabled for them; boxes cut to four chord tones held one note or none per
+string and lurched), the eight-note bebop scales `BebopDominant`/`BebopMajor`/`BebopMinor`
 (Mixolydian + 7, major + ♭6, Dorian + 3 — one chromatic passing tone each;
-they anchor like their parent scale and draw its boxes), five diagonal climbing variants
-(`DiagonalMajorPent`/`DiagonalPent`/`DiagonalBlues` and the diatonic
-`DiagonalMajor`/`DiagonalMinor`), the two all-notes
+they anchor like their parent scale and draw its boxes), the two all-notes
 maps `ChromaticMinor`/`ChromaticMajor`, the empty `Blank` neck, and the four triads
 `TriadMajor`/`TriadMinor`/`TriadDim`/`TriadAug`, plus `Custom`, a scale
 edited by clicking notes on the neck (see **Custom scales**).
+
+Two wrappers say how a scale is drawn rather than which notes it has:
+`Diagonal base` (the climbing shapes, see **Box shapes**) and `Plain base` (no
+shapes at all, just the notes). Every per-scale `case` delegates both to
+`base`; `boxedOf` unwraps them. `diagonalOf` / `plainOf` say which scales have
+each form: diagonal for the pentatonics, the blues and every seven-note scale;
+plain for everything but the triads and the all-notes maps. The arpeggios
+are diagonal without the wrapper (`isDiagonal` is true for them, and
+`diagonalOf` returns them unchanged). Slugs are
+`diagonal-<base>` (the five that predate the wrapper keep their old slugs —
+`diagonal-pent`, `diagonal-major`, … — via `diagonalSlug`) and `plain-<base>`,
+which may wrap a custom scale (`plain-minor-pent_02357a`): clicking notes on a
+plain neck keeps it plain (`toggleInterval`), while an edited diagonal becomes
+an ordinary box scale.
 
 `ChromaticMinor` and `ChromaticMajor` (the **All notes (minor)** / **All notes
 (major)** buttons, slugs `all-notes-minor` / `all-notes-major`) are deliberately
@@ -227,6 +247,9 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 - **Accidentals** are always the real symbols, ♯ and ♭ (𝄪/𝄫 for doubles), in
   anything a person reads: note names, tuning names, interval labels, docs.
   Never `#` or `b`. The only ASCII spellings are URL slugs (`Cs`, `eb-standard`).
+  A natural pitch class is always spelled with its own letter
+  (`rootLetterCandidates`), even where a sharp or flat root would save
+  accidentals — otherwise C dim7 spells B♯ D♯ F♯ A and F Locrian E♯.
   Inside the note markers the accidentals are not text at all: `noteLabel`
   draws them as paths (`accidentalPath`), raised like a superscript, because
   the system font's ♭ reads as a lowercase b. Elm cannot measure text, so
@@ -354,9 +377,14 @@ standard shape is the reference only for which pitches a box spans.
   `drawDiagonalShape`) and still use the pitch-preserving `boxShift` offset,
   since those are fixed shapes meant to be slid. Each is an octave split over
   a string pair, in two interlocking patterns that together hold every scale
-  note: 3 + 2 for the pentatonics, 4 + 3 for the diatonic major/minor (minor
-  starts on its root, so the shape is six frets wide; major is its relative
-  minor's shape, like the pentatonics).
+  note: 3 + 2 for the pentatonics (written out), and for every seven-note scale
+  (4 + 3) and arpeggio (2 + 2) read off its intervals (`splitDiagonalPatterns`):
+  rotated to the box anchor (`anchorScaleSet`), the first half of the notes go
+  on the lower string and the rest on the upper. An arpeggio anchors on its
+  root, so it sweeps R 3 on one string, 5 7 on the next. So natural minor starts on its
+  root (six frets wide), major is its relative minor's shape, and every mode
+  draws its parent's shapes — D Dorian draws C major's, the way its boxes are
+  C major's boxes. `diagonalAnchor` is `rootFret`'s anchor for them.
   The strings are paired from the top — 2/1, 4/3, 6/5, then 8/7 and so on
   (`diagonalShapesFor n scale`) — and each pair is the octave split of the one
   below it, an octave up. Two strings up in fourths is ten semitones, so a pair
@@ -466,9 +494,13 @@ neck's **heading is its controls**:
   `active` is simply the neck the picker is under (it still feeds the legend
   and Add neck, and rides in the URL).
 - **The scale picker** is the scale groups, then the Root row. The scale
-  picker is one radio group of 28 options broken into the families a player
-  would look in: Pentatonic, Modes, Harmonic, Melodic, Bebop, Diagonal, Triads, All
-  notes. Each is a `pickerGroup`, an uppercase caption riding with its own
+  picker is one radio group broken into the families a player
+  would look in: Modes, Pentatonic, Harmonic, Melodic, Bebop, Symmetric,
+  Triads, Arpeggios, All notes. Below them the **Shape** row (`shapeGroup`)
+  switches Boxes / Diagonal / None — the `Diagonal` and `Plain` wrappers, so
+  ways of drawing a scale rather than scales, and they have no scale buttons.
+  A scale button lights for its scale in any shape and keeps the neck's shape
+  when the new scale has that form; a shape the scale lacks is disabled. Each is a `pickerGroup`, an uppercase caption riding with its own
   buttons, and the groups flow and wrap inside a `controlBlock`. The caption
   carries the context, so the buttons can just say "Major".
 - **The Strings row** (triad modes) sits under each triad neck's heading,
@@ -772,7 +804,10 @@ count from 1 to 12):
 7. **`diagonalCells`** — the diagonal climbing shapes carry the right scale
    degrees on each string, and every string of every neck carries the whole
    scale across the two patterns, with no shape reaching for a string that
-   isn't there.
+   isn't there — for every scale that has a diagonal form. Plus
+   `shapeSlugs`: every scale round-trips through its slug in all three shapes,
+   the old diagonal slugs still open, and a plain neck stays plain while notes
+   are clicked.
 8. **`triadShapes`** — every triad voicing sits on its set's three strings and
    inside the neck, carries all three chord tones with none doubled, is in
    close position (each note under an octave above the one below), and its

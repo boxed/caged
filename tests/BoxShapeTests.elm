@@ -5,6 +5,7 @@ module BoxShapeTests exposing
     , diagonalCells
     , edgeSanity
     , overlapCoverage
+    , shapeSlugs
     , spelling
     , stringCounts
     , stripeEdges
@@ -26,7 +27,7 @@ a tuning's open strings and the scale intervals. These tests pin down that:
 
 import Dict
 import Expect
-import Main exposing (ScaleType(..), StringSet(..), Tuning, anchorOpen, deriveBox, diagonalAnchor, diagonalShapesFor, fourthsFor, midiAt, nextLowString, noteAt, openAbs, openString, resizeTuning, rootSpelling, scaleIntervals, spell, standardFor, standardTuning, stringCount, thirdsFor, triadVoicingsFor, tuningFromSlug, tunings, tuningsFor)
+import Main exposing (ScaleType(..), StringSet(..), Tuning, anchorOpen, deriveBox, diagonalAnchor, diagonalOf, diagonalShapesFor, plainOf, fourthsFor, midiAt, nextLowString, noteAt, openAbs, openString, resizeTuning, rootSpelling, scaleFromSlug, scaleIntervals, scaleSlug, spell, standardFor, standardTuning, stringCount, thirdsFor, toggleInterval, triadVoicingsFor, tuningFromSlug, tunings, tuningsFor)
 import Test exposing (Test, describe, test)
 
 
@@ -50,17 +51,24 @@ fretboardFrets =
     List.range 0 22
 
 
+{-| The seventh-chord arpeggios, which are only ever drawn diagonally. -}
+arpeggios : List ScaleType
+arpeggios =
+    [ ArpMaj7, ArpDom7, ArpMin7, ArpHalfDim, ArpDim7 ]
+
+
 {-| Scales whose boxes go through `deriveBox` (everything except the diagonal
 climbing shapes). -}
 boxScales : List ScaleType
 boxScales =
     [ MajorPent, MinorPent, Ionian, Aeolian, Dorian, Mixolydian, Phrygian, Lydian, Locrian, Blues, HarmonicMajor, HarmonicMinor, MelodicMajor, MelodicMinor, BebopDominant, BebopMajor, BebopMinor ]
+        ++ [ MajorBlues, PhrygianDominant, LydianDominant, Altered, DimHalfWhole, DimWholeHalf, WholeTone ]
         -- Scales edited on the neck: one note added, one taken away, and a
         -- sparse one built up from a blank neck, whose third flips it major.
         ++ [ Custom MinorPent [ 0, 2, 3, 5, 7, 10 ]
            , Custom Ionian [ 0, 2, 4, 5, 7, 9 ]
            , Custom Blank [ 0, 4, 9 ]
-           , Custom DiagonalMajor [ 0, 2, 4, 5, 7, 9 ]
+           , Custom (Diagonal Ionian) [ 0, 2, 4, 5, 7, 9 ]
            ]
 
 
@@ -106,6 +114,7 @@ scaleNotes scale root =
     List.map (\i -> modBy 12 (root + i)) (scaleIntervals scale)
 
 
+
 {-| Mirror of Main.rootFret: the anchor's fret on the low-E string, which
 follows that string's open pitch in any tuning. -}
 fRootFor : Tuning -> ScaleType -> Int -> Int
@@ -115,20 +124,17 @@ fRootFor tuning scale root =
             anchorOpen tuning
     in
     case scale of
-        DiagonalPent ->
+        Diagonal MinorPent ->
             modBy 12 (root + 3 - lowE)
 
-        DiagonalBlues ->
+        Diagonal Blues ->
             modBy 12 (root + 3 - lowE)
 
-        DiagonalMajorPent ->
+        Diagonal MajorPent ->
             modBy 12 (root - lowE)
 
-        DiagonalMajor ->
-            modBy 12 (root - 3 - lowE)
-
-        DiagonalMinor ->
-            modBy 12 (root - lowE)
+        Diagonal base ->
+            modBy 12 (root - offsetFor base - lowE)
 
         _ ->
             modBy 12 (root - offsetFor scale - lowE)
@@ -140,6 +146,7 @@ offsetFor : ScaleType -> Int
 offsetFor scale =
     case scale of
         MajorPent -> 3
+        MajorBlues -> 3
         Ionian -> 3
         Dorian -> 5
         Phrygian -> 7
@@ -147,11 +154,16 @@ offsetFor scale =
         Mixolydian -> 10
         Locrian -> 2
         HarmonicMajor -> 3
+        PhrygianDominant -> 7
         MelodicMajor -> 3
+        LydianDominant -> 5
+        Altered -> 11
         BebopDominant -> 10
         BebopMajor -> 3
         BebopMinor -> 5
-        DiagonalMajor -> 3
+        DimHalfWhole -> 3
+        WholeTone -> 3
+        Diagonal base -> offsetFor base
         Custom base intervals ->
             -- An edited scale keeps its preset's anchor while it keeps the
             -- preset's third, and anchors as plain minor or major once the
@@ -204,6 +216,18 @@ scaleName scale =
         HarmonicMinor -> "HarmonicMinor"
         MelodicMajor -> "MelodicMajor"
         MelodicMinor -> "MelodicMinor"
+        MajorBlues -> "MajorBlues"
+        PhrygianDominant -> "PhrygianDominant"
+        LydianDominant -> "LydianDominant"
+        Altered -> "Altered"
+        DimHalfWhole -> "DimHalfWhole"
+        DimWholeHalf -> "DimWholeHalf"
+        WholeTone -> "WholeTone"
+        ArpMaj7 -> "ArpMaj7"
+        ArpDom7 -> "ArpDom7"
+        ArpMin7 -> "ArpMin7"
+        ArpHalfDim -> "ArpHalfDim"
+        ArpDim7 -> "ArpDim7"
         BebopDominant -> "BebopDominant"
         BebopMajor -> "BebopMajor"
         BebopMinor -> "BebopMinor"
@@ -214,11 +238,8 @@ scaleName scale =
         TriadMinor -> "TriadMinor"
         TriadDim -> "TriadDim"
         TriadAug -> "TriadAug"
-        DiagonalPent -> "DiagonalPent"
-        DiagonalMajorPent -> "DiagonalMajorPent"
-        DiagonalBlues -> "DiagonalBlues"
-        DiagonalMajor -> "DiagonalMajor"
-        DiagonalMinor -> "DiagonalMinor"
+        Diagonal base -> "Diagonal" ++ scaleName base
+        Plain base -> "Plain" ++ scaleName base
         Custom base intervals -> scaleName base ++ "+" ++ String.join "," (List.map String.fromInt intervals)
 
 
@@ -667,6 +688,21 @@ spelling =
                 Expect.equal
                     [ "A\u{266D}", "B\u{266D}", "C", "D\u{266D}", "E\u{266D}", "F", "G" ]
                     (spell 8 Ionian)
+        , test "C altered = C D\u{266D} D\u{266F} E G\u{266D} G\u{266F} B\u{266D}, as jazz spells it" <|
+            \_ ->
+                Expect.equal
+                    [ "C", "D\u{266D}", "D\u{266F}", "E", "G\u{266D}", "G\u{266F}", "B\u{266D}" ]
+                    (spell 0 Altered)
+        , test "C diminished 7th arpeggio has a double-flat 7th" <|
+            \_ ->
+                Expect.equal
+                    [ "C", "E\u{266D}", "G\u{266D}", "B\u{266D}\u{266D}" ]
+                    (spell 0 ArpDim7)
+        , test "A major blues = A B C C\u{266F} E F\u{266F}" <|
+            \_ ->
+                Expect.equal
+                    [ "A", "B", "C", "C\u{266F}", "E", "F\u{266F}" ]
+                    (spell 9 MajorBlues)
         , test "pitch class 6 major breaks the tie toward F\u{266F} (sharps)" <|
             \_ ->
                 Expect.equal "F\u{266F}" (rootSpelling Ionian 6)
@@ -851,16 +887,23 @@ diagonalCells =
                         else
                             [ 0, 4, 9 ]
                 in
-                List.concatMap (diagonalRootCells strings DiagonalPent ( [ 3, 5, 7 ], [ 10, 0 ] )) roots
-                    ++ List.concatMap (diagonalRootCells strings DiagonalMajorPent ( [ 0, 2, 4 ], [ 7, 9 ] )) roots
-                    ++ List.concatMap (diagonalRootCells strings DiagonalBlues ( [ 3, 5, 6, 7 ], [ 10, 0 ] )) roots
-                    ++ List.concatMap (diagonalRootCells strings DiagonalMajor ( [ 9, 11, 0, 2 ], [ 4, 5, 7 ] )) roots
-                    ++ List.concatMap (diagonalRootCells strings DiagonalMinor ( [ 0, 2, 3, 5 ], [ 7, 8, 10 ] )) roots
+                List.concatMap (diagonalRootCells strings (Diagonal MinorPent) ( [ 3, 5, 7 ], [ 10, 0 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings (Diagonal MajorPent) ( [ 0, 2, 4 ], [ 7, 9 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings (Diagonal Blues) ( [ 3, 5, 6, 7 ], [ 10, 0 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings (Diagonal Ionian) ( [ 9, 11, 0, 2 ], [ 4, 5, 7 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings (Diagonal Aeolian) ( [ 0, 2, 3, 5 ], [ 7, 8, 10 ] )) roots
+                    -- A mode draws its parent's shapes: D Dorian splits C major
+                    -- the way A minor does, A B C D | E F G.
+                    ++ List.concatMap (diagonalRootCells strings (Diagonal Dorian) ( [ 7, 9, 10, 0 ], [ 2, 3, 5 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings (Diagonal HarmonicMinor) ( [ 0, 2, 3, 5 ], [ 7, 8, 11 ] )) roots
+                    -- The arpeggios sweep two notes per string from the root.
+                    ++ List.concatMap (diagonalRootCells strings ArpMaj7 ( [ 0, 4 ], [ 7, 11 ] )) roots
+                    ++ List.concatMap (diagonalRootCells strings ArpDim7 ( [ 0, 3 ], [ 6, 9 ] )) roots
             )
             (6 :: stringCountsUnderTest)
             ++ List.concatMap
                 (\strings ->
-                    List.map (diagonalStrings strings) [ DiagonalPent, DiagonalMajorPent, DiagonalBlues, DiagonalMajor, DiagonalMinor ]
+                    List.map (diagonalStrings strings) (List.filterMap diagonalOf (boxScales ++ arpeggios))
                 )
                 (6 :: stringCountsUnderTest)
         )
@@ -1177,4 +1220,52 @@ stringCounts =
                         [ 64, 59, 55, 50, 45, 40, 35, 30 ]
                         (List.map (\s -> midiAt (standardFor 8) s 0) (List.range 1 8))
             ]
+        ]
+
+
+
+-- SHAPES: boxes, diagonal or none, carried in the URL
+
+
+{-| Every scale finds itself again from its slug however it is drawn, the five
+diagonal slugs from before every scale could be diagonal still open, and a
+neck with no shapes stays that way while notes are clicked on and off. -}
+shapeSlugs : Test
+shapeSlugs =
+    let
+        everyScale =
+            boxScales ++ arpeggios ++ [ TriadMajor, TriadMinor, TriadDim, TriadAug, ChromaticMajor, ChromaticMinor, Blank ]
+
+        drawn =
+            everyScale
+                -- An arpeggio's diagonal form is itself, already listed.
+                ++ List.filter (\d -> not (List.member d everyScale)) (List.filterMap diagonalOf everyScale)
+                ++ List.filterMap plainOf everyScale
+    in
+    describe "shape slugs"
+        [ describe "every scale round-trips through its slug in every shape" <|
+            List.map
+                (\scale ->
+                    test (scaleName scale) <|
+                        \_ -> Expect.equal (Just scale) (scaleFromSlug (scaleSlug scale))
+                )
+                drawn
+        , test "the old diagonal slugs still open" <|
+            \_ ->
+                Expect.equal
+                    (List.map Just [ Diagonal MinorPent, Diagonal MajorPent, Diagonal Blues, Diagonal Ionian, Diagonal Aeolian ])
+                    (List.map scaleFromSlug [ "diagonal-pent", "diagonal-major-pent", "diagonal-blues", "diagonal-major", "diagonal-minor" ])
+        , test "every seven-note scale has a diagonal form" <|
+            \_ ->
+                Expect.equal [ Just (Diagonal Dorian), Just (Diagonal Altered), Just ArpMaj7, Nothing, Nothing ]
+                    (List.map diagonalOf [ Dorian, Altered, ArpMaj7, BebopDominant, TriadMajor ])
+        , test "clicking a note on a neck with no shapes keeps it bare, and clicking it off restores the preset" <|
+            \_ ->
+                let
+                    edited =
+                        toggleInterval 2 (Plain MinorPent)
+                in
+                Expect.equal
+                    ( Just edited, Plain MinorPent )
+                    ( scaleFromSlug (scaleSlug edited), toggleInterval 2 edited )
         ]
