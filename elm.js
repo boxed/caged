@@ -11110,11 +11110,7 @@ var $author$project$Main$barreIn = function (notes) {
 		return $elm$core$Maybe$Nothing;
 	} else {
 		var low = _v0.a;
-		var top = A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			$elm$core$List$minimum(
-				A2($elm$core$List$map, $elm$core$Tuple$first, notes)));
+		var top = 1;
 		var stopped = function (s) {
 			return A2(
 				$elm$core$List$any,

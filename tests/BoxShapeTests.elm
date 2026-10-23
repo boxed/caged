@@ -1430,8 +1430,8 @@ cagedChords =
 
 
 {-| Fingers a grip takes: one per fretted note, except that a barre — the
-lowest fret, held on two or more strings, laid from the grip's highest string
-down with nothing open or unplayed under it — is one finger for all the notes
+lowest fret, held on two or more strings, laid from the high e with nothing
+open or unplayed under it — is one finger for all the notes
 it covers. -}
 fingersFor : List ( Int, Int ) -> Int
 fingersFor notes =
@@ -1448,9 +1448,9 @@ fingersFor notes =
                 at =
                     List.map Tuple.first (List.filter (\( _, f ) -> f == low) fretted)
 
-                -- From the voicing's highest string down, as a finger lies.
+                -- From the high e, as a finger lies across the neck.
                 between =
-                    List.range (List.minimum (List.map Tuple.first notes) |> Maybe.withDefault 0) (List.maximum at |> Maybe.withDefault 0)
+                    List.range 1 (List.maximum at |> Maybe.withDefault 0)
 
                 barre =
                     List.length at >= 2 && List.all (\s -> List.any (\( s2, f ) -> s2 == s && f >= low) fretted) between

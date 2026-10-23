@@ -2872,11 +2872,12 @@ fingers notes =
 
 {-| The barre a voicing is played with, if any: the index finger laid across
 the strings at its lowest fretted fret, as `( fret, top string, bottom string )`.
-It runs from the voicing's highest string — that is how a finger lies, from
-the treble edge of the neck — down to the last string it holds at that fret.
-It is there when two or more strings are stopped at that fret and every string
-it crosses is stopped at it or higher: a barre cannot leave an open or
-unplayed string under it. -}
+It runs from the high e, string 1 — a finger lies across from the bottom
+edge of the neck — to the last string it holds at that fret, whatever strings
+the voicing plays. It is there when two or more strings are stopped at that
+fret and every string it crosses, the high e included, is stopped at it or
+higher: a barre cannot leave an open or unplayed string under it, so a voicing
+that leaves the high e out cannot be barred. -}
 barreOf : Triad -> Maybe ( Int, Int, Int )
 barreOf voicing =
     barreIn voicing.notes
@@ -2905,11 +2906,11 @@ barreIn notes =
                         )
                         fretted
 
-                -- A finger lies down from the top: the barre starts at the
-                -- voicing's highest string, wherever that is fretted, and
-                -- reaches down to the last string it holds at its fret.
+                -- A finger lies across from the bottom of the guitar: the
+                -- barre always starts at the high e, string 1, and reaches to
+                -- the last string it holds at its fret.
                 top =
-                    List.minimum (List.map Tuple.first notes) |> Maybe.withDefault 0
+                    1
 
                 bottom =
                     List.maximum at |> Maybe.withDefault 0

@@ -429,9 +429,11 @@ Chords is **Chord tones** (triads and arpeggios): what chords are made of.
   had (bass kept on a tie), or drops it. The tests hold every preset tuning to
   four frets and four fingers.
 - **Barres** (`barreOf`): a voicing is barred when two or more strings are
-  stopped at its lowest fret. The barre runs from the voicing's highest string
-  down to the last string held at that fret, as a finger lies, so nothing it
-  crosses may be open or unplayed.
+  stopped at its lowest fret. The barre always runs from the high e (string
+  1) to the last string held at that fret — a finger lies across from the
+  bottom of the guitar, whatever strings the voicing plays — so nothing it
+  crosses, the high e included, may be open or unplayed; a voicing without
+  the high e cannot be barred.
   `drawBarre` draws it as a thick bar in the lasso's color at that fret, over
   the lassos and under the notes. Triads share `drawLassos` but draw no
   barres: a triad is a fragment to see, a chord a grip to play. **`cagedVoicings`** moves them to the root, repeats them an octave
