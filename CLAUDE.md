@@ -423,8 +423,15 @@ Chords is **Chord tones** (triads and arpeggios): what chords are made of.
   tests hold standard tuning to both). Moving a shape up the neck frets its
   open strings, which is what pushes a shape to five fingers, so the minor and
   7 C shapes leave off the high e, and the minor G shapes their outer strings.
+  Other tunings refinger the shapes, which can spread them again, so
+  `fitHand` cuts a voicing that `playable` rejects down to the longest run of
+  adjacent strings that is playable and keeps the root, third and seventh it
+  had (bass kept on a tie), or drops it. The tests hold every preset tuning to
+  four frets and four fingers.
 - **Barres** (`barreOf`): a voicing is barred when two or more strings are
-  stopped at its lowest fret and nothing between them is open or unplayed.
+  stopped at its lowest fret. The barre runs from the voicing's highest string
+  down to the last string held at that fret, as a finger lies, so nothing it
+  crosses may be open or unplayed.
   `drawBarre` draws it as a thick bar in the lasso's color at that fret, over
   the lassos and under the notes. Triads share `drawLassos` but draw no
   barres: a triad is a fragment to see, a chord a grip to play. **`cagedVoicings`** moves them to the root, repeats them an octave

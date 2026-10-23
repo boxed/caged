@@ -2739,7 +2739,9 @@ way the box windows are: a note keeps the pitch it has in standard tuning, so
 on a string tuned down a tone it sits two frets higher (the short way round).
 The shapes are written for six strings, so they use the top six; a neck with
 fewer drops the lowest notes, and one with more leaves its extra strings
-unplayed. A voicing that does not fit on the neck is left out. `inversion` is
+unplayed. A voicing that does not fit on the neck is left out, and one that
+refingering has made unplayable is cut down to what a hand can play
+(`fitHand`). `inversion` is
 the shape (0 C … 4 D), which picks the lasso's color, and every shape gets its
 own width so where neighboring shapes share notes their lassos nest. -}
 cagedVoicings : Tuning -> ScaleType -> Int -> List Triad
@@ -2783,7 +2785,8 @@ cagedVoicings tuning scale root =
                         |> List.sortBy Tuple.first
             in
             if not (List.isEmpty notes) && List.all (\( _, fr ) -> fr >= 0 && fr <= numFrets) notes then
-                Just { notes = notes, inversion = shape, radius = radius shape }
+                fitHand tuning scale root notes
+                    |> Maybe.map (\fitted -> { notes = fitted, inversion = shape, radius = radius shape })
 
             else
                 Nothing
@@ -2794,16 +2797,96 @@ cagedVoicings tuning scale root =
         |> List.concat
 
 
-{-| The barre a voicing is played with, if any: the index finger laid across
-the strings at its lowest fretted fret, as `( fret, top string, bottom string )`.
-It is there when two or more strings are stopped at that fret and every string
-between them is stopped at it or higher — a barre cannot leave an open or
-unplayed string inside it sounding or silent. -}
-barreOf : Triad -> Maybe ( Int, Int, Int )
-barreOf voicing =
+{-| A voicing a hand can play, or the largest part of it that one can: the
+written shapes all fit in four frets and four fingers in standard tuning, but
+refingered for another tuning a shape can spread — in all fourths the B and e
+strings move up a fret, and the G shape of A7 wants six fingers. Then the run
+of adjacent strings kept is the longest that is playable and still has every
+chord tone the full voicing had of root, third and seventh (the fifth can go),
+keeping the bass where two runs tie. `Nothing` if no run of three strings or
+more will do. -}
+fitHand : Tuning -> ScaleType -> Int -> List ( Int, Int ) -> Maybe (List ( Int, Int ))
+fitHand tuning scale root notes =
+    let
+        tone ( s, f ) =
+            modBy 12 (noteAt tuning s f - root)
+
+        essential =
+            [ 0, thirdOf scale, seventhOf scale ]
+                |> List.filter (\t -> List.member t (List.map tone notes))
+
+        count =
+            List.length notes
+
+        runs =
+            List.range 0 (count - 1)
+                |> List.concatMap
+                    (\i -> List.map (\len -> List.take len (List.drop i notes)) (List.range 3 (count - i)))
+
+        ok run =
+            playable run && List.all (\t -> List.member t (List.map tone run)) essential
+
+        -- Longest first, then the one reaching the lowest string.
+        rank run =
+            ( negate (List.length run), negate (List.maximum (List.map Tuple.first run) |> Maybe.withDefault 0) )
+    in
+    if playable notes then
+        Just notes
+
+    else
+        runs
+            |> List.filter ok
+            |> List.sortBy rank
+            |> List.head
+
+
+{-| Whether a hand can play a voicing: its fretted notes within four frets
+(open strings aside), and four fingers at most, a barre counting as one. -}
+playable : List ( Int, Int ) -> Bool
+playable notes =
     let
         fretted =
-            List.filter (\( _, f ) -> f > 0) voicing.notes
+            List.map Tuple.second (List.filter (\( _, f ) -> f > 0) notes)
+
+        span =
+            Maybe.map2 (-) (List.maximum fretted) (List.minimum fretted) |> Maybe.withDefault 0
+    in
+    span <= 3 && fingers notes <= 4
+
+
+{-| Fingers a voicing takes: one per fretted note, but one for every note a
+barre holds down. -}
+fingers : List ( Int, Int ) -> Int
+fingers notes =
+    let
+        fretted =
+            List.filter (\( _, f ) -> f > 0) notes
+    in
+    case barreIn notes of
+        Just ( low, _, _ ) ->
+            1 + List.length (List.filter (\( _, f ) -> f > low) fretted)
+
+        Nothing ->
+            List.length fretted
+
+
+{-| The barre a voicing is played with, if any: the index finger laid across
+the strings at its lowest fretted fret, as `( fret, top string, bottom string )`.
+It runs from the voicing's highest string — that is how a finger lies, from
+the treble edge of the neck — down to the last string it holds at that fret.
+It is there when two or more strings are stopped at that fret and every string
+it crosses is stopped at it or higher: a barre cannot leave an open or
+unplayed string under it. -}
+barreOf : Triad -> Maybe ( Int, Int, Int )
+barreOf voicing =
+    barreIn voicing.notes
+
+
+barreIn : List ( Int, Int ) -> Maybe ( Int, Int, Int )
+barreIn notes =
+    let
+        fretted =
+            List.filter (\( _, f ) -> f > 0) notes
     in
     case List.minimum (List.map Tuple.second fretted) of
         Nothing ->
@@ -2822,8 +2905,11 @@ barreOf voicing =
                         )
                         fretted
 
+                -- A finger lies down from the top: the barre starts at the
+                -- voicing's highest string, wherever that is fretted, and
+                -- reaches down to the last string it holds at its fret.
                 top =
-                    List.minimum at |> Maybe.withDefault 0
+                    List.minimum (List.map Tuple.first notes) |> Maybe.withDefault 0
 
                 bottom =
                     List.maximum at |> Maybe.withDefault 0

@@ -1380,14 +1380,14 @@ cagedChords =
                             ( List.member [ ( 1, 0 ), ( 2, 1 ), ( 3, 0 ), ( 4, 2 ), ( 5, 3 ) ] notes
                             , List.member [ ( 1, 8 ), ( 2, 8 ), ( 3, 9 ), ( 4, 10 ), ( 5, 10 ), ( 6, 8 ) ] notes
                             )
-               , test "every voicing in standard tuning fits under one hand: four frets, open strings aside" <|
+               , test "every voicing, in every tuning, fits under one hand: four frets, open strings aside" <|
                     \_ ->
                         Expect.equal []
                             (cagedChordTypes
                                 |> List.concatMap
                                     (\scale ->
                                         List.range 0 11
-                                            |> List.concatMap (\root -> cagedVoicings standardTuning scale root)
+                                            |> List.concatMap (\root -> List.concatMap (\tuning -> cagedVoicings tuning scale root) presetTunings)
                                             |> List.filter
                                                 (\v ->
                                                     let
@@ -1401,14 +1401,14 @@ cagedChords =
                                             |> List.map (\v -> ( scaleName scale, v.notes ))
                                     )
                             )
-               , test "every voicing in standard tuning takes four fingers at most, a barre counting as one" <|
+               , test "every voicing, in every tuning, takes four fingers at most, a barre counting as one" <|
                     \_ ->
                         Expect.equal []
                             (cagedChordTypes
                                 |> List.concatMap
                                     (\scale ->
                                         List.range 0 11
-                                            |> List.concatMap (\root -> cagedVoicings standardTuning scale root)
+                                            |> List.concatMap (\root -> List.concatMap (\tuning -> cagedVoicings tuning scale root) presetTunings)
                                             |> List.filter (\v -> fingersFor v.notes > 4)
                                             |> List.map (\v -> ( scaleName scale, v.notes ))
                                     )
@@ -1430,8 +1430,9 @@ cagedChords =
 
 
 {-| Fingers a grip takes: one per fretted note, except that a barre — the
-lowest fret, held on two or more strings with nothing open or unplayed between
-them — is one finger for all the notes it covers. -}
+lowest fret, held on two or more strings, laid from the grip's highest string
+down with nothing open or unplayed under it — is one finger for all the notes
+it covers. -}
 fingersFor : List ( Int, Int ) -> Int
 fingersFor notes =
     let
@@ -1447,8 +1448,9 @@ fingersFor notes =
                 at =
                     List.map Tuple.first (List.filter (\( _, f ) -> f == low) fretted)
 
+                -- From the voicing's highest string down, as a finger lies.
                 between =
-                    List.range (List.minimum at |> Maybe.withDefault 0) (List.maximum at |> Maybe.withDefault 0)
+                    List.range (List.minimum (List.map Tuple.first notes) |> Maybe.withDefault 0) (List.maximum at |> Maybe.withDefault 0)
 
                 barre =
                     List.length at >= 2 && List.all (\s -> List.any (\( s2, f ) -> s2 == s && f >= low) fretted) between

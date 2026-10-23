@@ -11072,6 +11072,321 @@ var $author$project$Main$cagedShapes = function (scale) {
 				]);
 	}
 };
+var $elm$core$List$maximum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
+var $elm$core$List$minimum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$min, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$barreIn = function (notes) {
+	var fretted = A2(
+		$elm$core$List$filter,
+		function (_v3) {
+			var f = _v3.b;
+			return f > 0;
+		},
+		notes);
+	var _v0 = $elm$core$List$minimum(
+		A2($elm$core$List$map, $elm$core$Tuple$second, fretted));
+	if (_v0.$ === 1) {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var low = _v0.a;
+		var top = A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$minimum(
+				A2($elm$core$List$map, $elm$core$Tuple$first, notes)));
+		var stopped = function (s) {
+			return A2(
+				$elm$core$List$any,
+				function (_v2) {
+					var s2 = _v2.a;
+					var f = _v2.b;
+					return _Utils_eq(s2, s) && (_Utils_cmp(f, low) > -1);
+				},
+				fretted);
+		};
+		var at = A2(
+			$elm$core$List$filterMap,
+			function (_v1) {
+				var s = _v1.a;
+				var f = _v1.b;
+				return _Utils_eq(f, low) ? $elm$core$Maybe$Just(s) : $elm$core$Maybe$Nothing;
+			},
+			fretted);
+		var bottom = A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$maximum(at));
+		return (($elm$core$List$length(at) >= 2) && A2(
+			$elm$core$List$all,
+			stopped,
+			A2($elm$core$List$range, top, bottom))) ? $elm$core$Maybe$Just(
+			_Utils_Tuple3(low, top, bottom)) : $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$fingers = function (notes) {
+	var fretted = A2(
+		$elm$core$List$filter,
+		function (_v3) {
+			var f = _v3.b;
+			return f > 0;
+		},
+		notes);
+	var _v0 = $author$project$Main$barreIn(notes);
+	if (!_v0.$) {
+		var _v1 = _v0.a;
+		var low = _v1.a;
+		return 1 + $elm$core$List$length(
+			A2(
+				$elm$core$List$filter,
+				function (_v2) {
+					var f = _v2.b;
+					return _Utils_cmp(f, low) > 0;
+				},
+				fretted));
+	} else {
+		return $elm$core$List$length(fretted);
+	}
+};
+var $author$project$Main$playable = function (notes) {
+	var fretted = A2(
+		$elm$core$List$map,
+		$elm$core$Tuple$second,
+		A2(
+			$elm$core$List$filter,
+			function (_v0) {
+				var f = _v0.b;
+				return f > 0;
+			},
+			notes));
+	var span = A2(
+		$elm$core$Maybe$withDefault,
+		0,
+		A3(
+			$elm$core$Maybe$map2,
+			$elm$core$Basics$sub,
+			$elm$core$List$maximum(fretted),
+			$elm$core$List$minimum(fretted)));
+	return (span <= 3) && ($author$project$Main$fingers(notes) <= 4);
+};
+var $author$project$Main$seventhOf = function (scale) {
+	seventhOf:
+	while (true) {
+		switch (scale.$) {
+			case 0:
+				return -1;
+			case 1:
+				return 10;
+			case 2:
+				return -1;
+			case 3:
+				return 11;
+			case 8:
+				return 10;
+			case 4:
+				return 10;
+			case 7:
+				return 10;
+			case 5:
+				return 10;
+			case 6:
+				return 11;
+			case 9:
+				return 10;
+			case 10:
+				return 10;
+			case 11:
+				return 10;
+			case 12:
+				return -1;
+			case 13:
+				return 11;
+			case 14:
+				return 11;
+			case 15:
+				return 10;
+			case 16:
+				return 10;
+			case 17:
+				return 10;
+			case 18:
+				return 11;
+			case 19:
+				return 10;
+			case 20:
+				return 11;
+			case 21:
+				return 10;
+			case 22:
+				return 10;
+			case 23:
+				return 10;
+			case 24:
+				return 10;
+			case 25:
+				return 11;
+			case 26:
+				return 10;
+			case 27:
+				return 10;
+			case 28:
+				return 11;
+			case 29:
+				return 10;
+			case 30:
+				return 11;
+			case 31:
+				return 11;
+			case 32:
+				return -1;
+			case 33:
+				return 10;
+			case 34:
+				return -1;
+			case 35:
+				return -1;
+			case 36:
+				return -1;
+			case 37:
+				return -1;
+			case 38:
+				return -1;
+			case 39:
+				return -1;
+			case 40:
+				return -1;
+			case 41:
+				return -1;
+			case 42:
+				return -1;
+			case 43:
+				return -1;
+			case 44:
+				return -1;
+			case 45:
+				return 10;
+			case 46:
+				return 11;
+			case 47:
+				return 10;
+			case 48:
+				return 11;
+			case 49:
+				return 10;
+			case 50:
+				return 10;
+			case 51:
+				return 10;
+			case 52:
+				return 9;
+			case 53:
+				var base = scale.a;
+				var $temp$scale = base;
+				scale = $temp$scale;
+				continue seventhOf;
+			case 54:
+				var base = scale.a;
+				var $temp$scale = base;
+				scale = $temp$scale;
+				continue seventhOf;
+			default:
+				var base = scale.a;
+				var intervals = scale.b;
+				return A5(
+					$author$project$Main$pickTone,
+					base,
+					intervals,
+					$author$project$Main$seventhOf(base),
+					10,
+					11);
+		}
+	}
+};
+var $author$project$Main$fitHand = F4(
+	function (tuning, scale, root, notes) {
+		var tone = function (_v0) {
+			var s = _v0.a;
+			var f = _v0.b;
+			return A2(
+				$elm$core$Basics$modBy,
+				12,
+				A3($author$project$Main$noteAt, tuning, s, f) - root);
+		};
+		var rank = function (run) {
+			return _Utils_Tuple2(
+				-$elm$core$List$length(run),
+				-A2(
+					$elm$core$Maybe$withDefault,
+					0,
+					$elm$core$List$maximum(
+						A2($elm$core$List$map, $elm$core$Tuple$first, run))));
+		};
+		var essential = A2(
+			$elm$core$List$filter,
+			function (t) {
+				return A2(
+					$elm$core$List$member,
+					t,
+					A2($elm$core$List$map, tone, notes));
+			},
+			_List_fromArray(
+				[
+					0,
+					$author$project$Main$thirdOf(scale),
+					$author$project$Main$seventhOf(scale)
+				]));
+		var ok = function (run) {
+			return $author$project$Main$playable(run) && A2(
+				$elm$core$List$all,
+				function (t) {
+					return A2(
+						$elm$core$List$member,
+						t,
+						A2($elm$core$List$map, tone, run));
+				},
+				essential);
+		};
+		var count = $elm$core$List$length(notes);
+		var runs = A2(
+			$elm$core$List$concatMap,
+			function (i) {
+				return A2(
+					$elm$core$List$map,
+					function (len) {
+						return A2(
+							$elm$core$List$take,
+							len,
+							A2($elm$core$List$drop, i, notes));
+					},
+					A2($elm$core$List$range, 3, count - i));
+			},
+			A2($elm$core$List$range, 0, count - 1));
+		return $author$project$Main$playable(notes) ? $elm$core$Maybe$Just(notes) : $elm$core$List$head(
+			A2(
+				$elm$core$List$sortBy,
+				rank,
+				A2($elm$core$List$filter, ok, runs)));
+	});
 var $author$project$Main$cagedVoicings = F3(
 	function (tuning, scale, root) {
 		var shift = function (s) {
@@ -11137,12 +11452,16 @@ var $author$project$Main$cagedVoicings = F3(
 						var fr = _v0.b;
 						return (fr >= 0) && (_Utils_cmp(fr, $author$project$Main$numFrets) < 1);
 					},
-					notes)) ? $elm$core$Maybe$Just(
-					{
-						ah: shape,
-						_: notes,
-						aN: radius(shape)
-					}) : $elm$core$Maybe$Nothing;
+					notes)) ? A2(
+					$elm$core$Maybe$map,
+					function (fitted) {
+						return {
+							ah: shape,
+							_: fitted,
+							aN: radius(shape)
+						};
+					},
+					A4($author$project$Main$fitHand, tuning, scale, root, notes)) : $elm$core$Maybe$Nothing;
 			});
 		return $elm$core$List$concat(
 			A2(
@@ -11156,10 +11475,6 @@ var $author$project$Main$cagedVoicings = F3(
 								[-1, 0, 1]));
 					}),
 				$author$project$Main$cagedShapes(scale)));
-	});
-var $elm$core$Basics$min = F2(
-	function (x, y) {
-		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
 var $author$project$Main$anchorString = function (t) {
 	return A2(
@@ -11302,26 +11617,6 @@ var $author$project$Main$anchorScaleSet = function (scale) {
 		$author$project$Main$scaleIntervals(scale));
 };
 var $author$project$Main$boxWindow = _Utils_Tuple2(-1, 3);
-var $elm$core$List$maximum = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(
-			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $elm$core$List$minimum = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(
-			A3($elm$core$List$foldl, $elm$core$Basics$min, x, xs));
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $author$project$Main$pentAnchor = function (b) {
 	switch (b) {
 		case 1:
@@ -12314,51 +12609,7 @@ var $author$project$Main$drawDiagonalRegions = function (board) {
 		instances);
 };
 var $author$project$Main$barreOf = function (voicing) {
-	var fretted = A2(
-		$elm$core$List$filter,
-		function (_v3) {
-			var f = _v3.b;
-			return f > 0;
-		},
-		voicing._);
-	var _v0 = $elm$core$List$minimum(
-		A2($elm$core$List$map, $elm$core$Tuple$second, fretted));
-	if (_v0.$ === 1) {
-		return $elm$core$Maybe$Nothing;
-	} else {
-		var low = _v0.a;
-		var stopped = function (s) {
-			return A2(
-				$elm$core$List$any,
-				function (_v2) {
-					var s2 = _v2.a;
-					var f = _v2.b;
-					return _Utils_eq(s2, s) && (_Utils_cmp(f, low) > -1);
-				},
-				fretted);
-		};
-		var at = A2(
-			$elm$core$List$filterMap,
-			function (_v1) {
-				var s = _v1.a;
-				var f = _v1.b;
-				return _Utils_eq(f, low) ? $elm$core$Maybe$Just(s) : $elm$core$Maybe$Nothing;
-			},
-			fretted);
-		var bottom = A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			$elm$core$List$maximum(at));
-		var top = A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			$elm$core$List$minimum(at));
-		return (($elm$core$List$length(at) >= 2) && A2(
-			$elm$core$List$all,
-			stopped,
-			A2($elm$core$List$range, top, bottom))) ? $elm$core$Maybe$Just(
-			_Utils_Tuple3(low, top, bottom)) : $elm$core$Maybe$Nothing;
-	}
+	return $author$project$Main$barreIn(voicing._);
 };
 var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
 var $author$project$Main$noteX = function (f) {
@@ -13774,139 +14025,6 @@ var $author$project$Main$fifthInterval = function (scale) {
 				}
 			default:
 				return 7;
-		}
-	}
-};
-var $author$project$Main$seventhOf = function (scale) {
-	seventhOf:
-	while (true) {
-		switch (scale.$) {
-			case 0:
-				return -1;
-			case 1:
-				return 10;
-			case 2:
-				return -1;
-			case 3:
-				return 11;
-			case 8:
-				return 10;
-			case 4:
-				return 10;
-			case 7:
-				return 10;
-			case 5:
-				return 10;
-			case 6:
-				return 11;
-			case 9:
-				return 10;
-			case 10:
-				return 10;
-			case 11:
-				return 10;
-			case 12:
-				return -1;
-			case 13:
-				return 11;
-			case 14:
-				return 11;
-			case 15:
-				return 10;
-			case 16:
-				return 10;
-			case 17:
-				return 10;
-			case 18:
-				return 11;
-			case 19:
-				return 10;
-			case 20:
-				return 11;
-			case 21:
-				return 10;
-			case 22:
-				return 10;
-			case 23:
-				return 10;
-			case 24:
-				return 10;
-			case 25:
-				return 11;
-			case 26:
-				return 10;
-			case 27:
-				return 10;
-			case 28:
-				return 11;
-			case 29:
-				return 10;
-			case 30:
-				return 11;
-			case 31:
-				return 11;
-			case 32:
-				return -1;
-			case 33:
-				return 10;
-			case 34:
-				return -1;
-			case 35:
-				return -1;
-			case 36:
-				return -1;
-			case 37:
-				return -1;
-			case 38:
-				return -1;
-			case 39:
-				return -1;
-			case 40:
-				return -1;
-			case 41:
-				return -1;
-			case 42:
-				return -1;
-			case 43:
-				return -1;
-			case 44:
-				return -1;
-			case 45:
-				return 10;
-			case 46:
-				return 11;
-			case 47:
-				return 10;
-			case 48:
-				return 11;
-			case 49:
-				return 10;
-			case 50:
-				return 10;
-			case 51:
-				return 10;
-			case 52:
-				return 9;
-			case 53:
-				var base = scale.a;
-				var $temp$scale = base;
-				scale = $temp$scale;
-				continue seventhOf;
-			case 54:
-				var base = scale.a;
-				var $temp$scale = base;
-				scale = $temp$scale;
-				continue seventhOf;
-			default:
-				var base = scale.a;
-				var intervals = scale.b;
-				return A5(
-					$author$project$Main$pickTone,
-					base,
-					intervals,
-					$author$project$Main$seventhOf(base),
-					10,
-					11);
 		}
 	}
 };
