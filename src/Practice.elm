@@ -3,6 +3,7 @@ port module Practice exposing
     , Msg
     , init
     , isPlaying
+    , soundingChord
     , subscriptions
     , update
     , view
@@ -24,6 +25,7 @@ is playing, and every note the microphone settles on.
 
 The chart is remembered in the browser (`band.js` writes what `encodeSave`
 gives it to localStorage), not in the URL: the URL belongs to the fretboard.
+A link can still set it up once with `?practice=` (`linkedPractice` in `band.js`).
 
 -}
 
@@ -989,6 +991,18 @@ type alias Model =
 isPlaying : Model -> Bool
 isPlaying =
     .playing
+
+
+{-| The pitch classes of the chord the band is playing right now, or `Nothing`
+while it is stopped or counting in. The necks fade every other note. -}
+soundingChord : Model -> Maybe (List Int)
+soundingChord model =
+    case ( model.playing, model.playhead ) of
+        ( True, Just _ ) ->
+            Just (Dict.keys (chordTones (currentBar model)))
+
+        _ ->
+            Nothing
 
 
 {-| `seed` seeds the chart writer; `saved` is what `encodeSave` left in the

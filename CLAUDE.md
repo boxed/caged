@@ -872,10 +872,22 @@ carries a dot while it plays.
   *played* (voicing, bass pattern); names live in Practice.elm.
 - Elm cannot `preventDefault` from a document subscription, so `band.js`
   cancels Space and the arrows itself while `.practice-panel` is in the page.
+- **While the band plays, the necks fade every note outside its chord**
+  (`Practice.soundingChord` → `board.chord` → `noteFade`, at
+  `offChordOpacity` 0.4, lighter than the off-string fade since the scale is
+  still what you solo with). Stopped or counting in, nothing fades.
 - The samples are fetched from `sounds/` on the first Play, not inlined.
 - The chart is remembered in **localStorage** (`caged-practice`, written by JS
   from Practice's `encodeSave`, read back into the `practice` flag), not the URL,
   which belongs to the fretboard.
+- **Linking in**: `?root=A&scale=aeolian&practice=Am-F-C-G` (what the TabsFast
+  menu bar app opens for a song) sets the panel up and opens it, shutting the
+  other drawers. `linkedPractice` in `band.js` reads it before Elm starts: the
+  chords (dash-separated, in the saved chart's codes — ASCII flat roots plus a
+  `qualInfo` id, `#` sent as `%23`) and the neck's root as the key go into the
+  saved chart, replacing any preset but keeping style, tempo and mix, and the
+  param is stripped from the address, so it applies once and a reload keeps
+  edits. The `openPractice` flag opens the drawer.
 
 ## Ports (Wake Lock, sound)
 

@@ -111,11 +111,14 @@ type alias Model =
 
 {-| What `index.html` hands over at start: the window width (which decides
 whether the drawers start open), a seed for the Practice panel's chart writer,
-and the chart that panel was left on, from localStorage (or null). -}
+the chart that panel was left on, from localStorage (or null), and whether to
+open it: a link with `?practice=` sets the chart up and opens the panel on it
+(`linkedPractice` in `band.js`). -}
 type alias Flags =
     { width : Int
     , seed : Int
     , practice : Decode.Value
+    , openPractice : Bool
     }
 
 
@@ -152,6 +155,10 @@ type alias Board =
     , stringFocus : Maybe Int
     , mono : Bool
     , degrees : Bool
+
+    -- The chord the Practice band is playing, while it plays: every note not
+    -- in it is drawn faded, so the neck shows what to aim for on this bar.
+    , chord : Maybe (List Int)
     , id : String
     , slot : Int
     }
@@ -326,7 +333,7 @@ tabOf scale =
 
 
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init { width, seed, practice } url key =
+init { width, seed, practice, openPractice } url key =
     let
         state =
             parseUrl url
@@ -345,8 +352,8 @@ init { width, seed, practice } url key =
       , drag = Nothing
       , tuning = state.tuning
       , tuningOpen = False
-      , scaleOpen = not compact
-      , viewOpen = not compact
+      , scaleOpen = not compact && not openPractice
+      , viewOpen = not compact && not openPractice
       , pickerTab = tabOf activeScale
       , compact = compact
       , focus = state.focus
@@ -356,7 +363,7 @@ init { width, seed, practice } url key =
       , twoColumns = state.twoColumns
       , key = key
       , wakeLockOn = False
-      , practiceOpen = False
+      , practiceOpen = openPractice
       , practice = Practice.init seed practice
       }
     , Cmd.none
@@ -1234,6 +1241,7 @@ boardAt model i neck =
     , stringFocus = model.stringFocus
     , mono = model.mono
     , degrees = model.degrees
+    , chord = Practice.soundingChord model.practice
     , id = "n" ++ String.fromInt i ++ "-"
     , slot = i
     }
@@ -6806,7 +6814,7 @@ drawNoteAt board s f =
                         )
             in
             Just
-                (Svg.g (offString board s)
+                (Svg.g (noteFade board s n)
                     ((if board.mono then
                         [ noteHalo role cx cy ]
 
@@ -7021,21 +7029,46 @@ accidentalPath c =
             Nothing
 
 
-{-| What a note marker wears when the string highlight is on and this note is
-not on that string: the whole marker, label included, faded back behind the
-one string you are working on. -}
-offString : Board -> Int -> List (Svg.Attribute Msg)
-offString board s =
-    case board.stringFocus of
-        Just t ->
-            if t == s then
-                []
+{-| What a note marker wears when it is not one of the notes to look at: the
+whole marker, label included, faded back. That is a note off the highlighted
+string, or, while the Practice band plays, a note outside the chord it is on.
+Faded rather than hidden, since where the note you want sits among its
+neighbors is half of what you are looking at. -}
+noteFade : Board -> Int -> Int -> List (Svg.Attribute Msg)
+noteFade board s n =
+    let
+        offString =
+            case board.stringFocus of
+                Just t ->
+                    t /= s
 
-            else
-                [ SA.opacity (String.fromFloat offStringOpacity) ]
+                Nothing ->
+                    False
 
-        Nothing ->
-            []
+        offChord =
+            case board.chord of
+                Just tones ->
+                    not (List.member n tones)
+
+                Nothing ->
+                    False
+    in
+    if offString then
+        [ SA.opacity (String.fromFloat offStringOpacity) ]
+
+    else if offChord then
+        [ SA.opacity (String.fromFloat offChordOpacity) ]
+
+    else
+        []
+
+
+{-| How far back the notes outside the band's chord are drawn: less than the
+notes off a highlighted string, because the scale around the chord is still
+what you are soloing with. -}
+offChordOpacity : Float
+offChordOpacity =
+    0.4
 
 
 

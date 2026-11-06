@@ -139,11 +139,13 @@
     <script src="elm.js"></script>
     <script src="band.js"></script>
     <script>
+        const linked = linkedPractice();
         const app = Elm.Main.init({
             flags: {
                 width: window.innerWidth,
                 seed: Math.floor(Math.random() * 2147483647),
-                practice: savedPractice(),
+                practice: linked || savedPractice(),
+                openPractice: linked !== null,
             },
         });
         connectBand(app);

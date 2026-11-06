@@ -836,3 +836,21 @@ function connectBand(app) {
 function savedPractice() {
   try { return JSON.parse(localStorage.getItem('caged-practice')); } catch (e) { return null; }
 }
+
+// A link can set up the panel: ?root=A&scale=aeolian&practice=Am-F-C-G opens it on that chart (chords as the saved
+// chart writes them, dash-separated) in the neck's key, keeping the saved style and tempo. The parameter is used once:
+// it goes into the saved chart and out of the address, so a reload keeps any edits made since.
+function linkedPractice() {
+  const params = new URLSearchParams(location.search);
+  const chart = params.get('practice');
+  if (chart === null) return null;
+  params.delete('practice');
+  const query = params.toString();
+  history.replaceState(null, '', location.pathname + (query ? '?' + query : '') + location.hash);
+  const keys = { C: 'C', Cs: 'Db', D: 'D', Ds: 'Eb', E: 'E', F: 'F', Fs: 'Gb', G: 'G', Gs: 'Ab', A: 'A', As: 'Bb', B: 'B' };
+  const save = Object.assign({}, savedPractice(), { chords: chart.split('-').filter(Boolean) });
+  delete save.prog;
+  if (keys[params.get('root')]) save.key = keys[params.get('root')];
+  try { localStorage.setItem('caged-practice', JSON.stringify(save)); } catch (e) { /* storage blocked */ }
+  return save;
+}
