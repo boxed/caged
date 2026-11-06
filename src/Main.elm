@@ -153,9 +153,10 @@ type alias Board =
     , mono : Bool
     , degrees : Bool
 
-    -- The chord the Practice band is playing, while it plays: every note not
-    -- in it is drawn faded, so the neck shows what to aim for on this bar.
-    , chord : Maybe (List Int)
+    -- The chord the Practice band is playing, while it plays: its root, third
+    -- and fifth are marked in place of the scale's, and every note not in it
+    -- is drawn faded, so the neck shows what to aim for on this bar.
+    , chord : Maybe Practice.SoundingChord
     , id : String
     , slot : Int
     }
@@ -3398,6 +3399,39 @@ type NoteRole
 
 noteRole : Board -> Int -> NoteRole
 noteRole board n =
+    case board.chord of
+        Just chord ->
+            chordRole chord n
+
+        Nothing ->
+            scaleRole board n
+
+
+{-| While the Practice band plays, a note is marked by what it is in the chord
+it is on, not in the scale: that is what you aim a phrase at on this bar. Any
+other chord tone (a 7th, a 9th) is a plain note, left at full strength by
+`noteFade` where the notes outside the chord are faded. -}
+chordRole : Practice.SoundingChord -> Int -> NoteRole
+chordRole chord n =
+    let
+        interval =
+            modBy 12 (n - chord.root)
+    in
+    if interval == 0 then
+        Root
+
+    else if interval == chord.third then
+        Third
+
+    else if interval == chord.fifth then
+        Fifth
+
+    else
+        Other
+
+
+scaleRole : Board -> Int -> NoteRole
+scaleRole board n =
     if isChromatic board.scale then
         -- The all-notes maps have no scale to pick *which* third or seventh is
         -- the diatonic one, so the mode itself says: minor marks ♭3/♭7, major
@@ -7108,8 +7142,8 @@ noteFade board s n =
 
         offChord =
             case board.chord of
-                Just tones ->
-                    not (List.member n tones)
+                Just chord ->
+                    not (List.member n chord.tones)
 
                 Nothing ->
                     False

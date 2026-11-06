@@ -875,10 +875,13 @@ carries a dot while it plays.
   *played* (voicing, bass pattern); names live in Practice.elm.
 - Elm cannot `preventDefault` from a document subscription, so `band.js`
   cancels Space and the arrows itself while `.practice-panel` is in the page.
-- **While the band plays, the necks fade every note outside its chord**
-  (`Practice.soundingChord` → `board.chord` → `noteFade`, at
-  `offChordOpacity` 0.4, lighter than the off-string fade since the scale is
-  still what you solo with). Stopped or counting in, nothing fades.
+- **While the band plays, the necks follow its chord**
+  (`Practice.soundingChord` → `board.chord`): the root, third and fifth
+  markers move to the chord's (`chordRole` in place of `scaleRole`), its
+  other tones are plain notes, and every note outside it fades (`noteFade`,
+  at `offChordOpacity` 0.4, lighter than the off-string fade since the scale
+  is still what you solo with). Stopped or counting in, the necks show the
+  scale as usual.
 - The samples are fetched from `sounds/` on the first Play, not inlined.
 - **Every setting is in the URL** like everything else (`toQuery` /
   `fromQuery`), each left out at its default: `band` (style), `bpm`, `feel`,

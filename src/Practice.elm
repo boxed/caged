@@ -6,6 +6,7 @@ port module Practice exposing
     , changesUrl
     , isPlaying
     , toQuery
+    , SoundingChord
     , soundingChord
     , subscriptions
     , update
@@ -995,13 +996,42 @@ isPlaying =
     .playing
 
 
-{-| The pitch classes of the chord the band is playing right now, or `Nothing`
-while it is stopped or counting in. The necks fade every other note. -}
-soundingChord : Model -> Maybe (List Int)
+{-| The chord the band is on: its root, its third and fifth as intervals above
+the root, and every tone it holds by pitch class. -}
+type alias SoundingChord =
+    { root : Int, third : Int, fifth : Int, tones : List Int }
+
+
+{-| The chord the band is playing right now, or `Nothing` while it is stopped
+or counting in. The necks mark its root, third and fifth and fade every note
+outside it. -}
+soundingChord : Model -> Maybe SoundingChord
 soundingChord model =
     case ( model.playing, model.playhead ) of
         ( True, Just _ ) ->
-            Just (Dict.keys (chordTones (currentBar model)))
+            let
+                bar =
+                    currentBar model
+
+                info =
+                    qualInfo bar.q
+            in
+            Just
+                { root = bar.root
+                , third =
+                    if info.fam == MinFam || info.fam == DimFam then
+                        3
+
+                    else
+                        4
+                , fifth =
+                    if info.fam == DimFam then
+                        6
+
+                    else
+                        7
+                , tones = Dict.keys (chordTones bar)
+                }
 
         _ ->
             Nothing
