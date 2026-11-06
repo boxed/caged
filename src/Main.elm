@@ -44,6 +44,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as Decode
 import Svg
 import Svg.Attributes as SA
+import Practice
 import Url exposing (Url)
 
 
@@ -99,6 +100,22 @@ type alias Model =
     , twoColumns : Bool
     , key : Nav.Key
     , wakeLockOn : Bool
+
+    -- The **Practice** drawer: a backing band to solo over (`Practice`). Shut by
+    -- default on every screen, and like the other drawers not in the URL.
+    -- Shutting it does not stop the band: you can play along with the neck.
+    , practiceOpen : Bool
+    , practice : Practice.Model
+    }
+
+
+{-| What `index.html` hands over at start: the window width (which decides
+whether the drawers start open), a seed for the Practice panel's chart writer,
+and the chart that panel was left on, from localStorage (or null). -}
+type alias Flags =
+    { width : Int
+    , seed : Int
+    , practice : Decode.Value
     }
 
 
@@ -276,6 +293,8 @@ type Msg
     | ToggleWakeLock
     | WakeLockChanged Bool
     | FretClicked Int Int Int Bool
+    | TogglePractice
+    | PracticeMsg Practice.Msg
 
 
 {-| The scale picker's tabs: what kind of thing the neck shows. -}
@@ -306,8 +325,8 @@ tabOf scale =
         ScalesTab
 
 
-init : Int -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init width url key =
+init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init { width, seed, practice } url key =
     let
         state =
             parseUrl url
@@ -337,6 +356,8 @@ init width url key =
       , twoColumns = state.twoColumns
       , key = key
       , wakeLockOn = False
+      , practiceOpen = False
+      , practice = Practice.init seed practice
       }
     , Cmd.none
     )
@@ -400,6 +421,7 @@ update msg model =
                     | active = clampIndex model.necks i
                     , scaleOpen = opening
                     , viewOpen = model.viewOpen && not (model.compact && opening)
+                    , practiceOpen = model.practiceOpen && not (model.compact && opening)
                     , pickerTab =
                         if opening then
                             List.drop i model.necks
@@ -418,9 +440,26 @@ update msg model =
             ( { model
                 | viewOpen = not model.viewOpen
                 , scaleOpen = model.scaleOpen && not (model.compact && not model.viewOpen)
+                , practiceOpen = model.practiceOpen && not (model.compact && not model.viewOpen)
               }
             , Cmd.none
             )
+
+        TogglePractice ->
+            ( { model
+                | practiceOpen = not model.practiceOpen
+                , scaleOpen = model.scaleOpen && not (model.compact && not model.practiceOpen)
+                , viewOpen = model.viewOpen && not (model.compact && not model.practiceOpen)
+              }
+            , Cmd.none
+            )
+
+        PracticeMsg practiceMsg ->
+            let
+                ( practice, cmd ) =
+                    Practice.update practiceMsg model.practice
+            in
+            ( { model | practice = practice }, Cmd.map PracticeMsg cmd )
 
         WindowResized width ->
             ( { model | compact = width < compactWidth }, Cmd.none )
@@ -4013,10 +4052,15 @@ viewBody model =
             ]
             [ h1 [ class "app-title", style "margin" "0 0 6px" ] [ span [ class "wide-only" ] [ text "Guitar " ], text "Fretboard Visualizer" ]
             , span [ style "display" "flex", style "gap" "6px" ]
-                [ gearButton model, wakeLockButton model ]
+                [ practiceButton model, gearButton model, wakeLockButton model ]
             ]
         , if model.viewOpen then
             viewOptions model
+
+          else
+            text ""
+        , if model.practiceOpen then
+            Html.map PracticeMsg (Practice.view totalWidth model.practice)
 
           else
             text ""
@@ -4243,6 +4287,42 @@ addNeckButton =
         [ button
             ([ onClick AddNeck ] ++ buttonBaseStyle False)
             [ text "+ Add neck" ]
+        ]
+
+
+{-| Opens and shuts the Practice panel. While the band plays a dot says so, since
+it keeps playing with the panel shut. -}
+practiceButton : Model -> Html Msg
+practiceButton model =
+    button
+        ([ onClick TogglePractice
+         , attribute "aria-expanded"
+            (if model.practiceOpen then
+                "true"
+
+             else
+                "false"
+            )
+         , Html.Attributes.title "Practice soloing over a backing band"
+         , class "no-print"
+         ]
+            ++ buttonBaseStyle model.practiceOpen
+        )
+        [ if Practice.isPlaying model.practice then
+            span
+                [ style "display" "inline-block"
+                , style "width" "8px"
+                , style "height" "8px"
+                , style "border-radius" "50%"
+                , style "background" "currentColor"
+                , style "margin-right" "6px"
+                , style "vertical-align" "1px"
+                ]
+                []
+
+          else
+            text ""
+        , text "Practice"
         ]
 
 
@@ -7497,6 +7577,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ wakeLockChanged WakeLockChanged
+        , Sub.map PracticeMsg (Practice.subscriptions model.practiceOpen model.practice)
         , Browser.Events.onResize (\w _ -> WindowResized w)
 
         -- Touch pointers are captured by the handle, so its own pointermove is
@@ -7522,7 +7603,7 @@ compactWidth =
     1000
 
 
-main : Program Int Model Msg
+main : Program Flags Model Msg
 main =
     Browser.application
         { init = init

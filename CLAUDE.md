@@ -36,10 +36,13 @@ commit both files together.
 ## File layout
 
 - `src/Main.elm` — the whole app: model, music theory, SVG rendering, ports.
+- `src/Practice.elm` — the Practice panel (backing band to solo over), see **Practice**.
+- `band.js` — the Practice panel's sound and microphone: everything Elm can't do.
+- `sounds/` — the band's recorded guitar and piano notes (FluidR3, MIT).
 - `tests/BoxShapeTests.elm` — tests that box shape edges land on scale notes,
   stripe edges land on scale notes, and overlap stripes cover all multi-box
   overlap regions.
-- `index.html` — host page; loads `elm.js`, wires Wake Lock ports.
+- `index.html` — host page; loads `elm.js` and `band.js`, wires the ports.
 - `elm.json` — Elm dependencies (including test deps).
 - `elm.js` — compiled output (committed).
 - `fretboard-reference.jpeg` — the original reference image.
@@ -843,6 +846,36 @@ address bar is always a link to exactly what is on screen.
 - The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots
   all sharing the one `scale`) so links from that version keep working. It is
   never written any more; the next change rewrites the URL in the new form.
+
+## Practice
+
+The **Practice** button (page header, beside the gear) opens a drawer with a
+backing band to solo over, ported from a standalone tool. Shut by default on
+every screen; `practiceOpen` is drawer state, so not in the URL, and in compact
+mode it is one of the drawers that shut each other. Shutting it does **not**
+stop the band — you play along while looking at the necks — so the button
+carries a dot while it plays.
+
+- **Elm owns everything but sound** (`src/Practice.elm`, its own `Model`/`Msg`,
+  mapped in by `PracticeMsg`): the chart, presets, the random chart writer
+  (`writeChart`, `elm/random`, seeded from the `seed` flag), key-following
+  after an edit (`keyFit`/`followKey`), Roman numerals, what every note is over
+  the current chord (`roleOf`: chord tone / in the key / blue / outside), the
+  keyboard shortcuts (a document `onKeyDown`, only while the drawer is open)
+  and the view.
+- **`band.js`** is the Web Audio band (drums, bass, keys, guitar; three
+  styles), its lookahead scheduler, and the microphone pitch tracker. Ports:
+  `bandOut` (Elm → JS: `state` on every audible change, `play`, `stop`,
+  `listen`, `unlisten`) and `bandIn` (JS → Elm: `playing`, `beat`, `heard`
+  pitch class, `ear` status). JS decides nothing about notes: it reports what
+  it heard and Elm judges it. Its chord table only says how each type is
+  *played* (voicing, bass pattern); names live in Practice.elm.
+- Elm cannot `preventDefault` from a document subscription, so `band.js`
+  cancels Space and the arrows itself while `.practice-panel` is in the page.
+- The samples are fetched from `sounds/` on the first Play, not inlined.
+- The chart is remembered in **localStorage** (`caged-practice`, written by JS
+  from Practice's `encodeSave`, read back into the `practice` flag), not the URL,
+  which belongs to the fretboard.
 
 ## Ports (Wake Lock, sound)
 

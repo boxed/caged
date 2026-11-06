@@ -80,271 +80,6 @@ function A9(fun, a, b, c, d, e, f, g, h, i) {
 
 
 
-// EQUALITY
-
-function _Utils_eq(x, y)
-{
-	for (
-		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
-		isEqual && (pair = stack.pop());
-		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
-		)
-	{}
-
-	return isEqual;
-}
-
-function _Utils_eqHelp(x, y, depth, stack)
-{
-	if (x === y)
-	{
-		return true;
-	}
-
-	if (typeof x !== 'object' || x === null || y === null)
-	{
-		typeof x === 'function' && _Debug_crash(5);
-		return false;
-	}
-
-	if (depth > 100)
-	{
-		stack.push(_Utils_Tuple2(x,y));
-		return true;
-	}
-
-	/**_UNUSED/
-	if (x.$ === 'Set_elm_builtin')
-	{
-		x = $elm$core$Set$toList(x);
-		y = $elm$core$Set$toList(y);
-	}
-	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	/**/
-	if (x.$ < 0)
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	for (var key in x)
-	{
-		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-var _Utils_equal = F2(_Utils_eq);
-var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
-
-
-
-// COMPARISONS
-
-// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
-// the particular integer values assigned to LT, EQ, and GT.
-
-function _Utils_cmp(x, y, ord)
-{
-	if (typeof x !== 'object')
-	{
-		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
-	}
-
-	/**_UNUSED/
-	if (x instanceof String)
-	{
-		var a = x.valueOf();
-		var b = y.valueOf();
-		return a === b ? 0 : a < b ? -1 : 1;
-	}
-	//*/
-
-	/**/
-	if (typeof x.$ === 'undefined')
-	//*/
-	/**_UNUSED/
-	if (x.$[0] === '#')
-	//*/
-	{
-		return (ord = _Utils_cmp(x.a, y.a))
-			? ord
-			: (ord = _Utils_cmp(x.b, y.b))
-				? ord
-				: _Utils_cmp(x.c, y.c);
-	}
-
-	// traverse conses until end of a list or a mismatch
-	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
-	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
-}
-
-var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
-var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
-var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
-var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
-
-var _Utils_compare = F2(function(x, y)
-{
-	var n = _Utils_cmp(x, y);
-	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
-});
-
-
-// COMMON VALUES
-
-var _Utils_Tuple0 = 0;
-var _Utils_Tuple0_UNUSED = { $: '#0' };
-
-function _Utils_Tuple2(a, b) { return { a: a, b: b }; }
-function _Utils_Tuple2_UNUSED(a, b) { return { $: '#2', a: a, b: b }; }
-
-function _Utils_Tuple3(a, b, c) { return { a: a, b: b, c: c }; }
-function _Utils_Tuple3_UNUSED(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
-
-function _Utils_chr(c) { return c; }
-function _Utils_chr_UNUSED(c) { return new String(c); }
-
-
-// RECORDS
-
-function _Utils_update(oldRecord, updatedFields)
-{
-	var newRecord = {};
-
-	for (var key in oldRecord)
-	{
-		newRecord[key] = oldRecord[key];
-	}
-
-	for (var key in updatedFields)
-	{
-		newRecord[key] = updatedFields[key];
-	}
-
-	return newRecord;
-}
-
-
-// APPEND
-
-var _Utils_append = F2(_Utils_ap);
-
-function _Utils_ap(xs, ys)
-{
-	// append Strings
-	if (typeof xs === 'string')
-	{
-		return xs + ys;
-	}
-
-	// append Lists
-	if (!xs.b)
-	{
-		return ys;
-	}
-	var root = _List_Cons(xs.a, ys);
-	xs = xs.b
-	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		curr = curr.b = _List_Cons(xs.a, ys);
-	}
-	return root;
-}
-
-
-
-var _List_Nil = { $: 0 };
-var _List_Nil_UNUSED = { $: '[]' };
-
-function _List_Cons(hd, tl) { return { $: 1, a: hd, b: tl }; }
-function _List_Cons_UNUSED(hd, tl) { return { $: '::', a: hd, b: tl }; }
-
-
-var _List_cons = F2(_List_Cons);
-
-function _List_fromArray(arr)
-{
-	var out = _List_Nil;
-	for (var i = arr.length; i--; )
-	{
-		out = _List_Cons(arr[i], out);
-	}
-	return out;
-}
-
-function _List_toArray(xs)
-{
-	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		out.push(xs.a);
-	}
-	return out;
-}
-
-var _List_map2 = F3(function(f, xs, ys)
-{
-	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
-	{
-		arr.push(A2(f, xs.a, ys.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map3 = F4(function(f, xs, ys, zs)
-{
-	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A3(f, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map4 = F5(function(f, ws, xs, ys, zs)
-{
-	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
-{
-	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_sortBy = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		return _Utils_cmp(f(a), f(b));
-	}));
-});
-
-var _List_sortWith = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		var ord = A2(f, a, b);
-		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
-	}));
-});
-
-
-
 var _JsArray_empty = [];
 
 function _JsArray_singleton(value)
@@ -784,12 +519,277 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.a1.aB === region.bf.aB)
+	if (region.bx.aX === region.bM.aX)
 	{
-		return 'on line ' + region.a1.aB;
+		return 'on line ' + region.bx.aX;
 	}
-	return 'on lines ' + region.a1.aB + ' through ' + region.bf.aB;
+	return 'on lines ' + region.bx.aX + ' through ' + region.bM.aX;
 }
+
+
+
+// EQUALITY
+
+function _Utils_eq(x, y)
+{
+	for (
+		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
+		isEqual && (pair = stack.pop());
+		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
+		)
+	{}
+
+	return isEqual;
+}
+
+function _Utils_eqHelp(x, y, depth, stack)
+{
+	if (x === y)
+	{
+		return true;
+	}
+
+	if (typeof x !== 'object' || x === null || y === null)
+	{
+		typeof x === 'function' && _Debug_crash(5);
+		return false;
+	}
+
+	if (depth > 100)
+	{
+		stack.push(_Utils_Tuple2(x,y));
+		return true;
+	}
+
+	/**_UNUSED/
+	if (x.$ === 'Set_elm_builtin')
+	{
+		x = $elm$core$Set$toList(x);
+		y = $elm$core$Set$toList(y);
+	}
+	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	/**/
+	if (x.$ < 0)
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	for (var key in x)
+	{
+		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+var _Utils_equal = F2(_Utils_eq);
+var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
+
+
+
+// COMPARISONS
+
+// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
+// the particular integer values assigned to LT, EQ, and GT.
+
+function _Utils_cmp(x, y, ord)
+{
+	if (typeof x !== 'object')
+	{
+		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
+	}
+
+	/**_UNUSED/
+	if (x instanceof String)
+	{
+		var a = x.valueOf();
+		var b = y.valueOf();
+		return a === b ? 0 : a < b ? -1 : 1;
+	}
+	//*/
+
+	/**/
+	if (typeof x.$ === 'undefined')
+	//*/
+	/**_UNUSED/
+	if (x.$[0] === '#')
+	//*/
+	{
+		return (ord = _Utils_cmp(x.a, y.a))
+			? ord
+			: (ord = _Utils_cmp(x.b, y.b))
+				? ord
+				: _Utils_cmp(x.c, y.c);
+	}
+
+	// traverse conses until end of a list or a mismatch
+	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
+	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
+}
+
+var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
+var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
+var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
+var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
+
+var _Utils_compare = F2(function(x, y)
+{
+	var n = _Utils_cmp(x, y);
+	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
+});
+
+
+// COMMON VALUES
+
+var _Utils_Tuple0 = 0;
+var _Utils_Tuple0_UNUSED = { $: '#0' };
+
+function _Utils_Tuple2(a, b) { return { a: a, b: b }; }
+function _Utils_Tuple2_UNUSED(a, b) { return { $: '#2', a: a, b: b }; }
+
+function _Utils_Tuple3(a, b, c) { return { a: a, b: b, c: c }; }
+function _Utils_Tuple3_UNUSED(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
+
+function _Utils_chr(c) { return c; }
+function _Utils_chr_UNUSED(c) { return new String(c); }
+
+
+// RECORDS
+
+function _Utils_update(oldRecord, updatedFields)
+{
+	var newRecord = {};
+
+	for (var key in oldRecord)
+	{
+		newRecord[key] = oldRecord[key];
+	}
+
+	for (var key in updatedFields)
+	{
+		newRecord[key] = updatedFields[key];
+	}
+
+	return newRecord;
+}
+
+
+// APPEND
+
+var _Utils_append = F2(_Utils_ap);
+
+function _Utils_ap(xs, ys)
+{
+	// append Strings
+	if (typeof xs === 'string')
+	{
+		return xs + ys;
+	}
+
+	// append Lists
+	if (!xs.b)
+	{
+		return ys;
+	}
+	var root = _List_Cons(xs.a, ys);
+	xs = xs.b
+	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		curr = curr.b = _List_Cons(xs.a, ys);
+	}
+	return root;
+}
+
+
+
+var _List_Nil = { $: 0 };
+var _List_Nil_UNUSED = { $: '[]' };
+
+function _List_Cons(hd, tl) { return { $: 1, a: hd, b: tl }; }
+function _List_Cons_UNUSED(hd, tl) { return { $: '::', a: hd, b: tl }; }
+
+
+var _List_cons = F2(_List_Cons);
+
+function _List_fromArray(arr)
+{
+	var out = _List_Nil;
+	for (var i = arr.length; i--; )
+	{
+		out = _List_Cons(arr[i], out);
+	}
+	return out;
+}
+
+function _List_toArray(xs)
+{
+	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		out.push(xs.a);
+	}
+	return out;
+}
+
+var _List_map2 = F3(function(f, xs, ys)
+{
+	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
+	{
+		arr.push(A2(f, xs.a, ys.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map3 = F4(function(f, xs, ys, zs)
+{
+	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A3(f, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map4 = F5(function(f, ws, xs, ys, zs)
+{
+	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
+{
+	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_sortBy = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		return _Utils_cmp(f(a), f(b));
+	}));
+});
+
+var _List_sortWith = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		var ord = A2(f, a, b);
+		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
+	}));
+});
 
 
 
@@ -1857,9 +1857,9 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.ce,
-		impl.cH,
-		impl.cC,
+		impl.cN,
+		impl.de,
+		impl.c9,
 		function() { return function() {} }
 	);
 });
@@ -2719,9 +2719,9 @@ var _VirtualDom_mapEventTuple = F2(function(func, tuple)
 var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
-		_: func(record._),
-		a3: record.a3,
-		aZ: record.aZ
+		aq: func(record.aq),
+		bz: record.bz,
+		bs: record.bs
 	}
 });
 
@@ -2989,11 +2989,11 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		// 3 = Custom
 
 		var value = result.a;
-		var message = !tag ? value : tag < 3 ? value.a : value._;
-		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.a3;
+		var message = !tag ? value : tag < 3 ? value.a : value.aq;
+		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.bz;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.aZ) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value.bs) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -3943,11 +3943,11 @@ var _Browser_element = _Debugger_element || F4(function(impl, flagDecoder, debug
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.ce,
-		impl.cH,
-		impl.cC,
+		impl.cN,
+		impl.de,
+		impl.c9,
 		function(sendToApp, initialModel) {
-			var view = impl.cI;
+			var view = impl.df;
 			/**/
 			var domNode = args['node'];
 			//*/
@@ -3979,12 +3979,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.ce,
-		impl.cH,
-		impl.cC,
+		impl.cN,
+		impl.de,
+		impl.c9,
 		function(sendToApp, initialModel) {
-			var divertHrefToApp = impl.a$ && impl.a$(sendToApp)
-			var view = impl.cI;
+			var divertHrefToApp = impl.bv && impl.bv(sendToApp)
+			var view = impl.df;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
 			var currNode = _VirtualDom_virtualize(bodyNode);
@@ -3992,12 +3992,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 			{
 				_VirtualDom_divertHrefToApp = divertHrefToApp;
 				var doc = view(model);
-				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.bY);
+				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.cv);
 				var patches = _VirtualDom_diff(currNode, nextNode);
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.cF) && (_VirtualDom_doc.title = title = doc.cF);
+				(title !== doc.dc) && (_VirtualDom_doc.title = title = doc.dc);
 			});
 		}
 	);
@@ -4053,12 +4053,12 @@ function _Browser_makeAnimator(model, draw)
 
 function _Browser_application(impl)
 {
-	var onUrlChange = impl.cs;
-	var onUrlRequest = impl.ct;
+	var onUrlChange = impl.c$;
+	var onUrlRequest = impl.c0;
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
-		a$: function(sendToApp)
+		bv: function(sendToApp)
 		{
 			key.a = sendToApp;
 			_Browser_window.addEventListener('popstate', key);
@@ -4074,9 +4074,9 @@ function _Browser_application(impl)
 					var next = $elm$url$Url$fromString(href).a;
 					sendToApp(onUrlRequest(
 						(next
-							&& curr.bB === next.bB
-							&& curr.bm === next.bm
-							&& curr.by.a === next.by.a
+							&& curr.b8 === next.b8
+							&& curr.bU === next.bU
+							&& curr.b4.a === next.b4.a
 						)
 							? $elm$browser$Browser$Internal(next)
 							: $elm$browser$Browser$External(href)
@@ -4084,13 +4084,13 @@ function _Browser_application(impl)
 				}
 			});
 		},
-		ce: function(flags)
+		cN: function(flags)
 		{
-			return A3(impl.ce, flags, _Browser_getUrl(), key);
+			return A3(impl.cN, flags, _Browser_getUrl(), key);
 		},
-		cI: impl.cI,
-		cH: impl.cH,
-		cC: impl.cC
+		df: impl.df,
+		de: impl.de,
+		c9: impl.c9
 	});
 }
 
@@ -4156,17 +4156,17 @@ var _Browser_decodeEvent = F2(function(decoder, event)
 function _Browser_visibilityInfo()
 {
 	return (typeof _VirtualDom_doc.hidden !== 'undefined')
-		? { cb: 'hidden', b$: 'visibilitychange' }
+		? { cK: 'hidden', cy: 'visibilitychange' }
 		:
 	(typeof _VirtualDom_doc.mozHidden !== 'undefined')
-		? { cb: 'mozHidden', b$: 'mozvisibilitychange' }
+		? { cK: 'mozHidden', cy: 'mozvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.msHidden !== 'undefined')
-		? { cb: 'msHidden', b$: 'msvisibilitychange' }
+		? { cK: 'msHidden', cy: 'msvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.webkitHidden !== 'undefined')
-		? { cb: 'webkitHidden', b$: 'webkitvisibilitychange' }
-		: { cb: 'hidden', b$: 'visibilitychange' };
+		? { cK: 'webkitHidden', cy: 'webkitvisibilitychange' }
+		: { cK: 'hidden', cy: 'visibilitychange' };
 }
 
 
@@ -4247,12 +4247,12 @@ var _Browser_call = F2(function(functionName, id)
 function _Browser_getViewport()
 {
 	return {
-		bF: _Browser_getScene(),
-		bO: {
-			bR: _Browser_window.pageXOffset,
-			bS: _Browser_window.pageYOffset,
-			bQ: _Browser_doc.documentElement.clientWidth,
-			bl: _Browser_doc.documentElement.clientHeight
+		cc: _Browser_getScene(),
+		cm: {
+			co: _Browser_window.pageXOffset,
+			cp: _Browser_window.pageYOffset,
+			bC: _Browser_doc.documentElement.clientWidth,
+			bS: _Browser_doc.documentElement.clientHeight
 		}
 	};
 }
@@ -4262,8 +4262,8 @@ function _Browser_getScene()
 	var body = _Browser_doc.body;
 	var elem = _Browser_doc.documentElement;
 	return {
-		bQ: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
-		bl: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
+		bC: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
+		bS: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
 	};
 }
 
@@ -4286,15 +4286,15 @@ function _Browser_getViewportOf(id)
 	return _Browser_withNode(id, function(node)
 	{
 		return {
-			bF: {
-				bQ: node.scrollWidth,
-				bl: node.scrollHeight
+			cc: {
+				bC: node.scrollWidth,
+				bS: node.scrollHeight
 			},
-			bO: {
-				bR: node.scrollLeft,
-				bS: node.scrollTop,
-				bQ: node.clientWidth,
-				bl: node.clientHeight
+			cm: {
+				co: node.scrollLeft,
+				cp: node.scrollTop,
+				bC: node.clientWidth,
+				bS: node.clientHeight
 			}
 		};
 	});
@@ -4324,18 +4324,18 @@ function _Browser_getElement(id)
 		var x = _Browser_window.pageXOffset;
 		var y = _Browser_window.pageYOffset;
 		return {
-			bF: _Browser_getScene(),
-			bO: {
-				bR: x,
-				bS: y,
-				bQ: _Browser_doc.documentElement.clientWidth,
-				bl: _Browser_doc.documentElement.clientHeight
+			cc: _Browser_getScene(),
+			cm: {
+				co: x,
+				cp: y,
+				bC: _Browser_doc.documentElement.clientWidth,
+				bS: _Browser_doc.documentElement.clientHeight
 			},
-			b5: {
-				bR: x + rect.left,
-				bS: y + rect.top,
-				bQ: rect.width,
-				bl: rect.height
+			cE: {
+				co: x + rect.left,
+				cp: y + rect.top,
+				bC: rect.width,
+				bS: rect.height
 			}
 		};
 	});
@@ -4413,10 +4413,31 @@ var $author$project$Main$LinkClicked = function (a) {
 var $author$project$Main$UrlChanged = function (a) {
 	return {$: 21, a: a};
 };
-var $elm$core$Basics$EQ = 1;
-var $elm$core$Basics$GT = 2;
-var $elm$core$Basics$LT = 0;
 var $elm$core$List$cons = _List_cons;
+var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
+var $elm$core$Array$foldr = F3(
+	function (func, baseCase, _v0) {
+		var tree = _v0.c;
+		var tail = _v0.d;
+		var helper = F2(
+			function (node, acc) {
+				if (!node.$) {
+					var subTree = node.a;
+					return A3($elm$core$Elm$JsArray$foldr, helper, acc, subTree);
+				} else {
+					var values = node.a;
+					return A3($elm$core$Elm$JsArray$foldr, func, acc, values);
+				}
+			});
+		return A3(
+			$elm$core$Elm$JsArray$foldr,
+			helper,
+			A3($elm$core$Elm$JsArray$foldr, func, baseCase, tail),
+			tree);
+	});
+var $elm$core$Array$toList = function (array) {
+	return A3($elm$core$Array$foldr, $elm$core$List$cons, _List_Nil, array);
+};
 var $elm$core$Dict$foldr = F3(
 	function (func, acc, t) {
 		foldr:
@@ -4469,30 +4490,9 @@ var $elm$core$Set$toList = function (_v0) {
 	var dict = _v0;
 	return $elm$core$Dict$keys(dict);
 };
-var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
-var $elm$core$Array$foldr = F3(
-	function (func, baseCase, _v0) {
-		var tree = _v0.c;
-		var tail = _v0.d;
-		var helper = F2(
-			function (node, acc) {
-				if (!node.$) {
-					var subTree = node.a;
-					return A3($elm$core$Elm$JsArray$foldr, helper, acc, subTree);
-				} else {
-					var values = node.a;
-					return A3($elm$core$Elm$JsArray$foldr, func, acc, values);
-				}
-			});
-		return A3(
-			$elm$core$Elm$JsArray$foldr,
-			helper,
-			A3($elm$core$Elm$JsArray$foldr, func, baseCase, tail),
-			tree);
-	});
-var $elm$core$Array$toList = function (array) {
-	return A3($elm$core$Array$foldr, $elm$core$List$cons, _List_Nil, array);
-};
+var $elm$core$Basics$EQ = 1;
+var $elm$core$Basics$GT = 2;
+var $elm$core$Basics$LT = 0;
 var $elm$core$Result$Err = function (a) {
 	return {$: 1, a: a};
 };
@@ -4819,25 +4819,25 @@ var $elm$core$Array$treeFromBuilder = F2(
 	});
 var $elm$core$Array$builderToArray = F2(
 	function (reverseNodeList, builder) {
-		if (!builder.o) {
+		if (!builder.t) {
 			return A4(
 				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.u),
+				$elm$core$Elm$JsArray$length(builder.B),
 				$elm$core$Array$shiftStep,
 				$elm$core$Elm$JsArray$empty,
-				builder.u);
+				builder.B);
 		} else {
-			var treeLen = builder.o * $elm$core$Array$branchFactor;
+			var treeLen = builder.t * $elm$core$Array$branchFactor;
 			var depth = $elm$core$Basics$floor(
 				A2($elm$core$Basics$logBase, $elm$core$Array$branchFactor, treeLen - 1));
-			var correctNodeList = reverseNodeList ? $elm$core$List$reverse(builder.v) : builder.v;
-			var tree = A2($elm$core$Array$treeFromBuilder, correctNodeList, builder.o);
+			var correctNodeList = reverseNodeList ? $elm$core$List$reverse(builder.C) : builder.C;
+			var tree = A2($elm$core$Array$treeFromBuilder, correctNodeList, builder.t);
 			return A4(
 				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.u) + treeLen,
+				$elm$core$Elm$JsArray$length(builder.B) + treeLen,
 				A2($elm$core$Basics$max, 5, depth * $elm$core$Array$shiftStep),
 				tree,
-				builder.u);
+				builder.B);
 		}
 	});
 var $elm$core$Basics$idiv = _Basics_idiv;
@@ -4850,7 +4850,7 @@ var $elm$core$Array$initializeHelp = F5(
 				return A2(
 					$elm$core$Array$builderToArray,
 					false,
-					{v: nodeList, o: (len / $elm$core$Array$branchFactor) | 0, u: tail});
+					{C: nodeList, t: (len / $elm$core$Array$branchFactor) | 0, B: tail});
 			} else {
 				var leaf = $elm$core$Array$Leaf(
 					A3($elm$core$Elm$JsArray$initialize, $elm$core$Array$branchFactor, fromIndex, fn));
@@ -4888,6 +4888,7 @@ var $elm$core$Result$isOk = function (result) {
 		return false;
 	}
 };
+var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $elm$json$Json$Decode$map = _Json_map1;
 var $elm$json$Json$Decode$map2 = _Json_map2;
 var $elm$json$Json$Decode$succeed = _Json_succeed;
@@ -4917,7 +4918,7 @@ var $elm$url$Url$Http = 0;
 var $elm$url$Url$Https = 1;
 var $elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
-		return {bh: fragment, bm: host, bw: path, by: port_, bB: protocol, cw: query};
+		return {bO: fragment, bU: host, b2: path, b4: port_, b8: protocol, c3: query};
 	});
 var $elm$core$String$contains = _String_contains;
 var $elm$core$String$length = _String_length;
@@ -5196,10 +5197,11 @@ var $elm$core$Task$perform = F2(
 			A2($elm$core$Task$map, toMessage, task));
 	});
 var $elm$browser$Browser$application = _Browser_application;
+var $elm$json$Json$Decode$field = _Json_decodeField;
 var $author$project$Main$compactWidth = 1000;
 var $author$project$Main$AllStrings = {$: 0};
 var $author$project$Main$Ionian = {$: 3};
-var $author$project$Main$defaultNeck = {g: 0, a: $author$project$Main$Ionian, t: $author$project$Main$AllStrings};
+var $author$project$Main$defaultNeck = {h: 0, a: $author$project$Main$Ionian, z: $author$project$Main$AllStrings};
 var $elm$core$List$drop = F2(
 	function (n, list) {
 		drop:
@@ -5230,6 +5232,59 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
+var $author$project$Practice$Ballad = 2;
+var $author$project$Practice$FromPreset = function (a) {
+	return {$: 0, a: a};
+};
+var $author$project$Practice$Custom = {$: 1};
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $elm$core$Basics$not = _Basics_not;
+var $elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			$elm$core$List$any,
+			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
+			list);
+	});
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (!maybeValue.$) {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
 var $elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (!maybe.$) {
@@ -5240,22 +5295,674 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $elm$core$Basics$not = _Basics_not;
-var $elm$core$Maybe$andThen = F2(
-	function (callback, maybeValue) {
-		if (!maybeValue.$) {
-			var value = maybeValue.a;
-			return callback(value);
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $author$project$Practice$Preset = F3(
+	function (id, name, bars) {
+		return {f: bars, ai: id, q: name};
+	});
+var $author$project$Practice$Q7 = 2;
+var $author$project$Practice$Q7s9 = 9;
+var $author$project$Practice$Q9 = 7;
+var $author$project$Practice$QDim7 = 11;
+var $author$project$Practice$QMaj = 0;
+var $author$project$Practice$QMin = 1;
+var $author$project$Practice$QMin7 = 3;
+var $author$project$Practice$presets = function () {
+	var sevenths = $elm$core$List$map(
+		function (d) {
+			return _Utils_Tuple2(d, 2);
+		});
+	return _List_fromArray(
+		[
+			A3(
+			$author$project$Practice$Preset,
+			'twelve',
+			'12-bar blues',
+			sevenths(
+				_List_fromArray(
+					[0, 0, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7]))),
+			A3(
+			$author$project$Practice$Preset,
+			'quick',
+			'quick-change blues',
+			sevenths(
+				_List_fromArray(
+					[0, 5, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7]))),
+			A3(
+			$author$project$Practice$Preset,
+			'soul',
+			'soul blues',
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(5, 2),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(9, 3),
+					_Utils_Tuple2(5, 2),
+					_Utils_Tuple2(2, 3),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(4, 3),
+					_Utils_Tuple2(2, 3),
+					_Utils_Tuple2(7, 2),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(7, 2)
+				])),
+			A3(
+			$author$project$Practice$Preset,
+			'jazz',
+			'jazz blues',
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(5, 2),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(5, 2),
+					_Utils_Tuple2(6, 11),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(9, 2),
+					_Utils_Tuple2(2, 3),
+					_Utils_Tuple2(7, 2),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(7, 2)
+				])),
+			A3(
+			$author$project$Practice$Preset,
+			'slow',
+			'slow blues',
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 7),
+					_Utils_Tuple2(5, 7),
+					_Utils_Tuple2(0, 7),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(5, 7),
+					_Utils_Tuple2(5, 7),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(4, 3),
+					_Utils_Tuple2(2, 3),
+					_Utils_Tuple2(7, 7),
+					_Utils_Tuple2(0, 2),
+					_Utils_Tuple2(7, 9)
+				])),
+			A3(
+			$author$project$Practice$Preset,
+			'minor',
+			'minor blues',
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 3),
+					_Utils_Tuple2(0, 3),
+					_Utils_Tuple2(0, 3),
+					_Utils_Tuple2(0, 3),
+					_Utils_Tuple2(5, 3),
+					_Utils_Tuple2(5, 3),
+					_Utils_Tuple2(0, 3),
+					_Utils_Tuple2(0, 3),
+					_Utils_Tuple2(8, 2),
+					_Utils_Tuple2(7, 2),
+					_Utils_Tuple2(0, 3),
+					_Utils_Tuple2(7, 2)
+				])),
+			A3(
+			$author$project$Practice$Preset,
+			'rock',
+			'blues rock',
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 0),
+					_Utils_Tuple2(0, 0),
+					_Utils_Tuple2(5, 0),
+					_Utils_Tuple2(7, 0),
+					_Utils_Tuple2(0, 0),
+					_Utils_Tuple2(9, 1),
+					_Utils_Tuple2(5, 0),
+					_Utils_Tuple2(7, 0)
+				])),
+			A3(
+			$author$project$Practice$Preset,
+			'ballad',
+			'pop ballad',
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, 0),
+					_Utils_Tuple2(9, 1),
+					_Utils_Tuple2(7, 0),
+					_Utils_Tuple2(5, 0)
+				])),
+			A3(
+			$author$project$Practice$Preset,
+			'eight',
+			'8-bar blues',
+			sevenths(
+				_List_fromArray(
+					[0, 7, 5, 5, 0, 7, 0, 0])))
+		]);
+}();
+var $author$project$Practice$presetById = function (id) {
+	return $elm$core$List$head(
+		A2(
+			$elm$core$List$filter,
+			function (p) {
+				return _Utils_eq(p.ai, id);
+			},
+			$author$project$Practice$presets));
+};
+var $author$project$Practice$basicFor = function (f) {
+	switch (f) {
+		case 0:
+			return 0;
+		case 1:
+			return 1;
+		default:
+			return 2;
+	}
+};
+var $author$project$Practice$DimFam = 3;
+var $author$project$Practice$DomFam = 2;
+var $author$project$Practice$MajFam = 0;
+var $author$project$Practice$MinFam = 1;
+var $author$project$Practice$QualInfo = F6(
+	function (id, label, name, basic, fam, tones) {
+		return {aU: basic, aW: fam, ai: id, aM: label, q: name, cl: tones};
+	});
+var $author$project$Practice$qualInfo = function (q) {
+	switch (q) {
+		case 0:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'maj',
+				'',
+				'major',
+				true,
+				0,
+				_List_fromArray(
+					[0, 4, 7]));
+		case 1:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'm',
+				'm',
+				'minor',
+				true,
+				1,
+				_List_fromArray(
+					[0, 3, 7]));
+		case 2:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'7',
+				'7',
+				'seventh',
+				true,
+				2,
+				_List_fromArray(
+					[0, 4, 10]));
+		case 3:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'm7',
+				'm7',
+				'minor seventh',
+				false,
+				1,
+				_List_fromArray(
+					[3, 10, 14]));
+		case 4:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'maj7',
+				'maj7',
+				'major seventh',
+				false,
+				0,
+				_List_fromArray(
+					[4, 7, 11]));
+		case 5:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'6',
+				'6',
+				'sixth',
+				false,
+				0,
+				_List_fromArray(
+					[4, 7, 9]));
+		case 6:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'm6',
+				'm6',
+				'minor sixth',
+				false,
+				1,
+				_List_fromArray(
+					[3, 7, 9]));
+		case 7:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'9',
+				'9',
+				'ninth',
+				false,
+				2,
+				_List_fromArray(
+					[4, 10, 14]));
+		case 8:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'13',
+				'13',
+				'thirteenth',
+				false,
+				2,
+				_List_fromArray(
+					[4, 9, 10, 14]));
+		case 9:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'7#9',
+				'7♯9',
+				'sharp nine',
+				false,
+				2,
+				_List_fromArray(
+					[4, 10, 15]));
+		case 10:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'7b9',
+				'7♭9',
+				'flat nine',
+				false,
+				2,
+				_List_fromArray(
+					[4, 10, 13]));
+		default:
+			return A6(
+				$author$project$Practice$QualInfo,
+				'dim7',
+				'°7',
+				'diminished',
+				false,
+				3,
+				_List_fromArray(
+					[0, 3, 6, 9]));
+	}
+};
+var $author$project$Practice$fam = function (q) {
+	return $author$project$Practice$qualInfo(q).aW;
+};
+var $author$project$Practice$simplify = F2(
+	function (moreOpen, bars) {
+		return moreOpen ? bars : A2(
+			$elm$core$List$map,
+			function (b) {
+				return _Utils_update(
+					b,
+					{
+						i: $author$project$Practice$basicFor(
+							$author$project$Practice$fam(b.i))
+					});
+			},
+			bars);
+	});
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return value;
 		} else {
-			return $elm$core$Maybe$Nothing;
+			return _default;
 		}
+	});
+var $author$project$Practice$barsFromPreset = F3(
+	function (moreOpen, id, key) {
+		return A2(
+			$author$project$Practice$simplify,
+			moreOpen,
+			A2(
+				$elm$core$Maybe$withDefault,
+				_List_Nil,
+				A2(
+					$elm$core$Maybe$map,
+					A2(
+						$elm$core$Basics$composeR,
+						function ($) {
+							return $.f;
+						},
+						$elm$core$List$map(
+							function (_v0) {
+								var d = _v0.a;
+								var q = _v0.b;
+								return {
+									i: q,
+									h: A2($elm$core$Basics$modBy, 12, key + d)
+								};
+							})),
+					$author$project$Practice$presetById(id))));
 	});
 var $elm$core$Basics$clamp = F3(
 	function (low, high, number) {
 		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
 	});
+var $elm$core$List$maybeCons = F3(
+	function (f, mx, xs) {
+		var _v0 = f(mx);
+		if (!_v0.$) {
+			var x = _v0.a;
+			return A2($elm$core$List$cons, x, xs);
+		} else {
+			return xs;
+		}
+	});
+var $elm$core$List$filterMap = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			$elm$core$List$maybeCons(f),
+			_List_Nil,
+			xs);
+	});
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $author$project$Practice$slugKeys = _List_fromArray(
+	['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']);
+var $author$project$Practice$keyFromSlug = function (s) {
+	return A2(
+		$elm$core$Maybe$map,
+		$elm$core$Tuple$first,
+		$elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (_v0) {
+					var n = _v0.b;
+					return _Utils_eq(n, s);
+				},
+				A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, $author$project$Practice$slugKeys))));
+};
+var $author$project$Practice$maxBars = 16;
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $author$project$Practice$Bar = F2(
+	function (root, q) {
+		return {i: q, h: root};
+	});
+var $elm$core$Maybe$map2 = F3(
+	function (func, ma, mb) {
+		if (ma.$ === 1) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var a = ma.a;
+			if (mb.$ === 1) {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var b = mb.a;
+				return $elm$core$Maybe$Just(
+					A2(func, a, b));
+			}
+		}
+	});
+var $author$project$Practice$Q13 = 8;
+var $author$project$Practice$Q6 = 5;
+var $author$project$Practice$Q7b9 = 10;
+var $author$project$Practice$QMaj7 = 4;
+var $author$project$Practice$QMin6 = 6;
+var $author$project$Practice$qualities = _List_fromArray(
+	[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+var $author$project$Practice$qualFromId = function (id) {
+	return $elm$core$List$head(
+		A2(
+			$elm$core$List$filter,
+			function (q) {
+				return _Utils_eq(
+					$author$project$Practice$qualInfo(q).ai,
+					id);
+			},
+			$author$project$Practice$qualities));
+};
+var $author$project$Practice$parseChord = function (code) {
+	var rootLen = (A3($elm$core$String$slice, 1, 2, code) === 'b') ? 2 : 1;
+	return A3(
+		$elm$core$Maybe$map2,
+		$author$project$Practice$Bar,
+		$author$project$Practice$keyFromSlug(
+			A2($elm$core$String$left, rootLen, code)),
+		function () {
+			var _v0 = A2($elm$core$String$dropLeft, rootLen, code);
+			if (_v0 === '') {
+				return $elm$core$Maybe$Just(0);
+			} else {
+				var id = _v0;
+				return $author$project$Practice$qualFromId(id);
+			}
+		}());
+};
+var $author$project$Practice$StyleInfo = F6(
+	function (id, name, _short, bpm, feel, hint) {
+		return {w: bpm, s: feel, bT: hint, ai: id, q: name, cd: _short};
+	});
+var $author$project$Practice$styleInfo = function (s) {
+	switch (s) {
+		case 0:
+			return A6($author$project$Practice$StyleInfo, 'shuffle', 'Old-school shuffle', 'Shuffle', 112, 80, 'Ride, boogie bass, electric piano');
+		case 1:
+			return A6($author$project$Practice$StyleInfo, 'modern', 'Modern blues rock', 'Modern', 100, 8, 'Straight eighths, hi-hat, strummed acoustic guitar');
+		default:
+			return A6($author$project$Practice$StyleInfo, 'ballad', 'Slow ballad', 'Ballad', 50, 100, 'Slow triplet feel, piano triplets over organ, no guitar');
+	}
+};
+var $author$project$Practice$Modern = 1;
+var $author$project$Practice$Shuffle = 0;
+var $author$project$Practice$styles = _List_fromArray(
+	[1, 0, 2]);
+var $author$project$Practice$styleFromId = function (id) {
+	return $elm$core$List$head(
+		A2(
+			$elm$core$List$filter,
+			function (s) {
+				return _Utils_eq(
+					$author$project$Practice$styleInfo(s).ai,
+					id);
+			},
+			$author$project$Practice$styles));
+};
+var $author$project$Practice$applySaved = F2(
+	function (s, model) {
+		var style = A2(
+			$elm$core$Maybe$withDefault,
+			model.A,
+			A2($elm$core$Maybe$andThen, $author$project$Practice$styleFromId, s.A));
+		var key = A2(
+			$elm$core$Maybe$withDefault,
+			model.ba,
+			A2($elm$core$Maybe$andThen, $author$project$Practice$keyFromSlug, s.ba));
+		var info = $author$project$Practice$styleInfo(style);
+		var chords = A2(
+			$elm$core$List$map,
+			$author$project$Practice$parseChord,
+			A2($elm$core$Maybe$withDefault, _List_Nil, s.ah));
+		var withChart = function (m) {
+			if ((!$elm$core$List$isEmpty(chords)) && ((_Utils_cmp(
+				$elm$core$List$length(chords),
+				$author$project$Practice$maxBars) < 1) && A2(
+				$elm$core$List$all,
+				$elm$core$Basics$neq($elm$core$Maybe$Nothing),
+				chords))) {
+				return _Utils_update(
+					m,
+					{
+						f: A2($elm$core$List$filterMap, $elm$core$Basics$identity, chords),
+						J: $author$project$Practice$Custom
+					});
+			} else {
+				var _v2 = A2($elm$core$Maybe$andThen, $author$project$Practice$presetById, s.b7);
+				if (!_v2.$) {
+					var p = _v2.a;
+					return _Utils_update(
+						m,
+						{
+							f: A3($author$project$Practice$barsFromPreset, m.E, p.ai, key),
+							J: $author$project$Practice$FromPreset(p.ai)
+						});
+				} else {
+					return m;
+				}
+			}
+		};
+		return withChart(
+			_Utils_update(
+				model,
+				{
+					w: A2(
+						$elm$core$Maybe$withDefault,
+						info.w,
+						A2(
+							$elm$core$Maybe$map,
+							A2($elm$core$Basics$clamp, 40, 200),
+							s.w)),
+					s: function () {
+						var _v0 = _Utils_Tuple2(style, s.s);
+						if (_v0.a === 2) {
+							var _v1 = _v0.a;
+							return info.s;
+						} else {
+							if (!_v0.b.$) {
+								var f = _v0.b.a;
+								return A3($elm$core$Basics$clamp, 0, 100, f);
+							} else {
+								return info.s;
+							}
+						}
+					}(),
+					ba: key,
+					A: style
+				}));
+	});
+var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $elm$random$Random$Seed = F2(
+	function (a, b) {
+		return {$: 0, a: a, b: b};
+	});
+var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var $elm$random$Random$next = function (_v0) {
+	var state0 = _v0.a;
+	var incr = _v0.b;
+	return A2($elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
+};
+var $elm$random$Random$initialSeed = function (x) {
+	var _v0 = $elm$random$Random$next(
+		A2($elm$random$Random$Seed, 0, 1013904223));
+	var state1 = _v0.a;
+	var incr = _v0.b;
+	var state2 = (state1 + x) >>> 0;
+	return $elm$random$Random$next(
+		A2($elm$random$Random$Seed, state2, incr));
+};
+var $author$project$Practice$getAt = F2(
+	function (i, list) {
+		return (i < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
+			A2($elm$core$List$drop, i, list));
+	});
+var $author$project$Practice$currentBarAt = F2(
+	function (i, model) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			{i: 0, h: model.ba},
+			A2($author$project$Practice$getAt, i, model.f));
+	});
+var $author$project$Practice$openMoreIfNeeded = function (model) {
+	return $author$project$Practice$qualInfo(
+		A2($author$project$Practice$currentBarAt, model.L, model).i).aU ? model : _Utils_update(
+		model,
+		{E: true});
+};
+var $author$project$Practice$Saved = F6(
+	function (style, bpm, feel, key, prog, chords) {
+		return {w: bpm, ah: chords, s: feel, ba: key, b7: prog, A: style};
+	});
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$json$Json$Decode$map6 = _Json_map6;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$maybe = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder),
+				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
+			]));
+};
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Practice$savedDecoder = A7(
+	$elm$json$Json$Decode$map6,
+	$author$project$Practice$Saved,
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'style', $elm$json$Json$Decode$string)),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'bpm', $elm$json$Json$Decode$int)),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'feel', $elm$json$Json$Decode$int)),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string)),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'prog', $elm$json$Json$Decode$string)),
+	$elm$json$Json$Decode$maybe(
+		A2(
+			$elm$json$Json$Decode$field,
+			'chords',
+			$elm$json$Json$Decode$list($elm$json$Json$Decode$string))));
+var $author$project$Practice$init = F2(
+	function (seed, saved) {
+		var fresh = {
+			f: A3($author$project$Practice$barsFromPreset, false, 'ballad', 0),
+			w: $author$project$Practice$styleInfo(2).w,
+			aI: '',
+			s: $author$project$Practice$styleInfo(2).s,
+			ao: $elm$core$Maybe$Nothing,
+			ba: 0,
+			aa: false,
+			aZ: false,
+			aN: 0,
+			aB: {a4: 90, a7: 80, a9: 75, bb: 55, bd: 90},
+			E: false,
+			as: $elm$core$Maybe$Nothing,
+			V: false,
+			bu: $elm$random$Random$initialSeed(seed),
+			L: 0,
+			J: $author$project$Practice$FromPreset('ballad'),
+			A: 2
+		};
+		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Practice$savedDecoder, saved);
+		if (!_v0.$) {
+			var s = _v0.a;
+			return $author$project$Practice$openMoreIfNeeded(
+				A2($author$project$Practice$applySaved, s, fresh));
+		} else {
+			return fresh;
+		}
+	});
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$numFrets = 22;
 var $author$project$Main$clampFocus = function (_v0) {
 	var lo = _v0.a;
@@ -5276,40 +5983,6 @@ var $author$project$Main$clampIndex = F2(
 var $author$project$Main$clampString = function (n) {
 	return A2($elm$core$Basics$clamp, 1, n);
 };
-var $elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
-	});
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var $elm$core$List$maybeCons = F3(
-	function (f, mx, xs) {
-		var _v0 = f(mx);
-		if (!_v0.$) {
-			var x = _v0.a;
-			return A2($elm$core$List$cons, x, xs);
-		} else {
-			return xs;
-		}
-	});
-var $elm$core$List$filterMap = F2(
-	function (f, xs) {
-		return A3(
-			$elm$core$List$foldr,
-			$elm$core$List$maybeCons(f),
-			_List_Nil,
-			xs);
-	});
 var $author$project$Main$focusFromSlug = function (str) {
 	var _v0 = A2(
 		$elm$core$List$map,
@@ -5325,21 +5998,6 @@ var $author$project$Main$focusFromSlug = function (str) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm$core$Maybe$map2 = F3(
-	function (func, ma, mb) {
-		if (ma.$ === 1) {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var a = ma.a;
-			if (mb.$ === 1) {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var b = mb.a;
-				return $elm$core$Maybe$Just(
-					A2(func, a, b));
-			}
-		}
-	});
 var $elm$core$Maybe$map3 = F4(
 	function (func, ma, mb, mc) {
 		if (ma.$ === 1) {
@@ -5393,27 +6051,6 @@ var $author$project$Main$rootFromSlug = function (s) {
 var $author$project$Main$Custom = F2(
 	function (a, b) {
 		return {$: 55, a: a, b: b};
-	});
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
 	});
 var $elm$core$List$member = F2(
 	function (x, xs) {
@@ -5962,7 +6599,7 @@ var $author$project$Main$neckFromSlug = function (str) {
 					$elm$core$Maybe$map2,
 					F2(
 						function (root, scale) {
-							return {g: root, a: scale, t: $author$project$Main$AllStrings};
+							return {h: root, a: scale, z: $author$project$Main$AllStrings};
 						}),
 					$author$project$Main$rootFromSlug(r),
 					$author$project$Main$scaleFromSlug(sc));
@@ -5977,7 +6614,7 @@ var $author$project$Main$neckFromSlug = function (str) {
 						$elm$core$Maybe$map3,
 						F3(
 							function (root, scale, stringSet) {
-								return {g: root, a: scale, t: stringSet};
+								return {h: root, a: scale, z: stringSet};
 							}),
 						$author$project$Main$rootFromSlug(r),
 						$author$project$Main$scaleFromSlug(sc),
@@ -6006,7 +6643,7 @@ var $author$project$Main$normalizeNeck = F2(
 		return _Utils_update(
 			neck,
 			{
-				t: A2($author$project$Main$normalizeSet, n, neck.t)
+				z: A2($author$project$Main$normalizeSet, n, neck.z)
 			});
 	});
 var $elm$core$Tuple$second = function (_v0) {
@@ -6014,19 +6651,18 @@ var $elm$core$Tuple$second = function (_v0) {
 	return y;
 };
 var $author$project$Main$standardTuning = {
-	m: 'Standard',
-	k: 'standard',
-	h: _List_fromArray(
+	q: 'Standard',
+	m: 'standard',
+	j: _List_fromArray(
 		[4, 11, 7, 2, 9, 4])
 };
 var $author$project$Main$stringCount = function (t) {
 	return A2(
 		$elm$core$Basics$max,
 		1,
-		$elm$core$List$length(t.h));
+		$elm$core$List$length(t.j));
 };
 var $author$project$Main$customName = 'Custom';
-var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$rootSlug = function (n) {
 	var _v0 = A2($elm$core$Basics$modBy, 12, n);
 	switch (_v0) {
@@ -6060,53 +6696,53 @@ var $author$project$Main$rootSlug = function (n) {
 };
 var $author$project$Main$customFrom = function (strings) {
 	return {
-		m: $author$project$Main$customName,
-		k: A2(
+		q: $author$project$Main$customName,
+		m: A2(
 			$elm$core$String$join,
 			'-',
 			A2($elm$core$List$map, $author$project$Main$rootSlug, strings)),
-		h: strings
+		j: strings
 	};
 };
 var $author$project$Main$extendedTunings = _List_fromArray(
 	[
 		{
-		m: 'Drop A',
-		k: 'drop-a',
-		h: _List_fromArray(
+		q: 'Drop A',
+		m: 'drop-a',
+		j: _List_fromArray(
 			[4, 11, 7, 2, 9, 4, 9])
 	},
 		{
-		m: 'A Standard',
-		k: 'a-standard',
-		h: _List_fromArray(
+		q: 'A Standard',
+		m: 'a-standard',
+		j: _List_fromArray(
 			[2, 9, 5, 0, 7, 2, 9])
 	},
 		{
-		m: 'Russian (Open G)',
-		k: 'russian',
-		h: _List_fromArray(
+		q: 'Russian (Open G)',
+		m: 'russian',
+		j: _List_fromArray(
 			[2, 11, 7, 2, 11, 7, 2])
 	},
 		{
-		m: 'Drop E',
-		k: 'drop-e',
-		h: _List_fromArray(
+		q: 'Drop E',
+		m: 'drop-e',
+		j: _List_fromArray(
 			[4, 11, 7, 2, 9, 4, 11, 4])
 	},
 		{
-		m: 'E Standard',
-		k: 'e-standard',
-		h: _List_fromArray(
+		q: 'E Standard',
+		m: 'e-standard',
+		j: _List_fromArray(
 			[2, 9, 5, 0, 7, 2, 9, 4])
 	}
 	]);
 var $author$project$Main$generated = F4(
 	function (name, base, n, note) {
 		return {
-			m: name,
-			k: (n === 6) ? base : (base + ('-' + $elm$core$String$fromInt(n))),
-			h: A2(
+			q: name,
+			m: (n === 6) ? base : (base + ('-' + $elm$core$String$fromInt(n))),
+			j: A2(
 				$elm$core$List$map,
 				function (s) {
 					return A2(
@@ -6128,21 +6764,12 @@ var $author$project$Main$fourthsFor = function (n) {
 		});
 };
 var $author$project$Main$maxStrings = 1000;
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (!maybe.$) {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var $author$project$Main$referenceOpen = function (s) {
 	return (s <= 6) ? A2(
 		$elm$core$Maybe$withDefault,
 		4,
 		$elm$core$List$head(
-			A2($elm$core$List$drop, s - 1, $author$project$Main$standardTuning.h))) : A2($elm$core$Basics$modBy, 12, 4 - (5 * (s - 6)));
+			A2($elm$core$List$drop, s - 1, $author$project$Main$standardTuning.j))) : A2($elm$core$Basics$modBy, 12, 4 - (5 * (s - 6)));
 };
 var $author$project$Main$standardFor = function (n) {
 	return A4($author$project$Main$generated, 'Standard', 'standard', n, $author$project$Main$referenceOpen);
@@ -6198,59 +6825,59 @@ var $author$project$Main$tunings = _List_fromArray(
 	[
 		$author$project$Main$standardTuning,
 		{
-		m: 'Drop D',
-		k: 'drop-d',
-		h: _List_fromArray(
+		q: 'Drop D',
+		m: 'drop-d',
+		j: _List_fromArray(
 			[4, 11, 7, 2, 9, 2])
 	},
 		{
-		m: 'D♯/E♭ Standard',
-		k: 'eb-standard',
-		h: _List_fromArray(
+		q: 'D♯/E♭ Standard',
+		m: 'eb-standard',
+		j: _List_fromArray(
 			[3, 10, 6, 1, 8, 3])
 	},
 		{
-		m: 'D Standard',
-		k: 'd-standard',
-		h: _List_fromArray(
+		q: 'D Standard',
+		m: 'd-standard',
+		j: _List_fromArray(
 			[2, 9, 5, 0, 7, 2])
 	},
 		{
-		m: 'Drop C',
-		k: 'drop-c',
-		h: _List_fromArray(
+		q: 'Drop C',
+		m: 'drop-c',
+		j: _List_fromArray(
 			[2, 9, 5, 0, 7, 0])
 	},
 		{
-		m: 'C♯/D♭ Standard',
-		k: 'cs-standard',
-		h: _List_fromArray(
+		q: 'C♯/D♭ Standard',
+		m: 'cs-standard',
+		j: _List_fromArray(
 			[1, 8, 4, 11, 6, 1])
 	},
 		$author$project$Main$fourthsFor(6),
 		$author$project$Main$thirdsFor(6),
 		{
-		m: 'DADGAD',
-		k: 'dadgad',
-		h: _List_fromArray(
+		q: 'DADGAD',
+		m: 'dadgad',
+		j: _List_fromArray(
 			[2, 9, 7, 2, 9, 2])
 	},
 		{
-		m: 'Open G',
-		k: 'open-g',
-		h: _List_fromArray(
+		q: 'Open G',
+		m: 'open-g',
+		j: _List_fromArray(
 			[2, 11, 7, 2, 7, 2])
 	},
 		{
-		m: 'Open D',
-		k: 'open-d',
-		h: _List_fromArray(
+		q: 'Open D',
+		m: 'open-d',
+		j: _List_fromArray(
 			[2, 9, 6, 2, 9, 2])
 	},
 		{
-		m: 'Open E',
-		k: 'open-e',
-		h: _List_fromArray(
+		q: 'Open E',
+		m: 'open-e',
+		j: _List_fromArray(
 			[4, 11, 8, 4, 11, 4])
 	}
 	]);
@@ -6258,7 +6885,7 @@ var $author$project$Main$tuningFromSlug = function (s) {
 	var _v0 = A2(
 		$elm$core$List$filter,
 		function (t) {
-			return _Utils_eq(t.k, s);
+			return _Utils_eq(t.m, s);
 		},
 		_Utils_ap($author$project$Main$tunings, $author$project$Main$extendedTunings));
 	if (_v0.b) {
@@ -6299,7 +6926,7 @@ var $author$project$Main$parseUrl = function (url) {
 		A2(
 			$elm$core$String$split,
 			'&',
-			A2($elm$core$Maybe$withDefault, '', url.cw)));
+			A2($elm$core$Maybe$withDefault, '', url.c3)));
 	var lookup = function (k) {
 		return A2(
 			$elm$core$Maybe$map,
@@ -6328,15 +6955,15 @@ var $author$project$Main$parseUrl = function (url) {
 			$author$project$Main$stringSetFromSlug,
 			lookup('strings')));
 	var single = {
-		g: A2(
+		h: A2(
 			$elm$core$Maybe$withDefault,
-			$author$project$Main$defaultNeck.g,
+			$author$project$Main$defaultNeck.h,
 			A2(
 				$elm$core$Maybe$andThen,
 				$author$project$Main$rootFromSlug,
 				lookup('root'))),
 		a: scale,
-		t: stringSet
+		z: stringSet
 	};
 	var tuning = A2(
 		$elm$core$Maybe$withDefault,
@@ -6349,7 +6976,7 @@ var $author$project$Main$parseUrl = function (url) {
 	var legacyRoots = A2(
 		$elm$core$List$map,
 		function (r) {
-			return {g: r, a: scale, t: stringSet};
+			return {h: r, a: scale, z: stringSet};
 		},
 		A2(
 			$elm$core$Maybe$withDefault,
@@ -6386,7 +7013,7 @@ var $author$project$Main$parseUrl = function (url) {
 		}
 	}();
 	return {
-		i: A2(
+		k: A2(
 			$author$project$Main$clampIndex,
 			necks,
 			A2(
@@ -6396,10 +7023,10 @@ var $author$project$Main$parseUrl = function (url) {
 					$elm$core$Maybe$andThen,
 					$elm$core$String$toInt,
 					lookup('active')))),
-		x: _Utils_eq(
+		F: _Utils_eq(
 			lookup('degrees'),
 			$elm$core$Maybe$Just('1')),
-		r: A2(
+		x: A2(
 			$elm$core$Maybe$map,
 			$author$project$Main$clampFocus,
 			A2(
@@ -6413,7 +7040,7 @@ var $author$project$Main$parseUrl = function (url) {
 			$elm$core$List$map,
 			$author$project$Main$normalizeNeck(strings),
 			necks),
-		q: A2(
+		v: A2(
 			$elm$core$Maybe$map,
 			$author$project$Main$clampString(strings),
 			A2(
@@ -6421,7 +7048,7 @@ var $author$project$Main$parseUrl = function (url) {
 				$elm$core$String$toInt,
 				lookup('string'))),
 		b: tuning,
-		F: _Utils_eq(
+		Q: _Utils_eq(
 			lookup('cols'),
 			$elm$core$Maybe$Just('2'))
 	};
@@ -6456,7 +7083,10 @@ var $author$project$Main$tabOf = function (scale) {
 	return $author$project$Main$isCagedChord(base) ? 1 : (($author$project$Main$isTriad(base) || $author$project$Main$isArpeggio(base)) ? 2 : ($author$project$Main$isChromatic(base) ? 3 : 0));
 };
 var $author$project$Main$init = F3(
-	function (width, url, key) {
+	function (_v0, url, key) {
+		var practice = _v0.af;
+		var seed = _v0.bu;
+		var width = _v0.bC;
 		var state = $author$project$Main$parseUrl(url);
 		var compact = _Utils_cmp(width, $author$project$Main$compactWidth) < 0;
 		var activeScale = A2(
@@ -6468,32 +7098,36 @@ var $author$project$Main$init = F3(
 					return $.a;
 				},
 				$elm$core$List$head(
-					A2($elm$core$List$drop, state.i, state.e))));
+					A2($elm$core$List$drop, state.k, state.e))));
 		return _Utils_Tuple2(
 			{
-				i: state.i,
-				ap: compact,
+				k: state.k,
+				_: compact,
+				F: state.F,
+				S: $elm$core$Maybe$Nothing,
 				x: state.x,
-				G: $elm$core$Maybe$Nothing,
-				r: state.r,
-				aL: key,
+				ba: key,
 				d: state.d,
 				e: state.e,
-				aa: $author$project$Main$tabOf(activeScale),
-				U: !compact,
-				q: state.q,
+				ar: $author$project$Main$tabOf(activeScale),
+				af: A2($author$project$Practice$init, seed, practice),
+				K: false,
+				Z: !compact,
+				v: state.v,
 				b: state.b,
-				V: false,
-				F: state.F,
+				ak: false,
+				Q: state.Q,
 				R: !compact,
-				ao: false
+				aH: false
 			},
 			$elm$core$Platform$Cmd$none);
 	});
-var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $author$project$Main$DragEnd = {$: 20};
 var $author$project$Main$DragMove = function (a) {
 	return {$: 19, a: a};
+};
+var $author$project$Main$PracticeMsg = function (a) {
+	return {$: 27, a: a};
 };
 var $author$project$Main$WakeLockChanged = function (a) {
 	return {$: 24, a: a};
@@ -6502,9 +7136,9 @@ var $author$project$Main$WindowResized = function (a) {
 	return {$: 15, a: a};
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$float = _Json_decodeFloat;
 var $author$project$Main$clientY = A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float);
+var $elm$core$Platform$Sub$map = _Platform_map;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $elm$browser$Browser$Events$Document = 0;
 var $elm$browser$Browser$Events$MySub = F3(
@@ -6513,7 +7147,7 @@ var $elm$browser$Browser$Events$MySub = F3(
 	});
 var $elm$browser$Browser$Events$State = F2(
 	function (subs, pids) {
-		return {bx: pids, bL: subs};
+		return {b3: pids, ci: subs};
 	});
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: -2};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
@@ -6745,7 +7379,7 @@ var $elm$core$Dict$merge = F6(
 	});
 var $elm$browser$Browser$Events$Event = F2(
 	function (key, event) {
-		return {bg: event, aL: key};
+		return {bN: event, ba: key};
 	});
 var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
 var $elm$browser$Browser$Events$spawn = F3(
@@ -6820,7 +7454,7 @@ var $elm$browser$Browser$Events$onEffects = F3(
 			stepLeft,
 			stepBoth,
 			stepRight,
-			state.bx,
+			state.b3,
 			$elm$core$Dict$fromList(newSubs),
 			_Utils_Tuple3(_List_Nil, $elm$core$Dict$empty, _List_Nil));
 		var deadPids = _v0.a;
@@ -6848,8 +7482,8 @@ var $elm$browser$Browser$Events$onEffects = F3(
 	});
 var $elm$browser$Browser$Events$onSelfMsg = F3(
 	function (router, _v0, state) {
-		var event = _v0.bg;
-		var key = _v0.aL;
+		var event = _v0.bN;
+		var key = _v0.ba;
 		var toMessage = function (_v2) {
 			var subKey = _v2.a;
 			var _v3 = _v2.b;
@@ -6858,7 +7492,7 @@ var $elm$browser$Browser$Events$onSelfMsg = F3(
 			var decoder = _v3.c;
 			return _Utils_eq(subKey, key) ? A2(_Browser_decodeEvent, decoder, event) : $elm$core$Maybe$Nothing;
 		};
-		var messages = A2($elm$core$List$filterMap, toMessage, state.bL);
+		var messages = A2($elm$core$List$filterMap, toMessage, state.ci);
 		return A2(
 			$elm$core$Task$andThen,
 			function (_v1) {
@@ -6905,20 +7539,171 @@ var $elm$browser$Browser$Events$onResize = function (func) {
 				A2($elm$json$Json$Decode$field, 'innerWidth', $elm$json$Json$Decode$int),
 				A2($elm$json$Json$Decode$field, 'innerHeight', $elm$json$Json$Decode$int))));
 };
+var $author$project$Practice$FromBand = function (a) {
+	return {$: 18, a: a};
+};
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $author$project$Practice$bandIn = _Platform_incomingPort('bandIn', $elm$json$Json$Decode$value);
+var $author$project$Practice$FlipMinor = {$: 14};
+var $author$project$Practice$NudgeQuality = function (a) {
+	return {$: 13, a: a};
+};
+var $author$project$Practice$NudgeRoot = function (a) {
+	return {$: 11, a: a};
+};
+var $author$project$Practice$SetRoot = function (a) {
+	return {$: 10, a: a};
+};
+var $author$project$Practice$Step = function (a) {
+	return {$: 9, a: a};
+};
+var $author$project$Practice$TogglePlay = {$: 0};
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $elm$json$Json$Decode$fail = _Json_fail;
+var $elm$core$Dict$get = F2(
+	function (targetKey, dict) {
+		get:
+		while (true) {
+			if (dict.$ === -2) {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var key = dict.b;
+				var value = dict.c;
+				var left = dict.d;
+				var right = dict.e;
+				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
+				switch (_v1) {
+					case 0:
+						var $temp$targetKey = targetKey,
+							$temp$dict = left;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+					case 1:
+						return $elm$core$Maybe$Just(value);
+					default:
+						var $temp$targetKey = targetKey,
+							$temp$dict = right;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+				}
+			}
+		}
+	});
+var $author$project$Practice$letterPitch = function (letter) {
+	return A2(
+		$elm$core$Dict$get,
+		letter,
+		$elm$core$Dict$fromList(
+			_List_fromArray(
+				[
+					_Utils_Tuple2('C', 0),
+					_Utils_Tuple2('D', 2),
+					_Utils_Tuple2('E', 4),
+					_Utils_Tuple2('F', 5),
+					_Utils_Tuple2('G', 7),
+					_Utils_Tuple2('A', 9),
+					_Utils_Tuple2('B', 11)
+				])));
+};
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $elm$core$String$toUpper = _String_toUpper;
+var $author$project$Practice$keyDecoder = A2(
+	$elm$json$Json$Decode$andThen,
+	A2(
+		$elm$core$Basics$composeR,
+		$elm$core$Maybe$map($elm$json$Json$Decode$succeed),
+		$elm$core$Maybe$withDefault(
+			$elm$json$Json$Decode$fail('not ours'))),
+	A7(
+		$elm$json$Json$Decode$map6,
+		F6(
+			function (key, shift, meta, ctrl, alt, tag) {
+				if (meta || (ctrl || (alt || A2(
+					$elm$core$List$member,
+					tag,
+					_List_fromArray(
+						['INPUT', 'SELECT', 'TEXTAREA']))))) {
+					return $elm$core$Maybe$Nothing;
+				} else {
+					switch (key) {
+						case ' ':
+							return $elm$core$Maybe$Just($author$project$Practice$TogglePlay);
+						case 'ArrowRight':
+							return $elm$core$Maybe$Just(
+								$author$project$Practice$Step(1));
+						case 'ArrowLeft':
+							return $elm$core$Maybe$Just(
+								$author$project$Practice$Step(-1));
+						case 'ArrowUp':
+							return $elm$core$Maybe$Just(
+								shift ? $author$project$Practice$NudgeQuality(1) : $author$project$Practice$NudgeRoot(1));
+						case 'ArrowDown':
+							return $elm$core$Maybe$Just(
+								shift ? $author$project$Practice$NudgeQuality(-1) : $author$project$Practice$NudgeRoot(-1));
+						default:
+							var _v1 = $elm$core$String$toUpper(key);
+							if (_v1 === 'M') {
+								return $elm$core$Maybe$Just($author$project$Practice$FlipMinor);
+							} else {
+								var letter = _v1;
+								return A2(
+									$elm$core$Maybe$map,
+									$author$project$Practice$SetRoot,
+									$author$project$Practice$letterPitch(letter));
+							}
+					}
+				}
+			}),
+		A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string),
+		A2($elm$json$Json$Decode$field, 'shiftKey', $elm$json$Json$Decode$bool),
+		A2($elm$json$Json$Decode$field, 'metaKey', $elm$json$Json$Decode$bool),
+		A2($elm$json$Json$Decode$field, 'ctrlKey', $elm$json$Json$Decode$bool),
+		A2($elm$json$Json$Decode$field, 'altKey', $elm$json$Json$Decode$bool),
+		$elm$json$Json$Decode$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$json$Json$Decode$at,
+					_List_fromArray(
+						['target', 'tagName']),
+					$elm$json$Json$Decode$string),
+					$elm$json$Json$Decode$succeed('')
+				]))));
+var $elm$browser$Browser$Events$onKeyDown = A2($elm$browser$Browser$Events$on, 0, 'keydown');
+var $author$project$Practice$subscriptions = F2(
+	function (open, _v0) {
+		return $elm$core$Platform$Sub$batch(
+			_List_fromArray(
+				[
+					$author$project$Practice$bandIn($author$project$Practice$FromBand),
+					open ? $elm$browser$Browser$Events$onKeyDown($author$project$Practice$keyDecoder) : $elm$core$Platform$Sub$none
+				]));
+	});
 var $author$project$Main$wakeLockChanged = _Platform_incomingPort('wakeLockChanged', $elm$json$Json$Decode$bool);
 var $author$project$Main$subscriptions = function (model) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
 				$author$project$Main$wakeLockChanged($author$project$Main$WakeLockChanged),
+				A2(
+				$elm$core$Platform$Sub$map,
+				$author$project$Main$PracticeMsg,
+				A2($author$project$Practice$subscriptions, model.K, model.af)),
 				$elm$browser$Browser$Events$onResize(
 				F2(
 					function (w, _v0) {
 						return $author$project$Main$WindowResized(w);
 					})),
 				function () {
-				var _v1 = model.G;
+				var _v1 = model.S;
 				if (!_v1.$) {
 					return $elm$core$Platform$Sub$batch(
 						_List_fromArray(
@@ -6941,7 +7726,7 @@ var $author$project$Main$activeNeck = function (model) {
 		$elm$core$List$head(
 			A2(
 				$elm$core$List$drop,
-				A2($author$project$Main$clampIndex, model.e, model.i),
+				A2($author$project$Main$clampIndex, model.e, model.k),
 				model.e)));
 };
 var $elm$core$List$takeReverse = F3(
@@ -7080,12 +7865,13 @@ var $author$project$Main$insertAt = F3(
 				A2($elm$core$List$drop, i, xs)));
 	});
 var $author$project$Main$isCustom = function (t) {
-	return _Utils_eq(t.m, $author$project$Main$customName);
+	return _Utils_eq(t.q, $author$project$Main$customName);
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
+var $elm$core$Platform$Cmd$map = _Platform_map;
 var $author$project$Main$mapActive = F2(
 	function (f, model) {
-		var i = A2($author$project$Main$clampIndex, model.e, model.i);
+		var i = A2($author$project$Main$clampIndex, model.e, model.k);
 		return A2(
 			$elm$core$List$indexedMap,
 			F2(
@@ -7100,7 +7886,7 @@ var $author$project$Main$openString = F2(
 			$elm$core$Maybe$withDefault,
 			0,
 			$elm$core$List$head(
-				A2($elm$core$List$drop, s - 1, tuning.h)));
+				A2($elm$core$List$drop, s - 1, tuning.j)));
 	});
 var $author$project$Main$ascendingStep = F2(
 	function (tuning, s) {
@@ -7164,7 +7950,6 @@ var $author$project$Main$moveItem = F3(
 					A2($elm$core$List$drop, from + 1, xs)));
 		}
 	});
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Main$noteAt = F3(
 	function (tuning, s, f) {
 		return A2(
@@ -7250,14 +8035,14 @@ var $author$project$Main$resizeTuning = F2(
 			}
 		};
 		var strings = grow(
-			A2($elm$core$List$take, target, tuning.h));
+			A2($elm$core$List$take, target, tuning.j));
 		if ($author$project$Main$isCustom(tuning)) {
 			return $author$project$Main$customFrom(strings);
 		} else {
 			var _v0 = A2(
 				$elm$core$List$filter,
 				function (t) {
-					return _Utils_eq(t.h, strings);
+					return _Utils_eq(t.j, strings);
 				},
 				$author$project$Main$tuningsFor(
 					$elm$core$List$length(strings)));
@@ -7271,7 +8056,7 @@ var $author$project$Main$resizeTuning = F2(
 	});
 var $elm$core$Basics$round = _Basics_round;
 var $author$project$Main$hasStringSet = function (neck) {
-	return $author$project$Main$isTriad(neck.a) && (!_Utils_eq(neck.t, $author$project$Main$AllStrings));
+	return $author$project$Main$isTriad(neck.a) && (!_Utils_eq(neck.z, $author$project$Main$AllStrings));
 };
 var $elm$core$String$concat = function (strings) {
 	return A2($elm$core$String$join, '', strings);
@@ -7432,28 +8217,28 @@ var $author$project$Main$stringSetSlug = function (set) {
 	}
 };
 var $author$project$Main$triadStrings = function (neck) {
-	return $author$project$Main$hasStringSet(neck) ? ('.' + $author$project$Main$stringSetSlug(neck.t)) : '';
+	return $author$project$Main$hasStringSet(neck) ? ('.' + $author$project$Main$stringSetSlug(neck.z)) : '';
 };
 var $author$project$Main$neckSlug = function (neck) {
-	return $author$project$Main$rootSlug(neck.g) + ('.' + ($author$project$Main$scaleSlug(neck.a) + $author$project$Main$triadStrings(neck)));
+	return $author$project$Main$rootSlug(neck.h) + ('.' + ($author$project$Main$scaleSlug(neck.a) + $author$project$Main$triadStrings(neck)));
 };
 var $author$project$Main$modelUrl = function (model) {
 	var base = function () {
 		var _v3 = model.e;
 		if (_v3.b && (!_v3.b.b)) {
 			var neck = _v3.a;
-			return '?root=' + ($author$project$Main$rootSlug(neck.g) + ('&scale=' + ($author$project$Main$scaleSlug(neck.a) + ($author$project$Main$hasStringSet(neck) ? ('&strings=' + $author$project$Main$stringSetSlug(neck.t)) : ''))));
+			return '?root=' + ($author$project$Main$rootSlug(neck.h) + ('&scale=' + ($author$project$Main$scaleSlug(neck.a) + ($author$project$Main$hasStringSet(neck) ? ('&strings=' + $author$project$Main$stringSetSlug(neck.z)) : ''))));
 		} else {
 			var necks = _v3;
 			return '?necks=' + (A2(
 				$elm$core$String$join,
 				',',
-				A2($elm$core$List$map, $author$project$Main$neckSlug, necks)) + ((!model.i) ? '' : ('&active=' + $elm$core$String$fromInt(model.i))));
+				A2($elm$core$List$map, $author$project$Main$neckSlug, necks)) + ((!model.k) ? '' : ('&active=' + $elm$core$String$fromInt(model.k))));
 		}
 	}();
-	var withTuning = _Utils_eq(model.b.k, $author$project$Main$standardTuning.k) ? base : (base + ('&tuning=' + model.b.k));
+	var withTuning = _Utils_eq(model.b.m, $author$project$Main$standardTuning.m) ? base : (base + ('&tuning=' + model.b.m));
 	var withFocus = function () {
-		var _v1 = model.r;
+		var _v1 = model.x;
 		if (_v1.$ === 1) {
 			return withTuning;
 		} else {
@@ -7464,7 +8249,7 @@ var $author$project$Main$modelUrl = function (model) {
 		}
 	}();
 	var withString = function () {
-		var _v0 = model.q;
+		var _v0 = model.v;
 		if (_v0.$ === 1) {
 			return withFocus;
 		} else {
@@ -7473,8 +8258,8 @@ var $author$project$Main$modelUrl = function (model) {
 		}
 	}();
 	var withMono = model.d ? (withString + '&mono=1') : withString;
-	var withDegrees = model.x ? (withMono + '&degrees=1') : withMono;
-	return model.F ? (withDegrees + '&cols=2') : withDegrees;
+	var withDegrees = model.F ? (withMono + '&degrees=1') : withMono;
+	return model.Q ? (withDegrees + '&cols=2') : withDegrees;
 };
 var $elm$browser$Browser$Navigation$replaceUrl = _Browser_replaceUrl;
 var $author$project$Main$sync = function (model) {
@@ -7482,7 +8267,7 @@ var $author$project$Main$sync = function (model) {
 		model,
 		A2(
 			$elm$browser$Browser$Navigation$replaceUrl,
-			model.aL,
+			model.ba,
 			$author$project$Main$modelUrl(model)));
 };
 var $elm$url$Url$addPort = F2(
@@ -7507,7 +8292,7 @@ var $elm$url$Url$addPrefixed = F3(
 	});
 var $elm$url$Url$toString = function (url) {
 	var http = function () {
-		var _v0 = url.bB;
+		var _v0 = url.b8;
 		if (!_v0) {
 			return 'http://';
 		} else {
@@ -7517,17 +8302,17 @@ var $elm$url$Url$toString = function (url) {
 	return A3(
 		$elm$url$Url$addPrefixed,
 		'#',
-		url.bh,
+		url.bO,
 		A3(
 			$elm$url$Url$addPrefixed,
 			'?',
-			url.cw,
+			url.c3,
 			_Utils_ap(
 				A2(
 					$elm$url$Url$addPort,
-					url.by,
-					_Utils_ap(http, url.bm)),
-				url.bw)));
+					url.b4,
+					_Utils_ap(http, url.bU)),
+				url.b2)));
 };
 var $author$project$Main$toggleIntervalShaped = F2(
 	function (interval, scale) {
@@ -7550,6 +8335,1969 @@ var $author$project$Main$toggleInterval = F2(
 			return A2($author$project$Main$toggleIntervalShaped, interval, scale);
 		}
 	});
+var $author$project$Practice$bandOut = _Platform_outgoingPort('bandOut', $elm$core$Basics$identity);
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(0),
+			pairs));
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Practice$command = F2(
+	function (kind, fields) {
+		return $author$project$Practice$bandOut(
+			$elm$json$Json$Encode$object(
+				A2(
+					$elm$core$List$cons,
+					_Utils_Tuple2(
+						'type',
+						$elm$json$Json$Encode$string(kind)),
+					fields)));
+	});
+var $author$project$Practice$Bass = 1;
+var $author$project$Practice$Drums = 0;
+var $author$project$Practice$Guitar = 3;
+var $author$project$Practice$Keys = 2;
+var $author$project$Practice$Master = 4;
+var $elm$json$Json$Encode$float = _Json_wrap;
+var $author$project$Practice$level = F2(
+	function (c, mix) {
+		switch (c) {
+			case 0:
+				return mix.a7;
+			case 1:
+				return mix.a4;
+			case 2:
+				return mix.bb;
+			case 3:
+				return mix.a9;
+			default:
+				return mix.bd;
+		}
+	});
+var $elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				$elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(0),
+				entries));
+	});
+var $author$project$Practice$encodeBand = function (model) {
+	var fader = function (c) {
+		return $elm$json$Json$Encode$float(
+			A2($author$project$Practice$level, c, model.aB) / 100);
+	};
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'style',
+				$elm$json$Json$Encode$string(
+					$author$project$Practice$styleInfo(model.A).ai)),
+				_Utils_Tuple2(
+				'bpm',
+				$elm$json$Json$Encode$int(model.w)),
+				_Utils_Tuple2(
+				'feel',
+				$elm$json$Json$Encode$int(model.s)),
+				_Utils_Tuple2(
+				'bars',
+				A2(
+					$elm$json$Json$Encode$list,
+					function (b) {
+						return $elm$json$Json$Encode$object(
+							_List_fromArray(
+								[
+									_Utils_Tuple2(
+									'root',
+									$elm$json$Json$Encode$int(b.h)),
+									_Utils_Tuple2(
+									'q',
+									$elm$json$Json$Encode$string(
+										$author$project$Practice$qualInfo(b.i).ai))
+								]));
+					},
+					model.f)),
+				_Utils_Tuple2(
+				'mix',
+				$elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'drums',
+							fader(0)),
+							_Utils_Tuple2(
+							'bass',
+							fader(1)),
+							_Utils_Tuple2(
+							'keys',
+							fader(2)),
+							_Utils_Tuple2(
+							'guitar',
+							fader(3)),
+							_Utils_Tuple2(
+							'master',
+							fader(4))
+						])))
+			]));
+};
+var $author$project$Practice$chordCode = function (b) {
+	return _Utils_ap(
+		A2(
+			$elm$core$Maybe$withDefault,
+			'C',
+			A2($author$project$Practice$getAt, b.h, $author$project$Practice$slugKeys)),
+		(!b.i) ? '' : $author$project$Practice$qualInfo(b.i).ai);
+};
+var $author$project$Practice$encodeSave = function (model) {
+	return $elm$json$Json$Encode$object(
+		_Utils_ap(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'style',
+					$elm$json$Json$Encode$string(
+						$author$project$Practice$styleInfo(model.A).ai)),
+					_Utils_Tuple2(
+					'bpm',
+					$elm$json$Json$Encode$int(model.w)),
+					_Utils_Tuple2(
+					'feel',
+					$elm$json$Json$Encode$int(model.s)),
+					_Utils_Tuple2(
+					'key',
+					$elm$json$Json$Encode$string(
+						A2(
+							$elm$core$Maybe$withDefault,
+							'A',
+							A2($author$project$Practice$getAt, model.ba, $author$project$Practice$slugKeys))))
+				]),
+			function () {
+				var _v0 = model.J;
+				if (!_v0.$) {
+					var id = _v0.a;
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(
+							'prog',
+							$elm$json$Json$Encode$string(id))
+						]);
+				} else {
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(
+							'chords',
+							A2(
+								$elm$json$Json$Encode$list,
+								A2($elm$core$Basics$composeR, $author$project$Practice$chordCode, $elm$json$Json$Encode$string),
+								model.f))
+						]);
+				}
+			}()));
+};
+var $elm$core$Tuple$mapFirst = F2(
+	function (func, _v0) {
+		var x = _v0.a;
+		var y = _v0.b;
+		return _Utils_Tuple2(
+			func(x),
+			y);
+	});
+var $author$project$Practice$clampSelected = function (model) {
+	return _Utils_update(
+		model,
+		{
+			L: A3(
+				$elm$core$Basics$clamp,
+				0,
+				$elm$core$List$length(model.f) - 1,
+				model.L)
+		});
+};
+var $author$project$Practice$MissExpired = function (a) {
+	return {$: 19, a: a};
+};
+var $author$project$Practice$Outside = 3;
+var $author$project$Practice$BlueNote = 2;
+var $author$project$Practice$ChordTone = 0;
+var $author$project$Practice$InKey = 1;
+var $author$project$Practice$toneName = F2(
+	function (f, d) {
+		var names = function () {
+			switch (f) {
+				case 0:
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(0, 'R'),
+							_Utils_Tuple2(4, '3'),
+							_Utils_Tuple2(7, '5'),
+							_Utils_Tuple2(11, '7'),
+							_Utils_Tuple2(9, '6'),
+							_Utils_Tuple2(2, '9')
+						]);
+				case 2:
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(0, 'R'),
+							_Utils_Tuple2(4, '3'),
+							_Utils_Tuple2(7, '5'),
+							_Utils_Tuple2(10, '♭7'),
+							_Utils_Tuple2(2, '9'),
+							_Utils_Tuple2(9, '13'),
+							_Utils_Tuple2(3, '♯9'),
+							_Utils_Tuple2(1, '♭9')
+						]);
+				case 1:
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(0, 'R'),
+							_Utils_Tuple2(3, '♭3'),
+							_Utils_Tuple2(7, '5'),
+							_Utils_Tuple2(10, '♭7'),
+							_Utils_Tuple2(9, '6'),
+							_Utils_Tuple2(2, '9')
+						]);
+				default:
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(0, 'R'),
+							_Utils_Tuple2(3, '♭3'),
+							_Utils_Tuple2(6, '♭5'),
+							_Utils_Tuple2(9, '°7')
+						]);
+			}
+		}();
+		return A2(
+			$elm$core$Maybe$withDefault,
+			'',
+			A2(
+				$elm$core$Dict$get,
+				d,
+				$elm$core$Dict$fromList(names)));
+	});
+var $author$project$Practice$chordTones = function (bar) {
+	var info = $author$project$Practice$qualInfo(bar.i);
+	var offsets = A2(
+		$elm$core$List$cons,
+		0,
+		_Utils_ap(
+			(info.aW === 3) ? _List_Nil : _List_fromArray(
+				[7]),
+			A2(
+				$elm$core$List$map,
+				$elm$core$Basics$modBy(12),
+				info.cl)));
+	return $elm$core$Dict$fromList(
+		A2(
+			$elm$core$List$map,
+			function (d) {
+				return _Utils_Tuple2(
+					A2($elm$core$Basics$modBy, 12, bar.h + d),
+					A2($author$project$Practice$toneName, info.aW, d));
+			},
+			offsets));
+};
+var $author$project$Practice$currentIndex = function (model) {
+	var _v0 = _Utils_Tuple2(model.V, model.as);
+	if (_v0.a && (!_v0.b.$)) {
+		var ph = _v0.b.a;
+		return A2(
+			$elm$core$Basics$modBy,
+			A2(
+				$elm$core$Basics$max,
+				1,
+				$elm$core$List$length(model.f)),
+			ph.bl);
+	} else {
+		return model.L;
+	}
+};
+var $author$project$Practice$currentBar = function (model) {
+	return A2(
+		$elm$core$Maybe$withDefault,
+		{i: 2, h: model.ba},
+		A2(
+			$author$project$Practice$getAt,
+			$author$project$Practice$currentIndex(model),
+			model.f));
+};
+var $elm$core$Dict$member = F2(
+	function (key, dict) {
+		var _v0 = A2($elm$core$Dict$get, key, dict);
+		if (!_v0.$) {
+			return true;
+		} else {
+			return false;
+		}
+	});
+var $author$project$Practice$roleOf = F2(
+	function (model, pc) {
+		var k = model.ba;
+		var minorKey = A2(
+			$elm$core$List$any,
+			function (b) {
+				return _Utils_eq(b.h, k) && ($author$project$Practice$fam(b.i) === 1);
+			},
+			model.f);
+		var scale = minorKey ? _List_fromArray(
+			[0, 2, 3, 5, 7, 8, 10, 11]) : _List_fromArray(
+			[0, 2, 4, 5, 7, 9, 11]);
+		var degree = A2($elm$core$Basics$modBy, 12, pc - k);
+		var blue = (model.A === 2) ? _List_Nil : (minorKey ? _List_fromArray(
+			[6]) : _List_fromArray(
+			[3, 6, 10]));
+		return A2(
+			$elm$core$Dict$member,
+			pc,
+			$author$project$Practice$chordTones(
+				$author$project$Practice$currentBar(model))) ? 0 : (A2($elm$core$List$member, degree, scale) ? 1 : (A2($elm$core$List$member, degree, blue) ? 2 : 3));
+	});
+var $elm$core$Process$sleep = _Process_sleep;
+var $elm$core$Result$toMaybe = function (result) {
+	if (!result.$) {
+		var v = result.a;
+		return $elm$core$Maybe$Just(v);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Result$withDefault = F2(
+	function (def, result) {
+		if (!result.$) {
+			var a = result.a;
+			return a;
+		} else {
+			return def;
+		}
+	});
+var $author$project$Practice$fromBand = F2(
+	function (value, model) {
+		var field = F2(
+			function (name, dec) {
+				return A2(
+					$elm$json$Json$Decode$decodeValue,
+					A2($elm$json$Json$Decode$field, name, dec),
+					value);
+			});
+		var _v0 = A2(field, 'type', $elm$json$Json$Decode$string);
+		_v0$4:
+		while (true) {
+			if (!_v0.$) {
+				switch (_v0.a) {
+					case 'playing':
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									as: $elm$core$Maybe$Nothing,
+									V: A2(
+										$elm$core$Result$withDefault,
+										false,
+										A2(field, 'on', $elm$json$Json$Decode$bool))
+								}),
+							$elm$core$Platform$Cmd$none);
+					case 'beat':
+						var _v1 = _Utils_Tuple2(
+							A2(field, 'bar', $elm$json$Json$Decode$int),
+							A2(field, 'beat', $elm$json$Json$Decode$int));
+						if ((!_v1.a.$) && (!_v1.b.$)) {
+							var bar = _v1.a.a;
+							var beat = _v1.b.a;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										as: $elm$core$Maybe$Just(
+											{bl: bar, a5: beat})
+									}),
+								$elm$core$Platform$Cmd$none);
+						} else {
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						}
+					case 'ear':
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									aI: A2(
+										$elm$core$Result$withDefault,
+										'',
+										A2(field, 'message', $elm$json$Json$Decode$string)),
+									aa: A2(
+										$elm$core$Result$withDefault,
+										false,
+										A2(field, 'on', $elm$json$Json$Decode$bool))
+								}),
+							$elm$core$Platform$Cmd$none);
+					case 'heard':
+						var wasOut = _Utils_eq(
+							A2(
+								$elm$core$Maybe$map,
+								$author$project$Practice$roleOf(model),
+								model.ao),
+							$elm$core$Maybe$Just(3));
+						var heard = A2(
+							$elm$core$Maybe$andThen,
+							function (pc) {
+								return (pc < 0) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(pc);
+							},
+							$elm$core$Result$toMaybe(
+								A2(field, 'pc', $elm$json$Json$Decode$int)));
+						var isOut = _Utils_eq(
+							A2(
+								$elm$core$Maybe$map,
+								$author$project$Practice$roleOf(model),
+								heard),
+							$elm$core$Maybe$Just(3));
+						return (wasOut && (!isOut)) ? _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{ao: heard, aZ: true, aN: model.aN + 1}),
+							A2(
+								$elm$core$Task$perform,
+								function (_v2) {
+									return $author$project$Practice$MissExpired(model.aN + 1);
+								},
+								$elm$core$Process$sleep(150))) : _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{ao: heard}),
+							$elm$core$Platform$Cmd$none);
+					default:
+						break _v0$4;
+				}
+			} else {
+				break _v0$4;
+			}
+		}
+		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+	});
+var $author$project$Practice$Generated = {$: 2};
+var $elm$core$Array$fromListHelp = F3(
+	function (list, nodeList, nodeListSize) {
+		fromListHelp:
+		while (true) {
+			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, list);
+			var jsArray = _v0.a;
+			var remainingItems = _v0.b;
+			if (_Utils_cmp(
+				$elm$core$Elm$JsArray$length(jsArray),
+				$elm$core$Array$branchFactor) < 0) {
+				return A2(
+					$elm$core$Array$builderToArray,
+					true,
+					{C: nodeList, t: nodeListSize, B: jsArray});
+			} else {
+				var $temp$list = remainingItems,
+					$temp$nodeList = A2(
+					$elm$core$List$cons,
+					$elm$core$Array$Leaf(jsArray),
+					nodeList),
+					$temp$nodeListSize = nodeListSize + 1;
+				list = $temp$list;
+				nodeList = $temp$nodeList;
+				nodeListSize = $temp$nodeListSize;
+				continue fromListHelp;
+			}
+		}
+	});
+var $elm$core$Array$fromList = function (list) {
+	if (!list.b) {
+		return $elm$core$Array$empty;
+	} else {
+		return A3($elm$core$Array$fromListHelp, list, _List_Nil, 0);
+	}
+};
+var $elm$core$Bitwise$and = _Bitwise_and;
+var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
+var $elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
+var $elm$core$Array$getHelp = F3(
+	function (shift, index, tree) {
+		getHelp:
+		while (true) {
+			var pos = $elm$core$Array$bitMask & (index >>> shift);
+			var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
+			if (!_v0.$) {
+				var subTree = _v0.a;
+				var $temp$shift = shift - $elm$core$Array$shiftStep,
+					$temp$index = index,
+					$temp$tree = subTree;
+				shift = $temp$shift;
+				index = $temp$index;
+				tree = $temp$tree;
+				continue getHelp;
+			} else {
+				var values = _v0.a;
+				return A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, values);
+			}
+		}
+	});
+var $elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
+var $elm$core$Array$tailIndex = function (len) {
+	return (len >>> 5) << 5;
+};
+var $elm$core$Array$get = F2(
+	function (index, _v0) {
+		var len = _v0.a;
+		var startShift = _v0.b;
+		var tree = _v0.c;
+		var tail = _v0.d;
+		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? $elm$core$Maybe$Nothing : ((_Utils_cmp(
+			index,
+			$elm$core$Array$tailIndex(len)) > -1) ? $elm$core$Maybe$Just(
+			A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, tail)) : $elm$core$Maybe$Just(
+			A3($elm$core$Array$getHelp, startShift, index, tree)));
+	});
+var $elm$core$Set$Set_elm_builtin = $elm$core$Basics$identity;
+var $elm$core$Set$insert = F2(
+	function (key, _v0) {
+		var dict = _v0;
+		return A3($elm$core$Dict$insert, key, 0, dict);
+	});
+var $author$project$Practice$insertMaybe = F2(
+	function (m, set) {
+		if (!m.$) {
+			var x = m.a;
+			return A2($elm$core$Set$insert, x, set);
+		} else {
+			return set;
+		}
+	});
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
+var $elm$core$Basics$pow = _Basics_pow;
+var $elm$random$Random$Generator = $elm$core$Basics$identity;
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $elm$core$Bitwise$xor = _Bitwise_xor;
+var $elm$random$Random$peel = function (_v0) {
+	var state = _v0.a;
+	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
+	return ((word >>> 22) ^ word) >>> 0;
+};
+var $elm$random$Random$float = F2(
+	function (a, b) {
+		return function (seed0) {
+			var seed1 = $elm$random$Random$next(seed0);
+			var range = $elm$core$Basics$abs(b - a);
+			var n1 = $elm$random$Random$peel(seed1);
+			var n0 = $elm$random$Random$peel(seed0);
+			var lo = (134217727 & n1) * 1.0;
+			var hi = (67108863 & n0) * 1.0;
+			var val = ((hi * 134217728.0) + lo) / 9007199254740992.0;
+			var scaled = (val * range) + a;
+			return _Utils_Tuple2(
+				scaled,
+				$elm$random$Random$next(seed1));
+		};
+	});
+var $elm$random$Random$step = F2(
+	function (_v0, seed) {
+		var generator = _v0;
+		return generator(seed);
+	});
+var $author$project$Practice$roll = $elm$random$Random$step(
+	A2($elm$random$Random$float, 0, 1));
+var $author$project$Practice$leanFrom = F3(
+	function (list, fallback, seed) {
+		var n = $elm$core$List$length(list);
+		var _v0 = $author$project$Practice$roll(seed);
+		var r = _v0.a;
+		var s = _v0.b;
+		return _Utils_Tuple2(
+			A2(
+				$elm$core$Maybe$withDefault,
+				fallback,
+				A2(
+					$author$project$Practice$getAt,
+					A2(
+						$elm$core$Basics$min,
+						n - 1,
+						$elm$core$Basics$floor(
+							A2($elm$core$Basics$pow, r, 1.8) * n)),
+					list)),
+			s);
+	});
+var $elm$core$Array$length = function (_v0) {
+	var len = _v0.a;
+	return len;
+};
+var $author$project$Practice$majorPalette = {
+	ah: $elm$core$Array$fromList(
+		_List_fromArray(
+			[
+				{
+				n: 0,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2, 5]),
+						_List_fromArray(
+						[7, 7, 8])
+					])
+			},
+				{
+				n: 5,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[7, 4])
+					])
+			},
+				{
+				n: 7,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[7, 9, 8])
+					])
+			},
+				{
+				n: 9,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[1]),
+						_List_fromArray(
+						[3]),
+						_List_fromArray(
+						[3, 6])
+					])
+			},
+				{
+				n: 2,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[1]),
+						_List_fromArray(
+						[3]),
+						_List_fromArray(
+						[3])
+					])
+			},
+				{
+				n: 10,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[7])
+					])
+			},
+				{
+				n: 4,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[1]),
+						_List_fromArray(
+						[3]),
+						_List_fromArray(
+						[3])
+					])
+			},
+				{
+				n: 6,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[11]),
+						_List_fromArray(
+						[11]),
+						_List_fromArray(
+						[11])
+					])
+			},
+				{
+				n: 8,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[4])
+					])
+			},
+				{
+				n: 3,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[4])
+					])
+			},
+				{
+				n: 2,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[7])
+					])
+			},
+				{
+				n: 5,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[1]),
+						_List_fromArray(
+						[3]),
+						_List_fromArray(
+						[6])
+					])
+			}
+			])),
+	be: $elm$core$Dict$fromList(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				0,
+				_List_fromArray(
+					[1, 2, 3, 4, 5, 7, 9])),
+				_Utils_Tuple2(
+				1,
+				_List_fromArray(
+					[0, 2, 7, 11, 5])),
+				_Utils_Tuple2(
+				2,
+				_List_fromArray(
+					[0, 3, 1, 8])),
+				_Utils_Tuple2(
+				3,
+				_List_fromArray(
+					[4, 1, 2, 6])),
+				_Utils_Tuple2(
+				4,
+				_List_fromArray(
+					[2, 0, 6, 1])),
+				_Utils_Tuple2(
+				5,
+				_List_fromArray(
+					[1, 0, 8])),
+				_Utils_Tuple2(
+				6,
+				_List_fromArray(
+					[3, 4, 1])),
+				_Utils_Tuple2(
+				7,
+				_List_fromArray(
+					[0, 2])),
+				_Utils_Tuple2(
+				8,
+				_List_fromArray(
+					[2, 5, 0])),
+				_Utils_Tuple2(
+				9,
+				_List_fromArray(
+					[1, 0])),
+				_Utils_Tuple2(
+				10,
+				_List_fromArray(
+					[2, 4])),
+				_Utils_Tuple2(
+				11,
+				_List_fromArray(
+					[0, 2]))
+			]))
+};
+var $author$project$Practice$maxVariety = function (n) {
+	return A2(
+		$elm$core$Basics$min,
+		n,
+		$elm$core$Array$length($author$project$Practice$majorPalette.ah));
+};
+var $elm$core$Set$member = F2(
+	function (key, _v0) {
+		var dict = _v0;
+		return A2($elm$core$Dict$member, key, dict);
+	});
+var $author$project$Practice$minorPalette = {
+	ah: $elm$core$Array$fromList(
+		_List_fromArray(
+			[
+				{
+				n: 0,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[1]),
+						_List_fromArray(
+						[3]),
+						_List_fromArray(
+						[3, 6])
+					])
+			},
+				{
+				n: 5,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[1]),
+						_List_fromArray(
+						[3]),
+						_List_fromArray(
+						[3])
+					])
+			},
+				{
+				n: 7,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[9, 10])
+					])
+			},
+				{
+				n: 8,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[4])
+					])
+			},
+				{
+				n: 10,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[7])
+					])
+			},
+				{
+				n: 3,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[5]),
+						_List_fromArray(
+						[4])
+					])
+			},
+				{
+				n: 7,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[1]),
+						_List_fromArray(
+						[3]),
+						_List_fromArray(
+						[3])
+					])
+			},
+				{
+				n: 2,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[11]),
+						_List_fromArray(
+						[11]),
+						_List_fromArray(
+						[11])
+					])
+			},
+				{
+				n: 5,
+				o: _List_fromArray(
+					[
+						_List_fromArray(
+						[0]),
+						_List_fromArray(
+						[2]),
+						_List_fromArray(
+						[7])
+					])
+			}
+			])),
+	be: $elm$core$Dict$fromList(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				0,
+				_List_fromArray(
+					[1, 2, 4, 3, 5, 8])),
+				_Utils_Tuple2(
+				1,
+				_List_fromArray(
+					[0, 2, 3, 4])),
+				_Utils_Tuple2(
+				2,
+				_List_fromArray(
+					[0, 1, 3])),
+				_Utils_Tuple2(
+				3,
+				_List_fromArray(
+					[2, 4, 0])),
+				_Utils_Tuple2(
+				4,
+				_List_fromArray(
+					[0, 3, 5, 1])),
+				_Utils_Tuple2(
+				5,
+				_List_fromArray(
+					[3, 4, 1])),
+				_Utils_Tuple2(
+				6,
+				_List_fromArray(
+					[3, 1, 0])),
+				_Utils_Tuple2(
+				7,
+				_List_fromArray(
+					[2, 0])),
+				_Utils_Tuple2(
+				8,
+				_List_fromArray(
+					[0, 2, 4]))
+			]))
+};
+var $author$project$Practice$pickFrom = F3(
+	function (list, fallback, seed) {
+		var _v0 = $author$project$Practice$roll(seed);
+		var r = _v0.a;
+		var s = _v0.b;
+		return _Utils_Tuple2(
+			A2(
+				$elm$core$Maybe$withDefault,
+				fallback,
+				A2(
+					$author$project$Practice$getAt,
+					$elm$core$Basics$floor(
+						r * $elm$core$List$length(list)),
+					list)),
+			s);
+	});
+var $elm$core$Elm$JsArray$push = _JsArray_push;
+var $elm$core$Elm$JsArray$singleton = _JsArray_singleton;
+var $elm$core$Elm$JsArray$unsafeSet = _JsArray_unsafeSet;
+var $elm$core$Array$insertTailInTree = F4(
+	function (shift, index, tail, tree) {
+		var pos = $elm$core$Array$bitMask & (index >>> shift);
+		if (_Utils_cmp(
+			pos,
+			$elm$core$Elm$JsArray$length(tree)) > -1) {
+			if (shift === 5) {
+				return A2(
+					$elm$core$Elm$JsArray$push,
+					$elm$core$Array$Leaf(tail),
+					tree);
+			} else {
+				var newSub = $elm$core$Array$SubTree(
+					A4($elm$core$Array$insertTailInTree, shift - $elm$core$Array$shiftStep, index, tail, $elm$core$Elm$JsArray$empty));
+				return A2($elm$core$Elm$JsArray$push, newSub, tree);
+			}
+		} else {
+			var value = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
+			if (!value.$) {
+				var subTree = value.a;
+				var newSub = $elm$core$Array$SubTree(
+					A4($elm$core$Array$insertTailInTree, shift - $elm$core$Array$shiftStep, index, tail, subTree));
+				return A3($elm$core$Elm$JsArray$unsafeSet, pos, newSub, tree);
+			} else {
+				var newSub = $elm$core$Array$SubTree(
+					A4(
+						$elm$core$Array$insertTailInTree,
+						shift - $elm$core$Array$shiftStep,
+						index,
+						tail,
+						$elm$core$Elm$JsArray$singleton(value)));
+				return A3($elm$core$Elm$JsArray$unsafeSet, pos, newSub, tree);
+			}
+		}
+	});
+var $elm$core$Array$unsafeReplaceTail = F2(
+	function (newTail, _v0) {
+		var len = _v0.a;
+		var startShift = _v0.b;
+		var tree = _v0.c;
+		var tail = _v0.d;
+		var originalTailLen = $elm$core$Elm$JsArray$length(tail);
+		var newTailLen = $elm$core$Elm$JsArray$length(newTail);
+		var newArrayLen = len + (newTailLen - originalTailLen);
+		if (_Utils_eq(newTailLen, $elm$core$Array$branchFactor)) {
+			var overflow = _Utils_cmp(newArrayLen >>> $elm$core$Array$shiftStep, 1 << startShift) > 0;
+			if (overflow) {
+				var newShift = startShift + $elm$core$Array$shiftStep;
+				var newTree = A4(
+					$elm$core$Array$insertTailInTree,
+					newShift,
+					len,
+					newTail,
+					$elm$core$Elm$JsArray$singleton(
+						$elm$core$Array$SubTree(tree)));
+				return A4($elm$core$Array$Array_elm_builtin, newArrayLen, newShift, newTree, $elm$core$Elm$JsArray$empty);
+			} else {
+				return A4(
+					$elm$core$Array$Array_elm_builtin,
+					newArrayLen,
+					startShift,
+					A4($elm$core$Array$insertTailInTree, startShift, len, newTail, tree),
+					$elm$core$Elm$JsArray$empty);
+			}
+		} else {
+			return A4($elm$core$Array$Array_elm_builtin, newArrayLen, startShift, tree, newTail);
+		}
+	});
+var $elm$core$Array$push = F2(
+	function (a, array) {
+		var tail = array.d;
+		return A2(
+			$elm$core$Array$unsafeReplaceTail,
+			A2($elm$core$Elm$JsArray$push, a, tail),
+			array);
+	});
+var $author$project$Practice$richness = function (s) {
+	switch (s) {
+		case 1:
+			return _Utils_Tuple2(0.45, 0.4);
+		case 0:
+			return _Utils_Tuple2(0.15, 0.5);
+		default:
+			return _Utils_Tuple2(0.8, 0.2);
+	}
+};
+var $elm$core$Array$setHelp = F4(
+	function (shift, index, value, tree) {
+		var pos = $elm$core$Array$bitMask & (index >>> shift);
+		var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
+		if (!_v0.$) {
+			var subTree = _v0.a;
+			var newSub = A4($elm$core$Array$setHelp, shift - $elm$core$Array$shiftStep, index, value, subTree);
+			return A3(
+				$elm$core$Elm$JsArray$unsafeSet,
+				pos,
+				$elm$core$Array$SubTree(newSub),
+				tree);
+		} else {
+			var values = _v0.a;
+			var newLeaf = A3($elm$core$Elm$JsArray$unsafeSet, $elm$core$Array$bitMask & index, value, values);
+			return A3(
+				$elm$core$Elm$JsArray$unsafeSet,
+				pos,
+				$elm$core$Array$Leaf(newLeaf),
+				tree);
+		}
+	});
+var $elm$core$Array$set = F3(
+	function (index, value, array) {
+		var len = array.a;
+		var startShift = array.b;
+		var tree = array.c;
+		var tail = array.d;
+		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? array : ((_Utils_cmp(
+			index,
+			$elm$core$Array$tailIndex(len)) > -1) ? A4(
+			$elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			tree,
+			A3($elm$core$Elm$JsArray$unsafeSet, $elm$core$Array$bitMask & index, value, tail)) : A4(
+			$elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A4($elm$core$Array$setHelp, startShift, index, value, tree),
+			tail));
+	});
+var $elm$core$Dict$singleton = F2(
+	function (key, value) {
+		return A5($elm$core$Dict$RBNode_elm_builtin, 1, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
+	});
+var $elm$core$Set$singleton = function (key) {
+	return A2($elm$core$Dict$singleton, key, 0);
+};
+var $author$project$Practice$writeChart = F5(
+	function (n, k0, key, style, seed0) {
+		var k = A3(
+			$elm$core$Basics$clamp,
+			1,
+			$author$project$Practice$maxVariety(n),
+			k0);
+		var ratio = n / k;
+		var holdChance = (ratio >= 3) ? 0.35 : ((ratio >= 2) ? 0.15 : 0);
+		var _v0 = $author$project$Practice$richness(style);
+		var plain = _v0.a;
+		var sevenths = _v0.b;
+		var _v1 = $author$project$Practice$roll(seed0);
+		var rMinor = _v1.a;
+		var s1 = _v1.b;
+		var pal = ((rMinor < 0.25) && (_Utils_cmp(
+			k,
+			$elm$core$Array$length($author$project$Practice$minorPalette.ah)) < 1)) ? $author$project$Practice$minorPalette : $author$project$Practice$majorPalette;
+		var chordAt = function (i) {
+			return A2(
+				$elm$core$Maybe$withDefault,
+				{
+					n: 0,
+					o: _List_fromArray(
+						[
+							_List_fromArray(
+							[0])
+						])
+				},
+				A2($elm$core$Array$get, i, pal.ah));
+		};
+		var _v2 = A3(
+			$elm$core$List$foldl,
+			F2(
+				function (i, _v3) {
+					var acc = _v3.a;
+					var s = _v3.b;
+					var _v4 = $author$project$Practice$roll(s);
+					var r = _v4.a;
+					var s_ = _v4.b;
+					return _Utils_Tuple2(
+						A2(
+							$elm$core$List$cons,
+							_Utils_Tuple2(i, i + (r * 4.5)),
+							acc),
+						s_);
+				}),
+			_Utils_Tuple2(_List_Nil, s1),
+			A2(
+				$elm$core$List$range,
+				1,
+				$elm$core$Array$length(pal.ah) - 1));
+		var scored = _v2.a;
+		var s2 = _v2.b;
+		var _v5 = $author$project$Practice$roll(s2);
+		var rBase = _v5.a;
+		var s3 = _v5.b;
+		var base = (_Utils_cmp(rBase, plain) < 0) ? 0 : ((_Utils_cmp(rBase, plain + sevenths) < 0) ? 1 : 2);
+		var chosen = A2(
+			$elm$core$List$cons,
+			0,
+			A2(
+				$elm$core$List$take,
+				k - 1,
+				A2(
+					$elm$core$List$map,
+					$elm$core$Tuple$first,
+					A2($elm$core$List$sortBy, $elm$core$Tuple$second, scored))));
+		var _v6 = A3(
+			$elm$core$List$foldl,
+			F2(
+				function (i, _v7) {
+					var d = _v7.a;
+					var s = _v7.b;
+					var _v8 = $author$project$Practice$roll(s);
+					var ra = _v8.a;
+					var sa = _v8.b;
+					var _v9 = $author$project$Practice$roll(sa);
+					var rb = _v9.a;
+					var sb = _v9.b;
+					var shift = (ra < 0.25) ? ((rb < 0.5) ? (-1) : 1) : 0;
+					var options = A2(
+						$elm$core$Maybe$withDefault,
+						_List_fromArray(
+							[0]),
+						A2(
+							$author$project$Practice$getAt,
+							A3($elm$core$Basics$clamp, 0, 2, base + shift),
+							chordAt(i).o));
+					var _v10 = A3($author$project$Practice$pickFrom, options, 0, sb);
+					var q = _v10.a;
+					var sc = _v10.b;
+					return _Utils_Tuple2(
+						A3($elm$core$Dict$insert, i, q, d),
+						sc);
+				}),
+			_Utils_Tuple2($elm$core$Dict$empty, s3),
+			chosen);
+		var quality = _v6.a;
+		var s4 = _v6.b;
+		var inSet = function (c) {
+			return A2($elm$core$List$member, c, chosen);
+		};
+		var lastFixed = ((n >= 2) && (k >= 2)) ? $elm$core$Maybe$Just(
+			inSet(2) ? 2 : A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				A2($author$project$Practice$getAt, 1, chosen))) : $elm$core$Maybe$Nothing;
+		var fixed = _Utils_eq(lastFixed, $elm$core$Maybe$Nothing) ? 0 : 1;
+		var fill = F2(
+			function (i, _v11) {
+				fill:
+				while (true) {
+					var seq = _v11.a;
+					var used = _v11.b;
+					var s = _v11.c;
+					if (_Utils_cmp(i, n - fixed) > -1) {
+						return _Utils_Tuple3(seq, used, s);
+					} else {
+						var unused = A2(
+							$elm$core$List$filter,
+							function (c) {
+								return !A2($elm$core$Set$member, c, used);
+							},
+							chosen);
+						var turnaround = function (c) {
+							return (!_Utils_eq(lastFixed, $elm$core$Maybe$Nothing)) && (_Utils_eq(i, n - 2) && _Utils_eq(
+								$elm$core$Maybe$Just(c),
+								lastFixed));
+						};
+						var prev = A2(
+							$elm$core$Maybe$withDefault,
+							0,
+							A2($elm$core$Array$get, i - 1, seq));
+						var run = (i >= 2) && _Utils_eq(
+							A2($elm$core$Array$get, i - 2, seq),
+							$elm$core$Maybe$Just(prev));
+						var left = (n - i) - fixed;
+						var _v12 = function () {
+							if ((!$elm$core$List$isEmpty(unused)) && (_Utils_cmp(
+								$elm$core$List$length(unused),
+								left) > -1)) {
+								return A3($author$project$Practice$pickFrom, unused, prev, s);
+							} else {
+								var _v13 = $author$project$Practice$roll(s);
+								var ra = _v13.a;
+								var sa = _v13.b;
+								var _v14 = $author$project$Practice$roll(sa);
+								var rb = _v14.a;
+								var sb = _v14.b;
+								var _v15 = $author$project$Practice$roll(sb);
+								var rc = _v15.a;
+								var sc = _v15.b;
+								if ((!A2($elm$core$Basics$modBy, 4, i)) && ((n >= 8) && ((!(!prev)) && (ra < 0.6)))) {
+									return _Utils_Tuple2(0, sa);
+								} else {
+									if ((!run) && ((!turnaround(prev)) && (_Utils_cmp(rb, holdChance) < 0))) {
+										return _Utils_Tuple2(prev, sb);
+									} else {
+										var wants = A2(
+											$elm$core$List$filter,
+											function (c) {
+												return inSet(c) && ((!_Utils_eq(c, prev)) && (!turnaround(c)));
+											},
+											A2(
+												$elm$core$Maybe$withDefault,
+												_List_Nil,
+												A2($elm$core$Dict$get, prev, pal.be)));
+										var fresh = A2(
+											$elm$core$List$filter,
+											function (c) {
+												return !A2($elm$core$Set$member, c, used);
+											},
+											wants);
+										var fallback = A2(
+											$elm$core$List$filter,
+											function (c) {
+												return (!_Utils_eq(c, prev)) && (!turnaround(c));
+											},
+											chosen);
+										var _v16 = _Utils_Tuple3(fresh, wants, fallback);
+										if (_v16.a.b) {
+											var _v17 = _v16.a;
+											var f = _v17.a;
+											return (rc < 0.6) ? _Utils_Tuple2(f, sc) : A3($author$project$Practice$leanFrom, wants, prev, sc);
+										} else {
+											if (_v16.b.b) {
+												var _v18 = _v16.b;
+												return A3($author$project$Practice$leanFrom, wants, prev, sc);
+											} else {
+												if (_v16.c.b) {
+													var _v19 = _v16.c;
+													return A3($author$project$Practice$pickFrom, fallback, prev, sc);
+												} else {
+													return _Utils_Tuple2(prev, sc);
+												}
+											}
+										}
+									}
+								}
+							}
+						}();
+						var next = _v12.a;
+						var s_ = _v12.b;
+						var $temp$i = i + 1,
+							$temp$_v11 = _Utils_Tuple3(
+							A2($elm$core$Array$push, next, seq),
+							A2($elm$core$Set$insert, next, used),
+							s_);
+						i = $temp$i;
+						_v11 = $temp$_v11;
+						continue fill;
+					}
+				}
+			});
+		var _v20 = A2(
+			fill,
+			1,
+			_Utils_Tuple3(
+				$elm$core$Array$fromList(
+					_List_fromArray(
+						[0])),
+				A2(
+					$author$project$Practice$insertMaybe,
+					lastFixed,
+					$elm$core$Set$singleton(0)),
+				s4));
+		var body = _v20.a;
+		var s5 = _v20.c;
+		var withLast = function () {
+			if (!lastFixed.$) {
+				var lf = lastFixed.a;
+				return A2($elm$core$Array$push, lf, body);
+			} else {
+				return body;
+			}
+		}();
+		var _v21 = A3(
+			$elm$core$List$foldl,
+			F2(
+				function (c, _v22) {
+					var seq = _v22.a;
+					var s = _v22.b;
+					var repeats = function (i) {
+						return _Utils_eq(
+							A2($elm$core$Array$get, i, seq),
+							A2($elm$core$Array$get, i - 1, seq)) || _Utils_eq(
+							A2($elm$core$Array$get, i, seq),
+							A2($elm$core$Array$get, i + 1, seq));
+					};
+					var len = $elm$core$Array$length(seq);
+					var _v23 = A2(
+						$elm$core$List$filter,
+						repeats,
+						A2($elm$core$List$range, 1, len - 2));
+					if (_v23.b) {
+						var spot = _v23.a;
+						return _Utils_Tuple2(
+							A3($elm$core$Array$set, spot, c, seq),
+							s);
+					} else {
+						var _v24 = $author$project$Practice$roll(s);
+						var r = _v24.a;
+						var s_ = _v24.b;
+						return _Utils_Tuple2(
+							A3(
+								$elm$core$Array$set,
+								A2(
+									$elm$core$Basics$max,
+									1,
+									$elm$core$Basics$floor(r * (len - 1))),
+								c,
+								seq),
+							s_);
+					}
+				}),
+			_Utils_Tuple2(withLast, s5),
+			A2(
+				$elm$core$List$filter,
+				function (c) {
+					return !A2(
+						$elm$core$List$member,
+						c,
+						$elm$core$Array$toList(withLast));
+				},
+				chosen));
+		var _final = _v21.a;
+		var s6 = _v21.b;
+		return _Utils_Tuple2(
+			A2(
+				$elm$core$List$map,
+				function (i) {
+					return {
+						i: A2(
+							$elm$core$Maybe$withDefault,
+							0,
+							A2($elm$core$Dict$get, i, quality)),
+						h: A2(
+							$elm$core$Basics$modBy,
+							12,
+							key + chordAt(i).n)
+					};
+				},
+				$elm$core$Array$toList(_final)),
+			s6);
+	});
+var $author$project$Practice$generate = F3(
+	function (n, k, model) {
+		var _v0 = A5($author$project$Practice$writeChart, n, k, model.ba, model.A, model.bu);
+		var bars = _v0.a;
+		var seed = _v0.b;
+		return $author$project$Practice$clampSelected(
+			_Utils_update(
+				model,
+				{
+					f: A2($author$project$Practice$simplify, model.E, bars),
+					bu: seed,
+					J: $author$project$Practice$Generated
+				}));
+	});
+var $author$project$Practice$indexOf = F2(
+	function (x, list) {
+		return A2(
+			$elm$core$Maybe$map,
+			$elm$core$Tuple$first,
+			$elm$core$List$head(
+				A2(
+					$elm$core$List$filter,
+					function (_v0) {
+						var y = _v0.b;
+						return _Utils_eq(y, x);
+					},
+					A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, list))));
+	});
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $author$project$Practice$keyFit = F2(
+	function (bars, k) {
+		return $elm$core$List$sum(
+			A2(
+				$elm$core$List$indexedMap,
+				F2(
+					function (i, b) {
+						var f = $author$project$Practice$fam(b.i);
+						var d = A2($elm$core$Basics$modBy, 12, b.h - k);
+						var chord = (((!f) || (f === 2)) && A2(
+							$elm$core$List$member,
+							d,
+							_List_fromArray(
+								[0, 5, 7]))) ? 2 : (((f === 1) && A2(
+							$elm$core$List$member,
+							d,
+							_List_fromArray(
+								[2, 4, 9]))) ? 2 : (((f === 3) && (d === 11)) ? 2 : (((f === 1) && (!d)) ? 1.5 : 0)));
+						return chord + (((!i) && (!d)) ? 1.5 : 0);
+					}),
+				bars));
+	});
+var $author$project$Practice$followKey = function (model) {
+	var best = A3(
+		$elm$core$List$foldl,
+		F2(
+			function (k, _v0) {
+				var bk = _v0.a;
+				var bs = _v0.b;
+				var sc = A2($author$project$Practice$keyFit, model.f, k);
+				return (_Utils_cmp(sc, bs) > 0) ? _Utils_Tuple2(k, sc) : _Utils_Tuple2(bk, bs);
+			}),
+		_Utils_Tuple2(
+			model.ba,
+			A2($author$project$Practice$keyFit, model.f, model.ba)),
+		A2($elm$core$List$range, 0, 11));
+	return _Utils_update(
+		model,
+		{ba: best.a});
+};
+var $author$project$Practice$setAt = F2(
+	function (i, x) {
+		return $elm$core$List$indexedMap(
+			F2(
+				function (j, y) {
+					return _Utils_eq(j, i) ? x : y;
+				}));
+	});
+var $author$project$Practice$setChord = F2(
+	function (bar, model) {
+		return $author$project$Practice$followKey(
+			_Utils_update(
+				model,
+				{
+					f: A3($author$project$Practice$setAt, model.L, bar, model.f),
+					J: $author$project$Practice$Custom
+				}));
+	});
+var $elm$core$Set$empty = $elm$core$Dict$empty;
+var $elm$core$Set$fromList = function (list) {
+	return A3($elm$core$List$foldl, $elm$core$Set$insert, $elm$core$Set$empty, list);
+};
+var $elm$core$Dict$sizeHelp = F2(
+	function (n, dict) {
+		sizeHelp:
+		while (true) {
+			if (dict.$ === -2) {
+				return n;
+			} else {
+				var left = dict.d;
+				var right = dict.e;
+				var $temp$n = A2($elm$core$Dict$sizeHelp, n + 1, right),
+					$temp$dict = left;
+				n = $temp$n;
+				dict = $temp$dict;
+				continue sizeHelp;
+			}
+		}
+	});
+var $elm$core$Dict$size = function (dict) {
+	return A2($elm$core$Dict$sizeHelp, 0, dict);
+};
+var $elm$core$Set$size = function (_v0) {
+	var dict = _v0;
+	return $elm$core$Dict$size(dict);
+};
+var $author$project$Practice$distinctChords = function (bars) {
+	return $elm$core$Set$size(
+		$elm$core$Set$fromList(
+			A2(
+				$elm$core$List$map,
+				function (b) {
+					return _Utils_Tuple2(
+						b.h,
+						$author$project$Practice$qualInfo(b.i).ai);
+				},
+				bars)));
+};
+var $author$project$Practice$minBars = 1;
+var $elm$core$List$repeatHelp = F3(
+	function (result, n, value) {
+		repeatHelp:
+		while (true) {
+			if (n <= 0) {
+				return result;
+			} else {
+				var $temp$result = A2($elm$core$List$cons, value, result),
+					$temp$n = n - 1,
+					$temp$value = value;
+				result = $temp$result;
+				n = $temp$n;
+				value = $temp$value;
+				continue repeatHelp;
+			}
+		}
+	});
+var $elm$core$List$repeat = F2(
+	function (n, value) {
+		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
+	});
+var $author$project$Practice$setCount = F2(
+	function (n0, model) {
+		var n = A3($elm$core$Basics$clamp, $author$project$Practice$minBars, $author$project$Practice$maxBars, n0);
+		var last = A2(
+			$elm$core$Maybe$withDefault,
+			{i: 2, h: model.ba},
+			$elm$core$List$head(
+				$elm$core$List$reverse(model.f)));
+		return _Utils_eq(model.J, $author$project$Practice$Generated) ? A3(
+			$author$project$Practice$generate,
+			n,
+			$author$project$Practice$distinctChords(model.f),
+			model) : $author$project$Practice$clampSelected(
+			_Utils_update(
+				model,
+				{
+					f: A2(
+						$elm$core$List$take,
+						n,
+						_Utils_ap(
+							model.f,
+							A2(
+								$elm$core$List$repeat,
+								n - $elm$core$List$length(model.f),
+								last))),
+					J: $author$project$Practice$Custom
+				}));
+	});
+var $author$project$Practice$setKey = F2(
+	function (k, model) {
+		var _v0 = model.J;
+		if (!_v0.$) {
+			var id = _v0.a;
+			return _Utils_update(
+				model,
+				{
+					f: A3($author$project$Practice$barsFromPreset, model.E, id, k),
+					ba: k
+				});
+		} else {
+			return _Utils_update(
+				model,
+				{
+					f: A2(
+						$author$project$Practice$simplify,
+						model.E,
+						A2(
+							$elm$core$List$map,
+							function (b) {
+								return _Utils_update(
+									b,
+									{
+										h: A2($elm$core$Basics$modBy, 12, (b.h + k) - model.ba)
+									});
+							},
+							model.f)),
+					ba: k
+				});
+		}
+	});
+var $author$project$Practice$setLevel = F3(
+	function (c, v, mix) {
+		switch (c) {
+			case 0:
+				return _Utils_update(
+					mix,
+					{a7: v});
+			case 1:
+				return _Utils_update(
+					mix,
+					{a4: v});
+			case 2:
+				return _Utils_update(
+					mix,
+					{bb: v});
+			case 3:
+				return _Utils_update(
+					mix,
+					{a9: v});
+			default:
+				return _Utils_update(
+					mix,
+					{bd: v});
+		}
+	});
+var $author$project$Practice$step = F2(
+	function (msg, model) {
+		var selectedBar = A2($author$project$Practice$currentBarAt, model.L, model);
+		switch (msg.$) {
+			case 0:
+				return _Utils_Tuple2(
+					model,
+					model.V ? A2($author$project$Practice$command, 'stop', _List_Nil) : A2(
+						$author$project$Practice$command,
+						'play',
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								'band',
+								$author$project$Practice$encodeBand(model))
+							])));
+			case 1:
+				var s = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							w: $author$project$Practice$styleInfo(s).w,
+							s: $author$project$Practice$styleInfo(s).s,
+							A: s
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 2:
+				var v = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							w: A3(
+								$elm$core$Basics$clamp,
+								40,
+								200,
+								A2(
+									$elm$core$Maybe$withDefault,
+									model.w,
+									$elm$core$String$toInt(v)))
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 3:
+				var v = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							s: A3(
+								$elm$core$Basics$clamp,
+								0,
+								100,
+								A2(
+									$elm$core$Maybe$withDefault,
+									model.s,
+									$elm$core$String$toInt(v)))
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 4:
+				var v = msg.a;
+				var _v1 = $elm$core$String$toInt(v);
+				if (!_v1.$) {
+					var k = _v1.a;
+					return _Utils_Tuple2(
+						A2(
+							$author$project$Practice$setKey,
+							A2($elm$core$Basics$modBy, 12, k),
+							model),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 5:
+				var id = msg.a;
+				var _v2 = $author$project$Practice$presetById(id);
+				if (!_v2.$) {
+					return _Utils_Tuple2(
+						$author$project$Practice$clampSelected(
+							_Utils_update(
+								model,
+								{
+									f: A3($author$project$Practice$barsFromPreset, model.E, id, model.ba),
+									J: $author$project$Practice$FromPreset(id)
+								})),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 6:
+				var n = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Practice$setCount, n, model),
+					$elm$core$Platform$Cmd$none);
+			case 7:
+				var k = msg.a;
+				return _Utils_Tuple2(
+					A3(
+						$author$project$Practice$generate,
+						$elm$core$List$length(model.f),
+						k,
+						model),
+					$elm$core$Platform$Cmd$none);
+			case 8:
+				var i = msg.a;
+				return _Utils_Tuple2(
+					$author$project$Practice$clampSelected(
+						_Utils_update(
+							model,
+							{L: i})),
+					$elm$core$Platform$Cmd$none);
+			case 9:
+				var d = msg.a;
+				return _Utils_Tuple2(
+					$author$project$Practice$clampSelected(
+						_Utils_update(
+							model,
+							{L: model.L + d})),
+					$elm$core$Platform$Cmd$none);
+			case 10:
+				var r = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Practice$setChord,
+						_Utils_update(
+							selectedBar,
+							{
+								h: A2($elm$core$Basics$modBy, 12, r)
+							}),
+						model),
+					$elm$core$Platform$Cmd$none);
+			case 11:
+				var d = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Practice$setChord,
+						_Utils_update(
+							selectedBar,
+							{
+								h: A2($elm$core$Basics$modBy, 12, selectedBar.h + d)
+							}),
+						model),
+					$elm$core$Platform$Cmd$none);
+			case 12:
+				var q = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Practice$setChord,
+						_Utils_update(
+							selectedBar,
+							{i: q}),
+						model),
+					$elm$core$Platform$Cmd$none);
+			case 13:
+				var d = msg.a;
+				var offered = A2(
+					$elm$core$List$filter,
+					function (t) {
+						return model.E || $author$project$Practice$qualInfo(t).aU;
+					},
+					$author$project$Practice$qualities);
+				var idx = function () {
+					var _v3 = A2($author$project$Practice$indexOf, selectedBar.i, offered);
+					if (!_v3.$) {
+						var i = _v3.a;
+						return i;
+					} else {
+						return (d > 0) ? (-1) : 0;
+					}
+				}();
+				var q = A2(
+					$elm$core$Maybe$withDefault,
+					selectedBar.i,
+					A2(
+						$author$project$Practice$getAt,
+						A2(
+							$elm$core$Basics$modBy,
+							$elm$core$List$length(offered),
+							idx + d),
+						offered));
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Practice$setChord,
+						_Utils_update(
+							selectedBar,
+							{i: q}),
+						model),
+					$elm$core$Platform$Cmd$none);
+			case 14:
+				var q = function () {
+					var _v4 = selectedBar.i;
+					switch (_v4) {
+						case 1:
+							return 0;
+						case 3:
+							return 2;
+						case 6:
+							return 5;
+						case 5:
+							return model.E ? 6 : 1;
+						default:
+							var other = _v4;
+							return (A2(
+								$elm$core$List$member,
+								other,
+								_List_fromArray(
+									[2, 7, 8, 9, 10, 4])) && model.E) ? 3 : 1;
+					}
+				}();
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Practice$setChord,
+						_Utils_update(
+							selectedBar,
+							{i: q}),
+						model),
+					$elm$core$Platform$Cmd$none);
+			case 15:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{E: !model.E}),
+					$elm$core$Platform$Cmd$none);
+			case 16:
+				var c = msg.a;
+				var v = msg.b;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							aB: A3(
+								$author$project$Practice$setLevel,
+								c,
+								A3(
+									$elm$core$Basics$clamp,
+									0,
+									100,
+									A2(
+										$elm$core$Maybe$withDefault,
+										0,
+										$elm$core$String$toInt(v))),
+								model.aB)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 17:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{aI: ''}),
+					A2(
+						$author$project$Practice$command,
+						model.aa ? 'unlisten' : 'listen',
+						_List_Nil));
+			case 18:
+				var value = msg.a;
+				return A2($author$project$Practice$fromBand, value, model);
+			default:
+				var token = msg.a;
+				return _Utils_eq(token, model.aN) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{aZ: false}),
+					$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		}
+	});
+var $author$project$Practice$update = F2(
+	function (msg, model) {
+		var heardBy = function (m) {
+			return _Utils_Tuple3(
+				m.A,
+				_Utils_Tuple3(m.w, m.s, m.ba),
+				_Utils_Tuple3(m.J, m.f, m.aB));
+		};
+		var _v0 = A2(
+			$elm$core$Tuple$mapFirst,
+			$author$project$Practice$openMoreIfNeeded,
+			A2($author$project$Practice$step, msg, model));
+		var next = _v0.a;
+		var cmd = _v0.b;
+		return (!_Utils_eq(
+			heardBy(next),
+			heardBy(model))) ? _Utils_Tuple2(
+			next,
+			$elm$core$Platform$Cmd$batch(
+				_List_fromArray(
+					[
+						cmd,
+						A2(
+						$author$project$Practice$command,
+						'state',
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								'band',
+								$author$project$Practice$encodeBand(next)),
+								_Utils_Tuple2(
+								'save',
+								$author$project$Practice$encodeSave(next))
+							]))
+					]))) : _Utils_Tuple2(next, cmd);
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -7565,7 +10313,7 @@ var $author$project$Main$update = F2(
 									return _Utils_update(
 										neck,
 										{
-											g: A2($elm$core$Basics$modBy, 12, n)
+											h: A2($elm$core$Basics$modBy, 12, n)
 										});
 								},
 								model)
@@ -7584,7 +10332,7 @@ var $author$project$Main$update = F2(
 										{a: sc});
 								},
 								model),
-							U: model.U && (!model.ap)
+							Z: model.Z && (!model._)
 						}));
 			case 3:
 				var i = msg.a;
@@ -7599,7 +10347,7 @@ var $author$project$Main$update = F2(
 									function (j, neck) {
 										return _Utils_eq(j, i) ? _Utils_update(
 											neck,
-											{t: set}) : neck;
+											{z: set}) : neck;
 									}),
 								model.e)
 						}));
@@ -7610,25 +10358,25 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							b: t,
-							V: $author$project$Main$isCustom(t)
+							ak: $author$project$Main$isCustom(t)
 						}));
 			case 11:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{V: !model.V}),
+						{ak: !model.ak}),
 					$elm$core$Platform$Cmd$none);
 			case 12:
 				var i = msg.a;
-				var opening = (!_Utils_eq(i, model.i)) || (!model.U);
+				var opening = (!_Utils_eq(i, model.k)) || (!model.Z);
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
 						{
-							i: A2($author$project$Main$clampIndex, model.e, i),
-							aa: opening ? A2(
+							k: A2($author$project$Main$clampIndex, model.e, i),
+							ar: opening ? A2(
 								$elm$core$Maybe$withDefault,
-								model.aa,
+								model.ar,
 								A2(
 									$elm$core$Maybe$map,
 									A2(
@@ -7638,30 +10386,47 @@ var $author$project$Main$update = F2(
 										},
 										$author$project$Main$tabOf),
 									$elm$core$List$head(
-										A2($elm$core$List$drop, i, model.e)))) : model.aa,
-							U: opening,
-							R: model.R && (!(model.ap && opening))
+										A2($elm$core$List$drop, i, model.e)))) : model.ar,
+							K: model.K && (!(model._ && opening)),
+							Z: opening,
+							R: model.R && (!(model._ && opening))
 						}));
 			case 13:
 				var tab = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{aa: tab}),
+						{ar: tab}),
 					$elm$core$Platform$Cmd$none);
 			case 14:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{U: model.U && (!(model.ap && (!model.R))), R: !model.R}),
+						{K: model.K && (!(model._ && (!model.R))), Z: model.Z && (!(model._ && (!model.R))), R: !model.R}),
 					$elm$core$Platform$Cmd$none);
+			case 26:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{K: !model.K, Z: model.Z && (!(model._ && (!model.K))), R: model.R && (!(model._ && (!model.K)))}),
+					$elm$core$Platform$Cmd$none);
+			case 27:
+				var practiceMsg = msg.a;
+				var _v1 = A2($author$project$Practice$update, practiceMsg, model.af);
+				var practice = _v1.a;
+				var cmd = _v1.b;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{af: practice}),
+					A2($elm$core$Platform$Cmd$map, $author$project$Main$PracticeMsg, cmd));
 			case 15:
 				var width = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							ap: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
+							_: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 4:
@@ -7673,7 +10438,7 @@ var $author$project$Main$update = F2(
 						function (i, n) {
 							return _Utils_eq(i, s - 1) ? A2($elm$core$Basics$modBy, 12, n + delta) : n;
 						}),
-					model.b.h);
+					model.b.j);
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
@@ -7695,10 +10460,10 @@ var $author$project$Main$update = F2(
 								$elm$core$List$map,
 								$author$project$Main$normalizeNeck(strings),
 								model.e),
-							q: A2(
+							v: A2(
 								$elm$core$Maybe$map,
 								$author$project$Main$clampString(strings),
-								model.q),
+								model.v),
 							b: tuning
 						}));
 			case 6:
@@ -7707,7 +10472,7 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							r: A2($elm$core$Maybe$map, $author$project$Main$clampFocus, f)
+							x: A2($elm$core$Maybe$map, $author$project$Main$clampFocus, f)
 						}));
 			case 7:
 				var s = msg.a;
@@ -7715,7 +10480,7 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							q: A2(
+							v: A2(
 								$elm$core$Maybe$map,
 								$author$project$Main$clampString(
 									$author$project$Main$stringCount(model.b)),
@@ -7730,19 +10495,19 @@ var $author$project$Main$update = F2(
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
-						{x: !model.x}));
+						{F: !model.F}));
 			case 10:
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
-						{F: !model.F}));
+						{Q: !model.Q}));
 			case 16:
-				var i = A2($author$project$Main$clampIndex, model.e, model.i);
+				var i = A2($author$project$Main$clampIndex, model.e, model.k);
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
 						{
-							i: i + 1,
+							k: i + 1,
 							e: A3(
 								$author$project$Main$insertAt,
 								i + 1,
@@ -7761,10 +10526,10 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								i: A2(
+								k: A2(
 									$author$project$Main$clampIndex,
 									remaining,
-									(_Utils_cmp(model.i, i) > 0) ? (model.i - 1) : model.i),
+									(_Utils_cmp(model.k, i) > 0) ? (model.k - 1) : model.k),
 								e: remaining
 							}));
 				}
@@ -7776,47 +10541,47 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							i: A2($author$project$Main$clampIndex, model.e, i),
-							G: $elm$core$Maybe$Just(
-								{as: i, a_: rowHeight, a2: y, ac: i})
+							k: A2($author$project$Main$clampIndex, model.e, i),
+							S: $elm$core$Maybe$Just(
+								{aL: i, bt: rowHeight, by: y, au: i})
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 19:
 				var y = msg.a;
-				var _v1 = model.G;
-				if (_v1.$ === 1) {
+				var _v2 = model.S;
+				if (_v2.$ === 1) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
-					var drag = _v1.a;
-					var perRow = model.F ? 2 : 1;
+					var drag = _v2.a;
+					var perRow = model.Q ? 2 : 1;
 					var slots = perRow * $elm$core$Basics$round(
-						(y - drag.a2) / A2($elm$core$Basics$max, 1, drag.a_));
+						(y - drag.by) / A2($elm$core$Basics$max, 1, drag.bt));
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{
-								G: $elm$core$Maybe$Just(
+								S: $elm$core$Maybe$Just(
 									_Utils_update(
 										drag,
 										{
-											ac: A2($author$project$Main$clampIndex, model.e, drag.as + slots)
+											au: A2($author$project$Main$clampIndex, model.e, drag.aL + slots)
 										}))
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
 			case 20:
-				var _v2 = model.G;
-				if (_v2.$ === 1) {
+				var _v3 = model.S;
+				if (_v3.$ === 1) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
-					var drag = _v2.a;
+					var drag = _v3.a;
 					return $author$project$Main$sync(
 						_Utils_update(
 							model,
 							{
-								i: drag.ac,
-								G: $elm$core$Maybe$Nothing,
-								e: A3($author$project$Main$moveItem, drag.as, drag.ac, model.e)
+								k: drag.au,
+								S: $elm$core$Maybe$Nothing,
+								e: A3($author$project$Main$moveItem, drag.aL, drag.au, model.e)
 							}));
 				}
 			case 21:
@@ -7825,7 +10590,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{i: state.i, x: state.x, r: state.r, d: state.d, e: state.e, q: state.q, b: state.b, F: state.F}),
+						{k: state.k, F: state.F, x: state.x, d: state.d, e: state.e, v: state.v, b: state.b, Q: state.Q}),
 					$elm$core$Platform$Cmd$none);
 			case 22:
 				var request = msg.a;
@@ -7835,7 +10600,7 @@ var $author$project$Main$update = F2(
 						model,
 						A2(
 							$elm$browser$Browser$Navigation$pushUrl,
-							model.aL,
+							model.ba,
 							$elm$url$Url$toString(url)));
 				} else {
 					var href = request.a;
@@ -7844,19 +10609,19 @@ var $author$project$Main$update = F2(
 						$elm$browser$Browser$Navigation$load(href));
 				}
 			case 23:
-				var next = !model.ao;
+				var next = !model.aH;
 				var cmd = next ? $author$project$Main$requestWakeLock(0) : $author$project$Main$releaseWakeLock(0);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{ao: next}),
+						{aH: next}),
 					cmd);
 			case 24:
 				var on = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{ao: on}),
+						{aH: on}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.d) {
@@ -7879,11 +10644,11 @@ var $author$project$Main$update = F2(
 									A2(
 										$elm$core$Basics$modBy,
 										12,
-										A3($author$project$Main$noteAt, model.b, s, f) - neck.g),
+										A3($author$project$Main$noteAt, model.b, s, f) - neck.h),
 									neck.a)
 							});
 					};
-					var _v4 = $author$project$Main$sync(
+					var _v5 = $author$project$Main$sync(
 						_Utils_update(
 							model,
 							{
@@ -7895,8 +10660,8 @@ var $author$project$Main$update = F2(
 										}),
 									model.e)
 							}));
-					var synced = _v4.a;
-					var cmd = _v4.b;
+					var synced = _v5.a;
+					var cmd = _v5.b;
 					return _Utils_Tuple2(
 						synced,
 						$elm$core$Platform$Cmd$batch(
@@ -7912,18 +10677,18 @@ var $author$project$Main$update = F2(
 var $author$project$Main$boardAt = F3(
 	function (model, i, neck) {
 		return {
+			F: model.F,
 			x: model.x,
-			r: model.r,
-			S: 'n' + ($elm$core$String$fromInt(i) + '-'),
+			ai: 'n' + ($elm$core$String$fromInt(i) + '-'),
 			d: model.d,
-			g: neck.g,
+			h: neck.h,
 			a: neck.a,
-			a0: i,
-			q: model.q,
-			t: A2(
+			bw: i,
+			v: model.v,
+			z: A2(
 				$author$project$Main$normalizeSet,
 				$author$project$Main$stringCount(model.b),
-				neck.t),
+				neck.z),
 			b: model.b
 		};
 	});
@@ -7931,7 +10696,7 @@ var $author$project$Main$activeBoard = function (model) {
 	return A3(
 		$author$project$Main$boardAt,
 		model,
-		A2($author$project$Main$clampIndex, model.e, model.i),
+		A2($author$project$Main$clampIndex, model.e, model.k),
 		$author$project$Main$activeNeck(model));
 };
 var $author$project$Main$AddNeck = {$: 16};
@@ -7962,7 +10727,6 @@ var $author$project$Main$buttonBaseStyle = function (active) {
 			active ? '600' : '500')
 		]);
 };
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -8099,40 +10863,1664 @@ var $author$project$Main$gearButton = function (model) {
 			]));
 };
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
+var $elm$html$Html$map = $elm$virtual_dom$VirtualDom$map;
 var $author$project$Main$orderedNecks = function (model) {
-	var _v0 = model.G;
+	var _v0 = model.S;
 	if (!_v0.$) {
 		var drag = _v0.a;
-		return A3($author$project$Main$moveItem, drag.as, drag.ac, model.e);
+		return A3($author$project$Main$moveItem, drag.aL, drag.au, model.e);
 	} else {
 		return model.e;
 	}
 };
+var $author$project$Main$TogglePractice = {$: 26};
+var $author$project$Practice$isPlaying = function ($) {
+	return $.V;
+};
 var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$practiceButton = function (model) {
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick($author$project$Main$TogglePractice),
+					A2(
+					$elm$html$Html$Attributes$attribute,
+					'aria-expanded',
+					model.K ? 'true' : 'false'),
+					$elm$html$Html$Attributes$title('Practice soloing over a backing band'),
+					$elm$html$Html$Attributes$class('no-print')
+				]),
+			$author$project$Main$buttonBaseStyle(model.K)),
+		_List_fromArray(
+			[
+				$author$project$Practice$isPlaying(model.af) ? A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+						A2($elm$html$Html$Attributes$style, 'width', '8px'),
+						A2($elm$html$Html$Attributes$style, 'height', '8px'),
+						A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+						A2($elm$html$Html$Attributes$style, 'background', 'currentColor'),
+						A2($elm$html$Html$Attributes$style, 'margin-right', '6px'),
+						A2($elm$html$Html$Attributes$style, 'vertical-align', '1px')
+					]),
+				_List_Nil) : $elm$html$Html$text(''),
+				$elm$html$Html$text('Practice')
+			]));
+};
 var $author$project$Main$fretWidth = 58;
 var $author$project$Main$leftMargin = 18;
 var $author$project$Main$nutWidth = 70;
 var $author$project$Main$rightMargin = 18;
 var $author$project$Main$totalWidth = (($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets)) + $author$project$Main$rightMargin;
+var $author$project$Practice$Select = function (a) {
+	return {$: 8, a: a};
+};
+var $author$project$Practice$boolString = function (b) {
+	return b ? 'true' : 'false';
+};
+var $author$project$Practice$noteNames = $elm$core$Array$fromList(
+	_List_fromArray(
+		['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B']));
+var $author$project$Practice$noteName = function (pc) {
+	return A2(
+		$elm$core$Maybe$withDefault,
+		'?',
+		A2(
+			$elm$core$Array$get,
+			A2($elm$core$Basics$modBy, 12, pc),
+			$author$project$Practice$noteNames));
+};
+var $author$project$Practice$degreeNumerals = $elm$core$Array$fromList(
+	_List_fromArray(
+		['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII']));
+var $elm$core$String$toLower = _String_toLower;
+var $author$project$Practice$numeral = F2(
+	function (key, bar) {
+		var rn = A2(
+			$elm$core$Maybe$withDefault,
+			'?',
+			A2(
+				$elm$core$Array$get,
+				A2($elm$core$Basics$modBy, 12, bar.h - key),
+				$author$project$Practice$degreeNumerals));
+		var info = $author$project$Practice$qualInfo(bar.i);
+		var _v0 = info.aW;
+		switch (_v0) {
+			case 3:
+				return $elm$core$String$toLower(rn) + '°7';
+			case 1:
+				return _Utils_ap(
+					$elm$core$String$toLower(rn),
+					A2($elm$core$String$dropLeft, 1, info.aM));
+			default:
+				return _Utils_ap(rn, info.aM);
+		}
+	});
+var $author$project$Practice$barView = F3(
+	function (model, i, bar) {
+		var selected = _Utils_eq(i, model.L);
+		var info = $author$project$Practice$qualInfo(bar.i);
+		var current = model.V && ((!_Utils_eq(model.as, $elm$core$Maybe$Nothing)) && _Utils_eq(
+			$author$project$Practice$currentIndex(model),
+			i));
+		var beat = A2(
+			$elm$core$Maybe$withDefault,
+			-1,
+			A2(
+				$elm$core$Maybe$map,
+				function ($) {
+					return $.a5;
+				},
+				model.as));
+		return A2(
+			$elm$html$Html$button,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(
+					$author$project$Practice$Select(i)),
+					A2($elm$html$Html$Attributes$attribute, 'role', 'listitem'),
+					A2(
+					$elm$html$Html$Attributes$attribute,
+					'aria-pressed',
+					$author$project$Practice$boolString(selected)),
+					A2(
+					$elm$html$Html$Attributes$attribute,
+					'aria-label',
+					'Bar ' + ($elm$core$String$fromInt(i + 1) + (': ' + ($author$project$Practice$noteName(bar.h) + (' ' + (info.q + (', ' + A2($author$project$Practice$numeral, model.ba, bar)))))))),
+					A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+					A2($elm$html$Html$Attributes$style, 'gap', '4px'),
+					A2($elm$html$Html$Attributes$style, 'justify-items', 'start'),
+					A2($elm$html$Html$Attributes$style, 'text-align', 'left'),
+					A2($elm$html$Html$Attributes$style, 'padding', '6px 9px 7px'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
+					A2($elm$html$Html$Attributes$style, 'border-radius', '6px'),
+					A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+					A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
+					A2($elm$html$Html$Attributes$style, 'min-width', '0'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'background',
+					selected ? 'var(--btn-on-bg)' : 'var(--btn-bg)'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'color',
+					selected ? 'var(--btn-on-text)' : 'var(--btn-text)'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'box-shadow',
+					current ? '0 0 0 2px var(--group-bg), 0 0 0 4px var(--btn-on-bg)' : 'none')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+							A2($elm$html$Html$Attributes$style, 'opacity', '0.7'),
+							A2($elm$html$Html$Attributes$style, 'white-space', 'nowrap')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							A2($author$project$Practice$numeral, model.ba, bar))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '24px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'line-height', '1'),
+							A2($elm$html$Html$Attributes$style, 'white-space', 'nowrap')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$author$project$Practice$noteName(bar.h)),
+							A2(
+							$elm$html$Html$span,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
+									A2($elm$html$Html$Attributes$style, 'vertical-align', '0.5em'),
+									A2($elm$html$Html$Attributes$style, 'font-weight', '500')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(info.aM)
+								]))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+							A2($elm$html$Html$Attributes$style, 'gap', '5px')
+						]),
+					A2(
+						$elm$core$List$map,
+						function (k) {
+							return A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '7px'),
+										A2($elm$html$Html$Attributes$style, 'height', '7px'),
+										A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+										A2($elm$html$Html$Attributes$style, 'border', '1.5px solid currentColor'),
+										A2(
+										$elm$html$Html$Attributes$style,
+										'opacity',
+										(current && (_Utils_cmp(k, beat) < 1)) ? '1' : '0.45'),
+										A2(
+										$elm$html$Html$Attributes$style,
+										'background',
+										(current && (_Utils_cmp(k, beat) < 1)) ? 'currentColor' : 'transparent')
+									]),
+								_List_Nil);
+						},
+						A2($elm$core$List$range, 0, 3)))
+				]));
+	});
+var $author$project$Practice$feelName = function (model) {
+	return (model.A === 2) ? 'Triplets' : ((model.s < 20) ? 'Straight 8ths' : ((model.s < 60) ? 'Light swing' : 'Shuffle'));
+};
+var $author$project$Practice$chordName = function (bar) {
+	return _Utils_ap(
+		$author$project$Practice$noteName(bar.h),
+		$author$project$Practice$qualInfo(bar.i).aM);
+};
+var $author$project$Practice$keyDegrees = $elm$core$Array$fromList(
+	_List_fromArray(
+		['1', '♭2', '2', '♭3', '3', '4', '♭5', '5', '♭6', '6', '♭7', '7']));
+var $author$project$Practice$noteCell = F3(
+	function (model, tones, d) {
+		var pc = A2($elm$core$Basics$modBy, 12, model.ba + d);
+		var role = A2($author$project$Practice$roleOf, model, pc);
+		var heard = model.aa && _Utils_eq(
+			model.ao,
+			$elm$core$Maybe$Just(pc));
+		var ring = function () {
+			if (!heard) {
+				return _List_Nil;
+			} else {
+				switch (role) {
+					case 0:
+						return _List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'box-shadow', '0 0 0 3px var(--hit)')
+							]);
+					case 3:
+						return _List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'box-shadow', '0 0 0 3px var(--miss)'),
+								A2($elm$html$Html$Attributes$style, 'background', 'color-mix(in srgb, var(--miss) 25%, var(--note-bg))')
+							]);
+					default:
+						return _List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'box-shadow', '0 0 0 3px var(--text)')
+							]);
+				}
+			}
+		}();
+		var chordRoot = (!role) && _Utils_eq(
+			pc,
+			$author$project$Practice$currentBar(model).h);
+		var _v0 = function () {
+			switch (role) {
+				case 0:
+					return chordRoot ? _Utils_Tuple2(
+						'chord root',
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'background', 'var(--root-bg)'),
+								A2($elm$html$Html$Attributes$style, 'border-color', 'var(--root-bg)'),
+								A2($elm$html$Html$Attributes$style, 'color', 'var(--root-text)')
+							])) : _Utils_Tuple2(
+						'chord tone',
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'border', '2px solid var(--chord-bd)'),
+								A2($elm$html$Html$Attributes$style, 'padding', '3px 0 4px')
+							]));
+				case 1:
+					return _Utils_Tuple2('in the key', _List_Nil);
+				case 2:
+					return _Utils_Tuple2(
+						'blue note',
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'border-style', 'dashed')
+							]));
+				default:
+					return _Utils_Tuple2(
+						'outside',
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'border-style', 'dotted'),
+								A2($elm$html$Html$Attributes$style, 'background', 'transparent'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'opacity',
+								heard ? '1' : '0.4')
+							]));
+			}
+		}();
+		var label = _v0.a;
+		var roleStyles = _v0.b;
+		return A2(
+			$elm$html$Html$div,
+			_Utils_ap(
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$attribute, 'role', 'listitem'),
+						A2(
+						$elm$html$Html$Attributes$attribute,
+						'aria-label',
+						$author$project$Practice$noteName(pc) + (', ' + label)),
+						A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+						A2($elm$html$Html$Attributes$style, 'padding', '4px 0 5px'),
+						A2($elm$html$Html$Attributes$style, 'border-radius', '4px'),
+						A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
+						A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--note-text)'),
+						A2($elm$html$Html$Attributes$style, 'min-width', '0'),
+						A2($elm$html$Html$Attributes$style, 'transition', 'background 0.12s, box-shadow 0.08s, opacity 0.12s')
+					]),
+				_Utils_ap(roleStyles, ring)),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'height', '12px'),
+							A2($elm$html$Html$Attributes$style, 'line-height', '12px')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							A2(
+								$elm$core$Maybe$withDefault,
+								'',
+								A2($elm$core$Dict$get, pc, tones)))
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '17px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+							A2($elm$html$Html$Attributes$style, 'line-height', '1.2')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$author$project$Practice$noteName(pc))
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
+							A2($elm$html$Html$Attributes$style, 'opacity', '0.65')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							A2(
+								$elm$core$Maybe$withDefault,
+								'',
+								A2($elm$core$Array$get, d, $author$project$Practice$keyDegrees)))
+						]))
+				]));
+	});
+var $author$project$Practice$strong = function (s) {
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text)'),
+				A2($elm$html$Html$Attributes$style, 'font-weight', '600')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(s)
+			]));
+};
+var $author$project$Practice$notesStrip = function (model) {
+	var legendChip = F2(
+		function (extra, label) {
+			return A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'gap', '4px')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$span,
+						_Utils_ap(
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'width', '10px'),
+									A2($elm$html$Html$Attributes$style, 'height', '10px'),
+									A2($elm$html$Html$Attributes$style, 'border-radius', '2px'),
+									A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--note-bd)'),
+									A2($elm$html$Html$Attributes$style, 'background', 'var(--note-bg)')
+								]),
+							extra),
+						_List_Nil),
+						$elm$html$Html$text(label)
+					]));
+		});
+	var bar = $author$project$Practice$currentBar(model);
+	var tones = $author$project$Practice$chordTones(bar);
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'margin-top', '10px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'baseline'),
+						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+						A2($elm$html$Html$Attributes$style, 'gap', '4px 14px'),
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '6px'),
+						A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$span,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Notes over '),
+								$author$project$Practice$strong(
+								$author$project$Practice$chordName(bar))
+							])),
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+								A2($elm$html$Html$Attributes$style, 'gap', '12px'),
+								A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								legendChip,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'background', 'var(--root-bg)'),
+										A2($elm$html$Html$Attributes$style, 'border-color', 'var(--root-bg)')
+									]),
+								'Chord root'),
+								A2(
+								legendChip,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'border', '2px solid var(--chord-bd)')
+									]),
+								'Chord tone'),
+								A2(legendChip, _List_Nil, 'In the key'),
+								A2(
+								legendChip,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'border-style', 'dashed')
+									]),
+								'Blue note'),
+								A2(
+								legendChip,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'border-style', 'dotted'),
+										A2($elm$html$Html$Attributes$style, 'opacity', '0.45'),
+										A2($elm$html$Html$Attributes$style, 'background', 'transparent')
+									]),
+								'Outside')
+							]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$attribute, 'role', 'list'),
+						A2($elm$html$Html$Attributes$attribute, 'aria-label', 'Notes for the current chord'),
+						A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+						A2($elm$html$Html$Attributes$style, 'grid-template-columns', 'repeat(12, minmax(0, 1fr))'),
+						A2($elm$html$Html$Attributes$style, 'gap', '4px')
+					]),
+				A2(
+					$elm$core$List$map,
+					A2($author$project$Practice$noteCell, model, tones),
+					A2($elm$core$List$range, 0, 11)))
+			]));
+};
+var $author$project$Practice$chart = function (model) {
+	var title = $author$project$Practice$noteName(model.ba) + (' ' + function () {
+		var _v0 = model.J;
+		if (!_v0.$) {
+			var id = _v0.a;
+			return A2(
+				$elm$core$Maybe$withDefault,
+				'blues',
+				A2(
+					$elm$core$Maybe$map,
+					function ($) {
+						return $.q;
+					},
+					$author$project$Practice$presetById(id)));
+		} else {
+			return 'blues';
+		}
+	}());
+	var n = $elm$core$List$length(model.f);
+	var miss = model.aZ || (model.aa && _Utils_eq(
+		A2(
+			$elm$core$Maybe$map,
+			$author$project$Practice$roleOf(model),
+			model.ao),
+		$elm$core$Maybe$Just(3)));
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$attribute, 'aria-label', 'Chord chart'),
+				A2($elm$html$Html$Attributes$style, 'background', 'var(--group-bg)'),
+				A2($elm$html$Html$Attributes$style, 'border-radius', '8px'),
+				A2($elm$html$Html$Attributes$style, 'padding', '8px 10px 10px'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'box-shadow',
+				miss ? '0 0 0 3px var(--miss)' : 'none'),
+				A2($elm$html$Html$Attributes$style, 'transition', 'box-shadow 0.12s')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'baseline'),
+						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+						A2($elm$html$Html$Attributes$style, 'gap', '4px 16px'),
+						A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'font-size', '18px'),
+								A2($elm$html$Html$Attributes$style, 'font-weight', '600')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(title)
+							])),
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+								A2($elm$html$Html$Attributes$style, 'gap', '14px'),
+								A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+								A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+							]),
+						A2(
+							$elm$core$List$map,
+							function (s) {
+								return A2(
+									$elm$html$Html$span,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text(s)
+										]));
+							},
+							_List_fromArray(
+								[
+									_Utils_ap(
+									(model.A === 2) ? '♩. = ' : '♩ = ',
+									$elm$core$String$fromInt(model.w)),
+									$author$project$Practice$styleInfo(model.A).cd,
+									$author$project$Practice$feelName(model),
+									_Utils_ap(
+									$elm$core$String$fromInt(n),
+									(n === 1) ? ' bar' : ' bars')
+								])))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$attribute, 'role', 'list'),
+						A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+						A2($elm$html$Html$Attributes$style, 'grid-template-columns', 'repeat(4, minmax(0, 1fr))'),
+						A2($elm$html$Html$Attributes$style, 'gap', '6px')
+					]),
+				A2(
+					$elm$core$List$indexedMap,
+					$author$project$Practice$barView(model),
+					model.f)),
+				$author$project$Practice$notesStrip(model)
+			]));
+};
+var $author$project$Practice$Generate = function (a) {
+	return {$: 7, a: a};
+};
+var $author$project$Practice$SetBpm = function (a) {
+	return {$: 2, a: a};
+};
+var $author$project$Practice$SetCount = function (a) {
+	return {$: 6, a: a};
+};
+var $author$project$Practice$SetFeel = function (a) {
+	return {$: 3, a: a};
+};
+var $author$project$Practice$SetKey = function (a) {
+	return {$: 4, a: a};
+};
+var $author$project$Practice$SetPreset = function (a) {
+	return {$: 5, a: a};
+};
+var $author$project$Practice$SetStyle = function (a) {
+	return {$: 1, a: a};
+};
+var $author$project$Practice$btn = function (active) {
+	return _List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'padding', '6px 12px'),
+			A2($elm$html$Html$Attributes$style, 'margin', '0 4px 0 0'),
+			A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
+			A2($elm$html$Html$Attributes$style, 'border-radius', '6px'),
+			A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+			A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
+			A2($elm$html$Html$Attributes$style, 'font-family', 'inherit'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'background',
+			active ? 'var(--btn-on-bg)' : 'var(--btn-bg)'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'color',
+			active ? 'var(--btn-on-text)' : 'var(--btn-text)'),
+			A2(
+			$elm$html$Html$Attributes$style,
+			'font-weight',
+			active ? '600' : '500')
+		]);
+};
+var $author$project$Practice$capitalize = function (s) {
+	return _Utils_ap(
+		$elm$core$String$toUpper(
+			A2($elm$core$String$left, 1, s)),
+		A2($elm$core$String$dropLeft, 1, s));
+};
+var $author$project$Practice$caption = function (name) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+				A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+				A2($elm$html$Html$Attributes$style, 'text-transform', 'uppercase'),
+				A2($elm$html$Html$Attributes$style, 'letter-spacing', '0.06em'),
+				A2($elm$html$Html$Attributes$style, 'margin', '0 0 5px 1px')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(name)
+			]));
+};
+var $author$project$Practice$card = F2(
+	function (name, children) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'background', 'var(--group-bg)'),
+					A2($elm$html$Html$Attributes$style, 'border-radius', '8px'),
+					A2($elm$html$Html$Attributes$style, 'padding', '6px 8px 8px'),
+					A2($elm$html$Html$Attributes$style, 'min-width', '0')
+				]),
+			A2(
+				$elm$core$List$cons,
+				$author$project$Practice$caption(name),
+				children));
+	});
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 1, a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
+};
+var $elm$html$Html$option = _VirtualDom_node('option');
+var $elm$html$Html$select = _VirtualDom_node('select');
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$Practice$dropdown = F3(
+	function (toMsg, current, options) {
+		return A2(
+			$elm$html$Html$select,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onInput(toMsg),
+					A2($elm$html$Html$Attributes$style, 'font', 'inherit'),
+					A2($elm$html$Html$Attributes$style, 'font-size', '14px'),
+					A2($elm$html$Html$Attributes$style, 'padding', '5px 8px'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--btn-bd)'),
+					A2($elm$html$Html$Attributes$style, 'border-radius', '6px'),
+					A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-bg)'),
+					A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-text)'),
+					A2($elm$html$Html$Attributes$style, 'min-width', '120px')
+				]),
+			A2(
+				$elm$core$List$map,
+				function (_v0) {
+					var v = _v0.a;
+					var label = _v0.b;
+					return A2(
+						$elm$html$Html$option,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$value(v),
+								$elm$html$Html$Attributes$selected(
+								_Utils_eq(v, current))
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(label)
+							]));
+				},
+				options));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
+var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $author$project$Practice$slider = F5(
+	function (lo, hi, value, toMsg, disabled) {
+		return A2(
+			$elm$html$Html$input,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$type_('range'),
+					$elm$html$Html$Attributes$min(
+					$elm$core$String$fromInt(lo)),
+					$elm$html$Html$Attributes$max(
+					$elm$core$String$fromInt(hi)),
+					$elm$html$Html$Attributes$value(
+					$elm$core$String$fromInt(value)),
+					$elm$html$Html$Attributes$disabled(disabled),
+					$elm$html$Html$Events$onInput(toMsg),
+					A2($elm$html$Html$Attributes$style, 'width', '100%'),
+					A2($elm$html$Html$Attributes$style, 'min-width', '110px'),
+					A2($elm$html$Html$Attributes$style, 'margin', '4px 0'),
+					A2($elm$html$Html$Attributes$style, 'accent-color', 'var(--btn-on-bg)'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'opacity',
+					disabled ? '0.35' : '1')
+				]),
+			_List_Nil);
+	});
+var $author$project$Practice$stepper = F7(
+	function (lessLabel, moreLabel, value, canLess, canMore, less, more) {
+		var side = F4(
+			function (label, enabled, msg, glyph) {
+				return A2(
+					$elm$html$Html$button,
+					A2(
+						$elm$core$List$cons,
+						$elm$html$Html$Events$onClick(msg),
+						A2(
+							$elm$core$List$cons,
+							A2($elm$html$Html$Attributes$attribute, 'aria-label', label),
+							A2(
+								$elm$core$List$cons,
+								$elm$html$Html$Attributes$disabled(!enabled),
+								_Utils_ap(
+									$author$project$Practice$btn(false),
+									_List_fromArray(
+										[
+											A2($elm$html$Html$Attributes$style, 'margin', '0'),
+											A2($elm$html$Html$Attributes$style, 'min-width', '34px'),
+											A2(
+											$elm$html$Html$Attributes$style,
+											'opacity',
+											enabled ? '1' : '0.4')
+										]))))),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(glyph)
+						]));
+			});
+		return A2(
+			$elm$html$Html$span,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+					A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+					A2($elm$html$Html$Attributes$style, 'gap', '8px')
+				]),
+			_List_fromArray(
+				[
+					A4(side, lessLabel, canLess, less, '−'),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'min-width', '2ch'),
+							A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+							A2($elm$html$Html$Attributes$style, 'font-size', '16px'),
+							A2($elm$html$Html$Attributes$style, 'font-weight', '600')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(value))
+						])),
+					A4(side, moreLabel, canMore, more, '+')
+				]));
+	});
+var $author$project$Practice$controls = function (model) {
+	var variety = $author$project$Practice$distinctChords(model.f);
+	var n = $elm$core$List$length(model.f);
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+				A2($elm$html$Html$Attributes$style, 'gap', '8px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$author$project$Practice$card,
+				'Style',
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+								A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+								A2($elm$html$Html$Attributes$style, 'row-gap', '4px')
+							]),
+						A2(
+							$elm$core$List$map,
+							function (s) {
+								return A2(
+									$elm$html$Html$button,
+									A2(
+										$elm$core$List$cons,
+										$elm$html$Html$Events$onClick(
+											$author$project$Practice$SetStyle(s)),
+										$author$project$Practice$btn(
+											_Utils_eq(s, model.A))),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(
+											$author$project$Practice$styleInfo(s).q)
+										]));
+							},
+							$author$project$Practice$styles)),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+								A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+								A2($elm$html$Html$Attributes$style, 'margin-top', '5px')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$author$project$Practice$styleInfo(model.A).bT)
+							]))
+					])),
+				A2(
+				$author$project$Practice$card,
+				'Tempo',
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'font-size', '18px'),
+								A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+								A2($elm$html$Html$Attributes$style, 'font-variant-numeric', 'tabular-nums')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$elm$core$String$fromInt(model.w)),
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+										A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+										A2($elm$html$Html$Attributes$style, 'font-weight', '500')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(' bpm')
+									]))
+							])),
+						A5($author$project$Practice$slider, 40, 200, model.w, $author$project$Practice$SetBpm, false)
+					])),
+				A2(
+				$author$project$Practice$card,
+				'Feel',
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+								A2($elm$html$Html$Attributes$style, 'margin-bottom', '2px')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$author$project$Practice$feelName(model))
+							])),
+						A5($author$project$Practice$slider, 0, 100, model.s, $author$project$Practice$SetFeel, model.A === 2),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+								A2($elm$html$Html$Attributes$style, 'justify-content', 'space-between'),
+								A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+								A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$span,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Straight')
+									])),
+								A2(
+								$elm$html$Html$span,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Shuffle')
+									]))
+							]))
+					])),
+				A2(
+				$author$project$Practice$card,
+				'Key',
+				_List_fromArray(
+					[
+						A3(
+						$author$project$Practice$dropdown,
+						$author$project$Practice$SetKey,
+						$elm$core$String$fromInt(model.ba),
+						A2(
+							$elm$core$List$map,
+							function (pc) {
+								return _Utils_Tuple2(
+									$elm$core$String$fromInt(pc),
+									$author$project$Practice$noteName(pc));
+							},
+							A2($elm$core$List$range, 0, 11)))
+					])),
+				A2(
+				$author$project$Practice$card,
+				'Progression',
+				_List_fromArray(
+					[
+						A3(
+						$author$project$Practice$dropdown,
+						$author$project$Practice$SetPreset,
+						function () {
+							var _v0 = model.J;
+							switch (_v0.$) {
+								case 0:
+									var id = _v0.a;
+									return id;
+								case 1:
+									return 'custom';
+								default:
+									return 'generated';
+							}
+						}(),
+						_Utils_ap(
+							A2(
+								$elm$core$List$map,
+								function (p) {
+									return _Utils_Tuple2(
+										p.ai,
+										$author$project$Practice$capitalize(p.q));
+								},
+								$author$project$Practice$presets),
+							function () {
+								var _v1 = model.J;
+								switch (_v1.$) {
+									case 1:
+										return _List_fromArray(
+											[
+												_Utils_Tuple2('custom', 'Custom')
+											]);
+									case 2:
+										return _List_fromArray(
+											[
+												_Utils_Tuple2('generated', 'Made up')
+											]);
+									default:
+										return _List_Nil;
+								}
+							}()))
+					])),
+				A2(
+				$author$project$Practice$card,
+				'Bars',
+				_List_fromArray(
+					[
+						A7(
+						$author$project$Practice$stepper,
+						'One bar fewer',
+						'One bar more',
+						n,
+						_Utils_cmp(n, $author$project$Practice$minBars) > 0,
+						_Utils_cmp(n, $author$project$Practice$maxBars) < 0,
+						$author$project$Practice$SetCount(n - 1),
+						$author$project$Practice$SetCount(n + 1))
+					])),
+				A2(
+				$author$project$Practice$card,
+				'Different chords',
+				_List_fromArray(
+					[
+						A7(
+						$author$project$Practice$stepper,
+						'One chord type fewer',
+						'One chord type more',
+						variety,
+						variety > 1,
+						_Utils_cmp(
+							variety,
+							$author$project$Practice$maxVariety(n)) < 0,
+						$author$project$Practice$Generate(variety - 1),
+						$author$project$Practice$Generate(variety + 1)),
+						A2(
+						$elm$html$Html$button,
+						A2(
+							$elm$core$List$cons,
+							$elm$html$Html$Events$onClick(
+								$author$project$Practice$Generate(variety)),
+							_Utils_ap(
+								$author$project$Practice$btn(false),
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'margin-top', '5px')
+									]))),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Write me a new chart')
+							]))
+					]))
+			]));
+};
+var $author$project$Practice$SetQuality = function (a) {
+	return {$: 12, a: a};
+};
+var $author$project$Practice$ToggleMore = {$: 15};
+var $author$project$Practice$editor = function (model) {
+	var bar = A2($author$project$Practice$currentBarAt, model.L, model);
+	var qualButton = function (q) {
+		var on = _Utils_eq(q, bar.i);
+		var info = $author$project$Practice$qualInfo(q);
+		return A2(
+			$elm$html$Html$button,
+			A2(
+				$elm$core$List$cons,
+				$elm$html$Html$Events$onClick(
+					$author$project$Practice$SetQuality(q)),
+				_Utils_ap(
+					$author$project$Practice$btn(on),
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'display', 'inline-grid'),
+							A2($elm$html$Html$Attributes$style, 'justify-items', 'start'),
+							A2($elm$html$Html$Attributes$style, 'gap', '2px'),
+							A2($elm$html$Html$Attributes$style, 'margin-bottom', '4px')
+						]))),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '15px')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$author$project$Practice$noteName(bar.h)),
+							A2(
+							$elm$html$Html$span,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'font-size', '10px'),
+									A2($elm$html$Html$Attributes$style, 'vertical-align', '0.5em')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(info.aM)
+								]))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'font-size', '11px'),
+							A2($elm$html$Html$Attributes$style, 'opacity', '0.7')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(info.q)
+						]))
+				]));
+	};
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'flex', '1 1 420px'),
+				A2($elm$html$Html$Attributes$style, 'min-width', '0')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$author$project$Practice$card,
+				'Editing bar ' + ($elm$core$String$fromInt(model.L + 1) + (' · ' + ($author$project$Practice$chordName(bar) + (' · ' + A2($author$project$Practice$numeral, model.ba, bar))))),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+								A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+								A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px'),
+								A2($elm$html$Html$Attributes$style, 'line-height', '1.5')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Click a bar to change its chord. ← → move between bars, ↑ ↓ change the note, with Shift the chord type. A–G name the note, M flips major and minor, Space plays and stops.')
+							])),
+						$author$project$Practice$caption('Note'),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+								A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+								A2($elm$html$Html$Attributes$style, 'row-gap', '4px'),
+								A2($elm$html$Html$Attributes$style, 'margin-bottom', '8px')
+							]),
+						A2(
+							$elm$core$List$map,
+							function (pc) {
+								return A2(
+									$elm$html$Html$button,
+									A2(
+										$elm$core$List$cons,
+										$elm$html$Html$Events$onClick(
+											$author$project$Practice$SetRoot(pc)),
+										_Utils_ap(
+											$author$project$Practice$btn(
+												_Utils_eq(pc, bar.h)),
+											_List_fromArray(
+												[
+													A2($elm$html$Html$Attributes$style, 'min-width', '40px')
+												]))),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(
+											$author$project$Practice$noteName(pc))
+										]));
+							},
+							A2($elm$core$List$range, 0, 11))),
+						$author$project$Practice$caption('Chord'),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+								A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap')
+							]),
+						A2(
+							$elm$core$List$map,
+							qualButton,
+							A2(
+								$elm$core$List$filter,
+								A2(
+									$elm$core$Basics$composeR,
+									$author$project$Practice$qualInfo,
+									function ($) {
+										return $.aU;
+									}),
+								$author$project$Practice$qualities))),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Practice$ToggleMore),
+								A2(
+								$elm$html$Html$Attributes$attribute,
+								'aria-expanded',
+								$author$project$Practice$boolString(model.E)),
+								$elm$html$Html$Attributes$title('While this is shut, new charts use only major, minor and seventh chords'),
+								A2($elm$html$Html$Attributes$style, 'border', '0'),
+								A2($elm$html$Html$Attributes$style, 'background', 'none'),
+								A2($elm$html$Html$Attributes$style, 'padding', '4px 0'),
+								A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+								A2($elm$html$Html$Attributes$style, 'font', 'inherit'),
+								A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+								A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+								A2($elm$html$Html$Attributes$style, 'text-decoration', 'underline')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								model.E ? 'Fewer chord types ▴' : 'More chord types ▾')
+							])),
+						model.E ? A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+								A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+								A2($elm$html$Html$Attributes$style, 'margin-top', '4px')
+							]),
+						A2(
+							$elm$core$List$map,
+							qualButton,
+							A2(
+								$elm$core$List$filter,
+								A2(
+									$elm$core$Basics$composeR,
+									$author$project$Practice$qualInfo,
+									A2(
+										$elm$core$Basics$composeR,
+										function ($) {
+											return $.aU;
+										},
+										$elm$core$Basics$not)),
+								$author$project$Practice$qualities))) : $elm$html$Html$text('')
+					]))
+			]));
+};
+var $author$project$Practice$SetMix = F2(
+	function (a, b) {
+		return {$: 16, a: a, b: b};
+	});
+var $author$project$Practice$channels = _List_fromArray(
+	[
+		_Utils_Tuple2(0, 'Drums'),
+		_Utils_Tuple2(1, 'Bass'),
+		_Utils_Tuple2(2, 'Keys'),
+		_Utils_Tuple2(3, 'Guitar'),
+		_Utils_Tuple2(4, 'Master')
+	]);
+var $author$project$Practice$mixer = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'flex', '0 1 260px'),
+				A2($elm$html$Html$Attributes$style, 'min-width', '200px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$author$project$Practice$card,
+				'Band',
+				A2(
+					$elm$core$List$map,
+					function (_v0) {
+						var c = _v0.a;
+						var name = _v0.b;
+						return A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+									A2($elm$html$Html$Attributes$style, 'grid-template-columns', '56px 1fr'),
+									A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+									A2($elm$html$Html$Attributes$style, 'gap', '8px')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$span,
+									_List_fromArray(
+										[
+											A2($elm$html$Html$Attributes$style, 'font-size', '12px'),
+											A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text(name)
+										])),
+									A5(
+									$author$project$Practice$slider,
+									0,
+									100,
+									A2($author$project$Practice$level, c, model.aB),
+									$author$project$Practice$SetMix(c),
+									false)
+								]));
+					},
+					$author$project$Practice$channels))
+			]));
+};
+var $author$project$Practice$ToggleListen = {$: 17};
+var $author$project$Practice$heardNote = function (model) {
+	var _v0 = _Utils_Tuple2(model.aa, model.ao);
+	if (_v0.a) {
+		if (!_v0.b.$) {
+			var pc = _v0.b.a;
+			return A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-size', '22px'),
+						A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+						A2($elm$html$Html$Attributes$style, 'min-width', '2.2ch'),
+						A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'color',
+						function () {
+							var _v1 = A2($author$project$Practice$roleOf, model, pc);
+							switch (_v1) {
+								case 0:
+									return 'var(--hit)';
+								case 3:
+									return 'var(--miss)';
+								default:
+									return 'var(--text)';
+							}
+						}())
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						$author$project$Practice$noteName(pc))
+					]));
+		} else {
+			var _v2 = _v0.b;
+			return A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'min-width', '2.2ch')
+					]),
+				_List_Nil);
+		}
+	} else {
+		return $elm$html$Html$text('');
+	}
+};
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
+var $author$project$Practice$playButton = function (model) {
+	return A2(
+		$elm$html$Html$button,
+		_List_fromArray(
+			[
+				$elm$html$Html$Events$onClick($author$project$Practice$TogglePlay),
+				A2(
+				$elm$html$Html$Attributes$attribute,
+				'aria-label',
+				model.V ? 'Stop' : 'Play'),
+				A2($elm$html$Html$Attributes$style, 'width', '44px'),
+				A2($elm$html$Html$Attributes$style, 'height', '44px'),
+				A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+				A2($elm$html$Html$Attributes$style, 'border', '0'),
+				A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+				A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+				A2($elm$html$Html$Attributes$style, 'place-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'background', 'var(--btn-on-bg)'),
+				A2($elm$html$Html$Attributes$style, 'color', 'var(--btn-on-text)'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'box-shadow',
+				model.V ? '0 0 0 3px var(--surface), 0 0 0 5px var(--btn-on-bg)' : 'none')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$svg,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$viewBox('0 0 24 24'),
+						$elm$svg$Svg$Attributes$width('20'),
+						$elm$svg$Svg$Attributes$height('20'),
+						$elm$svg$Svg$Attributes$fill('currentColor')
+					]),
+				_List_fromArray(
+					[
+						model.V ? A2(
+						$elm$svg$Svg$rect,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$x('5'),
+								$elm$svg$Svg$Attributes$y('5'),
+								$elm$svg$Svg$Attributes$width('14'),
+								$elm$svg$Svg$Attributes$height('14'),
+								$elm$svg$Svg$Attributes$rx('1.5')
+							]),
+						_List_Nil) : A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M7 4v16l13-8z')
+							]),
+						_List_Nil)
+					]))
+			]));
+};
+var $author$project$Practice$status = function (model) {
+	var _v0 = _Utils_Tuple2(model.V, model.as);
+	if (!_v0.a) {
+		return _List_fromArray(
+			[
+				$elm$html$Html$text('Ready')
+			]);
+	} else {
+		if (_v0.b.$ === 1) {
+			var _v1 = _v0.b;
+			return _List_fromArray(
+				[
+					$elm$html$Html$text('Counting in')
+				]);
+		} else {
+			var ph = _v0.b.a;
+			return _List_fromArray(
+				[
+					$elm$html$Html$text('Bar '),
+					$author$project$Practice$strong(
+					$elm$core$String$fromInt(
+						$author$project$Practice$currentIndex(model) + 1)),
+					$elm$html$Html$text(' · beat '),
+					$author$project$Practice$strong(
+					$elm$core$String$fromInt(ph.a5 + 1)),
+					$elm$html$Html$text(' · '),
+					$author$project$Practice$strong(
+					$author$project$Practice$chordName(
+						$author$project$Practice$currentBar(model)))
+				]);
+		}
+	}
+};
+var $author$project$Practice$transport = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+				A2($elm$html$Html$Attributes$style, 'gap', '12px'),
+				A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap')
+			]),
+		_List_fromArray(
+			[
+				$author$project$Practice$playButton(model),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+						A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+						A2($elm$html$Html$Attributes$style, 'gap', '8px'),
+						A2($elm$html$Html$Attributes$style, 'font-size', '14px')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'width', '10px'),
+								A2($elm$html$Html$Attributes$style, 'height', '10px'),
+								A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
+								A2(
+								$elm$html$Html$Attributes$style,
+								'background',
+								model.V ? 'var(--btn-on-bg)' : 'var(--surface-bd)')
+							]),
+						_List_Nil),
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)'),
+								A2($elm$html$Html$Attributes$style, 'font-variant-numeric', 'tabular-nums')
+							]),
+						$author$project$Practice$status(model))
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '1')
+					]),
+				_List_Nil),
+				$elm$core$String$isEmpty(model.aI) ? $elm$html$Html$text('') : A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+						A2($elm$html$Html$Attributes$style, 'color', 'var(--text-2)')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(model.aI)
+					])),
+				$author$project$Practice$heardNote(model),
+				A2(
+				$elm$html$Html$button,
+				_Utils_ap(
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onClick($author$project$Practice$ToggleListen),
+							$elm$html$Html$Attributes$title('Listen through the microphone and flash red on notes outside the key'),
+							A2(
+							$elm$html$Html$Attributes$attribute,
+							'aria-pressed',
+							$author$project$Practice$boolString(model.aa))
+						]),
+					$author$project$Practice$btn(model.aa)),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						model.aa ? 'Listening' : 'Listen')
+					]))
+			]));
+};
+var $author$project$Practice$view = F2(
+	function (maxWidth, model) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('no-print practice-panel'),
+					A2($elm$html$Html$Attributes$style, 'background', 'var(--surface)'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid var(--surface-bd)'),
+					A2($elm$html$Html$Attributes$style, 'border-radius', '10px'),
+					A2($elm$html$Html$Attributes$style, 'padding', '10px 12px 12px'),
+					A2($elm$html$Html$Attributes$style, 'margin-bottom', '10px'),
+					A2(
+					$elm$html$Html$Attributes$style,
+					'max-width',
+					$elm$core$String$fromFloat(maxWidth) + 'px'),
+					A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box'),
+					A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+					A2($elm$html$Html$Attributes$style, 'gap', '10px')
+				]),
+			_List_fromArray(
+				[
+					$author$project$Practice$transport(model),
+					$author$project$Practice$controls(model),
+					$author$project$Practice$chart(model),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+							A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap'),
+							A2($elm$html$Html$Attributes$style, 'gap', '10px')
+						]),
+					_List_fromArray(
+						[
+							$author$project$Practice$editor(model),
+							$author$project$Practice$mixer(model)
+						]))
+				]));
+	});
 var $author$project$Main$cagedShapeNames = _List_fromArray(
 	['C', 'A', 'G', 'E', 'D']);
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
 var $author$project$Main$isDiagonal = function (scale) {
 	if (scale.$ === 53) {
 		return true;
 	} else {
 		return $author$project$Main$isArpeggio(scale);
-	}
-};
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
 	}
 };
 var $author$project$Main$isPlain = function (scale) {
@@ -8409,9 +12797,6 @@ var $elm$core$List$concatMap = F2(
 		return $elm$core$List$concat(
 			A2($elm$core$List$map, f, list));
 	});
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $author$project$Main$stringSpacing = 36;
 var $author$project$Main$hatchTexture = F3(
 	function (b, _v0, _v1) {
@@ -8562,11 +12947,7 @@ var $author$project$Main$hatchTexture = F3(
 		}
 	});
 var $elm$svg$Svg$Attributes$id = _VirtualDom_attribute('id');
-var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
-var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
 var $elm$svg$Svg$Attributes$transform = _VirtualDom_attribute('transform');
-var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
-var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$hatchChip = F3(
 	function (round, b, lbl) {
 		var shape = _Utils_ap(
@@ -8751,10 +13132,6 @@ var $author$project$Main$legendText = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
-	});
 var $author$project$Main$noteName = function (n) {
 	var _v0 = A2($elm$core$Basics$modBy, 12, n);
 	switch (_v0) {
@@ -8997,7 +13374,7 @@ var $author$project$Main$viewLegend = function (board) {
 			A3($author$project$Main$legendMarker, board.d, 'circle-plain', 'other')
 		])));
 	var strings = function () {
-		var _v2 = board.q;
+		var _v2 = board.v;
 		if (_v2.$ === 1) {
 			return _List_Nil;
 		} else {
@@ -9013,7 +13390,7 @@ var $author$project$Main$viewLegend = function (board) {
 		}
 	}();
 	var highlight = function () {
-		var _v0 = board.r;
+		var _v0 = board.x;
 		if (_v0.$ === 1) {
 			return _List_Nil;
 		} else {
@@ -9105,12 +13482,12 @@ var $author$project$Main$indexAfterMove = F3(
 	});
 var $author$project$Main$displayIndexOf = F2(
 	function (model, i) {
-		var _v0 = model.G;
+		var _v0 = model.S;
 		if (_v0.$ === 1) {
 			return i;
 		} else {
 			var drag = _v0.a;
-			return A3($author$project$Main$indexAfterMove, drag.as, drag.ac, i);
+			return A3($author$project$Main$indexAfterMove, drag.aL, drag.au, i);
 		}
 	});
 var $author$project$Main$committedIndexOf = F2(
@@ -9135,11 +13512,6 @@ var $author$project$Main$DragStart = F3(
 	function (a, b, c) {
 		return {$: 18, a: a, b: b, c: c};
 	});
-var $elm$json$Json$Decode$at = F2(
-	function (fields, decoder) {
-		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
-	});
-var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $author$project$Main$dragStartDecoder = function (i) {
 	return A3(
 		$elm$json$Json$Decode$map2,
@@ -9322,27 +13694,6 @@ var $author$project$Main$aside = function (s) {
 				$elm$html$Html$text(s)
 			]));
 };
-var $elm$core$List$repeatHelp = F3(
-	function (result, n, value) {
-		repeatHelp:
-		while (true) {
-			if (n <= 0) {
-				return result;
-			} else {
-				var $temp$result = A2($elm$core$List$cons, value, result),
-					$temp$n = n - 1,
-					$temp$value = value;
-				result = $temp$result;
-				n = $temp$n;
-				value = $temp$value;
-				continue repeatHelp;
-			}
-		}
-	});
-var $elm$core$List$repeat = F2(
-	function (n, value) {
-		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
-	});
 var $author$project$Main$customLabel = F2(
 	function (base, i) {
 		return A2(
@@ -9621,9 +13972,6 @@ var $author$project$Main$accidentalFor = F2(
 			pc - $author$project$Main$letterPitchForIndex(li));
 		return (raw <= 6) ? raw : (raw - 12);
 	});
-var $elm$core$Basics$abs = function (n) {
-	return (n < 0) ? (-n) : n;
-};
 var $author$project$Main$rootLetterCandidates = function (pc) {
 	var _v0 = A2(
 		$elm$core$List$filter,
@@ -9855,9 +14203,6 @@ var $author$project$Main$scaleDegrees = function (st) {
 		}
 	}
 };
-var $elm$core$List$sum = function (numbers) {
-	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
-};
 var $author$project$Main$spellingCost = F3(
 	function (root, rootLi, scale) {
 		return $elm$core$List$sum(
@@ -9898,7 +14243,6 @@ var $author$project$Main$bestRootLetterIndex = F2(
 					$author$project$Main$rootLetterCandidates(
 						A2($elm$core$Basics$modBy, 12, root)))));
 	});
-var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
 var $elm$core$String$repeatHelp = F3(
 	function (n, chunk, result) {
@@ -10119,7 +14463,7 @@ var $author$project$Main$spell = F2(
 			$author$project$Main$scaleDegrees(scale));
 	});
 var $author$project$Main$spelledNotes = function (board) {
-	return A2($author$project$Main$spell, board.g, board.a);
+	return A2($author$project$Main$spell, board.h, board.a);
 };
 var $author$project$Main$stringSetLabel = function (set) {
 	if (!set.$) {
@@ -10132,12 +14476,12 @@ var $author$project$Main$stringSetLabel = function (set) {
 };
 var $author$project$Main$scaleTitleParts = function (board) {
 	var scaleName = _Utils_ap(
-		_Utils_eq(board.a, $author$project$Main$Blank) ? '' : (A2($author$project$Main$rootSpelling, board.a, board.g) + ' '),
+		_Utils_eq(board.a, $author$project$Main$Blank) ? '' : (A2($author$project$Main$rootSpelling, board.a, board.h) + ' '),
 		$author$project$Main$scaleTitle(board.a));
 	var detail = _Utils_eq(board.a, $author$project$Main$Blank) ? _List_Nil : ($author$project$Main$isChromatic(board.a) ? _List_fromArray(
 		[
 			$author$project$Main$aside(
-			'Every note on the neck · ' + ((board.d ? '' : 'hue = note · ') + ((_Utils_eq(board.a, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' from ' + $author$project$Main$noteName(board.g)))))
+			'Every note on the neck · ' + ((board.d ? '' : 'hue = note · ') + ((_Utils_eq(board.a, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' from ' + $author$project$Main$noteName(board.h)))))
 		]) : _Utils_ap(
 		A3(
 			$elm$core$List$map2,
@@ -10147,7 +14491,7 @@ var $author$project$Main$scaleTitleParts = function (board) {
 		$author$project$Main$isTriad(board.a) ? _List_fromArray(
 			[
 				$author$project$Main$aside(
-				$author$project$Main$stringSetLabel(board.t))
+				$author$project$Main$stringSetLabel(board.z))
 			]) : _List_Nil));
 	return _List_fromArray(
 		[
@@ -10233,7 +14577,7 @@ var $author$project$Main$pickerTabs = function (model) {
 		$author$project$Main$activeNeck(model).a);
 	var tab = F2(
 		function (t, lbl) {
-			var on = _Utils_eq(model.aa, t);
+			var on = _Utils_eq(model.ar, t);
 			return A2(
 				$elm$html$Html$button,
 				_List_fromArray(
@@ -10313,7 +14657,7 @@ var $author$project$Main$rootButton = F2(
 						A2($elm$html$Html$Attributes$style, 'min-width', '44px')
 					]),
 				$author$project$Main$buttonBaseStyle(
-					_Utils_eq(neck.g, n))),
+					_Utils_eq(neck.h, n))),
 			_List_fromArray(
 				[
 					$elm$html$Html$text(
@@ -10398,15 +14742,6 @@ var $author$project$Main$scaleGroup = F2(
 					buttons)
 				]));
 	});
-var $elm$json$Json$Encode$bool = _Json_wrap;
-var $elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$bool(bool));
-	});
-var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $author$project$Main$shapeGroup = function (model) {
 	var shapeButton = F4(
 		function (lbl, target, on, why) {
@@ -10504,7 +14839,7 @@ var $author$project$Main$scalePicker = function (model) {
 					[
 						$author$project$Main$pickerTabs(model),
 						function () {
-						var _v0 = model.aa;
+						var _v0 = model.ar;
 						switch (_v0) {
 							case 0:
 								return $author$project$Main$pickerCards(
@@ -10694,7 +15029,7 @@ var $author$project$Main$stringSetButton = F4(
 						A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 					]),
 				$author$project$Main$buttonBaseStyle(
-					_Utils_eq(board.t, set))),
+					_Utils_eq(board.z, set))),
 			_List_fromArray(
 				[
 					$elm$html$Html$text(lbl)
@@ -10717,7 +15052,7 @@ var $author$project$Main$viewScaleTitle = function (board) {
 };
 var $author$project$Main$neckHeading = F3(
 	function (model, slot, board) {
-		var open = model.U && _Utils_eq(slot, model.i);
+		var open = model.Z && _Utils_eq(slot, model.k);
 		return A2(
 			$elm$html$Html$div,
 			_List_Nil,
@@ -10774,16 +15109,6 @@ var $author$project$Main$neckHeading = F3(
 var $author$project$Main$RemoveNeck = function (a) {
 	return {$: 17, a: a};
 };
-var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 1, a: a};
-};
-var $elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
 var $author$project$Main$removeNeckButton = function (i) {
 	return A2(
 		$elm$html$Html$button,
@@ -10930,10 +15255,6 @@ var $author$project$Main$anchorOffset = function (scale) {
 		}
 	}
 };
-var $elm$core$Basics$min = F2(
-	function (x, y) {
-		return (_Utils_cmp(x, y) < 0) ? x : y;
-	});
 var $author$project$Main$anchorString = function (t) {
 	return A2(
 		$elm$core$Basics$min,
@@ -10948,13 +15269,6 @@ var $author$project$Main$anchorOpen = function (t) {
 		(A2($author$project$Main$openString, t, a) + $author$project$Main$referenceOpen(6)) - $author$project$Main$referenceOpen(a));
 };
 var $author$project$Main$boxWindow = _Utils_Tuple2(-1, 3);
-var $elm$core$List$all = F2(
-	function (isOkay, list) {
-		return !A2(
-			$elm$core$List$any,
-			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
-			list);
-	});
 var $elm$core$List$maximum = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -11409,7 +15723,7 @@ var $author$project$Main$cagedVoicings = F3(
 				return A2(
 					$elm$core$List$any,
 					function (v) {
-						return _Utils_eq(v.N, voicing.N);
+						return _Utils_eq(v.ac, voicing.ac);
 					},
 					found) ? found : _Utils_ap(
 					found,
@@ -11442,9 +15756,9 @@ var $author$project$Main$cagedVoicings = F3(
 					$elm$core$Maybe$map,
 					function (notes) {
 						return {
-							ah: shapeOf(b),
-							N: notes,
-							aN: radius(
+							az: shapeOf(b),
+							ac: notes,
+							bf: radius(
 								shapeOf(b))
 						};
 					},
@@ -11588,10 +15902,10 @@ var $author$project$Main$diagonalAnchor = F3(
 var $author$project$Main$rootFret = function (board) {
 	var lowE = $author$project$Main$anchorOpen(board.b);
 	var _v0 = board.a;
-	return $author$project$Main$isDiagonal(board.a) ? A3($author$project$Main$diagonalAnchor, board.b, board.a, board.g) : A2(
+	return $author$project$Main$isDiagonal(board.a) ? A3($author$project$Main$diagonalAnchor, board.b, board.a, board.h) : A2(
 		$elm$core$Basics$modBy,
 		12,
-		(board.g - $author$project$Main$anchorOffset(board.a)) - lowE);
+		(board.h - $author$project$Main$anchorOffset(board.a)) - lowE);
 };
 var $author$project$Main$boxSpan = F3(
 	function (board, b, octave) {
@@ -11811,7 +16125,7 @@ var $author$project$Main$drawOverlapStripe = F4(
 						$elm$svg$Svg$Attributes$fill(
 						A3(
 							$author$project$Main$stripeRef,
-							board.S,
+							board.ai,
 							_Utils_Tuple2(b1, b2),
 							_Utils_Tuple2(
 								A2(
@@ -11896,7 +16210,7 @@ var $author$project$Main$regionShape = F6(
 				]),
 			_List_Nil) : (muted ? A2($elm$svg$Svg$g, _List_Nil, _List_Nil) : A4(
 			$author$project$Main$hatchClipped,
-			board.S + ('clip-' + key),
+			board.ai + ('clip-' + key),
 			_List_fromArray(
 				[
 					A2(
@@ -11993,7 +16307,7 @@ var $author$project$Main$drawWrapOverlap = F3(
 						$elm$svg$Svg$Attributes$fill(
 						A3(
 							$author$project$Main$stripeRef,
-							board.S,
+							board.ai,
 							_Utils_Tuple2(5, 1),
 							_Utils_Tuple2(
 								A2(
@@ -12057,7 +16371,7 @@ var $author$project$Main$drawBoxRegionsBoxes = function (board) {
 		[-2, -1, 0, 1, 2]);
 	var lit = A2(
 		$author$project$Main$focusedShapes,
-		board.r,
+		board.x,
 		A2(
 			$elm$core$List$concatMap,
 			function (b) {
@@ -12106,7 +16420,7 @@ var $author$project$Main$drawBoxRegionsBoxes = function (board) {
 		_Utils_ap(overlaps, wrapOverlaps));
 };
 var $author$project$Main$diagonalOctaves = function (shape) {
-	var pair = ((shape.W - 1) / 2) | 0;
+	var pair = ((shape.al - 1) / 2) | 0;
 	return A2(
 		$elm$core$List$range,
 		-2,
@@ -12210,14 +16524,14 @@ var $author$project$Main$diagonalShapesFor = F2(
 				var offset = $author$project$Main$diagonalPairOffset(k);
 				var lower = (2 * k) + 2;
 				return {
-					aJ: color,
-					ai: lower,
-					aC: (_Utils_cmp(lower, n) < 1) ? A2(
+					a6: color,
+					aA: lower,
+					aY: (_Utils_cmp(lower, n) < 1) ? A2(
 						$elm$core$List$map,
 						$elm$core$Basics$add(offset),
 						lowerRels) : _List_Nil,
-					W: (2 * k) + 1,
-					aI: A2(
+					al: (2 * k) + 1,
+					a3: A2(
 						$elm$core$List$map,
 						$elm$core$Basics$add(offset),
 						upperRels)
@@ -12279,8 +16593,8 @@ var $author$project$Main$diagonalSpan = F5(
 			$elm$core$Basics$identity,
 			_List_fromArray(
 				[
-					A2(ends, shape.aC, shape.ai),
-					A2(ends, shape.aI, shape.W)
+					A2(ends, shape.aY, shape.aA),
+					A2(ends, shape.a3, shape.al)
 				]));
 		return _Utils_Tuple2(
 			A2(
@@ -12296,18 +16610,18 @@ var $author$project$Main$diagonalSpan = F5(
 	});
 var $author$project$Main$drawDiagonalShape = F6(
 	function (tuning, scale, root, paint, shape, octave) {
-		var yMid = ($author$project$Main$stringY(shape.ai) + $author$project$Main$stringY(shape.W)) / 2;
+		var yMid = ($author$project$Main$stringY(shape.aA) + $author$project$Main$stringY(shape.al)) / 2;
 		var shift = A3($author$project$Main$diagonalAnchor, tuning, scale, root) + (12 * octave);
 		var upperSpan = A2(
 			$author$project$Main$relsSpan,
-			shift + A2($author$project$Main$boxShift, tuning, shape.W),
-			shape.aI);
+			shift + A2($author$project$Main$boxShift, tuning, shape.al),
+			shape.a3);
 		var pad = $author$project$Main$stringSpacing * 0.55;
-		var yUpTop = $author$project$Main$stringY(shape.W) - pad;
+		var yUpTop = $author$project$Main$stringY(shape.al) - pad;
 		var lowerSpan = A2(
 			$author$project$Main$relsSpan,
-			shift + A2($author$project$Main$boxShift, tuning, shape.ai),
-			shape.aC);
+			shift + A2($author$project$Main$boxShift, tuning, shape.aA),
+			shape.aY);
 		var verts = function () {
 			var _v1 = _Utils_Tuple2(lowerSpan, upperSpan);
 			_v1$2:
@@ -12320,7 +16634,7 @@ var $author$project$Main$drawDiagonalShape = F6(
 						var _v3 = _v1.b.a;
 						var loU = _v3.a;
 						var hiU = _v3.b;
-						var yLoBot = $author$project$Main$stringY(shape.ai) + pad;
+						var yLoBot = $author$project$Main$stringY(shape.aA) + pad;
 						return _List_fromArray(
 							[
 								_Utils_Tuple2(
@@ -12357,7 +16671,7 @@ var $author$project$Main$drawDiagonalShape = F6(
 						var _v5 = _v1.b.a;
 						var loU = _v5.a;
 						var hiU = _v5.b;
-						var yUpBot = $author$project$Main$stringY(shape.W) + pad;
+						var yUpBot = $author$project$Main$stringY(shape.al) + pad;
 						return _List_fromArray(
 							[
 								_Utils_Tuple2(
@@ -12418,7 +16732,7 @@ var $author$project$Main$drawDiagonalRegions = function (board) {
 		A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, shapes));
 	var lit = A2(
 		$author$project$Main$focusedShapes,
-		board.r,
+		board.x,
 		A2(
 			$elm$core$List$map,
 			function (_v1) {
@@ -12427,7 +16741,7 @@ var $author$project$Main$drawDiagonalRegions = function (board) {
 				var o = _v1.c;
 				return _Utils_Tuple2(
 					key,
-					A5($author$project$Main$diagonalSpan, board.b, board.a, board.g, shape, o));
+					A5($author$project$Main$diagonalSpan, board.b, board.a, board.h, shape, o));
 			},
 			instances));
 	return A2(
@@ -12440,21 +16754,21 @@ var $author$project$Main$drawDiagonalRegions = function (board) {
 				$author$project$Main$drawDiagonalShape,
 				board.b,
 				board.a,
-				board.g,
+				board.h,
 				A5(
 					$author$project$Main$regionShape,
 					board,
 					'diag-' + ($elm$core$String$fromInt(key.a) + ('_' + $elm$core$String$fromInt(o))),
 					'0.45',
 					A2($author$project$Main$isMuted, lit, key),
-					shape.aJ),
+					shape.a6),
 				shape,
 				o);
 		},
 		instances);
 };
 var $author$project$Main$barreOf = function (voicing) {
-	return $author$project$Main$barreIn(voicing.N);
+	return $author$project$Main$barreIn(voicing.ac);
 };
 var $elm$svg$Svg$line = $elm$svg$Svg$trustedNode('line');
 var $author$project$Main$noteX = function (f) {
@@ -12505,10 +16819,9 @@ var $author$project$Main$inversionFill = F2(
 	function (muted, inv) {
 		return 'color-mix(in srgb, ' + (A2($author$project$Main$inversionColor, muted, inv) + (' ' + ($author$project$Main$triadFillPct + ', var(--bg))')));
 	});
-var $elm$core$Basics$pow = _Basics_pow;
 var $elm$core$Basics$sqrt = _Basics_sqrt;
 var $author$project$Main$triadLassoRadius = function (triad) {
-	return triad.aN;
+	return triad.bf;
 };
 var $elm$core$String$append = _String_append;
 var $author$project$Main$triadPath = function (triad) {
@@ -12527,7 +16840,7 @@ var $author$project$Main$triadPath = function (triad) {
 						$author$project$Main$noteX(f)) + (',' + $elm$core$String$fromFloat(
 						$author$project$Main$stringY(s)));
 				},
-				triad.N)));
+				triad.ac)));
 };
 var $author$project$Main$triadCapsule = F3(
 	function (triad, inset, attrs) {
@@ -12567,7 +16880,7 @@ var $author$project$Main$triadFill = F4(
 						$author$project$Main$noteX(f),
 						$author$project$Main$stringY(s));
 				},
-				triad.N);
+				triad.ac);
 			var num = $elm$core$String$fromFloat;
 			var disc = function (_v6) {
 				var x = _v6.a;
@@ -12651,14 +16964,14 @@ var $author$project$Main$triadFill = F4(
 						[
 							A4(
 							$author$project$Main$hatchClipped,
-							board.S + ('clip-triad-' + $elm$core$String$fromInt(index)),
+							board.ai + ('clip-triad-' + $elm$core$String$fromInt(index)),
 							_Utils_ap(
 								A2($elm$core$List$map, disc, pts),
 								bands),
 							_Utils_Tuple2(
 								_Utils_Tuple2(xa - r, xb + r),
 								_Utils_Tuple2(ya - r, yb + r)),
-							triad.ah + 1)
+							triad.az + 1)
 						])));
 		} else {
 			return A3(
@@ -12668,7 +16981,7 @@ var $author$project$Main$triadFill = F4(
 				_List_fromArray(
 					[
 						$elm$svg$Svg$Attributes$stroke(
-						A2($author$project$Main$inversionFill, muted, triad.ah))
+						A2($author$project$Main$inversionFill, muted, triad.az))
 					]));
 		}
 	});
@@ -12864,7 +17177,7 @@ var $author$project$Main$triadRing = F4(
 					$author$project$Main$noteX(f),
 					$author$project$Main$stringY(s));
 			},
-			triad.N);
+			triad.ac);
 		return _List_fromArray(
 			[
 				A2(
@@ -12890,7 +17203,7 @@ var $author$project$Main$drawLassos = F3(
 			},
 			unsorted);
 		var muted = function (triad) {
-			var _v0 = board.r;
+			var _v0 = board.x;
 			if (_v0.$ === 1) {
 				return false;
 			} else {
@@ -12903,7 +17216,7 @@ var $author$project$Main$drawLassos = F3(
 						var f = _v2.b;
 						return (_Utils_cmp(f, lo) > -1) && (_Utils_cmp(f, hi) < 1);
 					},
-					triad.N);
+					triad.ac);
 			}
 		};
 		return _Utils_ap(
@@ -12927,12 +17240,12 @@ var $author$project$Main$drawLassos = F3(
 							function (i, triad) {
 								return A4(
 									$author$project$Main$triadRing,
-									board.S,
+									board.ai,
 									A3(
 										$author$project$Main$ringColor,
 										board,
 										muted(triad),
-										triad.ah),
+										triad.az),
 									i,
 									triad);
 							}),
@@ -12946,7 +17259,7 @@ var $author$project$Main$drawLassos = F3(
 								$author$project$Main$ringColor,
 								board,
 								muted(triad),
-								triad.ah),
+								triad.az),
 							triad);
 					},
 					voicings) : _List_Nil));
@@ -13043,14 +17356,14 @@ var $author$project$Main$triadsOnStringSet = F4(
 							$elm$core$Maybe$map,
 							function (high) {
 								return {
-									ah: inv,
-									N: _List_fromArray(
+									az: inv,
+									ac: _List_fromArray(
 										[
 											_Utils_Tuple2(top, high),
 											_Utils_Tuple2(top + 1, mid),
 											_Utils_Tuple2(top + 2, low)
 										]),
-									aN: A2(
+									bf: A2(
 										$author$project$Main$triadSetRadius,
 										$author$project$Main$stringCount(tuning),
 										top)
@@ -13095,14 +17408,14 @@ var $author$project$Main$drawTriadLassos = function (board) {
 		$author$project$Main$drawLassos,
 		board,
 		false,
-		A4($author$project$Main$triadVoicingsFor, board.b, board.a, board.g, board.t));
+		A4($author$project$Main$triadVoicingsFor, board.b, board.a, board.h, board.z));
 };
 var $author$project$Main$drawBoxRegions = function (board) {
 	return $author$project$Main$isChromatic(board.a) ? _List_Nil : ($author$project$Main$isTriad(board.a) ? $author$project$Main$drawTriadLassos(board) : ($author$project$Main$isCagedChord(board.a) ? A3(
 		$author$project$Main$drawLassos,
 		board,
 		true,
-		A3($author$project$Main$cagedVoicings, board.b, board.a, board.g)) : ($author$project$Main$isDiagonal(board.a) ? $author$project$Main$drawDiagonalRegions(board) : ($author$project$Main$isPlain(board.a) ? _List_Nil : $author$project$Main$drawBoxRegionsBoxes(board)))));
+		A3($author$project$Main$cagedVoicings, board.b, board.a, board.h)) : ($author$project$Main$isDiagonal(board.a) ? $author$project$Main$drawDiagonalRegions(board) : ($author$project$Main$isPlain(board.a) ? _List_Nil : $author$project$Main$drawBoxRegionsBoxes(board)))));
 };
 var $elm$svg$Svg$defs = $elm$svg$Svg$trustedNode('defs');
 var $author$project$Main$fifthsStep = F2(
@@ -13167,7 +17480,7 @@ var $author$project$Main$drawFifthsLadders = function (board) {
 	var gradId = function (_v0) {
 		var s = _v0.a;
 		var f = _v0.b;
-		return board.S + ('ladder-' + ($elm$core$String$fromInt(s) + ('-' + $elm$core$String$fromInt(f))));
+		return board.ai + ('ladder-' + ($elm$core$String$fromInt(s) + ('-' + $elm$core$String$fromInt(f))));
 	};
 	var gradient = function (r) {
 		var s = r.a;
@@ -13445,7 +17758,7 @@ var $author$project$Main$drawHitAreas = function (board) {
 						'click',
 						A2(
 							$elm$json$Json$Decode$map,
-							A3($author$project$Main$FretClicked, board.a0, s, f),
+							A3($author$project$Main$FretClicked, board.bw, s, f),
 							A2($elm$json$Json$Decode$field, 'shiftKey', $elm$json$Json$Decode$bool)))
 					]),
 				_List_Nil);
@@ -13698,7 +18011,7 @@ var $author$project$Main$degreeLabel = F3(
 	});
 var $author$project$Main$degreeName = F2(
 	function (board, n) {
-		var interval = A2($elm$core$Basics$modBy, 12, n - board.g);
+		var interval = A2($elm$core$Basics$modBy, 12, n - board.h);
 		var common = A2(
 			$elm$core$Maybe$withDefault,
 			'',
@@ -13876,7 +18189,7 @@ var $author$project$Main$fifthInterval = function (scale) {
 var $author$project$Main$noteRole = F2(
 	function (board, n) {
 		if ($author$project$Main$isChromatic(board.a)) {
-			var interval = A2($elm$core$Basics$modBy, 12, n - board.g);
+			var interval = A2($elm$core$Basics$modBy, 12, n - board.h);
 			return (!interval) ? 0 : (_Utils_eq(
 				interval,
 				$author$project$Main$chromaticThird(board.a)) ? 1 : ((interval === 7) ? 2 : (_Utils_eq(
@@ -13885,7 +18198,7 @@ var $author$project$Main$noteRole = F2(
 		} else {
 			var thirdInterval = $author$project$Main$thirdOf(board.a);
 			var seventhInterval = $author$project$Main$seventhOf(board.a);
-			var interval = A2($elm$core$Basics$modBy, 12, n - board.g);
+			var interval = A2($elm$core$Basics$modBy, 12, n - board.h);
 			return (!interval) ? 0 : (_Utils_eq(interval, thirdInterval) ? 1 : (_Utils_eq(
 				interval,
 				$author$project$Main$fifthInterval(board.a)) ? 2 : (_Utils_eq(interval, seventhInterval) ? 3 : 4)));
@@ -13894,7 +18207,7 @@ var $author$project$Main$noteRole = F2(
 var $elm$svg$Svg$Attributes$opacity = _VirtualDom_attribute('opacity');
 var $author$project$Main$offString = F2(
 	function (board, s) {
-		var _v0 = board.q;
+		var _v0 = board.v;
 		if (!_v0.$) {
 			var t = _v0.a;
 			return _Utils_eq(t, s) ? _List_Nil : _List_fromArray(
@@ -13922,7 +18235,7 @@ var $author$project$Main$diagonalBoxOf = F5(
 						$elm$core$Basics$modBy(12),
 						rels));
 			};
-			return ((_Utils_eq(s, shape.ai) && memberMod(shape.aC)) || (_Utils_eq(s, shape.W) && memberMod(shape.aI))) ? $elm$core$Maybe$Just(shape.aJ) : $elm$core$Maybe$Nothing;
+			return ((_Utils_eq(s, shape.aA) && memberMod(shape.aY)) || (_Utils_eq(s, shape.al) && memberMod(shape.a3))) ? $elm$core$Maybe$Just(shape.a6) : $elm$core$Maybe$Nothing;
 		};
 		return $elm$core$List$head(
 			A2(
@@ -13937,7 +18250,7 @@ var $author$project$Main$scaleNotes = function (board) {
 	return A2(
 		$elm$core$List$map,
 		function (i) {
-			return A2($elm$core$Basics$modBy, 12, board.g + i);
+			return A2($elm$core$Basics$modBy, 12, board.h + i);
 		},
 		$author$project$Main$scaleIntervals(board.a));
 };
@@ -13950,7 +18263,7 @@ var $author$project$Main$isInScale = F2(
 	});
 var $author$project$Main$positionBox = F3(
 	function (board, s, f) {
-		return $author$project$Main$isDiagonal(board.a) ? A5($author$project$Main$diagonalBoxOf, board.b, board.a, board.g, s, f) : (A2(
+		return $author$project$Main$isDiagonal(board.a) ? A5($author$project$Main$diagonalBoxOf, board.b, board.a, board.h, s, f) : (A2(
 			$author$project$Main$isInScale,
 			board,
 			A3($author$project$Main$noteAt, board.b, s, f)) ? $elm$core$Maybe$Just(0) : $elm$core$Maybe$Nothing);
@@ -14013,7 +18326,7 @@ var $author$project$Main$drawNoteAt = F3(
 					[
 						$elm$svg$Svg$Attributes$fill(textColor)
 					]),
-				board.x ? A3(
+				board.F ? A3(
 					$author$project$Main$degreeLabel,
 					A2($author$project$Main$degreeName, board, n),
 					cx,
@@ -14152,7 +18465,7 @@ var $author$project$Main$drawStrings = function (board) {
 	var rightX = ($author$project$Main$leftMargin + $author$project$Main$nutWidth) + ($author$project$Main$fretWidth * $author$project$Main$numFrets);
 	var lit = function (s) {
 		return _Utils_eq(
-			board.q,
+			board.v,
 			$elm$core$Maybe$Just(s));
 	};
 	var leftX = $author$project$Main$leftMargin;
@@ -14269,7 +18582,7 @@ var $author$project$Main$stripePatternDefs = function (board) {
 			function (pair) {
 				return A2(
 					$elm$core$List$map,
-					A2($author$project$Main$overlapStripePattern, board.S, pair),
+					A2($author$project$Main$overlapStripePattern, board.ai, pair),
 					$author$project$Main$stripeMutings);
 			},
 			_List_fromArray(
@@ -14330,10 +18643,10 @@ var $author$project$Main$viewNeck = F4(
 		var slot = A2($author$project$Main$committedIndexOf, model, i);
 		var board = A3($author$project$Main$boardAt, model, slot, neck);
 		var beingDragged = function () {
-			var _v0 = model.G;
+			var _v0 = model.S;
 			if (!_v0.$) {
 				var drag = _v0.a;
-				return _Utils_eq(drag.ac, i);
+				return _Utils_eq(drag.au, i);
 			} else {
 				return false;
 			}
@@ -14410,7 +18723,7 @@ var $author$project$Main$customButton = function (model) {
 				[
 					$elm$html$Html$Events$onClick(
 					$author$project$Main$SetTuning(
-						$author$project$Main$customFrom(model.b.h))),
+						$author$project$Main$customFrom(model.b.j))),
 					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 				]),
 			$author$project$Main$buttonBaseStyle(
@@ -14430,7 +18743,7 @@ var $author$project$Main$columnsToggle = function (model) {
 					$elm$html$Html$Events$onClick($author$project$Main$ToggleColumns),
 					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.F)),
+			$author$project$Main$buttonBaseStyle(model.Q)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text('Two columns')
@@ -14446,7 +18759,7 @@ var $author$project$Main$degreesToggle = function (model) {
 					$elm$html$Html$Events$onClick($author$project$Main$ToggleDegrees),
 					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.x)),
+			$author$project$Main$buttonBaseStyle(model.F)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text('Degrees')
@@ -14516,7 +18829,7 @@ var $author$project$Main$stepper = F2(
 				]));
 	});
 var $author$project$Main$highlightFrets = function (model) {
-	var _v0 = model.r;
+	var _v0 = model.x;
 	if (_v0.$ === 1) {
 		return _List_Nil;
 	} else {
@@ -14563,7 +18876,7 @@ var $author$project$Main$SetStringFocus = function (a) {
 	return {$: 7, a: a};
 };
 var $author$project$Main$highlightString = function (model) {
-	var _v0 = model.q;
+	var _v0 = model.v;
 	if (_v0.$ === 1) {
 		return _List_Nil;
 	} else {
@@ -14596,7 +18909,7 @@ var $author$project$Main$highlightString = function (model) {
 };
 var $author$project$Main$defaultFocus = _Utils_Tuple2(4, 8);
 var $author$project$Main$highlightToggle = function (model) {
-	var on = !_Utils_eq(model.r, $elm$core$Maybe$Nothing);
+	var on = !_Utils_eq(model.x, $elm$core$Maybe$Nothing);
 	return A2(
 		$elm$html$Html$button,
 		_Utils_ap(
@@ -14656,7 +18969,7 @@ var $author$project$Main$stringCountControl = function (model) {
 };
 var $author$project$Main$defaultStringFocus = $author$project$Main$stringCount;
 var $author$project$Main$stringToggle = function (model) {
-	var on = !_Utils_eq(model.q, $elm$core$Maybe$Nothing);
+	var on = !_Utils_eq(model.v, $elm$core$Maybe$Nothing);
 	return A2(
 		$elm$html$Html$button,
 		_Utils_ap(
@@ -14682,7 +18995,7 @@ var $author$project$Main$tuningLabel = function (t) {
 		A2(
 			$elm$core$List$map,
 			$author$project$Main$noteName,
-			$elm$core$List$reverse(t.h)))) : (t.m + ' tuning');
+			$elm$core$List$reverse(t.j)))) : (t.q + ' tuning');
 };
 var $author$project$Main$tuningToggle = function (model) {
 	return A2(
@@ -14693,13 +19006,13 @@ var $author$project$Main$tuningToggle = function (model) {
 					$elm$html$Html$Events$onClick($author$project$Main$ToggleTuningList),
 					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.V)),
+			$author$project$Main$buttonBaseStyle(model.ak)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
 				_Utils_ap(
 					$author$project$Main$tuningLabel(model.b),
-					model.V ? ' ▴' : ' ▾'))
+					model.ak ? ' ▴' : ' ▾'))
 			]));
 };
 var $author$project$Main$setupRow = function (model) {
@@ -14793,10 +19106,10 @@ var $author$project$Main$tuningButton = F2(
 						A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 					]),
 				$author$project$Main$buttonBaseStyle(
-					_Utils_eq(model.b.k, t.k))),
+					_Utils_eq(model.b.m, t.m))),
 			_List_fromArray(
 				[
-					$elm$html$Html$text(t.m)
+					$elm$html$Html$text(t.q)
 				]));
 	});
 var $author$project$Main$viewOptions = function (model) {
@@ -14810,7 +19123,7 @@ var $author$project$Main$viewOptions = function (model) {
 		_List_fromArray(
 			[
 				$author$project$Main$setupRow(model),
-				model.V ? $author$project$Main$controlBlock(
+				model.ak ? $author$project$Main$controlBlock(
 				_Utils_ap(
 					A2(
 						$elm$core$List$map,
@@ -14821,7 +19134,7 @@ var $author$project$Main$viewOptions = function (model) {
 						[
 							$author$project$Main$customButton(model)
 						]))) : $elm$html$Html$text(''),
-				(model.V && $author$project$Main$isCustom(model.b)) ? A2(
+				(model.ak && $author$project$Main$isCustom(model.b)) ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -14849,11 +19162,11 @@ var $author$project$Main$wakeLockButton = function (model) {
 					$elm$html$Html$Attributes$class('no-print'),
 					A2($elm$html$Html$Attributes$style, 'min-width', '120px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.ao)),
+			$author$project$Main$buttonBaseStyle(model.aH)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				model.ao ? 'Screen on' : 'Keep screen on')
+				model.aH ? 'Screen on' : 'Keep screen on')
 			]));
 };
 var $author$project$Main$viewBody = function (model) {
@@ -14910,11 +19223,16 @@ var $author$project$Main$viewBody = function (model) {
 							]),
 						_List_fromArray(
 							[
+								$author$project$Main$practiceButton(model),
 								$author$project$Main$gearButton(model),
 								$author$project$Main$wakeLockButton(model)
 							]))
 					])),
 				model.R ? $author$project$Main$viewOptions(model) : $elm$html$Html$text(''),
+				model.K ? A2(
+				$elm$html$Html$map,
+				$author$project$Main$PracticeMsg,
+				A2($author$project$Practice$view, $author$project$Main$totalWidth, model.af)) : $elm$html$Html$text(''),
 				A2(
 				$elm$html$Html$div,
 				_Utils_ap(
@@ -14924,7 +19242,7 @@ var $author$project$Main$viewBody = function (model) {
 							$elm$html$Html$Attributes$style,
 							'user-select',
 							function () {
-								var _v0 = model.G;
+								var _v0 = model.S;
 								if (!_v0.$) {
 									return 'none';
 								} else {
@@ -14932,7 +19250,7 @@ var $author$project$Main$viewBody = function (model) {
 								}
 							}())
 						]),
-					model.F ? _List_fromArray(
+					model.Q ? _List_fromArray(
 						[
 							A2($elm$html$Html$Attributes$style, 'display', 'grid'),
 							A2($elm$html$Html$Attributes$style, 'grid-template-columns', 'repeat(2, minmax(0, 1fr))'),
@@ -14954,13 +19272,30 @@ var $author$project$Main$viewBody = function (model) {
 };
 var $author$project$Main$view = function (model) {
 	return {
-		bY: _List_fromArray(
+		cv: _List_fromArray(
 			[
 				$author$project$Main$viewBody(model)
 			]),
-		cF: 'Guitar Fretboard Visualizer'
+		dc: 'Guitar Fretboard Visualizer'
 	};
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
-	{ce: $author$project$Main$init, cs: $author$project$Main$UrlChanged, ct: $author$project$Main$LinkClicked, cC: $author$project$Main$subscriptions, cH: $author$project$Main$update, cI: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$int)(0)}});}(this));
+	{cN: $author$project$Main$init, c$: $author$project$Main$UrlChanged, c0: $author$project$Main$LinkClicked, c9: $author$project$Main$subscriptions, de: $author$project$Main$update, df: $author$project$Main$view});
+_Platform_export({'Main':{'init':$author$project$Main$main(
+	A2(
+		$elm$json$Json$Decode$andThen,
+		function (width) {
+			return A2(
+				$elm$json$Json$Decode$andThen,
+				function (seed) {
+					return A2(
+						$elm$json$Json$Decode$andThen,
+						function (practice) {
+							return $elm$json$Json$Decode$succeed(
+								{af: practice, bu: seed, bC: width});
+						},
+						A2($elm$json$Json$Decode$field, 'practice', $elm$json$Json$Decode$value));
+				},
+				A2($elm$json$Json$Decode$field, 'seed', $elm$json$Json$Decode$int));
+		},
+		A2($elm$json$Json$Decode$field, 'width', $elm$json$Json$Decode$int)))(0)}});}(this));

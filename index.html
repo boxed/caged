@@ -72,6 +72,10 @@
                Lightness follows the hue the way a real rainbow does (yellow
                lightest, blue darkest) and chroma sits just inside sRGB, which is
                what keeps neighboring hues from washing into one pastel. */
+            /* The Practice panel's ear: a note that fits the chord, and one
+               outside the key, which also rings the chord chart. */
+            --hit:  light-dark(oklch(0.55 0.15 145), oklch(0.76 0.17 145));
+            --miss: light-dark(oklch(0.58 0.21  28), oklch(0.68 0.19  28));
             --pc-0:  light-dark(oklch(0.72 0.160  27), oklch(0.55 0.170  27)); /* C  */
             --pc-1:  light-dark(oklch(0.76 0.125 240), oklch(0.53 0.110 240)); /* C# */
             --pc-2:  light-dark(oklch(0.90 0.145  95), oklch(0.66 0.123  95)); /* D  */
@@ -133,8 +137,16 @@
 </head>
 <body>
     <script src="elm.js"></script>
+    <script src="band.js"></script>
     <script>
-        const app = Elm.Main.init({ flags: window.innerWidth });
+        const app = Elm.Main.init({
+            flags: {
+                width: window.innerWidth,
+                seed: Math.floor(Math.random() * 2147483647),
+                practice: savedPractice(),
+            },
+        });
+        connectBand(app);
 
         let wakeLock = null;
         let wakeLockWanted = false;
