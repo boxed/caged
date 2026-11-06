@@ -102,7 +102,8 @@ type alias Model =
     , wakeLockOn : Bool
 
     -- The **Practice** drawer: a backing band to solo over (`Practice`). Shut by
-    -- default on every screen, and like the other drawers not in the URL.
+    -- default on every screen; `practice=1` in the URL when open, and every
+    -- setting inside it rides in the URL too (`Practice.toQuery`).
     -- Shutting it does not stop the band: you can play along with the neck.
     , practiceOpen : Bool
     , practice : Practice.Model
@@ -110,15 +111,11 @@ type alias Model =
 
 
 {-| What `index.html` hands over at start: the window width (which decides
-whether the drawers start open), a seed for the Practice panel's chart writer,
-the chart that panel was left on, from localStorage (or null), and whether to
-open it: a link with `?practice=` sets the chart up and opens the panel on it
-(`linkedPractice` in `band.js`). -}
+whether the drawers start open) and a seed for the Practice panel's chart
+writer. -}
 type alias Flags =
     { width : Int
     , seed : Int
-    , practice : Decode.Value
-    , openPractice : Bool
     }
 
 
@@ -333,7 +330,7 @@ tabOf scale =
 
 
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init { width, seed, practice, openPractice } url key =
+init { width, seed } url key =
     let
         state =
             parseUrl url
@@ -352,8 +349,8 @@ init { width, seed, practice, openPractice } url key =
       , drag = Nothing
       , tuning = state.tuning
       , tuningOpen = False
-      , scaleOpen = not compact && not openPractice
-      , viewOpen = not compact && not openPractice
+      , scaleOpen = not compact && not state.practiceOpen
+      , viewOpen = Maybe.withDefault (optionsByDefault compact state.practiceOpen) state.optionsOpen
       , pickerTab = tabOf activeScale
       , compact = compact
       , focus = state.focus
@@ -363,8 +360,8 @@ init { width, seed, practice, openPractice } url key =
       , twoColumns = state.twoColumns
       , key = key
       , wakeLockOn = False
-      , practiceOpen = openPractice
-      , practice = Practice.init seed practice
+      , practiceOpen = state.practiceOpen
+      , practice = Practice.init seed state.query
       }
     , Cmd.none
     )
@@ -444,29 +441,34 @@ update msg model =
             ( { model | pickerTab = tab }, Cmd.none )
 
         ToggleViewPanel ->
-            ( { model
-                | viewOpen = not model.viewOpen
-                , scaleOpen = model.scaleOpen && not (model.compact && not model.viewOpen)
-                , practiceOpen = model.practiceOpen && not (model.compact && not model.viewOpen)
-              }
-            , Cmd.none
-            )
+            sync
+                { model
+                    | viewOpen = not model.viewOpen
+                    , scaleOpen = model.scaleOpen && not (model.compact && not model.viewOpen)
+                    , practiceOpen = model.practiceOpen && not (model.compact && not model.viewOpen)
+                }
 
         TogglePractice ->
-            ( { model
-                | practiceOpen = not model.practiceOpen
-                , scaleOpen = model.scaleOpen && not (model.compact && not model.practiceOpen)
-                , viewOpen = model.viewOpen && not (model.compact && not model.practiceOpen)
-              }
-            , Cmd.none
-            )
+            sync
+                { model
+                    | practiceOpen = not model.practiceOpen
+                    , scaleOpen = model.scaleOpen && not (model.compact && not model.practiceOpen)
+                    , viewOpen = model.viewOpen && not (model.compact && not model.practiceOpen)
+                }
 
         PracticeMsg practiceMsg ->
             let
                 ( practice, cmd ) =
                     Practice.update practiceMsg model.practice
+
+                next =
+                    { model | practice = practice }
             in
-            ( { model | practice = practice }, Cmd.map PracticeMsg cmd )
+            if Practice.changesUrl practiceMsg model.practice practice then
+                Tuple.mapSecond (\c -> Cmd.batch [ c, Cmd.map PracticeMsg cmd ]) (sync next)
+
+            else
+                ( next, Cmd.map PracticeMsg cmd )
 
         WindowResized width ->
             ( { model | compact = width < compactWidth }, Cmd.none )
@@ -608,6 +610,9 @@ update msg model =
             let
                 state =
                     parseUrl url
+
+                ( practice, practiceCmd ) =
+                    Practice.applyQuery state.query model.practice
             in
             ( { model
                 | necks = state.necks
@@ -618,8 +623,11 @@ update msg model =
                 , mono = state.mono
                 , degrees = state.degrees
                 , twoColumns = state.twoColumns
+                , practiceOpen = state.practiceOpen
+                , viewOpen = Maybe.withDefault (optionsByDefault model.compact state.practiceOpen) state.optionsOpen
+                , practice = practice
               }
-            , Cmd.none
+            , Cmd.map PracticeMsg practiceCmd
             )
 
         LinkClicked request ->
@@ -675,6 +683,15 @@ update msg model =
             in
             ( synced, Cmd.batch [ cmd, playNote (midiAt model.tuning s f) ] )
 
+
+
+{-| Whether the display options are open on a page whose URL does not say:
+on a big screen, unless the Practice panel is open, which takes the room. The
+URL writes `options` only when it differs from this, so loading the page,
+writing its URL and reading it back must all ask this same question. -}
+optionsByDefault : Bool -> Bool -> Bool
+optionsByDefault compact practiceOpen =
+    not compact && not practiceOpen
 
 
 {-| Every state change reaches the URL, so the address bar is always a link to
@@ -752,12 +769,35 @@ modelUrl model =
 
             else
                 withMono
-    in
-    if model.twoColumns then
-        withDegrees ++ "&cols=2"
+        withColumns =
+            if model.twoColumns then
+                withDegrees ++ "&cols=2"
 
-    else
-        withDegrees
+            else
+                withDegrees
+
+        -- The display options are written only when they differ from what
+        -- the page would open with, so an untouched page keeps a clean URL.
+        withOptions =
+            if model.viewOpen == optionsByDefault model.compact model.practiceOpen then
+                withColumns
+
+            else if model.viewOpen then
+                withColumns ++ "&options=1"
+
+            else
+                withColumns ++ "&options=0"
+
+        withPractice =
+            if model.practiceOpen then
+                withOptions ++ "&practice=1"
+
+            else
+                withOptions
+    in
+    withPractice
+        ++ String.concat
+            (List.map (\( k, v ) -> "&" ++ k ++ "=" ++ v) (Practice.toQuery model.practice))
 
 
 {-| One neck as `root.scale`, with the string set appended in the triad modes
@@ -1073,6 +1113,14 @@ type alias UrlState =
     , mono : Bool
     , degrees : Bool
     , twoColumns : Bool
+
+    -- The Practice drawer, and the display options when the link says
+    -- (`Nothing`: the screen's default, open on a big one).
+    , practiceOpen : Bool
+    , optionsOpen : Maybe Bool
+
+    -- Every parameter, for the Practice panel to read its settings from.
+    , query : List ( String, String )
     }
 
 
@@ -1163,6 +1211,19 @@ parseUrl url =
     , mono = lookup "mono" == Just "1"
     , degrees = lookup "degrees" == Just "1"
     , twoColumns = lookup "cols" == Just "2"
+
+    , practiceOpen = lookup "practice" == Just "1"
+    , optionsOpen =
+        case lookup "options" of
+            Just "1" ->
+                Just True
+
+            Just "0" ->
+                Just False
+
+            _ ->
+                Nothing
+    , query = pairs
     }
 
 

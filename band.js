@@ -809,12 +809,8 @@ function connectBand(app) {
   }
 
   // ---------- from Elm ----------
-  const STORE = 'caged-practice';
   app.ports.bandOut.subscribe(msg => {
-    if (msg.type === 'state') {
-      setBand(msg.band);
-      try { localStorage.setItem(STORE, JSON.stringify(msg.save)); } catch (e) { /* storage blocked */ }
-    }
+    if (msg.type === 'state') setBand(msg.band);
     else if (msg.type === 'play') { setBand(msg.band); play(); }
     else if (msg.type === 'stop') stop();
     else if (msg.type === 'listen') listen();
@@ -830,27 +826,4 @@ function connectBand(app) {
     if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
     if (e.code === 'Space' || e.key.startsWith('Arrow')) e.preventDefault();
   });
-}
-
-// what the panel was left showing last time, read before Elm starts so it opens on it
-function savedPractice() {
-  try { return JSON.parse(localStorage.getItem('caged-practice')); } catch (e) { return null; }
-}
-
-// A link can set up the panel: ?root=A&scale=aeolian&practice=Am-F-C-G opens it on that chart (chords as the saved
-// chart writes them, dash-separated) in the neck's key, keeping the saved style and tempo. The parameter is used once:
-// it goes into the saved chart and out of the address, so a reload keeps any edits made since.
-function linkedPractice() {
-  const params = new URLSearchParams(location.search);
-  const chart = params.get('practice');
-  if (chart === null) return null;
-  params.delete('practice');
-  const query = params.toString();
-  history.replaceState(null, '', location.pathname + (query ? '?' + query : '') + location.hash);
-  const keys = { C: 'C', Cs: 'Db', D: 'D', Ds: 'Eb', E: 'E', F: 'F', Fs: 'Gb', G: 'G', Gs: 'Ab', A: 'A', As: 'Bb', B: 'B' };
-  const save = Object.assign({}, savedPractice(), { chords: chart.split('-').filter(Boolean) });
-  delete save.prog;
-  if (keys[params.get('root')]) save.key = keys[params.get('root')];
-  try { localStorage.setItem('caged-practice', JSON.stringify(save)); } catch (e) { /* storage blocked */ }
-  return save;
 }

@@ -2,7 +2,10 @@ port module Practice exposing
     ( Model
     , Msg
     , init
+    , applyQuery
+    , changesUrl
     , isPlaying
+    , toQuery
     , soundingChord
     , subscriptions
     , update
@@ -23,9 +26,8 @@ chord edited while the band plays is heard on the next bar) and play / stop /
 listen / unlisten; `bandIn` brings back the beat being heard, whether the band
 is playing, and every note the microphone settles on.
 
-The chart is remembered in the browser (`band.js` writes what `encodeSave`
-gives it to localStorage), not in the URL: the URL belongs to the fretboard.
-A link can still set it up once with `?practice=` (`linkedPractice` in `band.js`).
+Every setting in the panel is in the page's URL, like everything else on the
+page (`toQuery` / `fromQuery`).
 
 -}
 
@@ -77,7 +79,7 @@ type Family
     | DimFam
 
 
-{-| `id` is what `band.js` and the saved chart call it; `label` is what goes
+{-| `id` is what `band.js` calls it (and, with `♯` as `s`, the URL); `label` is what goes
 after the root (`A7♯9`); `name` is the caption in the editor; `basic` types
 show without opening **More chord types**; `tones` are the voicing's notes
 above the root, which with the root and fifth make the chord's tones. -}
@@ -1005,86 +1007,265 @@ soundingChord model =
             Nothing
 
 
-{-| `seed` seeds the chart writer; `saved` is what `encodeSave` left in the
-browser last time, or null. -}
-init : Int -> D.Value -> Model
-init seed saved =
-    let
-        fresh =
-            { style = Ballad
-            , bpm = (styleInfo Ballad).bpm
-            , feel = (styleInfo Ballad).feel
-            , key = 0
-            , source = FromPreset "ballad"
-            , bars = barsFromPreset False "ballad" 0
-            , selected = 0
-            , moreOpen = False
-            , mix = { drums = 80, bass = 90, keys = 55, guitar = 75, master = 90 }
-            , playing = False
-            , playhead = Nothing
-            , listening = False
-            , earMessage = ""
-            , heard = Nothing
-            , missHold = False
-            , missToken = 0
-            , seed = Random.initialSeed seed
-            }
-    in
-    case D.decodeValue savedDecoder saved of
-        Ok s ->
-            applySaved s fresh |> openMoreIfNeeded
-
-        Err _ ->
-            fresh
+{-| `seed` seeds the chart writer; `query` is the page's URL parameters, which
+carry every setting in the panel (`fromQuery`). -}
+init : Int -> List ( String, String ) -> Model
+init seed query =
+    fromQuery query (defaults (Random.initialSeed seed))
 
 
-
--- SAVED CHART
-
-
-type alias Saved =
-    { style : Maybe String
-    , bpm : Maybe Int
-    , feel : Maybe Int
-    , key : Maybe String
-    , prog : Maybe String
-    , chords : Maybe (List String)
+{-| What a page with nothing about the panel in its URL opens on: the slow
+ballad, C Am G F in C. -}
+defaults : Random.Seed -> Model
+defaults seed =
+    { style = Ballad
+    , bpm = (styleInfo Ballad).bpm
+    , feel = (styleInfo Ballad).feel
+    , key = 0
+    , source = FromPreset defaultPreset
+    , bars = barsFromPreset False defaultPreset 0
+    , selected = 0
+    , moreOpen = False
+    , mix = defaultMix
+    , playing = False
+    , playhead = Nothing
+    , listening = False
+    , earMessage = ""
+    , heard = Nothing
+    , missHold = False
+    , missToken = 0
+    , seed = seed
     }
 
 
-savedDecoder : D.Decoder Saved
-savedDecoder =
-    D.map6 Saved
-        (D.maybe (D.field "style" D.string))
-        (D.maybe (D.field "bpm" D.int))
-        (D.maybe (D.field "feel" D.int))
-        (D.maybe (D.field "key" D.string))
-        (D.maybe (D.field "prog" D.string))
-        (D.maybe (D.field "chords" (D.list D.string)))
+defaultPreset : String
+defaultPreset =
+    "ballad"
 
 
-{-| ASCII note names for storage, as everywhere caged writes a slug. -}
-slugKeys : List String
-slugKeys =
-    [ "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B" ]
+defaultMix : Mix
+defaultMix =
+    { drums = 80, bass = 90, keys = 55, guitar = 75, master = 90 }
+
+
+
+-- URL
+
+
+{-| The panel's settings as URL parameters, like everything else on the page.
+Each is left out while it has its default value, so a page that never touched
+the panel keeps the URL it had:
+
+  - `band` the style (`shuffle`, `modern`; the ballad is the default),
+  - `bpm` and `feel`, when not the style's own,
+  - `key` the chart's key, as caged writes a root (`Fs`),
+  - `chart` a preset's id (`soul`) or the chords themselves (`C-Am-G-F`),
+  - `more=1` the extra chord types open,
+  - `mix` the five faders, drums to master (`80-90-55-75-90`).
+
+What the band is doing (playing, the bar it is on, the microphone) and which
+bar is being edited are not settings, and stay out.
+
+-}
+toQuery : Model -> List ( String, String )
+toQuery model =
+    let
+        info =
+            styleInfo model.style
+
+        when cond pair =
+            if cond then
+                [ pair ]
+
+            else
+                []
+    in
+    when (model.style /= Ballad) ( "band", info.id )
+        ++ when (model.bpm /= info.bpm) ( "bpm", String.fromInt model.bpm )
+        ++ when (model.style /= Ballad && model.feel /= info.feel) ( "feel", String.fromInt model.feel )
+        ++ when (model.key /= 0) ( "key", keySlug model.key )
+        ++ when (model.source /= FromPreset defaultPreset)
+            ( "chart"
+            , case model.source of
+                FromPreset id ->
+                    id
+
+                _ ->
+                    String.join "-" (List.map chordSlug model.bars)
+            )
+        ++ when model.moreOpen ( "more", "1" )
+        ++ when (model.mix /= defaultMix)
+            ( "mix"
+            , List.map (\( c, _ ) -> String.fromInt (level c model.mix)) channels |> String.join "-"
+            )
+
+
+{-| The parameters `toQuery` writes. -}
+queryKeys : List String
+queryKeys =
+    [ "band", "bpm", "feel", "key", "chart", "more", "mix" ]
+
+
+{-| Reads the settings back. Anything missing or unreadable takes its default,
+so a hand-edited link cannot leave the panel half set up. -}
+fromQuery : List ( String, String ) -> Model -> Model
+fromQuery query model =
+    let
+        get k =
+            List.filter (\( k2, _ ) -> k2 == k) query |> List.head |> Maybe.map Tuple.second
+
+        style =
+            get "band" |> Maybe.andThen styleFromId |> Maybe.withDefault Ballad
+
+        info =
+            styleInfo style
+
+        key =
+            get "key" |> Maybe.andThen keyFromSlug |> Maybe.withDefault 0
+
+        chords =
+            Maybe.map (String.split "-" >> List.map parseChord)
+
+        chartParam =
+            get "chart"
+
+        custom =
+            case chords chartParam of
+                Just parsed ->
+                    if
+                        not (List.isEmpty parsed)
+                            && (List.length parsed <= maxBars)
+                            && List.all ((/=) Nothing) parsed
+                    then
+                        Just (List.filterMap identity parsed)
+
+                    else
+                        Nothing
+
+                Nothing ->
+                    Nothing
+
+        -- a chart that already uses the extra chord types keeps them on offer
+        moreOpen =
+            get "more" == Just "1" || List.any (\b -> not (qualInfo b.q).basic) (Maybe.withDefault [] custom)
+
+        ( source, bars ) =
+            case ( Maybe.andThen presetById chartParam, custom ) of
+                ( Just p, _ ) ->
+                    ( FromPreset p.id, barsFromPreset moreOpen p.id key )
+
+                ( Nothing, Just cs ) ->
+                    ( Custom, cs )
+
+                _ ->
+                    ( FromPreset defaultPreset, barsFromPreset moreOpen defaultPreset key )
+
+        mix =
+            case get "mix" |> Maybe.map (String.split "-" >> List.map String.toInt) of
+                Just [ Just a, Just b, Just c, Just d, Just e ] ->
+                    { drums = a, bass = b, keys = c, guitar = d, master = e }
+                        |> (\m -> List.foldl (\( ch, _ ) -> setLevel ch (clamp 0 100 (level ch m))) m channels)
+
+                _ ->
+                    defaultMix
+
+        int k lo hi fallback =
+            get k |> Maybe.andThen String.toInt |> Maybe.map (clamp lo hi) |> Maybe.withDefault fallback
+    in
+    clampSelected
+        { model
+            | style = style
+            , bpm = int "bpm" 40 200 info.bpm
+            , feel =
+                if style == Ballad then
+                    info.feel
+
+                else
+                    int "feel" 0 100 info.feel
+            , key = key
+            , source = source
+            , bars = bars
+            , moreOpen = moreOpen
+            , mix = mix
+        }
+
+
+{-| The page's URL changed under the panel (back, forward, an edited address).
+The URL the panel itself just wrote changes nothing, so a chart that was made
+up stays "Made up" rather than turning into the chords it wrote. -}
+applyQuery : List ( String, String ) -> Model -> ( Model, Cmd Msg )
+applyQuery query model =
+    let
+        ours =
+            List.filter (\( k, _ ) -> List.member k queryKeys) query
+    in
+    if List.sort ours == List.sort (toQuery model) then
+        ( model, Cmd.none )
+
+    else
+        let
+            next =
+                fromQuery query model
+        in
+        ( next, tellBand model next )
+
+
+{-| Whether a message should be written to the URL. A slider writes when it is
+let go (`Commit`), not on every step of a drag: browsers refuse a page that
+rewrites its address a hundred times in a few seconds. -}
+changesUrl : Msg -> Model -> Model -> Bool
+changesUrl msg before after =
+    case msg of
+        SetBpm _ ->
+            False
+
+        SetFeel _ ->
+            False
+
+        SetMix _ _ ->
+            False
+
+        Commit ->
+            True
+
+        _ ->
+            toQuery before /= toQuery after
+
+
+{-| Note names as caged writes them in a URL: sharps as `s`. -}
+keySlug : Int -> String
+keySlug pc =
+    getAt (modBy 12 pc) [ "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B" ]
+        |> Maybe.withDefault "C"
 
 
 keyFromSlug : String -> Maybe Int
 keyFromSlug s =
-    List.indexedMap Tuple.pair slugKeys
-        |> List.filter (\( _, n ) -> n == s)
-        |> List.head
-        |> Maybe.map Tuple.first
+    let
+        natural =
+            letterPitch (String.left 1 s)
+    in
+    case String.dropLeft 1 s of
+        "" ->
+            natural
+
+        "s" ->
+            Maybe.map (\n -> modBy 12 (n + 1)) natural
+
+        _ ->
+            Nothing
 
 
-chordCode : Bar -> String
-chordCode b =
-    (getAt b.root slugKeys |> Maybe.withDefault "C")
+{-| A chord in the URL: its root, then its type with `♯` written `s`
+(`Cs7s9`), and nothing for major. -}
+chordSlug : Bar -> String
+chordSlug b =
+    keySlug b.root
         ++ (if b.q == QMaj then
                 ""
 
             else
-                (qualInfo b.q).id
+                String.replace "#" "s" (qualInfo b.q).id
            )
 
 
@@ -1092,7 +1273,7 @@ parseChord : String -> Maybe Bar
 parseChord code =
     let
         rootLen =
-            if String.slice 1 2 code == "b" then
+            if String.slice 1 2 code == "s" then
                 2
 
             else
@@ -1105,75 +1286,7 @@ parseChord code =
                 Just QMaj
 
             id ->
-                qualFromId id
-        )
-
-
-applySaved : Saved -> Model -> Model
-applySaved s model =
-    let
-        style =
-            s.style |> Maybe.andThen styleFromId |> Maybe.withDefault model.style
-
-        info =
-            styleInfo style
-
-        key =
-            s.key |> Maybe.andThen keyFromSlug |> Maybe.withDefault model.key
-
-        chords =
-            s.chords |> Maybe.withDefault [] |> List.map parseChord
-
-        withChart m =
-            if
-                not (List.isEmpty chords)
-                    && List.length chords
-                    <= maxBars
-                    && List.all ((/=) Nothing) chords
-            then
-                { m | source = Custom, bars = List.filterMap identity chords }
-
-            else
-                case s.prog |> Maybe.andThen presetById of
-                    Just p ->
-                        { m | source = FromPreset p.id, bars = barsFromPreset m.moreOpen p.id key }
-
-                    Nothing ->
-                        m
-    in
-    withChart
-        { model
-            | style = style
-            , bpm = s.bpm |> Maybe.map (clamp 40 200) |> Maybe.withDefault info.bpm
-            , feel =
-                case ( style, s.feel ) of
-                    ( Ballad, _ ) ->
-                        info.feel
-
-                    ( _, Just f ) ->
-                        clamp 0 100 f
-
-                    _ ->
-                        info.feel
-            , key = key
-        }
-
-
-encodeSave : Model -> E.Value
-encodeSave model =
-    E.object
-        ([ ( "style", E.string (styleInfo model.style).id )
-         , ( "bpm", E.int model.bpm )
-         , ( "feel", E.int model.feel )
-         , ( "key", E.string (getAt model.key slugKeys |> Maybe.withDefault "A") )
-         ]
-            ++ (case model.source of
-                    FromPreset id ->
-                        [ ( "prog", E.string id ) ]
-
-                    _ ->
-                        [ ( "chords", E.list (chordCode >> E.string) model.bars ) ]
-               )
+                qualFromId (String.replace "s" "#" id)
         )
 
 
@@ -1235,30 +1348,32 @@ type Msg
     | ToggleListen
     | FromBand D.Value
     | MissExpired Int
+    | Commit
 
 
-{-| Every change that reaches the band is sent to it at once (so it is heard
-on the next beat) and saved. -}
+{-| Every change that reaches the band is sent to it at once, so it is heard
+on the next beat. -}
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         ( next, cmd ) =
             step msg model
                 |> Tuple.mapFirst openMoreIfNeeded
+    in
+    ( next, Cmd.batch [ cmd, tellBand model next ] )
 
+
+tellBand : Model -> Model -> Cmd msg
+tellBand before after =
+    let
         heardBy m =
             ( m.style, ( m.bpm, m.feel, m.key ), ( m.source, m.bars, m.mix ) )
     in
-    if heardBy next /= heardBy model then
-        ( next
-        , Cmd.batch
-            [ cmd
-            , command "state" [ ( "band", encodeBand next ), ( "save", encodeSave next ) ]
-            ]
-        )
+    if heardBy after /= heardBy before then
+        command "state" [ ( "band", encodeBand after ) ]
 
     else
-        ( next, cmd )
+        Cmd.none
 
 
 {-| A chord type beyond the basic three, selected, opens the rest of them. -}
@@ -1417,6 +1532,9 @@ step msg model =
 
         FromBand value ->
             fromBand value model
+
+        Commit ->
+            ( model, Cmd.none )
 
         MissExpired token ->
             if token == model.missToken then
@@ -2350,7 +2468,9 @@ btn active =
     ]
 
 
-slider : Int -> Int -> Int -> (String -> msg) -> Bool -> Html msg
+{-| A slider is heard while it moves (`input`) and written to the URL when it
+is let go (`change`, `Commit`). -}
+slider : Int -> Int -> Int -> (String -> Msg) -> Bool -> Html Msg
 slider lo hi value toMsg disabled =
     input
         [ A.type_ "range"
@@ -2359,6 +2479,7 @@ slider lo hi value toMsg disabled =
         , A.value (String.fromInt value)
         , A.disabled disabled
         , onInput toMsg
+        , Html.Events.on "change" (D.succeed Commit)
         , style "width" "100%"
         , style "min-width" "110px"
         , style "margin" "4px 0"

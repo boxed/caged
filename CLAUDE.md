@@ -603,9 +603,10 @@ neck's **heading is its controls**:
   tuning button is what separates those from it. Both steppers are the same
   `stepper`, which takes its label already rendered because a string reads as
   `6 (E)`, not as a bare number.
-- `tuningOpen`, `scaleOpen` and `viewOpen` are on the model but deliberately
-  **not** in the URL: they are the state of a drawer, not of the diagram, and
-  a shared link should not reopen someone else's drawer.
+- `tuningOpen` and `scaleOpen` are on the model but **not** in the URL. The
+  display options and the Practice drawer are: `&options=1`/`0` (written only
+  when it differs from the screen's default, open on a big screen) and
+  `&practice=1`.
 - The heading button does not print, so each heading also renders a
   `print-only` copy (`viewScaleTitle`), hidden on screen.
 - Under 600px the page title (`app-title`) drops to 16px and loses "Guitar"
@@ -843,6 +844,8 @@ address bar is always a link to exactly what is on screen.
 - `&degrees=1`, `&mono=1` and `&cols=2` carry the Degrees, Monochrome and Two
   columns switches,
   omitted when off.
+- `&options=1`/`0` and `&practice=1` carry the two drawers, and every setting
+  in the Practice panel follows (`Practice.toQuery`, see **Practice**).
 - The old `?roots=C-E-G` multi-root param is still **parsed** (a list of roots
   all sharing the one `scale`) so links from that version keep working. It is
   never written any more; the next change rewrites the URL in the new form.
@@ -851,8 +854,8 @@ address bar is always a link to exactly what is on screen.
 
 The **Practice** button (page header, beside the gear) opens a drawer with a
 backing band to solo over, ported from a standalone tool. Shut by default on
-every screen; `practiceOpen` is drawer state, so not in the URL, and in compact
-mode it is one of the drawers that shut each other. Shutting it does **not**
+every screen; `&practice=1` when open, and in compact mode it is one of the
+drawers that shut each other. Shutting it does **not**
 stop the band — you play along while looking at the necks — so the button
 carries a dot while it plays.
 
@@ -877,17 +880,20 @@ carries a dot while it plays.
   `offChordOpacity` 0.4, lighter than the off-string fade since the scale is
   still what you solo with). Stopped or counting in, nothing fades.
 - The samples are fetched from `sounds/` on the first Play, not inlined.
-- The chart is remembered in **localStorage** (`caged-practice`, written by JS
-  from Practice's `encodeSave`, read back into the `practice` flag), not the URL,
-  which belongs to the fretboard.
-- **Linking in**: `?root=A&scale=aeolian&practice=Am-F-C-G` (what the TabsFast
-  menu bar app opens for a song) sets the panel up and opens it, shutting the
-  other drawers. `linkedPractice` in `band.js` reads it before Elm starts: the
-  chords (dash-separated, in the saved chart's codes — ASCII flat roots plus a
-  `qualInfo` id, `#` sent as `%23`) and the neck's root as the key go into the
-  saved chart, replacing any preset but keeping style, tempo and mix, and the
-  param is stripped from the address, so it applies once and a reload keeps
-  edits. The `openPractice` flag opens the drawer.
+- **Every setting is in the URL** like everything else (`toQuery` /
+  `fromQuery`), each left out at its default: `band` (style), `bpm`, `feel`,
+  `key` (`Fs`, as a root is written), `chart` (a preset id, or the chords
+  dash-separated with `♯` as `s`: `C-Am-Fs7s9`), `more=1`, `mix` (five
+  faders, drums to master). Playing, the playhead, the microphone and the
+  selected bar are not settings and stay out. A slider writes the URL when
+  let go (`Commit` on `change`, `changesUrl`), not on every step: browsers
+  refuse a page that rewrites its address a hundred-odd times in seconds.
+  `UrlChanged` re-applies the settings only when they differ from the
+  panel's (`applyQuery`), so the panel's own `replaceUrl` echo does not turn
+  a "Made up" chart into a "Custom" one.
+- **Linking in**: the TabsFast menu bar app opens a song's chart with
+  `?root=A&scale=aeolian&practice=1&key=A&chart=Am-F-C-G` (`cagedURL` in
+  `../tabs-fast`), so a change to these parameters has to be made there too.
 
 ## Ports (Wake Lock, sound)
 
