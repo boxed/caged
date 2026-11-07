@@ -153,7 +153,8 @@ type alias Board =
     , mono : Bool
     , degrees : Bool
 
-    -- The chord the Practice band is playing, while it plays: its root, third
+    -- With the Practice panel open, the chord the band is playing, or the bar
+    -- selected in the chart while it is stopped: its root, third
     -- and fifth are marked in place of the scale's, and every note not in it
     -- is drawn faded, so the neck shows what to aim for on this bar.
     , chord : Maybe Practice.SoundingChord
@@ -277,6 +278,7 @@ type Msg
     | SetTuning Tuning
     | SetStringSet Int StringSet
     | TuneString Int Int
+    | TuneAll Int
     | ChangeStringCount Int
     | SetFocus (Maybe Focus)
     | SetStringFocus (Maybe Int)
@@ -488,6 +490,9 @@ update msg model =
                         model.tuning.strings
             in
             sync { model | tuning = customFrom newStrings }
+
+        TuneAll delta ->
+            sync { model | tuning = customFrom (List.map (\n -> modBy 12 (n + delta)) model.tuning.strings) }
 
         ChangeStringCount delta ->
             -- Strings come and go at the low end, so every string keeps its
@@ -1303,7 +1308,7 @@ boardAt model i neck =
     , stringFocus = model.stringFocus
     , mono = model.mono
     , degrees = model.degrees
-    , chord = Practice.soundingChord model.practice
+    , chord = Practice.soundingChord model.practiceOpen model.practice
     , id = "n" ++ String.fromInt i ++ "-"
     , slot = i
     }
@@ -4773,7 +4778,7 @@ viewOptions model =
             text ""
         , if model.tuningOpen && isCustom model.tuning then
             div [ style "display" "flex", style "align-items" "center", style "flex-wrap" "wrap" ]
-                (List.map (stringStepper model) (List.range 1 (stringCount model.tuning)))
+                (allStringsStepper :: List.map (stringStepper model) (List.range 1 (stringCount model.tuning)))
 
           else
             text ""
@@ -5513,6 +5518,33 @@ stringStepper model uiIndex =
             ]
             [ text (noteName note) ]
         , stepperButton (TuneString s -1) "▼"
+        ]
+
+
+{-| Retunes every string by a semitone at once: tuning the whole guitar down
+(or up) is the most common custom tuning, and one string at a time it takes
+six presses per step. -}
+allStringsStepper : Html Msg
+allStringsStepper =
+    div
+        [ style "display" "inline-flex"
+        , style "flex-direction" "column"
+        , style "align-items" "center"
+        , style "margin" "0 10px 0 3px"
+        , style "padding-right" "10px"
+        , style "border-right" "1px solid var(--btn-bd)"
+        ]
+        [ stepperButton (TuneAll 1) "▲"
+        , span
+            [ style "font-size" "13px"
+            , style "font-weight" "600"
+            , style "padding" "2px 0"
+            , style "min-width" "26px"
+            , style "text-align" "center"
+            , style "color" "var(--text)"
+            ]
+            [ text "All" ]
+        , stepperButton (TuneAll -1) "▼"
         ]
 
 

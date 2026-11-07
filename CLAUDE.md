@@ -269,7 +269,9 @@ is not 7 semitones, hence `fifthInterval` (6 for dim, 8 for aug), read by
 
 The selector offers the presets for the current string count **plus arbitrary
 custom tunings** via per-string ▲/▼ steppers (shown only after pressing
-**Custom**, one per string, wrapping on a long neck). At six strings: Standard,
+**Custom**, one per string, wrapping on a long neck, led by an **All** stepper
+(`TuneAll`) that moves every string a semitone at once, for tuning the whole
+neck down or up). At six strings: Standard,
 Drop D, D♯/E♭ Standard, D Standard, Drop C, C♯/D♭ Standard, All Fourths (E A D
 G C F), All Major Thirds (E G♯ C E G♯ C), DADGAD, Open G/D/E. A custom tuning
 round-trips through the URL as dash-joined note slugs, one per string
@@ -856,8 +858,7 @@ The **Practice** button (page header, beside the gear) opens a drawer with a
 backing band to solo over, ported from a standalone tool. Shut by default on
 every screen; `&practice=1` when open, and in compact mode it is one of the
 drawers that shut each other. Shutting it does **not**
-stop the band — you play along while looking at the necks — so the button
-carries a dot while it plays.
+stop the band, so the button carries a dot while it plays.
 
 - **Elm owns everything but sound** (`src/Practice.elm`, its own `Model`/`Msg`,
   mapped in by `PracticeMsg`): the chart, presets, the random chart writer
@@ -875,13 +876,15 @@ carries a dot while it plays.
   *played* (voicing, bass pattern); names live in Practice.elm.
 - Elm cannot `preventDefault` from a document subscription, so `band.js`
   cancels Space and the arrows itself while `.practice-panel` is in the page.
-- **While the band plays, the necks follow its chord**
-  (`Practice.soundingChord` → `board.chord`): the root, third and fifth
+- **While the panel is open, the necks follow the chart's chord**
+  (`Practice.soundingChord` → `board.chord`): the one the band is playing,
+  or, stopped, the bar selected in the chart, so a chart can be reviewed
+  chord by chord. Shutting the panel puts the necks back to their scales,
+  even with the band still playing. The root, third and fifth
   markers move to the chord's (`chordRole` in place of `scaleRole`), its
   other tones are plain notes, and every note outside it fades (`noteFade`,
   at `offChordOpacity` 0.4, lighter than the off-string fade since the scale
-  is still what you solo with). Stopped or counting in, the necks show the
-  scale as usual.
+  is still what you solo with).
 - The samples are fetched from `sounds/` on the first Play, not inlined.
 - **Every setting is in the URL** like everything else (`toQuery` /
   `fromQuery`), each left out at its default: `band` (style), `bpm`, `feel`,

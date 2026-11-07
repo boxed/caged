@@ -2719,7 +2719,7 @@ var _VirtualDom_mapEventTuple = F2(function(func, tuple)
 var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
-		as: func(record.as),
+		ar: func(record.ar),
 		bC: record.bC,
 		bv: record.bv
 	}
@@ -2989,7 +2989,7 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		// 3 = Custom
 
 		var value = result.a;
-		var message = !tag ? value : tag < 3 ? value.a : value.as;
+		var message = !tag ? value : tag < 3 ? value.a : value.ar;
 		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.bC;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
@@ -4408,10 +4408,10 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 	return a >>> offset;
 });
 var $author$project$Main$LinkClicked = function (a) {
-	return {$: 22, a: a};
+	return {$: 23, a: a};
 };
 var $author$project$Main$UrlChanged = function (a) {
-	return {$: 21, a: a};
+	return {$: 22, a: a};
 };
 var $elm$core$List$cons = _List_cons;
 var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -5431,7 +5431,7 @@ var $author$project$Practice$MajFam = 0;
 var $author$project$Practice$MinFam = 1;
 var $author$project$Practice$QualInfo = F6(
 	function (id, label, name, basic, fam, tones) {
-		return {aJ: basic, ap: fam, ai: id, aO: label, r: name, df: tones};
+		return {aJ: basic, ao: fam, ai: id, aO: label, r: name, df: tones};
 	});
 var $author$project$Practice$qualInfo = function (q) {
 	switch (q) {
@@ -5558,7 +5558,7 @@ var $author$project$Practice$qualInfo = function (q) {
 	}
 };
 var $author$project$Practice$fam = function (q) {
-	return $author$project$Practice$qualInfo(q).ap;
+	return $author$project$Practice$qualInfo(q).ao;
 };
 var $author$project$Practice$simplify = F2(
 	function (moreOpen, bars) {
@@ -5631,15 +5631,15 @@ var $author$project$Practice$defaults = function (seed) {
 		x: $author$project$Practice$styleInfo(2).x,
 		aK: '',
 		t: $author$project$Practice$styleInfo(2).t,
-		aq: $elm$core$Maybe$Nothing,
+		ap: $elm$core$Maybe$Nothing,
 		be: 0,
 		ab: false,
 		a2: false,
 		aP: 0,
 		ac: $author$project$Practice$defaultMix,
 		C: false,
-		ak: $elm$core$Maybe$Nothing,
-		Q: false,
+		at: $elm$core$Maybe$Nothing,
+		W: false,
 		bx: seed,
 		M: 0,
 		L: $author$project$Practice$FromPreset($author$project$Practice$defaultPreset),
@@ -7283,7 +7283,7 @@ var $author$project$Main$parseUrl = function (url) {
 		}
 	}();
 	return {
-		k: A2(
+		l: A2(
 			$author$project$Main$clampIndex,
 			necks,
 			A2(
@@ -7329,7 +7329,7 @@ var $author$project$Main$parseUrl = function (url) {
 			}
 			return $elm$core$Maybe$Nothing;
 		}(),
-		l: _Utils_eq(
+		k: _Utils_eq(
 			lookup('practice'),
 			$elm$core$Maybe$Just('1')),
 		a4: pairs,
@@ -7341,7 +7341,7 @@ var $author$project$Main$parseUrl = function (url) {
 				$elm$core$String$toInt,
 				lookup('string'))),
 		b: tuning,
-		S: _Utils_eq(
+		R: _Utils_eq(
 			lookup('cols'),
 			$elm$core$Maybe$Just('2'))
 	};
@@ -7390,46 +7390,46 @@ var $author$project$Main$init = F3(
 					return $.a;
 				},
 				$elm$core$List$head(
-					A2($elm$core$List$drop, state.k, state.e))));
+					A2($elm$core$List$drop, state.l, state.e))));
 		return _Utils_Tuple2(
 			{
-				k: state.k,
-				T: compact,
+				l: state.l,
+				S: compact,
 				H: state.H,
-				U: $elm$core$Maybe$Nothing,
+				T: $elm$core$Maybe$Nothing,
 				y: state.y,
 				be: key,
 				d: state.d,
 				e: state.e,
-				at: $author$project$Main$tabOf(activeScale),
+				as: $author$project$Main$tabOf(activeScale),
 				X: A2($author$project$Practice$init, seed, state.a4),
-				l: state.l,
-				aa: (!compact) && (!state.l),
+				k: state.k,
+				aa: (!compact) && (!state.k),
 				w: state.w,
 				b: state.b,
-				al: false,
-				S: state.S,
+				ak: false,
+				R: state.R,
 				G: A2(
 					$elm$core$Maybe$withDefault,
-					A2($author$project$Main$optionsByDefault, compact, state.l),
+					A2($author$project$Main$optionsByDefault, compact, state.k),
 					state.bh),
 				aI: false
 			},
 			$elm$core$Platform$Cmd$none);
 	});
 var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Main$DragEnd = {$: 20};
+var $author$project$Main$DragEnd = {$: 21};
 var $author$project$Main$DragMove = function (a) {
-	return {$: 19, a: a};
+	return {$: 20, a: a};
 };
 var $author$project$Main$PracticeMsg = function (a) {
-	return {$: 27, a: a};
+	return {$: 28, a: a};
 };
 var $author$project$Main$WakeLockChanged = function (a) {
-	return {$: 24, a: a};
+	return {$: 25, a: a};
 };
 var $author$project$Main$WindowResized = function (a) {
-	return {$: 15, a: a};
+	return {$: 16, a: a};
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$json$Json$Decode$float = _Json_decodeFloat;
@@ -7825,14 +7825,14 @@ var $author$project$Main$subscriptions = function (model) {
 				A2(
 				$elm$core$Platform$Sub$map,
 				$author$project$Main$PracticeMsg,
-				A2($author$project$Practice$subscriptions, model.l, model.X)),
+				A2($author$project$Practice$subscriptions, model.k, model.X)),
 				$elm$browser$Browser$Events$onResize(
 				F2(
 					function (w, _v0) {
 						return $author$project$Main$WindowResized(w);
 					})),
 				function () {
-				var _v1 = model.U;
+				var _v1 = model.T;
 				if (!_v1.$) {
 					return $elm$core$Platform$Sub$batch(
 						_List_fromArray(
@@ -7855,7 +7855,7 @@ var $author$project$Main$activeNeck = function (model) {
 		$elm$core$List$head(
 			A2(
 				$elm$core$List$drop,
-				A2($author$project$Main$clampIndex, model.e, model.k),
+				A2($author$project$Main$clampIndex, model.e, model.l),
 				model.e)));
 };
 var $author$project$Practice$queryKeys = _List_fromArray(
@@ -8255,7 +8255,7 @@ var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Platform$Cmd$map = _Platform_map;
 var $author$project$Main$mapActive = F2(
 	function (f, model) {
-		var i = A2($author$project$Main$clampIndex, model.e, model.k);
+		var i = A2($author$project$Main$clampIndex, model.e, model.l);
 		return A2(
 			$elm$core$List$indexedMap,
 			F2(
@@ -8624,7 +8624,7 @@ var $author$project$Main$modelUrl = function (model) {
 			return '?necks=' + (A2(
 				$elm$core$String$join,
 				',',
-				A2($elm$core$List$map, $author$project$Main$neckSlug, necks)) + ((!model.k) ? '' : ('&active=' + $elm$core$String$fromInt(model.k))));
+				A2($elm$core$List$map, $author$project$Main$neckSlug, necks)) + ((!model.l) ? '' : ('&active=' + $elm$core$String$fromInt(model.l))));
 		}
 	}();
 	var withTuning = _Utils_eq(model.b.n, $author$project$Main$standardTuning.n) ? base : (base + ('&tuning=' + model.b.n));
@@ -8650,11 +8650,11 @@ var $author$project$Main$modelUrl = function (model) {
 	}();
 	var withMono = model.d ? (withString + '&mono=1') : withString;
 	var withDegrees = model.H ? (withMono + '&degrees=1') : withMono;
-	var withColumns = model.S ? (withDegrees + '&cols=2') : withDegrees;
+	var withColumns = model.R ? (withDegrees + '&cols=2') : withDegrees;
 	var withOptions = _Utils_eq(
 		model.G,
-		A2($author$project$Main$optionsByDefault, model.T, model.l)) ? withColumns : (model.G ? (withColumns + '&options=1') : (withColumns + '&options=0'));
-	var withPractice = model.l ? (withOptions + '&practice=1') : withOptions;
+		A2($author$project$Main$optionsByDefault, model.S, model.k)) ? withColumns : (model.G ? (withColumns + '&options=1') : (withColumns + '&options=0'));
+	var withPractice = model.k ? (withOptions + '&practice=1') : withOptions;
 	return _Utils_ap(
 		withPractice,
 		$elm$core$String$concat(
@@ -8830,7 +8830,7 @@ var $author$project$Practice$chordTones = function (bar) {
 		$elm$core$List$cons,
 		0,
 		_Utils_ap(
-			(info.ap === 3) ? _List_Nil : _List_fromArray(
+			(info.ao === 3) ? _List_Nil : _List_fromArray(
 				[7]),
 			A2(
 				$elm$core$List$map,
@@ -8842,12 +8842,12 @@ var $author$project$Practice$chordTones = function (bar) {
 			function (d) {
 				return _Utils_Tuple2(
 					A2($elm$core$Basics$modBy, 12, bar.h + d),
-					A2($author$project$Practice$toneName, info.ap, d));
+					A2($author$project$Practice$toneName, info.ao, d));
 			},
 			offsets));
 };
 var $author$project$Practice$currentIndex = function (model) {
-	var _v0 = _Utils_Tuple2(model.Q, model.ak);
+	var _v0 = _Utils_Tuple2(model.W, model.at);
 	if (_v0.a && (!_v0.b.$)) {
 		var ph = _v0.b.a;
 		return A2(
@@ -8938,8 +8938,8 @@ var $author$project$Practice$fromBand = F2(
 							_Utils_update(
 								model,
 								{
-									ak: $elm$core$Maybe$Nothing,
-									Q: A2(
+									at: $elm$core$Maybe$Nothing,
+									W: A2(
 										$elm$core$Result$withDefault,
 										false,
 										A2(field, 'on', $elm$json$Json$Decode$bool))
@@ -8956,7 +8956,7 @@ var $author$project$Practice$fromBand = F2(
 								_Utils_update(
 									model,
 									{
-										ak: $elm$core$Maybe$Just(
+										at: $elm$core$Maybe$Just(
 											{bo: bar, ba: beat})
 									}),
 								$elm$core$Platform$Cmd$none);
@@ -8983,7 +8983,7 @@ var $author$project$Practice$fromBand = F2(
 							A2(
 								$elm$core$Maybe$map,
 								$author$project$Practice$roleOf(model),
-								model.aq),
+								model.ap),
 							$elm$core$Maybe$Just(3));
 						var heard = A2(
 							$elm$core$Maybe$andThen,
@@ -9001,7 +9001,7 @@ var $author$project$Practice$fromBand = F2(
 						return (wasOut && (!isOut)) ? _Utils_Tuple2(
 							_Utils_update(
 								model,
-								{aq: heard, a2: true, aP: model.aP + 1}),
+								{ap: heard, a2: true, aP: model.aP + 1}),
 							A2(
 								$elm$core$Task$perform,
 								function (_v2) {
@@ -9010,7 +9010,7 @@ var $author$project$Practice$fromBand = F2(
 								$elm$core$Process$sleep(150))) : _Utils_Tuple2(
 							_Utils_update(
 								model,
-								{aq: heard}),
+								{ap: heard}),
 							$elm$core$Platform$Cmd$none);
 					default:
 						break _v0$4;
@@ -10223,7 +10223,7 @@ var $author$project$Practice$step = F2(
 			case 0:
 				return _Utils_Tuple2(
 					model,
-					model.Q ? A2($author$project$Practice$command, 'stop', _List_Nil) : A2(
+					model.W ? A2($author$project$Practice$command, 'stop', _List_Nil) : A2(
 						$author$project$Practice$command,
 						'play',
 						_List_fromArray(
@@ -10534,7 +10534,7 @@ var $author$project$Main$update = F2(
 										{a: sc});
 								},
 								model),
-							aa: model.aa && (!model.T)
+							aa: model.aa && (!model.S)
 						}));
 			case 3:
 				var i = msg.a;
@@ -10560,25 +10560,25 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							b: t,
-							al: $author$project$Main$isCustom(t)
+							ak: $author$project$Main$isCustom(t)
 						}));
-			case 11:
+			case 12:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{al: !model.al}),
+						{ak: !model.ak}),
 					$elm$core$Platform$Cmd$none);
-			case 12:
+			case 13:
 				var i = msg.a;
-				var opening = (!_Utils_eq(i, model.k)) || (!model.aa);
+				var opening = (!_Utils_eq(i, model.l)) || (!model.aa);
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
 						{
-							k: A2($author$project$Main$clampIndex, model.e, i),
-							at: opening ? A2(
+							l: A2($author$project$Main$clampIndex, model.e, i),
+							as: opening ? A2(
 								$elm$core$Maybe$withDefault,
-								model.at,
+								model.as,
 								A2(
 									$elm$core$Maybe$map,
 									A2(
@@ -10588,29 +10588,29 @@ var $author$project$Main$update = F2(
 										},
 										$author$project$Main$tabOf),
 									$elm$core$List$head(
-										A2($elm$core$List$drop, i, model.e)))) : model.at,
-							l: model.l && (!(model.T && opening)),
+										A2($elm$core$List$drop, i, model.e)))) : model.as,
+							k: model.k && (!(model.S && opening)),
 							aa: opening,
-							G: model.G && (!(model.T && opening))
+							G: model.G && (!(model.S && opening))
 						}));
-			case 13:
+			case 14:
 				var tab = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{at: tab}),
+						{as: tab}),
 					$elm$core$Platform$Cmd$none);
-			case 14:
+			case 15:
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
-						{l: model.l && (!(model.T && (!model.G))), aa: model.aa && (!(model.T && (!model.G))), G: !model.G}));
-			case 26:
-				return $author$project$Main$sync(
-					_Utils_update(
-						model,
-						{l: !model.l, aa: model.aa && (!(model.T && (!model.l))), G: model.G && (!(model.T && (!model.l)))}));
+						{k: model.k && (!(model.S && (!model.G))), aa: model.aa && (!(model.S && (!model.G))), G: !model.G}));
 			case 27:
+				return $author$project$Main$sync(
+					_Utils_update(
+						model,
+						{k: !model.k, aa: model.aa && (!(model.S && (!model.k))), G: model.G && (!(model.S && (!model.k)))}));
+			case 28:
 				var practiceMsg = msg.a;
 				var _v1 = A2($author$project$Practice$update, practiceMsg, model.X);
 				var practice = _v1.a;
@@ -10631,13 +10631,13 @@ var $author$project$Main$update = F2(
 					$author$project$Main$sync(next)) : _Utils_Tuple2(
 					next,
 					A2($elm$core$Platform$Cmd$map, $author$project$Main$PracticeMsg, cmd));
-			case 15:
+			case 16:
 				var width = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							T: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
+							S: _Utils_cmp(width, $author$project$Main$compactWidth) < 0
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 4:
@@ -10658,6 +10658,20 @@ var $author$project$Main$update = F2(
 						}));
 			case 5:
 				var delta = msg.a;
+				return $author$project$Main$sync(
+					_Utils_update(
+						model,
+						{
+							b: $author$project$Main$customFrom(
+								A2(
+									$elm$core$List$map,
+									function (n) {
+										return A2($elm$core$Basics$modBy, 12, n + delta);
+									},
+									model.b.j))
+						}));
+			case 6:
+				var delta = msg.a;
 				var tuning = A2(
 					$author$project$Main$resizeTuning,
 					$author$project$Main$stringCount(model.b) + delta,
@@ -10677,7 +10691,7 @@ var $author$project$Main$update = F2(
 								model.w),
 							b: tuning
 						}));
-			case 6:
+			case 7:
 				var f = msg.a;
 				return $author$project$Main$sync(
 					_Utils_update(
@@ -10685,7 +10699,7 @@ var $author$project$Main$update = F2(
 						{
 							y: A2($elm$core$Maybe$map, $author$project$Main$clampFocus, f)
 						}));
-			case 7:
+			case 8:
 				var s = msg.a;
 				return $author$project$Main$sync(
 					_Utils_update(
@@ -10697,35 +10711,35 @@ var $author$project$Main$update = F2(
 									$author$project$Main$stringCount(model.b)),
 								s)
 						}));
-			case 8:
-				return $author$project$Main$sync(
-					_Utils_update(
-						model,
-						{d: !model.d}));
 			case 9:
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
-						{H: !model.H}));
+						{d: !model.d}));
 			case 10:
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
-						{S: !model.S}));
-			case 16:
-				var i = A2($author$project$Main$clampIndex, model.e, model.k);
+						{H: !model.H}));
+			case 11:
+				return $author$project$Main$sync(
+					_Utils_update(
+						model,
+						{R: !model.R}));
+			case 17:
+				var i = A2($author$project$Main$clampIndex, model.e, model.l);
 				return $author$project$Main$sync(
 					_Utils_update(
 						model,
 						{
-							k: i + 1,
+							l: i + 1,
 							e: A3(
 								$author$project$Main$insertAt,
 								i + 1,
 								$author$project$Main$activeNeck(model),
 								model.e)
 						}));
-			case 17:
+			case 18:
 				var i = msg.a;
 				if ($elm$core$List$length(model.e) <= 1) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -10737,14 +10751,14 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								k: A2(
+								l: A2(
 									$author$project$Main$clampIndex,
 									remaining,
-									(_Utils_cmp(model.k, i) > 0) ? (model.k - 1) : model.k),
+									(_Utils_cmp(model.l, i) > 0) ? (model.l - 1) : model.l),
 								e: remaining
 							}));
 				}
-			case 18:
+			case 19:
 				var i = msg.a;
 				var y = msg.b;
 				var rowHeight = msg.c;
@@ -10752,26 +10766,26 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							k: A2($author$project$Main$clampIndex, model.e, i),
-							U: $elm$core$Maybe$Just(
+							l: A2($author$project$Main$clampIndex, model.e, i),
+							T: $elm$core$Maybe$Just(
 								{aN: i, bw: rowHeight, bB: y, av: i})
 						}),
 					$elm$core$Platform$Cmd$none);
-			case 19:
+			case 20:
 				var y = msg.a;
-				var _v2 = model.U;
+				var _v2 = model.T;
 				if (_v2.$ === 1) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
 					var drag = _v2.a;
-					var perRow = model.S ? 2 : 1;
+					var perRow = model.R ? 2 : 1;
 					var slots = perRow * $elm$core$Basics$round(
 						(y - drag.bB) / A2($elm$core$Basics$max, 1, drag.bw));
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{
-								U: $elm$core$Maybe$Just(
+								T: $elm$core$Maybe$Just(
 									_Utils_update(
 										drag,
 										{
@@ -10780,8 +10794,8 @@ var $author$project$Main$update = F2(
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
-			case 20:
-				var _v3 = model.U;
+			case 21:
+				var _v3 = model.T;
 				if (_v3.$ === 1) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
@@ -10790,12 +10804,12 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								k: drag.av,
-								U: $elm$core$Maybe$Nothing,
+								l: drag.av,
+								T: $elm$core$Maybe$Nothing,
 								e: A3($author$project$Main$moveItem, drag.aN, drag.av, model.e)
 							}));
 				}
-			case 21:
+			case 22:
 				var url = msg.a;
 				var state = $author$project$Main$parseUrl(url);
 				var _v4 = A2($author$project$Practice$applyQuery, state.a4, model.X);
@@ -10805,23 +10819,23 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							k: state.k,
+							l: state.l,
 							H: state.H,
 							y: state.y,
 							d: state.d,
 							e: state.e,
 							X: practice,
-							l: state.l,
+							k: state.k,
 							w: state.w,
 							b: state.b,
-							S: state.S,
+							R: state.R,
 							G: A2(
 								$elm$core$Maybe$withDefault,
-								A2($author$project$Main$optionsByDefault, model.T, state.l),
+								A2($author$project$Main$optionsByDefault, model.S, state.k),
 								state.bh)
 						}),
 					A2($elm$core$Platform$Cmd$map, $author$project$Main$PracticeMsg, practiceCmd));
-			case 22:
+			case 23:
 				var request = msg.a;
 				if (!request.$) {
 					var url = request.a;
@@ -10837,7 +10851,7 @@ var $author$project$Main$update = F2(
 						model,
 						$elm$browser$Browser$Navigation$load(href));
 				}
-			case 23:
+			case 24:
 				var next = !model.aI;
 				var cmd = next ? $author$project$Main$requestWakeLock(0) : $author$project$Main$releaseWakeLock(0);
 				return _Utils_Tuple2(
@@ -10845,7 +10859,7 @@ var $author$project$Main$update = F2(
 						model,
 						{aI: next}),
 					cmd);
-			case 24:
+			case 25:
 				var on = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -10903,27 +10917,27 @@ var $author$project$Main$update = F2(
 				}
 		}
 	});
-var $author$project$Practice$soundingChord = function (model) {
-	var _v0 = _Utils_Tuple2(model.Q, model.ak);
-	if (_v0.a && (!_v0.b.$)) {
-		var bar = $author$project$Practice$currentBar(model);
-		var info = $author$project$Practice$qualInfo(bar.i);
-		return $elm$core$Maybe$Just(
-			{
-				cL: (info.ap === 3) ? 6 : 7,
-				h: bar.h,
-				dd: ((info.ap === 1) || (info.ap === 3)) ? 3 : 4,
-				df: $elm$core$Dict$keys(
-					$author$project$Practice$chordTones(bar))
-			});
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
+var $author$project$Practice$soundingChord = F2(
+	function (open, model) {
+		if (open) {
+			var bar = $author$project$Practice$currentBar(model);
+			var info = $author$project$Practice$qualInfo(bar.i);
+			return $elm$core$Maybe$Just(
+				{
+					cL: (info.ao === 3) ? 6 : 7,
+					h: bar.h,
+					dd: ((info.ao === 1) || (info.ao === 3)) ? 3 : 4,
+					df: $elm$core$Dict$keys(
+						$author$project$Practice$chordTones(bar))
+				});
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Main$boardAt = F3(
 	function (model, i, neck) {
 		return {
-			bb: $author$project$Practice$soundingChord(model.X),
+			bb: A2($author$project$Practice$soundingChord, model.k, model.X),
 			H: model.H,
 			y: model.y,
 			ai: 'n' + ($elm$core$String$fromInt(i) + '-'),
@@ -10943,10 +10957,10 @@ var $author$project$Main$activeBoard = function (model) {
 	return A3(
 		$author$project$Main$boardAt,
 		model,
-		A2($author$project$Main$clampIndex, model.e, model.k),
+		A2($author$project$Main$clampIndex, model.e, model.l),
 		$author$project$Main$activeNeck(model));
 };
-var $author$project$Main$AddNeck = {$: 16};
+var $author$project$Main$AddNeck = {$: 17};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
@@ -11025,7 +11039,7 @@ var $author$project$Main$addNeckButton = A2(
 				]))
 		]));
 var $elm$core$String$fromFloat = _String_fromNumber;
-var $author$project$Main$ToggleViewPanel = {$: 14};
+var $author$project$Main$ToggleViewPanel = {$: 15};
 var $elm$virtual_dom$VirtualDom$attribute = F2(
 	function (key, value) {
 		return A2(
@@ -11113,7 +11127,7 @@ var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
 var $elm$html$Html$map = $elm$virtual_dom$VirtualDom$map;
 var $author$project$Main$orderedNecks = function (model) {
-	var _v0 = model.U;
+	var _v0 = model.T;
 	if (!_v0.$) {
 		var drag = _v0.a;
 		return A3($author$project$Main$moveItem, drag.aN, drag.av, model.e);
@@ -11121,9 +11135,9 @@ var $author$project$Main$orderedNecks = function (model) {
 		return model.e;
 	}
 };
-var $author$project$Main$TogglePractice = {$: 26};
+var $author$project$Main$TogglePractice = {$: 27};
 var $author$project$Practice$isPlaying = function ($) {
-	return $.Q;
+	return $.W;
 };
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$practiceButton = function (model) {
@@ -11136,11 +11150,11 @@ var $author$project$Main$practiceButton = function (model) {
 					A2(
 					$elm$html$Html$Attributes$attribute,
 					'aria-expanded',
-					model.l ? 'true' : 'false'),
+					model.k ? 'true' : 'false'),
 					$elm$html$Html$Attributes$title('Practice soloing over a backing band'),
 					$elm$html$Html$Attributes$class('no-print')
 				]),
-			$author$project$Main$buttonBaseStyle(model.l)),
+			$author$project$Main$buttonBaseStyle(model.k)),
 		_List_fromArray(
 			[
 				$author$project$Practice$isPlaying(model.X) ? A2(
@@ -11196,7 +11210,7 @@ var $author$project$Practice$numeral = F2(
 				A2($elm$core$Basics$modBy, 12, bar.h - key),
 				$author$project$Practice$degreeNumerals));
 		var info = $author$project$Practice$qualInfo(bar.i);
-		var _v0 = info.ap;
+		var _v0 = info.ao;
 		switch (_v0) {
 			case 3:
 				return $elm$core$String$toLower(rn) + '°7';
@@ -11212,7 +11226,7 @@ var $author$project$Practice$barView = F3(
 	function (model, i, bar) {
 		var selected = _Utils_eq(i, model.M);
 		var info = $author$project$Practice$qualInfo(bar.i);
-		var current = model.Q && ((!_Utils_eq(model.ak, $elm$core$Maybe$Nothing)) && _Utils_eq(
+		var current = model.W && ((!_Utils_eq(model.at, $elm$core$Maybe$Nothing)) && _Utils_eq(
 			$author$project$Practice$currentIndex(model),
 			i));
 		var beat = A2(
@@ -11223,7 +11237,7 @@ var $author$project$Practice$barView = F3(
 				function ($) {
 					return $.ba;
 				},
-				model.ak));
+				model.at));
 		return A2(
 			$elm$html$Html$button,
 			_List_fromArray(
@@ -11351,7 +11365,7 @@ var $author$project$Practice$noteCell = F3(
 		var pc = A2($elm$core$Basics$modBy, 12, model.be + d);
 		var role = A2($author$project$Practice$roleOf, model, pc);
 		var heard = model.ab && _Utils_eq(
-			model.aq,
+			model.ap,
 			$elm$core$Maybe$Just(pc));
 		var ring = function () {
 			if (!heard) {
@@ -11650,7 +11664,7 @@ var $author$project$Practice$chart = function (model) {
 		A2(
 			$elm$core$Maybe$map,
 			$author$project$Practice$roleOf(model),
-			model.aq),
+			model.ap),
 		$elm$core$Maybe$Just(3)));
 	return A2(
 		$elm$html$Html$div,
@@ -12493,7 +12507,7 @@ var $author$project$Practice$mixer = function (model) {
 };
 var $author$project$Practice$ToggleListen = {$: 17};
 var $author$project$Practice$heardNote = function (model) {
-	var _v0 = _Utils_Tuple2(model.ab, model.aq);
+	var _v0 = _Utils_Tuple2(model.ab, model.ap);
 	if (_v0.a) {
 		if (!_v0.b.$) {
 			var pc = _v0.b.a;
@@ -12552,7 +12566,7 @@ var $author$project$Practice$playButton = function (model) {
 				A2(
 				$elm$html$Html$Attributes$attribute,
 				'aria-label',
-				model.Q ? 'Stop' : 'Play'),
+				model.W ? 'Stop' : 'Play'),
 				A2($elm$html$Html$Attributes$style, 'width', '44px'),
 				A2($elm$html$Html$Attributes$style, 'height', '44px'),
 				A2($elm$html$Html$Attributes$style, 'border-radius', '50%'),
@@ -12565,7 +12579,7 @@ var $author$project$Practice$playButton = function (model) {
 				A2(
 				$elm$html$Html$Attributes$style,
 				'box-shadow',
-				model.Q ? '0 0 0 3px var(--surface), 0 0 0 5px var(--btn-on-bg)' : 'none')
+				model.W ? '0 0 0 3px var(--surface), 0 0 0 5px var(--btn-on-bg)' : 'none')
 			]),
 		_List_fromArray(
 			[
@@ -12580,7 +12594,7 @@ var $author$project$Practice$playButton = function (model) {
 					]),
 				_List_fromArray(
 					[
-						model.Q ? A2(
+						model.W ? A2(
 						$elm$svg$Svg$rect,
 						_List_fromArray(
 							[
@@ -12601,7 +12615,7 @@ var $author$project$Practice$playButton = function (model) {
 			]));
 };
 var $author$project$Practice$status = function (model) {
-	var _v0 = _Utils_Tuple2(model.Q, model.ak);
+	var _v0 = _Utils_Tuple2(model.W, model.at);
 	if (!_v0.a) {
 		return _List_fromArray(
 			[
@@ -12667,7 +12681,7 @@ var $author$project$Practice$transport = function (model) {
 								A2(
 								$elm$html$Html$Attributes$style,
 								'background',
-								model.Q ? 'var(--btn-on-bg)' : 'var(--surface-bd)')
+								model.W ? 'var(--btn-on-bg)' : 'var(--surface-bd)')
 							]),
 						_List_Nil),
 						A2(
@@ -13726,7 +13740,7 @@ var $author$project$Main$indexAfterMove = F3(
 	});
 var $author$project$Main$displayIndexOf = F2(
 	function (model, i) {
-		var _v0 = model.U;
+		var _v0 = model.T;
 		if (_v0.$ === 1) {
 			return i;
 		} else {
@@ -13754,7 +13768,7 @@ var $author$project$Main$committedIndexOf = F2(
 	});
 var $author$project$Main$DragStart = F3(
 	function (a, b, c) {
-		return {$: 18, a: a, b: b, c: c};
+		return {$: 19, a: a, b: b, c: c};
 	});
 var $author$project$Main$dragStartDecoder = function (i) {
 	return A3(
@@ -13893,7 +13907,7 @@ var $author$project$Main$pickerGroup = F2(
 				buttons));
 	});
 var $author$project$Main$ToggleScalePicker = function (a) {
-	return {$: 12, a: a};
+	return {$: 13, a: a};
 };
 var $elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
 var $elm$svg$Svg$polyline = $elm$svg$Svg$trustedNode('polyline');
@@ -14814,14 +14828,14 @@ var $author$project$Main$pickerCards = function (groups) {
 		groups);
 };
 var $author$project$Main$SetPickerTab = function (a) {
-	return {$: 13, a: a};
+	return {$: 14, a: a};
 };
 var $author$project$Main$pickerTabs = function (model) {
 	var current = $author$project$Main$tabOf(
 		$author$project$Main$activeNeck(model).a);
 	var tab = F2(
 		function (t, lbl) {
-			var on = _Utils_eq(model.at, t);
+			var on = _Utils_eq(model.as, t);
 			return A2(
 				$elm$html$Html$button,
 				_List_fromArray(
@@ -15083,7 +15097,7 @@ var $author$project$Main$scalePicker = function (model) {
 					[
 						$author$project$Main$pickerTabs(model),
 						function () {
-						var _v0 = model.at;
+						var _v0 = model.as;
 						switch (_v0) {
 							case 0:
 								return $author$project$Main$pickerCards(
@@ -15296,7 +15310,7 @@ var $author$project$Main$viewScaleTitle = function (board) {
 };
 var $author$project$Main$neckHeading = F3(
 	function (model, slot, board) {
-		var open = model.aa && _Utils_eq(slot, model.k);
+		var open = model.aa && _Utils_eq(slot, model.l);
 		return A2(
 			$elm$html$Html$div,
 			_List_Nil,
@@ -15351,7 +15365,7 @@ var $author$project$Main$neckHeading = F3(
 				]));
 	});
 var $author$project$Main$RemoveNeck = function (a) {
-	return {$: 17, a: a};
+	return {$: 18, a: a};
 };
 var $author$project$Main$removeNeckButton = function (i) {
 	return A2(
@@ -16664,7 +16678,7 @@ var $author$project$Main$drawBoxRegionsBoxes = function (board) {
 		_Utils_ap(overlaps, wrapOverlaps));
 };
 var $author$project$Main$diagonalOctaves = function (shape) {
-	var pair = ((shape.am - 1) / 2) | 0;
+	var pair = ((shape.al - 1) / 2) | 0;
 	return A2(
 		$elm$core$List$range,
 		-2,
@@ -16774,7 +16788,7 @@ var $author$project$Main$diagonalShapesFor = F2(
 						$elm$core$List$map,
 						$elm$core$Basics$add(offset),
 						lowerRels) : _List_Nil,
-					am: (2 * k) + 1,
+					al: (2 * k) + 1,
 					a9: A2(
 						$elm$core$List$map,
 						$elm$core$Basics$add(offset),
@@ -16838,7 +16852,7 @@ var $author$project$Main$diagonalSpan = F5(
 			_List_fromArray(
 				[
 					A2(ends, shape.a0, shape.aC),
-					A2(ends, shape.a9, shape.am)
+					A2(ends, shape.a9, shape.al)
 				]));
 		return _Utils_Tuple2(
 			A2(
@@ -16854,14 +16868,14 @@ var $author$project$Main$diagonalSpan = F5(
 	});
 var $author$project$Main$drawDiagonalShape = F6(
 	function (tuning, scale, root, paint, shape, octave) {
-		var yMid = ($author$project$Main$stringY(shape.aC) + $author$project$Main$stringY(shape.am)) / 2;
+		var yMid = ($author$project$Main$stringY(shape.aC) + $author$project$Main$stringY(shape.al)) / 2;
 		var shift = A3($author$project$Main$diagonalAnchor, tuning, scale, root) + (12 * octave);
 		var upperSpan = A2(
 			$author$project$Main$relsSpan,
-			shift + A2($author$project$Main$boxShift, tuning, shape.am),
+			shift + A2($author$project$Main$boxShift, tuning, shape.al),
 			shape.a9);
 		var pad = $author$project$Main$stringSpacing * 0.55;
-		var yUpTop = $author$project$Main$stringY(shape.am) - pad;
+		var yUpTop = $author$project$Main$stringY(shape.al) - pad;
 		var lowerSpan = A2(
 			$author$project$Main$relsSpan,
 			shift + A2($author$project$Main$boxShift, tuning, shape.aC),
@@ -16915,7 +16929,7 @@ var $author$project$Main$drawDiagonalShape = F6(
 						var _v5 = _v1.b.a;
 						var loU = _v5.a;
 						var hiU = _v5.b;
-						var yUpBot = $author$project$Main$stringY(shape.am) + pad;
+						var yUpBot = $author$project$Main$stringY(shape.al) + pad;
 						return _List_fromArray(
 							[
 								_Utils_Tuple2(
@@ -17972,7 +17986,7 @@ var $author$project$Main$drawFretNumbers = function (strings) {
 };
 var $author$project$Main$FretClicked = F4(
 	function (a, b, c, d) {
-		return {$: 25, a: a, b: b, c: c, d: d};
+		return {$: 26, a: a, b: b, c: c, d: d};
 	});
 var $author$project$Main$drawHitAreas = function (board) {
 	var cell = F2(
@@ -18511,7 +18525,7 @@ var $author$project$Main$diagonalBoxOf = F5(
 						$elm$core$Basics$modBy(12),
 						rels));
 			};
-			return ((_Utils_eq(s, shape.aC) && memberMod(shape.a0)) || (_Utils_eq(s, shape.am) && memberMod(shape.a9))) ? $elm$core$Maybe$Just(shape.bc) : $elm$core$Maybe$Nothing;
+			return ((_Utils_eq(s, shape.aC) && memberMod(shape.a0)) || (_Utils_eq(s, shape.al) && memberMod(shape.a9))) ? $elm$core$Maybe$Just(shape.bc) : $elm$core$Maybe$Nothing;
 		};
 		return $elm$core$List$head(
 			A2(
@@ -18919,7 +18933,7 @@ var $author$project$Main$viewNeck = F4(
 		var slot = A2($author$project$Main$committedIndexOf, model, i);
 		var board = A3($author$project$Main$boardAt, model, slot, neck);
 		var beingDragged = function () {
-			var _v0 = model.U;
+			var _v0 = model.T;
 			if (!_v0.$) {
 				var drag = _v0.a;
 				return _Utils_eq(drag.av, i);
@@ -18988,61 +19002,8 @@ var $author$project$Main$viewNeck = F4(
 						]))
 				]));
 	});
-var $author$project$Main$SetTuning = function (a) {
-	return {$: 2, a: a};
-};
-var $author$project$Main$customButton = function (model) {
-	return A2(
-		$elm$html$Html$button,
-		_Utils_ap(
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick(
-					$author$project$Main$SetTuning(
-						$author$project$Main$customFrom(model.b.j))),
-					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
-				]),
-			$author$project$Main$buttonBaseStyle(
-				$author$project$Main$isCustom(model.b))),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('Custom')
-			]));
-};
-var $author$project$Main$ToggleColumns = {$: 10};
-var $author$project$Main$columnsToggle = function (model) {
-	return A2(
-		$elm$html$Html$button,
-		_Utils_ap(
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick($author$project$Main$ToggleColumns),
-					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
-				]),
-			$author$project$Main$buttonBaseStyle(model.S)),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('Two columns')
-			]));
-};
-var $author$project$Main$ToggleDegrees = {$: 9};
-var $author$project$Main$degreesToggle = function (model) {
-	return A2(
-		$elm$html$Html$button,
-		_Utils_ap(
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick($author$project$Main$ToggleDegrees),
-					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
-				]),
-			$author$project$Main$buttonBaseStyle(model.H)),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('Degrees')
-			]));
-};
-var $author$project$Main$SetFocus = function (a) {
-	return {$: 6, a: a};
+var $author$project$Main$TuneAll = function (a) {
+	return {$: 5, a: a};
 };
 var $author$project$Main$stepperButton = F2(
 	function (msg, glyph) {
@@ -19066,6 +19027,99 @@ var $author$project$Main$stepperButton = F2(
 					$elm$html$Html$text(glyph)
 				]));
 	});
+var $author$project$Main$allStringsStepper = A2(
+	$elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'display', 'inline-flex'),
+			A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+			A2($elm$html$Html$Attributes$style, 'align-items', 'center'),
+			A2($elm$html$Html$Attributes$style, 'margin', '0 10px 0 3px'),
+			A2($elm$html$Html$Attributes$style, 'padding-right', '10px'),
+			A2($elm$html$Html$Attributes$style, 'border-right', '1px solid var(--btn-bd)')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$author$project$Main$stepperButton,
+			$author$project$Main$TuneAll(1),
+			'▲'),
+			A2(
+			$elm$html$Html$span,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'font-size', '13px'),
+					A2($elm$html$Html$Attributes$style, 'font-weight', '600'),
+					A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
+					A2($elm$html$Html$Attributes$style, 'min-width', '26px'),
+					A2($elm$html$Html$Attributes$style, 'text-align', 'center'),
+					A2($elm$html$Html$Attributes$style, 'color', 'var(--text)')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text('All')
+				])),
+			A2(
+			$author$project$Main$stepperButton,
+			$author$project$Main$TuneAll(-1),
+			'▼')
+		]));
+var $author$project$Main$SetTuning = function (a) {
+	return {$: 2, a: a};
+};
+var $author$project$Main$customButton = function (model) {
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$SetTuning(
+						$author$project$Main$customFrom(model.b.j))),
+					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+				]),
+			$author$project$Main$buttonBaseStyle(
+				$author$project$Main$isCustom(model.b))),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Custom')
+			]));
+};
+var $author$project$Main$ToggleColumns = {$: 11};
+var $author$project$Main$columnsToggle = function (model) {
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick($author$project$Main$ToggleColumns),
+					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+				]),
+			$author$project$Main$buttonBaseStyle(model.R)),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Two columns')
+			]));
+};
+var $author$project$Main$ToggleDegrees = {$: 10};
+var $author$project$Main$degreesToggle = function (model) {
+	return A2(
+		$elm$html$Html$button,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick($author$project$Main$ToggleDegrees),
+					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
+				]),
+			$author$project$Main$buttonBaseStyle(model.H)),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Degrees')
+			]));
+};
+var $author$project$Main$SetFocus = function (a) {
+	return {$: 7, a: a};
+};
 var $author$project$Main$stepper = F2(
 	function (value, toMsg) {
 		return A2(
@@ -19149,7 +19203,7 @@ var $author$project$Main$highlightFrets = function (model) {
 	}
 };
 var $author$project$Main$SetStringFocus = function (a) {
-	return {$: 7, a: a};
+	return {$: 8, a: a};
 };
 var $author$project$Main$highlightString = function (model) {
 	var _v0 = model.w;
@@ -19202,7 +19256,7 @@ var $author$project$Main$highlightToggle = function (model) {
 				$elm$html$Html$text('Highlight shapes')
 			]));
 };
-var $author$project$Main$ToggleMono = {$: 8};
+var $author$project$Main$ToggleMono = {$: 9};
 var $author$project$Main$monoToggle = function (model) {
 	return A2(
 		$elm$html$Html$button,
@@ -19219,7 +19273,7 @@ var $author$project$Main$monoToggle = function (model) {
 			]));
 };
 var $author$project$Main$ChangeStringCount = function (a) {
-	return {$: 5, a: a};
+	return {$: 6, a: a};
 };
 var $author$project$Main$stringCountControl = function (model) {
 	return A2(
@@ -19263,7 +19317,7 @@ var $author$project$Main$stringToggle = function (model) {
 				$elm$html$Html$text('Highlight string')
 			]));
 };
-var $author$project$Main$ToggleTuningList = {$: 11};
+var $author$project$Main$ToggleTuningList = {$: 12};
 var $author$project$Main$tuningLabel = function (t) {
 	return $author$project$Main$isCustom(t) ? ('Custom tuning: ' + A2(
 		$elm$core$String$join,
@@ -19282,13 +19336,13 @@ var $author$project$Main$tuningToggle = function (model) {
 					$elm$html$Html$Events$onClick($author$project$Main$ToggleTuningList),
 					A2($elm$html$Html$Attributes$style, 'min-width', '80px')
 				]),
-			$author$project$Main$buttonBaseStyle(model.al)),
+			$author$project$Main$buttonBaseStyle(model.ak)),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
 				_Utils_ap(
 					$author$project$Main$tuningLabel(model.b),
-					model.al ? ' ▴' : ' ▾'))
+					model.ak ? ' ▴' : ' ▾'))
 			]));
 };
 var $author$project$Main$setupRow = function (model) {
@@ -19399,7 +19453,7 @@ var $author$project$Main$viewOptions = function (model) {
 		_List_fromArray(
 			[
 				$author$project$Main$setupRow(model),
-				model.al ? $author$project$Main$controlBlock(
+				model.ak ? $author$project$Main$controlBlock(
 				_Utils_ap(
 					A2(
 						$elm$core$List$map,
@@ -19410,7 +19464,7 @@ var $author$project$Main$viewOptions = function (model) {
 						[
 							$author$project$Main$customButton(model)
 						]))) : $elm$html$Html$text(''),
-				(model.al && $author$project$Main$isCustom(model.b)) ? A2(
+				(model.ak && $author$project$Main$isCustom(model.b)) ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -19419,15 +19473,18 @@ var $author$project$Main$viewOptions = function (model) {
 						A2($elm$html$Html$Attributes$style, 'flex-wrap', 'wrap')
 					]),
 				A2(
-					$elm$core$List$map,
-					$author$project$Main$stringStepper(model),
+					$elm$core$List$cons,
+					$author$project$Main$allStringsStepper,
 					A2(
-						$elm$core$List$range,
-						1,
-						$author$project$Main$stringCount(model.b)))) : $elm$html$Html$text('')
+						$elm$core$List$map,
+						$author$project$Main$stringStepper(model),
+						A2(
+							$elm$core$List$range,
+							1,
+							$author$project$Main$stringCount(model.b))))) : $elm$html$Html$text('')
 			]));
 };
-var $author$project$Main$ToggleWakeLock = {$: 23};
+var $author$project$Main$ToggleWakeLock = {$: 24};
 var $author$project$Main$wakeLockButton = function (model) {
 	return A2(
 		$elm$html$Html$button,
@@ -19505,7 +19562,7 @@ var $author$project$Main$viewBody = function (model) {
 							]))
 					])),
 				model.G ? $author$project$Main$viewOptions(model) : $elm$html$Html$text(''),
-				model.l ? A2(
+				model.k ? A2(
 				$elm$html$Html$map,
 				$author$project$Main$PracticeMsg,
 				A2($author$project$Practice$view, $author$project$Main$totalWidth, model.X)) : $elm$html$Html$text(''),
@@ -19518,7 +19575,7 @@ var $author$project$Main$viewBody = function (model) {
 							$elm$html$Html$Attributes$style,
 							'user-select',
 							function () {
-								var _v0 = model.U;
+								var _v0 = model.T;
 								if (!_v0.$) {
 									return 'none';
 								} else {
@@ -19526,7 +19583,7 @@ var $author$project$Main$viewBody = function (model) {
 								}
 							}())
 						]),
-					model.S ? _List_fromArray(
+					model.R ? _List_fromArray(
 						[
 							A2($elm$html$Html$Attributes$style, 'display', 'grid'),
 							A2($elm$html$Html$Attributes$style, 'grid-template-columns', 'repeat(2, minmax(0, 1fr))'),

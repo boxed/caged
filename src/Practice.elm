@@ -1002,39 +1002,40 @@ type alias SoundingChord =
     { root : Int, third : Int, fifth : Int, tones : List Int }
 
 
-{-| The chord the band is playing right now, or `Nothing` while it is stopped
-or counting in. The necks mark its root, third and fifth and fade every note
-outside it. -}
-soundingChord : Model -> Maybe SoundingChord
-soundingChord model =
-    case ( model.playing, model.playhead ) of
-        ( True, Just _ ) ->
-            let
-                bar =
-                    currentBar model
+{-| The chord the necks follow while the panel is open: the one the band is
+playing, or, stopped, the bar selected in the chart, so a chart can be gone
+through chord by chord at your own pace. `Nothing` with the panel shut, which
+puts the necks back to showing their scales, playing or not. The necks mark
+its root, third and fifth and fade every note outside it. -}
+soundingChord : Bool -> Model -> Maybe SoundingChord
+soundingChord open model =
+    if open then
+        let
+            bar =
+                currentBar model
 
-                info =
-                    qualInfo bar.q
-            in
-            Just
-                { root = bar.root
-                , third =
-                    if info.fam == MinFam || info.fam == DimFam then
-                        3
+            info =
+                qualInfo bar.q
+        in
+        Just
+            { root = bar.root
+            , third =
+                if info.fam == MinFam || info.fam == DimFam then
+                    3
 
-                    else
-                        4
-                , fifth =
-                    if info.fam == DimFam then
-                        6
+                else
+                    4
+            , fifth =
+                if info.fam == DimFam then
+                    6
 
-                    else
-                        7
-                , tones = Dict.keys (chordTones bar)
-                }
+                else
+                    7
+            , tones = Dict.keys (chordTones bar)
+            }
 
-        _ ->
-            Nothing
+    else
+        Nothing
 
 
 {-| `seed` seeds the chart writer; `query` is the page's URL parameters, which
