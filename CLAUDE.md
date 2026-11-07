@@ -38,7 +38,8 @@ commit both files together.
 - `src/Main.elm` — the whole app: model, music theory, SVG rendering, ports.
 - `src/Practice.elm` — the Practice panel (backing band to solo over), see **Practice**.
 - `band.js` — the Practice panel's sound and microphone: everything Elm can't do.
-- `sounds/` — the band's recorded guitar and piano notes (FluidR3, MIT).
+- `sounds/` — the band's recorded notes (FluidR3 GM soundfont, MIT): guitar and piano from
+  gleitz/midi-js-soundfonts, drums, bass, electric piano and organ rendered by `sounds/render.py`.
 - `tests/BoxShapeTests.elm` — tests that box shape edges land on scale notes,
   stripe edges land on scale notes, and overlap stripes cover all multi-box
   overlap regions.
@@ -885,7 +886,11 @@ stop the band, so the button carries a dot while it plays.
   other tones are plain notes, and every note outside it fades (`noteFade`,
   at `offChordOpacity` 0.4, lighter than the off-string fade since the scale
   is still what you solo with).
-- The samples are fetched from `sounds/` on the first Play, not inlined.
+- The samples are fetched from `sounds/` on the first Play, not inlined. Every
+  instrument is sampled (one note every three semitones, pitch-shifted between);
+  each also keeps a Web Audio synth that plays until its samples decode, or for
+  good if they fail. The `*_TRIM` constants match each sampled instrument's level
+  to the synth it replaced, soloed, so the mixer defaults still balance.
 - **Every setting is in the URL** like everything else (`toQuery` /
   `fromQuery`), each left out at its default: `band` (style), `bpm`, `feel`,
   `key` (`Fs`, as a root is written), `chart` (a preset id, or the chords

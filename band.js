@@ -3,9 +3,12 @@
 // Elm through two ports: `bandOut` (Elm -> here: state, play, stop, listen, unlisten) and
 // `bandIn` (here -> Elm: playing, beat, heard, ear).
 //
-// The band: drums, bass, keys and guitar synthesized with Web Audio, the acoustic guitar and the
-// ballad piano from recorded samples in sounds/ (FluidR3 General MIDI soundfont via
-// gleitz/midi-js-soundfonts, both MIT licensed), fetched on the first Play.
+// The band plays recorded samples from sounds/, fetched on the first Play: the acoustic guitar
+// and the ballad piano (FluidR3 General MIDI soundfont via gleitz/midi-js-soundfonts), and the
+// drum kit, finger bass, electric piano and drawbar organ (rendered from the same FluidR3_GM.sf2
+// with fluidsynth: one dry note per file, mono). FluidR3 is MIT licensed, © Frank Wen. Every
+// instrument also has a Web Audio synth, which plays until its samples have decoded, or for good
+// if they fail to.
 // read while this file loads: by the time connectBand runs, currentScript is the page's own
 const SOUNDS = new URL('sounds/', document.currentScript ? document.currentScript.src : location.href);
 
@@ -50,6 +53,18 @@ function connectBand(app) {
   // one recorded note every three semitones; the pitches between shift the nearest one
   const GTR_SAMPLES = [40, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73, 76];
   const PIANO_SAMPLES = [53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83];
+  const BASS_SAMPLES = [25, 28, 31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61, 64];
+  const KEYS_SAMPLES = PIANO_SAMPLES;   // the electric piano and the organ
+  // drum hits as [file, the MIDI velocity it was recorded at]; a hit plays the nearest layer
+  const DRUM_LAYERS = {
+    kick: [['kick', 110], ['kick-soft', 60]],
+    snare: [['snare', 110], ['snare-soft', 50]],
+    hat: [['hat', 100], ['hat-soft', 55]],
+    hatOpen: [['hat-open', 90]],
+    crash: [['crash', 100]],
+    ride: [['ride', 90]],
+  };
+  const DRUM_SAMPLES = Object.values(DRUM_LAYERS).flat().map(([file]) => file);
   async function loadSample(ctx, file) {
     const res = await fetch(new URL(file, SOUNDS));
     if (!res.ok) throw new Error(`${file}: ${res.status}`);
@@ -101,8 +116,59 @@ function connectBand(app) {
     };
     const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
 
+    // One instrument's recorded notes. `ready` stays false, and the synth plays, until every file
+    // has decoded. `start` is where each file's sound begins: mp3 decoders differ in how much of
+    // the encoder's leading padding they keep, and a drum hit has to land on the beat.
+    function sampleSet(name, keys) {
+      const set = { bufs: {}, start: {}, ready: false };
+      set.load = Promise.all(keys.map(async key => {
+        const buf = await loadSample(ctx, `${name}-${key}.mp3`);
+        const d = buf.getChannelData(0);
+        let i = 0;
+        while (i < d.length && Math.abs(d[i]) < 0.003) i++;
+        set.bufs[key] = buf;
+        set.start[key] = Math.max(0, i / buf.sampleRate - 0.001);
+      })).then(() => { set.ready = true; console.info(`${name}: samples ready`); })
+        .catch(e => console.warn(`${name}: samples failed to decode, using the synth`, e));
+      return set;
+    }
+    const nearest = (keys, m) => keys.reduce((a, b) => (Math.abs(b - m) < Math.abs(a - m) ? b : a));
+    // Play one file at time t, `rate` times its own speed. With `hold`, the note is damped after
+    // that many seconds, over `release`; without, it rings out. Returns its gain, for a choke.
+    function playSample(set, key, t, rate, dest, gain, hold, release = 0.06) {
+      const src = ctx.createBufferSource();
+      src.buffer = set.bufs[key];
+      src.playbackRate.value = rate;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(gain, t);
+      let end = t + (src.buffer.duration - set.start[key]) / rate;
+      if (hold !== undefined && t + hold + release < end) {
+        g.gain.setValueAtTime(gain, t + hold);
+        g.gain.exponentialRampToValueAtTime(gain * 0.001, t + hold + release);
+        end = t + hold + release;
+      }
+      src.connect(g).connect(dest);
+      src.start(t, set.start[key]);
+      src.stop(end + 0.02);
+      return { src, g };
+    }
+
+    // --- recorded drums ---
+    const kit = sampleSet('drum', DRUM_SAMPLES);
+    // Levels are in the synth kit's terms; a layer recorded softer is played that much louder,
+    // so picking a layer changes the tone of a hit, not its loudness.
+    // trims measured against the synth kit, soloed, so the mix the faders were set for still holds
+    const KIT_TRIM = 1.35;
+    const PIECE_TRIM = { ride: 2 };
+    let openHat = null;
+    function drumHit(t, vel, kind, hold, release) {
+      const [file, v] = DRUM_LAYERS[kind].reduce((a, b) => (Math.abs(b[1] / 127 - vel) < Math.abs(a[1] / 127 - vel) ? b : a));
+      return playSample(kit, file, t, 1 + (Math.random() - 0.5) * 0.01, bus.drums, KIT_TRIM * (PIECE_TRIM[kind] || 1) * vel * 127 / v, hold, release);
+    }
+
     // --- drums ---
     function kick(t, vel) {
+      if (kit.ready) return drumHit(t, vel, 'kick');
       const o = ctx.createOscillator(); o.type = 'sine';
       o.frequency.setValueAtTime(150, t);
       o.frequency.exponentialRampToValueAtTime(42, t + 0.11);
@@ -123,6 +189,11 @@ function connectBand(app) {
     // closed hi-hat: a soft "tss" played with the tip of the stick. The fizz above 10 kHz is cut,
     // the attack is eased in over a couple of milliseconds rather than a click, and it's quiet.
     function softHat(t, vel) {
+      if (kit.ready) {
+        // a closed hat chokes an open one still ringing
+        if (openHat) { openHat.g.gain.setTargetAtTime(0, t, 0.012); openHat = null; }
+        return drumHit(t, vel, 'hat');
+      }
       const dur = 0.07;
       const n = noise(t, dur);
       const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5500; hp.Q.value = 0.5;
@@ -137,6 +208,7 @@ function connectBand(app) {
     // snare: a warm, fat backbeat. The noise (the wires) is kept below ~4 kHz and eased in,
     // the drum's own tone carries the weight, and the tail is short and dark.
     function snare(t, vel) {
+      if (kit.ready) return drumHit(t, vel, 'snare');
       const n = noise(t, 0.3);
       const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.6;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3800; lp.Q.value = 0.5;
@@ -156,6 +228,7 @@ function connectBand(app) {
     }
     // crash: a soft, dark wash struck with a mallet-light touch rather than a bright splash
     function crash(t, vel) {
+      if (kit.ready) return drumHit(t, vel, 'crash');
       const dur = 2.2;
       const n = noise(t, dur);
       const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 4200; bp.Q.value = 0.5;
@@ -170,6 +243,7 @@ function connectBand(app) {
     }
     function hat(t, vel, open) {
       if (!open) return softHat(t, vel);
+      if (kit.ready) { openHat = drumHit(t, vel, 'hatOpen'); return; }
       const dur = 0.3;
       const n = noise(t, dur);
       const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4500; hp.Q.value = 0.5;
@@ -181,6 +255,8 @@ function connectBand(app) {
       n.connect(hp).connect(lp).connect(g).connect(bus.drums);
     }
     function ride(t, vel, dur) {
+      // a real ride rings under the next hit; it is only damped so the shuffle doesn't wash out
+      if (kit.ready) return drumHit(t, vel, 'ride', dur * 3, 0.4);
       const n = noise(t, dur);
       const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 6000; bp.Q.value = 0.6;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 8500; lp.Q.value = 0.5;
@@ -335,7 +411,19 @@ function connectBand(app) {
 
     // --- bass ---
     // dark: a round, deep ballad bass (less saw, filter mostly closed)
+    const bassSet = sampleSet('bass', BASS_SAMPLES);
+    const BASS_TRIM = 1.6;   // level-matched to the synth bass, as are the keys below
     function bassNote(t, midi, dur, vel, dark) {
+      if (bassSet.ready) {
+        const key = nearest(BASS_SAMPLES, midi);
+        let dest = bus.bass;
+        if (dark) {   // the ballad's: round and deep, the finger noise rolled off
+          dest = ctx.createBiquadFilter(); dest.type = 'lowpass'; dest.frequency.value = 600; dest.Q.value = 0.5;
+          dest.connect(bus.bass);
+        }
+        playSample(bassSet, key, t, Math.pow(2, (midi - key) / 12), dest, BASS_TRIM * (dark ? 1.1 : 1) * vel, dur, 0.04);
+        return;
+      }
       const f = midiHz(midi);
       const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = f;
       const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = f;
@@ -358,8 +446,18 @@ function connectBand(app) {
     // --- keys (electric piano) ---
     const keysLP = ctx.createBiquadFilter(); keysLP.type = 'lowpass'; keysLP.frequency.value = 3800;
     keysLP.connect(bus.keys);
+    const epSet = sampleSet('epiano', KEYS_SAMPLES);
+    const EP_TRIM = 0.85;
     function keysChord(t, midis, dur, vel) {
       const per = vel * 1.5 / midis.length;
+      if (epSet.ready) {
+        midis.forEach((m, idx) => {
+          const key = nearest(KEYS_SAMPLES, m);
+          playSample(epSet, key, t + idx * 0.006, Math.pow(2, (m - key) / 12), keysLP,
+            EP_TRIM * per * (0.92 + Math.random() * 0.16), dur, 0.12);
+        });
+        return;
+      }
       midis.forEach((m, idx) => {
         const f = midiHz(m) * (1 + (Math.random() - 0.5) * 0.0015);
         const tt = t + idx * 0.006; // a slight roll
@@ -392,8 +490,26 @@ function connectBand(app) {
     const organLfo = ctx.createOscillator(); organLfo.frequency.value = 5.6;
     const organLfoDepth = ctx.createGain(); organLfoDepth.gain.value = 5; // cents
     organLfo.connect(organLfoDepth); organLfo.start();
+    const organSet = sampleSet('organ', KEYS_SAMPLES);
+    const ORGAN_TRIM = 3.7;
     function organChord(t, midis, dur, vel) {
       const per = vel / midis.length;
+      if (organSet.ready) {
+        midis.forEach(m => {
+          const key = nearest(KEYS_SAMPLES, m);
+          // the swell pedal: fade the recorded note in under the bar, then let go of the keys
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(1, t + 0.12);
+          g.connect(organLP);
+          const { src } = playSample(organSet, key, t, Math.pow(2, (m - key) / 12), g, ORGAN_TRIM * per, dur, 0.1);
+          if (src.detune) {
+            organLfoDepth.connect(src.detune);
+            src.onended = () => organLfoDepth.disconnect(src.detune);
+          }
+        });
+        return;
+      }
       midis.forEach(m => {
         const o = ctx.createOscillator(); o.setPeriodicWave(organWave); o.frequency.value = midiHz(m);
         o.detune.value = (Math.random() - 0.5) * 6;
@@ -563,15 +679,16 @@ function connectBand(app) {
       const tr = beatDur / 3;
       const trip = k => t + k * tr;
 
-      // drums: hat on every triplet, a light kick on 1 & 3, a warm snare on 2 & 4, crash at the top, triplet fill into the top
+      // drums: hat on every triplet, a light kick on 1 & 3, a soft snare on 2 & 4, crash at the top, triplet fill into the top
       const fill = last && beat === 3;
       if (top && beat === 0) crash(t, 0.18);
       if (!fill) [0.42, 0.2, 0.26].forEach((v, k) => hat(trip(k), v * (0.9 + r() * 0.2), false));
       if (beat === 0 || beat === 2) kick(t, 0.4);
       if (beat === 3 && !fill && r() < 0.45) kick(trip(2), 0.25);
       if (beat === 1 && r() < 0.2) kick(trip(2), 0.22);
-      if (beat === 1 || beat === 3) snare(t, 0.85);
-      if (fill) { snare(t, 0.85); [0.45, 0.6].forEach((v, k) => snare(trip(k + 1), v)); }
+      // a ballad backbeat is laid back: soft enough to play the snare's light layer
+      if ((beat === 1 || beat === 3) && !fill) snare(t, 0.5);
+      if (fill) { snare(t, 0.5); [0.3, 0.42].forEach((v, k) => snare(trip(k + 1), v)); }
 
       // bass: low and round: root, fifth, root, then the fifth and a step into the next chord on the last triplet
       const BALLAD_BASS = 0.22; // the deep, round bass carries far more energy than the triplet piano
@@ -656,7 +773,7 @@ function connectBand(app) {
     });
 
     return {
-      ctx, queue, ready: Promise.all([gtrLoad, pianoLoad]),
+      ctx, queue, ready: Promise.all([gtrLoad, pianoLoad, kit.load, bassSet.load, epSet.load, organSet.load]),
       start() {
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setValueAtTime(state.mix.master, ctx.currentTime);
