@@ -12790,15 +12790,15 @@ var $author$project$Practice$view = F2(
 	});
 var $author$project$Main$cagedShapeNames = _List_fromArray(
 	['C', 'A', 'G', 'E', 'D']);
+var $author$project$Main$hueless = function (board) {
+	return !(!board.r);
+};
 var $author$project$Main$isDiagonal = function (scale) {
 	if (scale.$ === 53) {
 		return true;
 	} else {
 		return $author$project$Main$isArpeggio(scale);
 	}
-};
-var $author$project$Main$isMono = function (board) {
-	return board.r === 1;
 };
 var $author$project$Main$isPlain = function (scale) {
 	if (scale.$ === 54) {
@@ -12906,8 +12906,8 @@ var $author$project$Main$legendGroup = function (children) {
 		children);
 };
 var $author$project$Main$legendMarker = F3(
-	function (mono, kind, lbl) {
-		var pcGradient = mono ? 'var(--note-bg)' : 'linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))';
+	function (hueless_, kind, lbl) {
+		var pcGradient = hueless_ ? 'var(--note-bg)' : 'linear-gradient(135deg, var(--pc-0), var(--pc-7), var(--pc-4))';
 		var common = _List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
@@ -13339,6 +13339,9 @@ var $author$project$Main$inversionColor = F2(
 			}
 		}
 	});
+var $author$project$Main$isMono = function (board) {
+	return board.r === 1;
+};
 var $author$project$Main$legendRing = F2(
 	function (board, _v0) {
 		var inv = _v0.a;
@@ -13614,31 +13617,31 @@ var $author$project$Main$viewLegend = function (board) {
 				$author$project$Main$legendText('Tones:'),
 				A3(
 				$author$project$Main$legendMarker,
-				$author$project$Main$isMono(board),
+				$author$project$Main$hueless(board),
 				'square-pc',
 				'Root'),
 				A3(
 				$author$project$Main$legendMarker,
-				$author$project$Main$isMono(board),
+				$author$project$Main$hueless(board),
 				'circle-pc-dashed',
 				_Utils_eq(board.a, $author$project$Main$ChromaticMajor) ? '3rd' : '♭3'),
 				A3(
 				$author$project$Main$legendMarker,
-				$author$project$Main$isMono(board),
+				$author$project$Main$hueless(board),
 				'circle-pc-dotted',
 				'5th'),
 				A3(
 				$author$project$Main$legendMarker,
-				$author$project$Main$isMono(board),
+				$author$project$Main$hueless(board),
 				'circle-pc-double',
 				_Utils_eq(board.a, $author$project$Main$ChromaticMajor) ? '7th' : '♭7'),
 				A3(
 				$author$project$Main$legendMarker,
-				$author$project$Main$isMono(board),
+				$author$project$Main$hueless(board),
 				'circle-pc',
 				'other')
 			]),
-		$author$project$Main$isMono(board) ? _List_Nil : _List_fromArray(
+		$author$project$Main$hueless(board) ? _List_Nil : _List_fromArray(
 			[
 				$author$project$Main$legendText('hue = note')
 			])) : ($author$project$Main$isTriad(board.a) ? _List_fromArray(
@@ -13646,23 +13649,23 @@ var $author$project$Main$viewLegend = function (board) {
 			$author$project$Main$legendText('Tones:'),
 			A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'square-dark',
 			'Root'),
 			_Utils_eq(
 			$author$project$Main$thirdOf(board.a),
 			-1) ? A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'circle-plain',
 			$author$project$Main$triadMiddle(board.a)) : A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'circle-dashed',
 			'3rd'),
 			A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'circle-dotted',
 			'5th')
 		]) : _List_fromArray(
@@ -13670,27 +13673,27 @@ var $author$project$Main$viewLegend = function (board) {
 			$author$project$Main$legendText('Tones:'),
 			A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'square-dark',
 			'Root'),
 			A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'circle-dashed',
 			'3rd'),
 			A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'circle-dotted',
 			'5th'),
 			A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'circle-double',
 			'7th'),
 			A3(
 			$author$project$Main$legendMarker,
-			$author$project$Main$isMono(board),
+			$author$project$Main$hueless(board),
 			'circle-plain',
 			'other')
 		])));
@@ -14810,7 +14813,7 @@ var $author$project$Main$scaleTitleParts = function (board) {
 	var detail = _Utils_eq(board.a, $author$project$Main$Blank) ? _List_Nil : ($author$project$Main$isChromatic(board.a) ? _List_fromArray(
 		[
 			$author$project$Main$aside(
-			'Every note on the neck · ' + (($author$project$Main$isMono(board) ? '' : 'hue = note · ') + ((_Utils_eq(board.a, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' from ' + $author$project$Main$noteName(board.g)))))
+			'Every note on the neck · ' + (($author$project$Main$hueless(board) ? '' : 'hue = note · ') + ((_Utils_eq(board.a, $author$project$Main$ChromaticMajor) ? '3 · 5 · 7' : '♭3 · 5 · ♭7') + (' from ' + $author$project$Main$noteName(board.g)))))
 		]) : _Utils_ap(
 		A3(
 			$elm$core$List$map2,
@@ -17879,14 +17882,14 @@ var $author$project$Main$drawFifthsLadders = function (board) {
 					$elm$core$String$fromFloat(
 						$author$project$Main$stringY(s))),
 					$elm$svg$Svg$Attributes$stroke(
-					$author$project$Main$isMono(board) ? 'var(--note-bd)' : ('url(#' + (gradId(r) + ')'))),
+					$author$project$Main$hueless(board) ? 'var(--note-bd)' : ('url(#' + (gradId(r) + ')'))),
 					$elm$svg$Svg$Attributes$strokeWidth('6'),
 					$elm$svg$Svg$Attributes$strokeLinecap('round')
 				]),
 			_List_Nil);
 	};
 	return ((_Utils_eq(board.a, $author$project$Main$ChromaticMinor) || _Utils_eq(board.a, $author$project$Main$ChromaticMajor)) && $author$project$Main$laddersFit(board.b)) ? _Utils_ap(
-		$author$project$Main$isMono(board) ? _List_Nil : _List_fromArray(
+		$author$project$Main$hueless(board) ? _List_Nil : _List_fromArray(
 			[
 				A2(
 				$elm$svg$Svg$defs,
@@ -18714,7 +18717,7 @@ var $author$project$Main$drawNoteAt = F3(
 						role,
 						cx,
 						cy,
-						$author$project$Main$isMono(board) ? 'var(--note-bg)' : $author$project$Main$pitchColor(n));
+						$author$project$Main$hueless(board) ? 'var(--note-bg)' : $author$project$Main$pitchColor(n));
 				} else {
 					switch (role) {
 						case 0:

@@ -153,6 +153,13 @@ isMono board =
     board.shading == Monochrome
 
 
+{-| The all-notes maps color every note by its pitch; Monochrome has no hues
+to spend and Off asks for no colors, so both drop them. -}
+hueless : Board -> Bool
+hueless board =
+    board.shading /= Colored
+
+
 {-| A neck plus the tuning it is played in, which is everything the drawing
 code needs. `id` namespaces the SVG ids this neck mints: ids live in one
 document-wide namespace, so without a prefix a `url(#…)` reference would
@@ -4530,7 +4537,7 @@ scaleTitleParts board =
             else if isChromatic board.scale then
                 [ aside
                     ("Every note on the neck · "
-                        ++ (if isMono board then
+                        ++ (if hueless board then
                                 ""
 
                             else
@@ -6856,7 +6863,7 @@ drawFifthsLadders board =
                 , SA.x2 (String.fromFloat (noteX g))
                 , SA.y2 (String.fromFloat (stringY s))
                 , SA.stroke
-                    (if isMono board then
+                    (if hueless board then
                         "var(--note-bd)"
 
                      else
@@ -6868,7 +6875,7 @@ drawFifthsLadders board =
                 []
     in
     if (board.scale == ChromaticMinor || board.scale == ChromaticMajor) && laddersFit board.tuning then
-        (if isMono board then
+        (if hueless board then
             []
 
          else
@@ -6904,10 +6911,10 @@ drawNoteAt board s f =
 
                 background =
                     if isChromatic board.scale then
-                        -- Monochrome has no hues to spend, so the note
+                        -- Without hues (Monochrome or Off) the note
                         -- names alone say which note is which.
                         chromaticMarker role cx cy
-                            (if isMono board then
+                            (if hueless board then
                                 "var(--note-bg)"
 
                              else
@@ -7435,25 +7442,25 @@ viewLegend board =
 
             else if isChromatic board.scale then
                 [ legendText "Tones:"
-                , legendMarker (isMono board) "square-pc" "Root"
-                , legendMarker (isMono board) "circle-pc-dashed"
+                , legendMarker (hueless board) "square-pc" "Root"
+                , legendMarker (hueless board) "circle-pc-dashed"
                     (if board.scale == ChromaticMajor then
                         "3rd"
 
                      else
                         "♭3"
                     )
-                , legendMarker (isMono board) "circle-pc-dotted" "5th"
-                , legendMarker (isMono board) "circle-pc-double"
+                , legendMarker (hueless board) "circle-pc-dotted" "5th"
+                , legendMarker (hueless board) "circle-pc-double"
                     (if board.scale == ChromaticMajor then
                         "7th"
 
                      else
                         "♭7"
                     )
-                , legendMarker (isMono board) "circle-pc" "other"
+                , legendMarker (hueless board) "circle-pc" "other"
                 ]
-                    ++ (if isMono board then
+                    ++ (if hueless board then
                             []
 
                         else
@@ -7464,24 +7471,24 @@ viewLegend board =
                 -- A triad has nothing but chord tones, so there is no 7th and
                 -- no "other" to explain.
                 [ legendText "Tones:"
-                , legendMarker (isMono board) "square-dark" "Root"
+                , legendMarker (hueless board) "square-dark" "Root"
                 , if thirdOf board.scale == -1 then
                     -- A sus chord's 2nd or 4th is not a third, so it wears the
                     -- plain marker of any other note.
-                    legendMarker (isMono board) "circle-plain" (triadMiddle board.scale)
+                    legendMarker (hueless board) "circle-plain" (triadMiddle board.scale)
 
                   else
-                    legendMarker (isMono board) "circle-dashed" "3rd"
-                , legendMarker (isMono board) "circle-dotted" "5th"
+                    legendMarker (hueless board) "circle-dashed" "3rd"
+                , legendMarker (hueless board) "circle-dotted" "5th"
                 ]
 
             else
                 [ legendText "Tones:"
-                , legendMarker (isMono board) "square-dark" "Root"
-                , legendMarker (isMono board) "circle-dashed" "3rd"
-                , legendMarker (isMono board) "circle-dotted" "5th"
-                , legendMarker (isMono board) "circle-double" "7th"
-                , legendMarker (isMono board) "circle-plain" "other"
+                , legendMarker (hueless board) "square-dark" "Root"
+                , legendMarker (hueless board) "circle-dashed" "3rd"
+                , legendMarker (hueless board) "circle-dotted" "5th"
+                , legendMarker (hueless board) "circle-double" "7th"
+                , legendMarker (hueless board) "circle-plain" "other"
                 ]
     in
     div
@@ -7675,7 +7682,7 @@ legendRing board ( inv, lbl ) =
 
 
 legendMarker : Bool -> String -> String -> Html Msg
-legendMarker mono kind lbl =
+legendMarker hueless_ kind lbl =
     let
         common =
             [ style "display" "inline-block"
@@ -7686,7 +7693,7 @@ legendMarker mono kind lbl =
 
         -- A few pitch-class hues in one chip, to say "colored by note".
         pcGradient =
-            if mono then
+            if hueless_ then
                 "var(--note-bg)"
 
             else

@@ -698,7 +698,9 @@ One joined selector (`shadingSelector`, `shading : Shading` on the model —
 **Off** (`&shading=off`) draws no boxes or diagonal shapes at all, just the
 notes — in all fourths or all major thirds the CAGED positions mean nothing, so
 their colors only decorate. Lassos stay, as ink rings on a page-colored fill;
-the legend drops the box/inversion swatches. **Monochrome** (`&mono=1`, the
+the legend drops the box/inversion swatches. The all-notes maps drop their
+pitch hues under Off as under Monochrome (`hueless`): plain markers, ink
+ladders, no "hue = note". **Monochrome** (`&mono=1`, the
 link it always had) swaps
 every color on the necks for black-and-white hatched textures, for a printer with
 no color. It has to be a switch: browsers never match `@media (monochrome)` in
