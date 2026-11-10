@@ -581,7 +581,8 @@ neck's **heading is its controls**:
   takes the neck's slot, so it edits that neck whether or not it is active.
 - **The gear** (`gearButton`, in the page header beside Keep screen on) opens
   the **display options** (`viewOptions`): the row of buttons for tuning,
-  Highlight shapes, Highlight string, Degrees, Monochrome and Two columns.
+  Highlight shapes, Highlight string, Degrees, Colors / Monochrome / Off and
+  Two columns.
   An icon, not a label: it should not compete with Keep screen on.
 - **Open on a big screen, shut on a small one.** `index.html` passes
   `window.innerWidth` as the init flag; below `compactWidth` (1000px: phones
@@ -690,9 +691,15 @@ drag tint (with `!important`, since Elm styles inline) and keeps a neck from
 splitting across pages. Print forces the light scheme and a pure white page (`--bg`, `--surface`, and
 the `html`/`body` background).
 
-## Monochrome
+## Colors / Monochrome / Off
 
-The **Monochrome** button (`mono` on the model, `&mono=1` in the URL) swaps
+One joined selector (`shadingSelector`, `shading : Shading` on the model —
+`Colored`, `Monochrome`, `Unshaded`) says how boxes and lassos are painted.
+**Off** (`&shading=off`) draws no boxes or diagonal shapes at all, just the
+notes — in all fourths or all major thirds the CAGED positions mean nothing, so
+their colors only decorate. Lassos stay, as ink rings on a page-colored fill;
+the legend drops the box/inversion swatches. **Monochrome** (`&mono=1`, the
+link it always had) swaps
 every color on the necks for black-and-white hatched textures, for a printer with
 no color. It has to be a switch: browsers never match `@media (monochrome)` in
 print, and a Black & white print setting only turns the finished page gray. It
@@ -844,7 +851,8 @@ address bar is always a link to exactly what is on screen.
   neck or inside out.
 - `&string=6` carries the highlighted string, omitted when it is off, and
   clamped to 1–6 on the way in for the same reason.
-- `&degrees=1`, `&mono=1` and `&cols=2` carry the Degrees, Monochrome and Two
+- `&degrees=1`, `&mono=1` / `&shading=off` and `&cols=2` carry the Degrees,
+  Colors / Monochrome / Off and Two
   columns switches,
   omitted when off.
 - `&options=1`/`0` and `&practice=1` carry the two drawers, and every setting

@@ -83,12 +83,14 @@ type alias Model =
     -- rather than to one neck, so it lives here and applies to every neck.
     , stringFocus : Maybe Int
 
-    -- The **Monochrome** button: boxes and lassos swap their colors for hatched
-    -- textures, for printing on a black-and-white printer. Browsers do not
-    -- tell a page what the printer can do (`@media (monochrome)` never matches
-    -- in print), so it has to be a switch. Like the tuning it applies to every
-    -- neck, since a sheet goes to one printer.
-    , mono : Bool
+    -- The **Colors / Monochrome / Off** selector: how the boxes and lassos are
+    -- painted. Monochrome swaps their colors for hatched textures, for
+    -- printing on a black-and-white printer — browsers do not tell a page what
+    -- the printer can do (`@media (monochrome)` never matches in print), so it
+    -- has to be a switch. Off draws no boxes at all, for tunings like all
+    -- fourths where the CAGED positions mean nothing. Like the tuning it
+    -- applies to every neck, since a sheet goes to one printer.
+    , shading : Shading
 
     -- The **Degrees** button: every note marker names its interval from the
     -- root (R, 2, ♭3 …) instead of the note. Like monochrome it is a way of
@@ -138,6 +140,19 @@ type alias Neck =
     }
 
 
+{-| How boxes and lassos are painted: in their colors, in hatched textures for a
+black-and-white printer, or not at all. -}
+type Shading
+    = Colored
+    | Monochrome
+    | Unshaded
+
+
+isMono : Board -> Bool
+isMono board =
+    board.shading == Monochrome
+
+
 {-| A neck plus the tuning it is played in, which is everything the drawing
 code needs. `id` namespaces the SVG ids this neck mints: ids live in one
 document-wide namespace, so without a prefix a `url(#…)` reference would
@@ -150,7 +165,7 @@ type alias Board =
     , tuning : Tuning
     , focus : Maybe Focus
     , stringFocus : Maybe Int
-    , mono : Bool
+    , shading : Shading
     , degrees : Bool
 
     -- With the Practice panel open, the chord the band is playing, or the bar
@@ -282,7 +297,7 @@ type Msg
     | ChangeStringCount Int
     | SetFocus (Maybe Focus)
     | SetStringFocus (Maybe Int)
-    | ToggleMono
+    | SetShading Shading
     | ToggleDegrees
     | ToggleColumns
     | ToggleTuningList
@@ -358,7 +373,7 @@ init { width, seed } url key =
       , compact = compact
       , focus = state.focus
       , stringFocus = state.stringFocus
-      , mono = state.mono
+      , shading = state.shading
       , degrees = state.degrees
       , twoColumns = state.twoColumns
       , key = key
@@ -518,8 +533,8 @@ update msg model =
         SetStringFocus s ->
             sync { model | stringFocus = Maybe.map (clampString (stringCount model.tuning)) s }
 
-        ToggleMono ->
-            sync { model | mono = not model.mono }
+        SetShading sh ->
+            sync { model | shading = sh }
 
         ToggleDegrees ->
             sync { model | degrees = not model.degrees }
@@ -626,7 +641,7 @@ update msg model =
                 , tuning = state.tuning
                 , focus = state.focus
                 , stringFocus = state.stringFocus
-                , mono = state.mono
+                , shading = state.shading
                 , degrees = state.degrees
                 , twoColumns = state.twoColumns
                 , practiceOpen = state.practiceOpen
@@ -763,11 +778,15 @@ modelUrl model =
                     withFocus ++ "&string=" ++ String.fromInt s
 
         withMono =
-            if model.mono then
-                withString ++ "&mono=1"
+            case model.shading of
+                Colored ->
+                    withString
 
-            else
-                withString
+                Monochrome ->
+                    withString ++ "&mono=1"
+
+                Unshaded ->
+                    withString ++ "&shading=off"
 
         withDegrees =
             if model.degrees then
@@ -1116,7 +1135,7 @@ type alias UrlState =
     , tuning : Tuning
     , focus : Maybe Focus
     , stringFocus : Maybe Int
-    , mono : Bool
+    , shading : Shading
     , degrees : Bool
     , twoColumns : Bool
 
@@ -1214,7 +1233,15 @@ parseUrl url =
         lookup "string"
             |> Maybe.andThen String.toInt
             |> Maybe.map (clampString strings)
-    , mono = lookup "mono" == Just "1"
+    , shading =
+        if lookup "shading" == Just "off" then
+            Unshaded
+
+        else if lookup "mono" == Just "1" then
+            Monochrome
+
+        else
+            Colored
     , degrees = lookup "degrees" == Just "1"
     , twoColumns = lookup "cols" == Just "2"
 
@@ -1306,7 +1333,7 @@ boardAt model i neck =
     , tuning = model.tuning
     , focus = model.focus
     , stringFocus = model.stringFocus
-    , mono = model.mono
+    , shading = model.shading
     , degrees = model.degrees
     , chord = Practice.soundingChord model.practiceOpen model.practice
     , id = "n" ++ String.fromInt i ++ "-"
@@ -3769,7 +3796,7 @@ fade to would read as one more texture. `key` names the region's clip path, so
 it has to be unique on the neck. -}
 regionShape : Board -> String -> String -> Bool -> Int -> List ( Float, Float ) -> Svg.Svg Msg
 regionShape board key opacity muted b verts =
-    if not board.mono then
+    if not (isMono board) then
         Svg.polygon [ SA.points (pointsAttr verts), SA.fill (boxFill muted b), SA.fillOpacity opacity ] []
 
     else if muted then
@@ -4503,7 +4530,7 @@ scaleTitleParts board =
             else if isChromatic board.scale then
                 [ aside
                     ("Every note on the neck · "
-                        ++ (if board.mono then
+                        ++ (if isMono board then
                                 ""
 
                             else
@@ -4799,7 +4826,7 @@ setupRow model =
             :: highlightToggle model
             :: highlightFrets model
             ++ (stringToggle model :: highlightString model)
-            ++ [ degreesToggle model, monoToggle model, columnsToggle model ]
+            ++ [ degreesToggle model, shadingSelector model, columnsToggle model ]
         )
 
 
@@ -5392,14 +5419,40 @@ degreesToggle model =
         [ text "Degrees" ]
 
 
-{-| Swaps every color on the necks for black-and-white hatched textures, for a
-printer that has no color. It is on screen too, so what you see is what the
-page will print. -}
-monoToggle : Model -> Html Msg
-monoToggle model =
-    button
-        ([ onClick ToggleMono, style "min-width" "80px" ] ++ buttonBaseStyle model.mono)
-        [ text "Monochrome" ]
+{-| How the boxes and lassos are painted, as one joined selector: in color; as
+black-and-white hatched textures, for a printer that has no color (on screen
+too, so what you see is what the page will print); or off, for a tuning like
+all fourths where the CAGED boxes say nothing and their colors only decorate. -}
+shadingSelector : Model -> Html Msg
+shadingSelector model =
+    let
+        options =
+            [ ( Colored, "Colors" ), ( Monochrome, "Monochrome" ), ( Unshaded, "Off" ) ]
+
+        last =
+            List.length options - 1
+
+        segment i ( sh, lbl ) =
+            button
+                (buttonBaseStyle (model.shading == sh)
+                    ++ [ onClick (SetShading sh)
+                       , style "margin" (if i == 0 then "0" else "0 0 0 -1px")
+                       , style "border-radius"
+                            (if i == 0 then
+                                "6px 0 0 6px"
+
+                             else if i == last then
+                                "0 6px 6px 0"
+
+                             else
+                                "0"
+                            )
+                       ]
+                )
+                [ text lbl ]
+    in
+    span [ style "display" "inline-flex", style "margin-right" "4px" ]
+        (List.indexedMap segment options)
 
 
 {-| Lays the necks out two to a row at half width, for fitting a page. -}
@@ -5796,6 +5849,11 @@ drawBoxRegions board =
     else if isCagedChord board.scale then
         drawLassos board True (cagedVoicings board.tuning board.scale board.root)
 
+    else if board.shading == Unshaded then
+        -- Off: the scale's positions are not drawn, only its notes. In all
+        -- fourths or all major thirds the CAGED boxes mean nothing.
+        []
+
     else if isDiagonal board.scale then
         drawDiagonalRegions board
 
@@ -5842,7 +5900,7 @@ drawBoxRegionsBoxes board =
         wrapOverlaps =
             List.filterMap (drawWrapOverlap board lit) octaves
     in
-    if board.mono then
+    if isMono board then
         -- Hatchings are mostly holes, so where two boxes overlap both
         -- simply show; a stripe would only chop each texture in half.
         solids
@@ -6108,7 +6166,7 @@ the pill spelled out as fills: a disc on each note and a band along each leg,
 which is exactly what a round-capped, round-joined stroke covers. -}
 triadFill : Board -> Int -> Bool -> Triad -> Svg.Svg Msg
 triadFill board index muted triad =
-    if board.mono then
+    if isMono board then
         let
             r =
                 triadLassoRadius triad
@@ -6166,15 +6224,19 @@ triadFill board index muted triad =
                    )
             )
 
+    else if board.shading == Unshaded then
+        triadCapsule triad 0 [ SA.stroke "var(--bg)" ]
+
     else
         triadCapsule triad 0 [ SA.stroke (inversionFill muted triad.inversion) ]
 
 
 {-| The lasso's ring. In monochrome the texture inside says the inversion, so
-the ring only has to be ink — or gray when the highlight window mutes it. -}
+the ring only has to be ink — or gray when the highlight window mutes it. With
+the colors off the ring is ink too, and nothing says the inversion. -}
 ringColor : Board -> Bool -> Int -> String
 ringColor board muted inv =
-    if not board.mono then
+    if board.shading == Colored then
         inversionColor muted inv
 
     else if muted then
@@ -6794,7 +6856,7 @@ drawFifthsLadders board =
                 , SA.x2 (String.fromFloat (noteX g))
                 , SA.y2 (String.fromFloat (stringY s))
                 , SA.stroke
-                    (if board.mono then
+                    (if isMono board then
                         "var(--note-bd)"
 
                      else
@@ -6806,7 +6868,7 @@ drawFifthsLadders board =
                 []
     in
     if (board.scale == ChromaticMinor || board.scale == ChromaticMajor) && laddersFit board.tuning then
-        (if board.mono then
+        (if isMono board then
             []
 
          else
@@ -6845,7 +6907,7 @@ drawNoteAt board s f =
                         -- Monochrome has no hues to spend, so the note
                         -- names alone say which note is which.
                         chromaticMarker role cx cy
-                            (if board.mono then
+                            (if isMono board then
                                 "var(--note-bg)"
 
                              else
@@ -6942,7 +7004,7 @@ drawNoteAt board s f =
             in
             Just
                 (Svg.g (noteFade board s n)
-                    ((if board.mono then
+                    ((if isMono board then
                         [ noteHalo role cx cy ]
 
                       else
@@ -7310,7 +7372,7 @@ viewLegend : Board -> Html Msg
 viewLegend board =
     let
         boxes =
-            if isChromatic board.scale || isPlain board.scale then
+            if isChromatic board.scale || isPlain board.scale || board.shading == Unshaded then
                 []
 
             else if isCagedChord board.scale then
@@ -7334,8 +7396,21 @@ viewLegend board =
                 Nothing ->
                     []
 
+                -- With the colors off a box scale draws no shapes to gray out.
+                Just _ ->
+                    if board.shading == Unshaded && not (isLassoed board.scale) then
+                        []
+
+                    else
+                        highlightChip
+
+        highlightChip =
+            case board.focus of
+                Nothing ->
+                    []
+
                 Just ( lo, hi ) ->
-                    [ [ (if board.mono then
+                    [ [ (if board.shading /= Colored then
                             legendBlank
 
                          else
@@ -7360,25 +7435,25 @@ viewLegend board =
 
             else if isChromatic board.scale then
                 [ legendText "Tones:"
-                , legendMarker board.mono "square-pc" "Root"
-                , legendMarker board.mono "circle-pc-dashed"
+                , legendMarker (isMono board) "square-pc" "Root"
+                , legendMarker (isMono board) "circle-pc-dashed"
                     (if board.scale == ChromaticMajor then
                         "3rd"
 
                      else
                         "♭3"
                     )
-                , legendMarker board.mono "circle-pc-dotted" "5th"
-                , legendMarker board.mono "circle-pc-double"
+                , legendMarker (isMono board) "circle-pc-dotted" "5th"
+                , legendMarker (isMono board) "circle-pc-double"
                     (if board.scale == ChromaticMajor then
                         "7th"
 
                      else
                         "♭7"
                     )
-                , legendMarker board.mono "circle-pc" "other"
+                , legendMarker (isMono board) "circle-pc" "other"
                 ]
-                    ++ (if board.mono then
+                    ++ (if isMono board then
                             []
 
                         else
@@ -7389,24 +7464,24 @@ viewLegend board =
                 -- A triad has nothing but chord tones, so there is no 7th and
                 -- no "other" to explain.
                 [ legendText "Tones:"
-                , legendMarker board.mono "square-dark" "Root"
+                , legendMarker (isMono board) "square-dark" "Root"
                 , if thirdOf board.scale == -1 then
                     -- A sus chord's 2nd or 4th is not a third, so it wears the
                     -- plain marker of any other note.
-                    legendMarker board.mono "circle-plain" (triadMiddle board.scale)
+                    legendMarker (isMono board) "circle-plain" (triadMiddle board.scale)
 
                   else
-                    legendMarker board.mono "circle-dashed" "3rd"
-                , legendMarker board.mono "circle-dotted" "5th"
+                    legendMarker (isMono board) "circle-dashed" "3rd"
+                , legendMarker (isMono board) "circle-dotted" "5th"
                 ]
 
             else
                 [ legendText "Tones:"
-                , legendMarker board.mono "square-dark" "Root"
-                , legendMarker board.mono "circle-dashed" "3rd"
-                , legendMarker board.mono "circle-dotted" "5th"
-                , legendMarker board.mono "circle-double" "7th"
-                , legendMarker board.mono "circle-plain" "other"
+                , legendMarker (isMono board) "square-dark" "Root"
+                , legendMarker (isMono board) "circle-dashed" "3rd"
+                , legendMarker (isMono board) "circle-dotted" "5th"
+                , legendMarker (isMono board) "circle-double" "7th"
+                , legendMarker (isMono board) "circle-plain" "other"
                 ]
     in
     div
@@ -7476,7 +7551,7 @@ legendText s =
 
 legendSwatch : Board -> ( Int, String ) -> Html Msg
 legendSwatch board ( b, lbl ) =
-    if board.mono then
+    if isMono board then
         hatchChip False b lbl
 
     else
@@ -7577,7 +7652,7 @@ legendChip color lbl =
 {-| A lasso in miniature: a hollow ring in the inversion's color. -}
 legendRing : Board -> ( Int, String ) -> Html Msg
 legendRing board ( inv, lbl ) =
-    if board.mono then
+    if isMono board then
         hatchChip True (inv + 1) lbl
 
     else
